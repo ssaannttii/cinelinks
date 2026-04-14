@@ -47,7 +47,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .hdr-thumb img{width:100%;height:100%;object-fit:cover;display:block}
 .hdr-name{font-size:.78rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px}
 .hdr-arr{color:var(--mut);flex-shrink:0;font-size:.85rem}
-.hdr-clicks{text-align:center;flex-shrink:0;background:rgba(232,160,0,.08);border:1px solid rgba(232,160,0,.22);border-radius:8px;min-width:62px;padding:6px 9px;box-shadow:0 8px 18px rgba(0,0,0,.16)}
+.hdr-clicks{--click-ring:0deg;text-align:center;flex-shrink:0;background:linear-gradient(rgba(13,13,13,.9),rgba(13,13,13,.9)) padding-box,conic-gradient(var(--gold) var(--click-ring),rgba(255,255,255,.1) 0) border-box;border:1px solid transparent;border-radius:8px;min-width:62px;padding:6px 9px;box-shadow:0 8px 18px rgba(0,0,0,.16)}
 .clicks-n{font-size:1.45rem;font-weight:700;color:var(--gold);display:block;line-height:.95}
 .clicks-l{font-size:.58rem;color:var(--mut);text-transform:uppercase;letter-spacing:.1em;margin-top:3px;display:block}
 @keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.35)}100%{transform:scale(1)}}
@@ -71,6 +71,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .cur-info{flex:1;min-width:0;padding-top:2px}
 .cur-badge{font-size:.62rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
 .cur-name{font-size:1.3rem;font-weight:700;letter-spacing:-.02em;line-height:1.2}
+.cur-name.title{font-family:Georgia,'Times New Roman',serif;font-size:1.55rem;letter-spacing:0;font-weight:700}
 .cur-meta{color:var(--mut);font-size:.82rem;font-weight:600;margin-top:5px}
 .cur-prompt{color:var(--mut);font-size:.78rem;line-height:1.4;margin-top:12px;max-width:420px}
 .cur-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
@@ -85,12 +86,15 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 /* Path pills */
 .path-row{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;overflow-x:auto;margin-bottom:22px;padding-bottom:4px;scrollbar-width:none}
 .path-row::-webkit-scrollbar{display:none}
-.pill{display:flex;align-items:center;gap:6px;font-size:.72rem;padding:4px 10px;border-radius:20px;background:rgba(255,255,255,.045);border:1px solid var(--bdr);color:var(--mut);white-space:nowrap;max-width:170px;overflow:hidden;text-overflow:ellipsis;flex-shrink:0}
+.pill{display:flex;align-items:center;gap:7px;font-size:.72rem;padding:4px 10px 4px 5px;border-radius:20px;background:rgba(255,255,255,.045);border:1px solid var(--bdr);color:var(--mut);white-space:nowrap;max-width:190px;overflow:hidden;text-overflow:ellipsis;flex-shrink:0}
 .pill.movie,.pill.tv{border-radius:8px}
 .pill.director{border-color:rgba(232,160,0,.22)}
 .pill-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);flex-shrink:0;opacity:.85}
 .pill.movie .pill-dot{background:#f0f0f0}
 .pill.tv .pill-dot{background:#3498db}
+.pill-thumb{width:22px;height:22px;border-radius:50%;overflow:hidden;background:var(--s2);flex-shrink:0;border:1px solid rgba(255,255,255,.08)}
+.pill.movie .pill-thumb,.pill.tv .pill-thumb{width:18px;height:26px;border-radius:4px}
+.pill-thumb img{width:100%;height:100%;object-fit:cover;display:block}
 .pill-name{overflow:hidden;text-overflow:ellipsis}
 .pill.active{background:var(--gold);border-color:var(--gold);color:#111;font-weight:700}
 .pill.active .pill-dot{background:#111}
@@ -108,7 +112,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .empty-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 
 /* Cards */
-.card{background:var(--s1);border:1px solid var(--bdr);border-radius:8px;overflow:hidden;cursor:pointer;transition:border-color .15s,transform .15s,box-shadow .15s;position:relative}
+.card{background:rgba(255,255,255,.045);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.1);border-radius:8px;overflow:hidden;cursor:pointer;transition:border-color .15s,transform .15s,box-shadow .15s,background .15s;position:relative}
 .card:hover{border-color:var(--gold);transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.4)}
 .card:not(.visited)::before{content:"Choose";position:absolute;top:8px;right:8px;z-index:2;background:rgba(13,13,13,.78);border:1px solid rgba(232,160,0,.32);border-radius:8px;color:var(--gold);font-size:.58rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 6px;opacity:0;transform:translateY(-3px);transition:opacity .15s,transform .15s;pointer-events:none}
 .card:not(.visited):hover::before{opacity:1;transform:translateY(0)}
@@ -542,6 +546,7 @@ const game = window.game = {
     document.getElementById('startNodeName').textContent = start.name;
     document.getElementById('endNodeName').textContent   = end.name;
     document.getElementById('clickCounter').textContent  = this.clicks;
+    document.querySelector('.hdr-clicks')?.style.setProperty('--click-ring', this.clickRing());
     this.renderRunMetrics();
 
     showOnly('gameScreen');
@@ -577,6 +582,7 @@ const game = window.game = {
         this.setCurImg(su);
         this.renderCurrentMeta();
       }
+      this.renderPath();
     } catch(_) {}
   },
 
@@ -584,7 +590,10 @@ const game = window.game = {
     try {
       await hydrateNodeDetails(node);
       this.setCurImg(nodeImageUrl(node));
-      if (node === this.cur) this.renderCurrentMeta();
+      if (node === this.cur) {
+        this.renderCurrentMeta();
+        this.renderPath();
+      }
     } catch(_) {}
   },
 
@@ -613,10 +622,12 @@ const game = window.game = {
     el.innerHTML = '';
     this.setCurCardBg('');
     const role = this.cur.role;
+    const nameEl = document.getElementById('curName');
+    nameEl.classList.toggle('title', this.cur.type === 'movie' || this.cur.type === 'tv');
     document.getElementById('curType').textContent = this.cur.type === 'movie' ? 'MOVIE' :
       this.cur.type === 'tv' ? 'TV SHOW' :
       role === 'director' ? 'DIRECTOR' : 'ACTOR';
-    document.getElementById('curName').textContent = this.cur.name;
+    nameEl.textContent = this.cur.name;
     this.renderCurrentMeta();
     this.renderCurrentPrompt();
     this.renderRunMetrics();
@@ -647,6 +658,11 @@ const game = window.game = {
     if (links) links.textContent = this._connectionCount === null ? '\u2014' : this._connectionCount;
   },
 
+  clickRing() {
+    const maxClicks = 20;
+    return Math.min(360, Math.round((this.clicks / maxClicks) * 360)) + 'deg';
+  },
+
   renderPath() {
     const el = document.getElementById('pathRow');
     el.innerHTML = '';
@@ -661,12 +677,23 @@ const game = window.game = {
 
       const d = document.createElement('div');
       d.className = 'pill ' + n.type + (n.role === 'director' ? ' director' : '') + (i === this.path.length - 1 ? ' active' : '');
-      const dot = document.createElement('span');
-      dot.className = 'pill-dot';
+      const imgUrl = nodeImageUrl(n);
+      let marker;
+      if (imgUrl) {
+        marker = document.createElement('span');
+        marker.className = 'pill-thumb';
+        const img = document.createElement('img');
+        img.src = imgUrl;
+        img.alt = '';
+        marker.appendChild(img);
+      } else {
+        marker = document.createElement('span');
+        marker.className = 'pill-dot';
+      }
       const name = document.createElement('span');
       name.className = 'pill-name';
       name.textContent = n.name;
-      d.append(dot, name);
+      d.append(marker, name);
       d.title = n.name;
       el.appendChild(d);
     });
@@ -925,6 +952,7 @@ const game = window.game = {
 
     const ctr = document.getElementById('clickCounter');
     ctr.textContent = this.clicks;
+    document.querySelector('.hdr-clicks')?.style.setProperty('--click-ring', this.clickRing());
     ctr.classList.remove('popping');
     void ctr.offsetWidth;
     ctr.classList.add('popping');
