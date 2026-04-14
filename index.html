@@ -406,7 +406,10 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 <div id="deadEndToast"></div>
 
 <script>
-const DAILY = [
+const DAILY_TIME_ZONE = 'Europe/Madrid';
+const DAILY_ALGO_VERSION = 2;
+
+const FALLBACK_DAILY = [
   {s:{name:"Tom Hanks",type:"person",id:31},e:{name:"The Dark Knight",type:"movie",id:155}},
   {s:{name:"Meryl Streep",type:"person",id:5064},e:{name:"Inception",type:"movie",id:27205}},
   {s:{name:"Johnny Depp",type:"person",id:85},e:{name:"The Shawshank Redemption",type:"movie",id:278}},
@@ -418,6 +421,113 @@ const DAILY = [
   {s:{name:"Morgan Freeman",type:"person",id:192},e:{name:"Fight Club",type:"movie",id:550}},
   {s:{name:"Titanic",type:"movie",id:597},e:{name:"Tom Cruise",type:"person",id:500}},
 ];
+
+const DAILY_POOL = {
+  people: [
+    {name:"Tom Hanks",type:"person",id:31,knownFor:["movie-13","movie-862"]},
+    {name:"Meryl Streep",type:"person",id:5064,knownFor:["movie-350","movie-1402"]},
+    {name:"Johnny Depp",type:"person",id:85,knownFor:["movie-22","movie-118"]},
+    {name:"Natalie Portman",type:"person",id:524,knownFor:["movie-44214","movie-11","movie-1891"]},
+    {name:"Brad Pitt",type:"person",id:287,knownFor:["movie-550","movie-807","movie-16869"]},
+    {name:"Cate Blanchett",type:"person",id:112,knownFor:["movie-120","movie-122","movie-76341"]},
+    {name:"Scarlett Johansson",type:"person",id:1245,knownFor:["movie-299534","movie-24428","movie-153"]},
+    {name:"Morgan Freeman",type:"person",id:192,knownFor:["movie-278","movie-807","movie-155"]},
+    {name:"Tom Cruise",type:"person",id:500,knownFor:["movie-361743","movie-954","movie-597"]},
+    {name:"Diane Keaton",type:"person",id:2063,knownFor:["movie-238"]},
+    {name:"Leonardo DiCaprio",type:"person",id:6193,knownFor:["movie-597","movie-27205","movie-1422"]},
+    {name:"Robert De Niro",type:"person",id:380,knownFor:["movie-769","movie-240","movie-103"]},
+    {name:"Al Pacino",type:"person",id:1158,knownFor:["movie-238","movie-240","movie-949"]},
+    {name:"Denzel Washington",type:"person",id:5292,knownFor:["movie-2034","movie-510"]},
+    {name:"Julia Roberts",type:"person",id:1204,knownFor:["movie-634","movie-161"]},
+    {name:"Keanu Reeves",type:"person",id:6384,knownFor:["movie-603","movie-245891"]},
+    {name:"Harrison Ford",type:"person",id:3,knownFor:["movie-11","movie-1891","movie-85"]},
+    {name:"Samuel L. Jackson",type:"person",id:2231,knownFor:["movie-680","movie-329","movie-299534"]},
+    {name:"Matt Damon",type:"person",id:1892,knownFor:["movie-1422","movie-157336","movie-872585"]},
+    {name:"Christian Bale",type:"person",id:3894,knownFor:["movie-155","movie-272"]},
+    {name:"Ryan Gosling",type:"person",id:30614,knownFor:["movie-313369","movie-346698","movie-335984"]},
+    {name:"Emma Stone",type:"person",id:54693,knownFor:["movie-313369","movie-337404"]},
+    {name:"Anne Hathaway",type:"person",id:1813,knownFor:["movie-49026","movie-157336"]},
+    {name:"Jennifer Lawrence",type:"person",id:72129,knownFor:["movie-70160","movie-76338"]},
+    {name:"Viola Davis",type:"person",id:19492,knownFor:["movie-50014","movie-297761"]},
+    {name:"Nicole Kidman",type:"person",id:2227,knownFor:["movie-824","movie-1677"]},
+    {name:"Charlize Theron",type:"person",id:6885,knownFor:["movie-76341","movie-504172"]},
+    {name:"Sandra Bullock",type:"person",id:18277,knownFor:["movie-49047","movie-296098"]},
+    {name:"Amy Adams",type:"person",id:9273,knownFor:["movie-329865","movie-16869"]},
+    {name:"Mark Ruffalo",type:"person",id:103,knownFor:["movie-299534","movie-24428","movie-314365"]},
+    {name:"Chris Evans",type:"person",id:16828,knownFor:["movie-299534","movie-546554","movie-24428"]},
+    {name:"Robert Downey Jr.",type:"person",id:3223,knownFor:["movie-299534","movie-1726","movie-872585"]},
+    {name:"Chris Hemsworth",type:"person",id:74568,knownFor:["movie-299534","movie-284053"]},
+    {name:"Zendaya",type:"person",id:505710,knownFor:["movie-438631","movie-634649"]},
+    {name:"Margot Robbie",type:"person",id:234352,knownFor:["movie-346698","movie-16869"]},
+    {name:"Adam Driver",type:"person",id:1023139,knownFor:["movie-181808","movie-492188"]},
+    {name:"Joaquin Phoenix",type:"person",id:73421,knownFor:["movie-475557","movie-98","movie-152601"]},
+    {name:"Michelle Yeoh",type:"person",id:1620,knownFor:["movie-545611","movie-455207"]},
+    {name:"Oscar Isaac",type:"person",id:25072,knownFor:["movie-438631","movie-264660","movie-181808"]},
+    {name:"Pedro Pascal",type:"person",id:1253360,knownFor:["tv-100088","tv-1399"]}
+  ],
+  titles: [
+    {name:"The Godfather",type:"movie",id:238,yearLabel:"1972"},
+    {name:"The Dark Knight",type:"movie",id:155,yearLabel:"2008"},
+    {name:"Pulp Fiction",type:"movie",id:680,yearLabel:"1994"},
+    {name:"Inception",type:"movie",id:27205,yearLabel:"2010"},
+    {name:"Fight Club",type:"movie",id:550,yearLabel:"1999"},
+    {name:"Forrest Gump",type:"movie",id:13,yearLabel:"1994"},
+    {name:"Goodfellas",type:"movie",id:769,yearLabel:"1990"},
+    {name:"Titanic",type:"movie",id:597,yearLabel:"1997"},
+    {name:"The Matrix",type:"movie",id:603,yearLabel:"1999"},
+    {name:"The Shawshank Redemption",type:"movie",id:278,yearLabel:"1994"},
+    {name:"Parasite",type:"movie",id:496243,yearLabel:"2019"},
+    {name:"Interstellar",type:"movie",id:157336,yearLabel:"2014"},
+    {name:"Jurassic Park",type:"movie",id:329,yearLabel:"1993"},
+    {name:"Back to the Future",type:"movie",id:105,yearLabel:"1985"},
+    {name:"Star Wars",type:"movie",id:11,yearLabel:"1977"},
+    {name:"The Empire Strikes Back",type:"movie",id:1891,yearLabel:"1980"},
+    {name:"The Lord of the Rings: The Fellowship of the Ring",type:"movie",id:120,yearLabel:"2001"},
+    {name:"The Lord of the Rings: The Return of the King",type:"movie",id:122,yearLabel:"2003"},
+    {name:"Gladiator",type:"movie",id:98,yearLabel:"2000"},
+    {name:"The Silence of the Lambs",type:"movie",id:274,yearLabel:"1991"},
+    {name:"Raiders of the Lost Ark",type:"movie",id:85,yearLabel:"1981"},
+    {name:"The Social Network",type:"movie",id:37799,yearLabel:"2010"},
+    {name:"La La Land",type:"movie",id:313369,yearLabel:"2016"},
+    {name:"Mad Max: Fury Road",type:"movie",id:76341,yearLabel:"2015"},
+    {name:"Knives Out",type:"movie",id:546554,yearLabel:"2019"},
+    {name:"Get Out",type:"movie",id:419430,yearLabel:"2017"},
+    {name:"Arrival",type:"movie",id:329865,yearLabel:"2016"},
+    {name:"The Departed",type:"movie",id:1422,yearLabel:"2006"},
+    {name:"Se7en",type:"movie",id:807,yearLabel:"1995"},
+    {name:"Spirited Away",type:"movie",id:129,yearLabel:"2001"},
+    {name:"Toy Story",type:"movie",id:862,yearLabel:"1995"},
+    {name:"Finding Nemo",type:"movie",id:12,yearLabel:"2003"},
+    {name:"Spider-Man: Into the Spider-Verse",type:"movie",id:324857,yearLabel:"2018"},
+    {name:"Avengers: Endgame",type:"movie",id:299534,yearLabel:"2019"},
+    {name:"Black Panther",type:"movie",id:284054,yearLabel:"2018"},
+    {name:"The Grand Budapest Hotel",type:"movie",id:120467,yearLabel:"2014"},
+    {name:"Dune",type:"movie",id:438631,yearLabel:"2021"},
+    {name:"Everything Everywhere All at Once",type:"movie",id:545611,yearLabel:"2022"},
+    {name:"Oppenheimer",type:"movie",id:872585,yearLabel:"2023"},
+    {name:"Barbie",type:"movie",id:346698,yearLabel:"2023"},
+    {name:"Breaking Bad",type:"tv",id:1396,yearLabel:"2008-2013"},
+    {name:"Game of Thrones",type:"tv",id:1399,yearLabel:"2011-2019"},
+    {name:"The Sopranos",type:"tv",id:1398,yearLabel:"1999-2007"},
+    {name:"The Wire",type:"tv",id:1438,yearLabel:"2002-2008"},
+    {name:"Stranger Things",type:"tv",id:66732,yearLabel:"2016-present"},
+    {name:"The Office",type:"tv",id:2316,yearLabel:"2005-2013"},
+    {name:"Friends",type:"tv",id:1668,yearLabel:"1994-2004"},
+    {name:"The Last of Us",type:"tv",id:100088,yearLabel:"2023-present"},
+    {name:"Better Call Saul",type:"tv",id:60059,yearLabel:"2015-2022"},
+    {name:"Chernobyl",type:"tv",id:87108,yearLabel:"2019"},
+    {name:"Succession",type:"tv",id:76331,yearLabel:"2018-2023"},
+    {name:"The Crown",type:"tv",id:65494,yearLabel:"2016-2023"},
+    {name:"Fargo",type:"tv",id:60622,yearLabel:"2014-present"},
+    {name:"True Detective",type:"tv",id:46648,yearLabel:"2014-present"},
+    {name:"The Bear",type:"tv",id:136315,yearLabel:"2022-present"},
+    {name:"Sherlock",type:"tv",id:19885,yearLabel:"2010-2017"},
+    {name:"House",type:"tv",id:1408,yearLabel:"2004-2012"},
+    {name:"Lost",type:"tv",id:4607,yearLabel:"2004-2010"},
+    {name:"Mad Men",type:"tv",id:1104,yearLabel:"2007-2015"},
+    {name:"Fleabag",type:"tv",id:67070,yearLabel:"2016-2019"}
+  ]
+};
 
 const IMGBASE = 'https://image.tmdb.org/t/p/w342';
 
@@ -440,11 +550,37 @@ function randInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+function datePartsInTimeZone(date = new Date(), timeZone = DAILY_TIME_ZONE) {
+  try {
+    return new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      year:'numeric',
+      month:'2-digit',
+      day:'2-digit'
+    }).formatToParts(date).reduce((parts, part) => {
+      if (part.type !== 'literal') parts[part.type] = part.value;
+      return parts;
+    }, {});
+  } catch(_) {
+    return {
+      year:String(date.getFullYear()),
+      month:String(date.getMonth() + 1).padStart(2, '0'),
+      day:String(date.getDate()).padStart(2, '0')
+    };
+  }
+}
+
 function dateKey(date = new Date()) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return y + '-' + m + '-' + d;
+  const parts = datePartsInTimeZone(date);
+  return parts.year + '-' + parts.month + '-' + parts.day;
+}
+
+function formatDailyDate(date = new Date(), options = {}) {
+  try {
+    return new Intl.DateTimeFormat('en-US', {timeZone:DAILY_TIME_ZONE, ...options}).format(date);
+  } catch(_) {
+    return date.toLocaleDateString('en-US', options);
+  }
 }
 
 function hashString(str) {
@@ -475,7 +611,12 @@ function sampleWith(rand, items) {
 }
 
 function shuffleWith(rand, items) {
-  return [...items].sort(() => rand() - 0.5);
+  const shuffled = [...items];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
 }
 
 function movieYear(movie) {
@@ -571,8 +712,43 @@ function buildChallenge(people, titles, rand = Math.random) {
   return {s:title, e:personNode(p)};
 }
 
+function curatedNode(node) {
+  const copy = {name:node.name, type:node.type, id:node.id};
+  if (node.img) copy.img = node.img;
+  if (node.yearLabel) copy.yearLabel = node.yearLabel;
+  return copy;
+}
+
+function nodeKey(node) {
+  return node.type + '-' + node.id;
+}
+
+function isCuratedKnownFor(person, title) {
+  return (person.knownFor || []).includes(nodeKey(title));
+}
+
+function buildDailyChallenge(key) {
+  const rand = seededRandom(hashString('daily-v' + DAILY_ALGO_VERSION + '-' + key));
+  const personFirst = rand() < 0.58;
+  const useTv = rand() < 0.28;
+  const titlesForDay = DAILY_POOL.titles.filter(t => useTv ? t.type === 'tv' : t.type === 'movie');
+  const people = shuffleWith(rand, DAILY_POOL.people);
+  const titles = shuffleWith(rand, titlesForDay.length ? titlesForDay : DAILY_POOL.titles);
+
+  for (const person of people) {
+    for (const title of titles) {
+      if (isCuratedKnownFor(person, title)) continue;
+      return personFirst
+        ? {s:curatedNode(person), e:curatedNode(title)}
+        : {s:curatedNode(title), e:curatedNode(person)};
+    }
+  }
+
+  return fallbackDailyChallenge(key);
+}
+
 function fallbackDailyChallenge(key) {
-  const c = DAILY[hashString(key) % DAILY.length];
+  const c = FALLBACK_DAILY[hashString(key) % FALLBACK_DAILY.length];
   return {s:{...c.s}, e:{...c.e}};
 }
 
@@ -746,33 +922,17 @@ const game = window.game = {
 
   async startDaily() {
     const key = dateKey();
-    const rand = seededRandom(hashString('daily-' + key));
-    // Show date badge in header
     const badge = document.getElementById('hdrDateBadge');
     if (badge) {
-      badge.textContent = new Date().toLocaleDateString('en-US', {month:'short', day:'numeric'});
+      badge.textContent = formatDailyDate(new Date(), {month:'short', day:'numeric'});
       badge.style.display = '';
     }
     showOnly('loadingScreen');
-    try {
-      const pools = await fetchChallengePools({
-        people: randIntWith(rand, 1, 5),
-        movies: randIntWith(rand, 1, 8),
-        tv: randIntWith(rand, 1, 6)
-      });
-      const challenge = buildChallenge(pools.people, pools.titles, rand);
-      if (!challenge) throw 0;
-      this.optDist = null;
-      this._showLoadPreview(challenge.s, challenge.e);
-      await new Promise(r => setTimeout(r, 320));
-      this.init(challenge.s, challenge.e);
-    } catch(_) {
-      const c = fallbackDailyChallenge(key);
-      this.optDist = null;
-      this._showLoadPreview(c.s, c.e);
-      await new Promise(r => setTimeout(r, 320));
-      this.init(c.s, c.e);
-    }
+    const challenge = buildDailyChallenge(key);
+    this.optDist = null;
+    this._showLoadPreview(challenge.s, challenge.e);
+    await new Promise(r => setTimeout(r, 320));
+    this.init(challenge.s, challenge.e);
   },
 
   async startRandom() {
@@ -792,7 +952,7 @@ const game = window.game = {
       await new Promise(r => setTimeout(r, 320));
       this.init(challenge.s, challenge.e);
     } catch(_) {
-      const c = DAILY[Math.floor(Math.random() * DAILY.length)];
+      const c = FALLBACK_DAILY[Math.floor(Math.random() * FALLBACK_DAILY.length)];
       this._showLoadPreview(c.s, c.e);
       await new Promise(r => setTimeout(r, 320));
       this.init(c.s, c.e);
@@ -1625,8 +1785,7 @@ const game = window.game = {
 (function() {
   const el = document.getElementById('dailyDateLbl');
   if (!el) return;
-  const now = new Date();
-  const label = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  const label = formatDailyDate(new Date(), { weekday:'long', month:'long', day:'numeric' });
   el.textContent = label;
 })();
 
