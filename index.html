@@ -82,11 +82,12 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var
 .card.goal{border-color:rgba(232,160,0,.45);box-shadow:0 0 10px var(--golddim)}
 .card.visited{opacity:.38;cursor:not-allowed;pointer-events:none;position:relative}
 .card.visited::after{content:"Already visited";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:600;color:var(--mut);background:rgba(0,0,0,.55);text-align:center;padding:4px;pointer-events:none}
-.director-section{margin-bottom:16px}
-.director-label{font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--bdr)}
+.people-section{margin-bottom:18px}
+.people-section:last-child{margin-bottom:0}
+.people-label{display:flex;align-items:center;gap:10px;font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin-bottom:10px}
+.people-label::after{content:"";height:1px;background:var(--bdr);flex:1}
 .card.director-card{border-color:rgba(232,160,0,.2);background:rgba(232,160,0,.04)}
 .card.director-card .card-sub{color:var(--gold);font-weight:600}
-.cast-label{font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin-top:16px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--bdr)}
 .card-img{width:100%;aspect-ratio:2/3;overflow:hidden;background:var(--s2)}
 .card-img.person{aspect-ratio:1/1}
 .card-img img{width:100%;height:100%;object-fit:cover;display:block}
@@ -328,6 +329,30 @@ function nodeInitials(name) {
     .toUpperCase() || '?';
 }
 
+function sectionLabel(text) {
+  const label = document.createElement('div');
+  label.className = 'people-label';
+  label.textContent = text;
+  return label;
+}
+
+function peopleSection(labelText, items, makeCard) {
+  const section = document.createElement('div');
+  section.className = 'people-section';
+  section.appendChild(sectionLabel(labelText));
+
+  const row = document.createElement('div');
+  row.className = 'grid';
+  row.style.display = 'grid';
+  items.forEach(item => {
+    const card = makeCard(item);
+    if (card) row.appendChild(card);
+  });
+
+  section.appendChild(row);
+  return section;
+}
+
 async function hydrateNodeImage(node) {
   if (node.img) return node.img;
   try {
@@ -553,26 +578,25 @@ const game = window.game = {
       const dirItems = items.filter(i => i.sub === 'Director');
       const nonDirItems = items.filter(i => i.sub !== 'Director');
 
-      if (dirItems.length > 0) lbl.textContent = 'CAST & CREW';
       if (dirItems.length > 0) {
-        const dlbl = document.createElement('div');
-        dlbl.className = 'director-label';
-        dlbl.textContent = dirItems.length === 1 ? 'DIRECTOR' : 'DIRECTORS';
-        grid.appendChild(dlbl);
-        const drow = document.createElement('div');
-        drow.className = 'grid';
-        drow.style.display = 'grid';
-        drow.style.marginBottom = '16px';
-        dirItems.forEach(item => { const c = this._makeCard(item); if (c) drow.appendChild(c); });
-        grid.appendChild(drow);
+        lbl.textContent = 'PEOPLE';
+        grid.appendChild(peopleSection(
+          dirItems.length === 1 ? 'DIRECTOR' : 'DIRECTORS',
+          dirItems,
+          item => this._makeCard(item)
+        ));
       }
 
       if (nonDirItems.length > 0) {
-        const castGrid = document.createElement('div');
-        castGrid.className = 'grid';
-        castGrid.style.display = 'grid';
-        nonDirItems.forEach(item => { const c = this._makeCard(item); if (c) castGrid.appendChild(c); });
-        grid.appendChild(castGrid);
+        if (dirItems.length > 0) {
+          grid.appendChild(peopleSection('CAST', nonDirItems, item => this._makeCard(item)));
+        } else {
+          const castGrid = document.createElement('div');
+          castGrid.className = 'grid';
+          castGrid.style.display = 'grid';
+          nonDirItems.forEach(item => { const c = this._makeCard(item); if (c) castGrid.appendChild(c); });
+          grid.appendChild(castGrid);
+        }
       }
     } catch(_) {
       grid.innerHTML = '<p style="color:#777;font-size:.85rem">Could not load connections.</p>';
