@@ -1,1443 +1,464 @@
-<!DOCTYPE html>
+<\!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CineLinks - The Movie & Actor Connection Game</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html, body {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: #0d0d0d;
-            color: #f0f0f0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .container {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .screen {
-            display: none;
-            width: 100%;
-            height: 100%;
-            animation: fadeIn 0.3s ease-in;
-        }
-
-        .screen.active {
-            display: flex;
-            flex-direction: column;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-
-        @keyframes confetti {
-            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-            100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* START SCREEN */
-        #startScreen {
-            justify-content: center;
-            align-items: center;
-            padding: 40px 24px;
-            overflow-y: auto;
-        }
-
-        .start-content {
-            text-align: center;
-            max-width: 480px;
-            width: 100%;
-        }
-
-        .logo {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 8px;
-            color: #f0f0f0;
-            letter-spacing: -0.02em;
-        }
-
-        .logo-emoji {
-            font-size: 2rem;
-            margin-right: 8px;
-        }
-
-        .tagline {
-            font-size: 0.9rem;
-            color: #888;
-            margin-bottom: 48px;
-            font-weight: 400;
-            letter-spacing: 0.5px;
-        }
-
-        .button-group {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-bottom: 40px;
-        }
-
-        button {
-            padding: 14px 28px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            border: 1px solid rgba(255,255,255,0.12);
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-family: 'Inter', sans-serif;
-        }
-
-        .btn-primary {
-            background-color: #e8a000;
-            color: #0d0d0d;
-            border-color: #e8a000;
-        }
-
-        .btn-primary:hover {
-            background-color: #f0b020;
-            border-color: #f0b020;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(232, 160, 0, 0.25);
-        }
-
-        .btn-secondary {
-            background-color: transparent;
-            color: #f0f0f0;
-            border-color: rgba(255,255,255,0.12);
-        }
-
-        .btn-secondary:hover {
-            background-color: rgba(255,255,255,0.05);
-            border-color: rgba(255,255,255,0.24);
-            transform: translateY(-2px);
-        }
-
-        .instructions {
-            text-align: left;
-            background-color: transparent;
-            padding: 0;
-            border-radius: 0;
-            border: none;
-            font-size: 0.85rem;
-            line-height: 1.6;
-            color: #888;
-        }
-
-        .instructions h3 {
-            color: #f0f0f0;
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 0.5px;
-            font-weight: 600;
-        }
-
-        .instructions ul {
-            list-style: none;
-            padding-left: 0;
-        }
-
-        .instructions li {
-            margin-bottom: 8px;
-            padding-left: 0;
-            position: relative;
-        }
-
-        .instructions li:before {
-            content: "•";
-            position: absolute;
-            left: -12px;
-            color: #e8a000;
-            font-weight: 600;
-        }
-
-        /* LOADING SCREEN */
-        #loadingScreen {
-            justify-content: center;
-            align-items: center;
-            background-color: #0d0d0d;
-        }
-
-        .loading-content {
-            text-align: center;
-        }
-
-        .loading-spinner {
-            width: 48px;
-            height: 48px;
-            border: 2px solid rgba(255,255,255,0.08);
-            border-top-color: #e8a000;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 24px;
-        }
-
-        .loading-text {
-            font-size: 0.95rem;
-            color: #f0f0f0;
-            font-weight: 400;
-            letter-spacing: 0.3px;
-        }
-
-        /* GAME SCREEN */
-        #gameScreen {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            background-color: #0d0d0d;
-        }
-
-        .game-header {
-            padding: 16px 24px;
-            background-color: rgba(22, 22, 22, 0.8);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255,255,255,0.08);
-        }
-
-        .challenge-header {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            justify-content: center;
-            margin-bottom: 12px;
-        }
-
-        .challenge-node {
-            background-color: transparent;
-            padding: 0;
-            border: none;
-            border-radius: 0;
-            text-align: center;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .challenge-node-image {
-            width: 40px;
-            height: 56px;
-            border-radius: 6px;
-            overflow: hidden;
-            background-color: #1e1e1e;
-            flex-shrink: 0;
-        }
-
-        .challenge-node-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
-        .challenge-node-image.actor {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-        }
-
-        .challenge-node-image .no-img {
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #2a2a2a 0%, #161616 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #555;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-
-        .challenge-node-name {
-            font-size: 0.75rem;
-            color: #f0f0f0;
-            font-weight: 500;
-            max-width: 60px;
-            line-height: 1.2;
-            word-break: break-word;
-        }
-
-        .challenge-arrow {
-            font-size: 18px;
-            color: #e8a000;
-            flex-shrink: 0;
-        }
-
-        .click-counter-header {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-top: 8px;
-            gap: 8px;
-        }
-
-        .click-counter {
-            background-color: transparent;
-            padding: 0;
-            border: none;
-            border-radius: 0;
-            font-size: 0.85rem;
-            color: #e8a000;
-            font-weight: 600;
-            letter-spacing: 0.3px;
-            text-align: center;
-        }
-
-        .click-counter-label {
-            font-size: 0.7rem;
-            color: #555;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-weight: 500;
-        }
-
-        .click-counter.animate {
-            animation: pulse 0.4s ease;
-        }
-
-        .game-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            padding: 24px;
-            max-width: 900px;
-            margin: 0 auto;
-            width: 100%;
-        }
-
-        .current-node-card {
-            display: grid;
-            grid-template-columns: 120px 1fr;
-            gap: 20px;
-            background-color: #161616;
-            padding: 20px;
-            border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.08);
-            margin-bottom: 24px;
-        }
-
-        .current-node-image {
-            width: 120px;
-            height: 170px;
-            border-radius: 8px;
-            overflow: hidden;
-            background-color: #1e1e1e;
-            flex-shrink: 0;
-        }
-
-        .current-node-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
-        .current-node-image.actor {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-        }
-
-        .current-node-image .no-img {
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #2a2a2a 0%, #161616 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #555;
-            font-size: 0.8rem;
-        }
-
-        .current-node-info {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .current-node-type {
-            font-size: 0.7rem;
-            color: #888;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-weight: 600;
-        }
-
-        .current-node-name {
-            font-size: 1.4rem;
-            color: #f0f0f0;
-            font-weight: 600;
-            line-height: 1.2;
-        }
-
-        .current-node-meta {
-            font-size: 0.85rem;
-            color: #888;
-            font-weight: 400;
-        }
-
-        .path-trail {
-            margin-bottom: 24px;
-        }
-
-        .path-label {
-            font-size: 0.7rem;
-            color: #555;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .path-items {
-            display: flex;
-            gap: 8px;
-            overflow-x: auto;
-            padding-bottom: 4px;
-        }
-
-        .path-items::-webkit-scrollbar {
-            height: 4px;
-        }
-
-        .path-items::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .path-items::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.1);
-            border-radius: 2px;
-        }
-
-        .path-item {
-            background-color: #1e1e1e;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            color: #888;
-            font-weight: 500;
-            white-space: nowrap;
-            flex-shrink: 0;
-            border: 1px solid rgba(255,255,255,0.04);
-        }
-
-        .path-item.current {
-            background-color: #e8a000;
-            color: #0d0d0d;
-            border-color: #e8a000;
-        }
-
-        .connections-section {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .connections-label {
-            font-size: 0.7rem;
-            color: #555;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-weight: 600;
-            margin-bottom: 12px;
-        }
-
-        #connections {
-            flex: 1;
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 12px;
-            overflow-y: auto;
-            padding-right: 4px;
-        }
-
-        #connections::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        #connections::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        #connections::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.1);
-            border-radius: 3px;
-        }
-
-        #connections::-webkit-scrollbar-thumb:hover {
-            background: rgba(255,255,255,0.15);
-        }
-
-        .connection-item {
-            background-color: #161616;
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            animation: slideIn 0.3s ease forwards;
-            opacity: 0;
-        }
-
-        .connection-item:nth-child(1) { animation-delay: 0.05s; }
-        .connection-item:nth-child(2) { animation-delay: 0.1s; }
-        .connection-item:nth-child(3) { animation-delay: 0.15s; }
-        .connection-item:nth-child(4) { animation-delay: 0.2s; }
-        .connection-item:nth-child(5) { animation-delay: 0.25s; }
-        .connection-item:nth-child(6) { animation-delay: 0.3s; }
-        .connection-item:nth-child(n+7) { animation-delay: 0.35s; }
-
-        .connection-item:hover {
-            border-color: #e8a000;
-            transform: scale(1.02);
-            box-shadow: 0 4px 12px rgba(232, 160, 0, 0.15);
-        }
-
-        .connection-item.goal-node {
-            border-color: #e8a000;
-        }
-
-        .connection-item-image {
-            width: 100%;
-            aspect-ratio: 2 / 3;
-            background-color: #1e1e1e;
-            overflow: hidden;
-        }
-
-        .connection-item-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
-        .connection-item-image.actor {
-            aspect-ratio: 1 / 1;
-        }
-
-        .connection-item-image .no-img {
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #2a2a2a 0%, #161616 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #555;
-            font-size: 0.75rem;
-        }
-
-        .connection-item-info {
-            padding: 10px;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            gap: 4px;
-        }
-
-        .item-name {
-            font-size: 0.8rem;
-            font-weight: 500;
-            color: #f0f0f0;
-            line-height: 1.3;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
-        .item-sub {
-            font-size: 0.7rem;
-            color: #888;
-            font-weight: 400;
-        }
-
-        .skeleton-card {
-            background: linear-gradient(90deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 100%);
-            background-size: 200% 100%;
-            animation: loading 1.5s infinite;
-            border-radius: 8px;
-        }
-
-        @keyframes loading {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-
-        .loading {
-            color: #888;
-            text-align: center;
-            padding: 30px;
-            font-size: 0.9rem;
-            grid-column: 1 / -1;
-        }
-
-        .error-message {
-            background-color: rgba(192, 57, 43, 0.1);
-            border: 1px solid rgba(192, 57, 43, 0.3);
-            color: #ff8a7b;
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-            font-size: 0.85rem;
-        }
-
-        /* WIN SCREEN */
-        #winScreen {
-            justify-content: center;
-            align-items: center;
-            padding: 40px 24px;
-            background-color: #0d0d0d;
-            overflow-y: auto;
-            position: relative;
-        }
-
-        .confetti {
-            position: fixed;
-            width: 10px;
-            height: 10px;
-            pointer-events: none;
-        }
-
-        .win-content {
-            text-align: center;
-            max-width: 500px;
-            width: 100%;
-            background-color: #161616;
-            padding: 40px;
-            border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.08);
-            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-            position: relative;
-            z-index: 10;
-        }
-
-        .win-emoji {
-            font-size: 3.5rem;
-            margin-bottom: 16px;
-        }
-
-        .win-heading {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #f0f0f0;
-            margin-bottom: 8px;
-            letter-spacing: -0.01em;
-        }
-
-        .win-subtitle {
-            font-size: 1rem;
-            color: #888;
-            margin-bottom: 32px;
-            font-weight: 400;
-        }
-
-        .win-stats {
-            background-color: rgba(232, 160, 0, 0.05);
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 24px;
-            border: 1px solid rgba(232, 160, 0, 0.1);
-        }
-
-        .stat-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin-bottom: 12px;
-        }
-
-        .stat-row:last-child {
-            margin-bottom: 0;
-        }
-
-        .stat {
-            background-color: #1e1e1e;
-            padding: 16px;
-            border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.08);
-        }
-
-        .stat-label {
-            font-size: 0.7rem;
-            color: #888;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-weight: 600;
-            margin-bottom: 6px;
-        }
-
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #e8a000;
-            font-family: 'SF Mono', monospace;
-        }
-
-        .comparison {
-            font-size: 0.85rem;
-            color: #27ae60;
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px solid rgba(255,255,255,0.08);
-            font-weight: 500;
-        }
-
-        .comparison.bad {
-            color: #ff8a7b;
-        }
-
-        .win-path {
-            background-color: #1e1e1e;
-            padding: 16px;
-            border-radius: 8px;
-            margin-bottom: 24px;
-            border: 1px solid rgba(255,255,255,0.08);
-            text-align: left;
-            max-height: 180px;
-            overflow-y: auto;
-        }
-
-        .path-item {
-            font-size: 0.85rem;
-            color: #cccccc;
-            padding: 6px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.04);
-            font-weight: 400;
-        }
-
-        .path-item:last-child {
-            border-bottom: none;
-        }
-
-        .path-item.movie::before {
-            content: "🎬 ";
-            margin-right: 6px;
-        }
-
-        .path-item.person::before {
-            content: "👤 ";
-            margin-right: 6px;
-        }
-
-        /* RESPONSIVE */
-        @media (max-width: 900px) {
-            .game-content {
-                padding: 16px;
-            }
-
-            .current-node-card {
-                grid-template-columns: 100px 1fr;
-                gap: 16px;
-                padding: 16px;
-            }
-
-            .current-node-image {
-                width: 100px;
-                height: 140px;
-            }
-
-            .current-node-image.actor {
-                width: 100px;
-                height: 100px;
-            }
-
-            .current-node-name {
-                font-size: 1.2rem;
-            }
-
-            #connections {
-                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-                gap: 10px;
-            }
-        }
-
-        @media (max-width: 600px) {
-            .logo {
-                font-size: 1.8rem;
-            }
-
-            .start-content {
-                max-width: 100%;
-            }
-
-            .challenge-header {
-                gap: 12px;
-            }
-
-            .challenge-arrow {
-                font-size: 16px;
-            }
-
-            .current-node-card {
-                grid-template-columns: 80px 1fr;
-                gap: 12px;
-                padding: 12px;
-            }
-
-            .current-node-image {
-                width: 80px;
-                height: 110px;
-            }
-
-            .current-node-image.actor {
-                width: 80px;
-                height: 80px;
-            }
-
-            .current-node-name {
-                font-size: 1rem;
-            }
-
-            #connections {
-                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-                gap: 8px;
-            }
-
-            .win-content {
-                padding: 24px;
-            }
-
-            .win-heading {
-                font-size: 1.4rem;
-            }
-
-            .stat-value {
-                font-size: 1.6rem;
-            }
-
-            .game-content {
-                padding: 12px;
-            }
-
-            .game-header {
-                padding: 12px 16px;
-            }
-
-            .connection-item-info {
-                padding: 8px;
-            }
-
-            .item-name {
-                font-size: 0.75rem;
-            }
-
-            .stat-row {
-                grid-template-columns: 1fr;
-                gap: 12px;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CineLinks</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0d0d0d;--s1:#181818;--s2:#222;--bdr:rgba(255,255,255,0.09);--txt:#f0f0f0;--mut:#777;--gold:#e8a000;--golddim:rgba(232,160,0,0.15)}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh}
+.screen{display:none}
+.screen.active{display:flex;flex-direction:column}
+
+/* START */
+#startScreen{min-height:100vh;align-items:center;justify-content:center;padding:40px 20px}
+.start-inner{width:100%;max-width:420px;text-align:center}
+.logo{font-size:1.9rem;font-weight:700;letter-spacing:-0.03em;margin-bottom:6px}
+.logo-accent{color:var(--gold)}
+.tagline{color:var(--mut);font-size:0.88rem;margin-bottom:32px}
+.btn{display:block;width:100%;padding:14px;border-radius:10px;font-family:inherit;font-size:0.95rem;font-weight:600;cursor:pointer;border:1px solid transparent;transition:opacity .15s,transform .1s;margin-bottom:10px}
+.btn:hover{opacity:.85;transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn-gold{background:var(--gold);color:#111;border-color:var(--gold)}
+.btn-ghost{background:transparent;color:var(--txt);border-color:var(--bdr)}
+.how{margin-top:28px;border-top:1px solid var(--bdr);padding-top:22px;text-align:left}
+.how-title{font-size:.65rem;font-weight:600;letter-spacing:.1em;color:var(--mut);text-transform:uppercase;margin-bottom:10px}
+.how li{list-style:none;color:var(--mut);font-size:.83rem;line-height:1.8;padding-left:14px;position:relative}
+.how li::before{content:"→";position:absolute;left:0;color:var(--gold)}
+
+/* LOADING */
+#loadingScreen{min-height:100vh;align-items:center;justify-content:center;gap:14px}
+.spinner{width:34px;height:34px;border:2px solid var(--bdr);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-txt{color:var(--mut);font-size:.88rem}
+
+/* GAME */
+#gameScreen{min-height:100vh}
+.g-header{position:sticky;top:0;z-index:100;background:rgba(13,13,13,.88);backdrop-filter:blur(14px);border-bottom:1px solid var(--bdr);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.hdr-back{background:none;border:none;color:var(--mut);font-family:inherit;font-size:.8rem;cursor:pointer;padding:0}
+.hdr-back:hover{color:var(--txt)}
+.hdr-mid{display:flex;align-items:center;gap:8px;flex:1;justify-content:center;min-width:0;overflow:hidden}
+.hdr-node{display:flex;align-items:center;gap:7px;min-width:0}
+.hdr-thumb{flex-shrink:0;width:30px;height:30px;border-radius:50%;overflow:hidden;background:var(--s2)}
+.hdr-thumb.movie{width:22px;height:33px;border-radius:4px}
+.hdr-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.hdr-name{font-size:.78rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px}
+.hdr-arr{color:var(--mut);flex-shrink:0;font-size:.85rem}
+.hdr-clicks{text-align:center;flex-shrink:0}
+.clicks-n{font-size:1.25rem;font-weight:700;color:var(--gold);display:block;line-height:1}
+.clicks-l{font-size:.62rem;color:var(--mut);text-transform:uppercase;letter-spacing:.08em}
+@keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.35)}100%{transform:scale(1)}}
+.clicks-n.popping{animation:pop .22s ease}
+
+.g-body{max-width:940px;margin:0 auto;padding:20px 20px 60px;width:100%}
+
+/* Current node card */
+.cur-card{background:var(--s1);border:1px solid var(--bdr);border-radius:12px;padding:18px;display:flex;align-items:flex-start;gap:18px;margin-bottom:16px}
+.cur-img{flex-shrink:0;width:80px;height:120px;border-radius:8px;overflow:hidden;background:var(--s2)}
+.cur-img.person{width:80px;height:80px;border-radius:50%;margin-top:4px}
+.cur-img img{width:100%;height:100%;object-fit:cover;display:block}
+.cur-info{flex:1;min-width:0;padding-top:2px}
+.cur-badge{font-size:.62rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+.cur-name{font-size:1.3rem;font-weight:700;letter-spacing:-.02em;line-height:1.2}
+
+/* Path pills */
+.path-row{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:20px}
+.pill{font-size:.72rem;padding:3px 10px;border-radius:20px;background:var(--s2);color:var(--mut);white-space:nowrap;max-width:140px;overflow:hidden;text-overflow:ellipsis}
+.pill.active{background:var(--gold);color:#111;font-weight:600}
+
+/* Connections */
+.sec-lbl{font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin-bottom:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:10px}
+
+/* Cards */
+.card{background:var(--s1);border:1px solid var(--bdr);border-radius:8px;overflow:hidden;cursor:pointer;transition:border-color .15s,transform .15s,box-shadow .15s}
+.card:hover{border-color:var(--gold);transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.4)}
+.card.goal{border-color:rgba(232,160,0,.45);box-shadow:0 0 10px var(--golddim)}
+.card-img{width:100%;aspect-ratio:2/3;overflow:hidden;background:var(--s2)}
+.card-img.person{aspect-ratio:1/1}
+.card-img img{width:100%;height:100%;object-fit:cover;display:block}
+.card-noimg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--mut);font-size:.68rem}
+.card-info{padding:7px 9px 9px}
+.card-name{font-size:.78rem;font-weight:600;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card-sub{font-size:.68rem;color:var(--mut);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Skeleton */
+.skel{background:var(--s1);border:1px solid var(--bdr);border-radius:8px;overflow:hidden}
+.skel-img{width:100%;aspect-ratio:2/3;background:linear-gradient(90deg,var(--s2) 25%,#282828 50%,var(--s2) 75%);background-size:200% 100%;animation:shim 1.3s infinite}
+.skel-img.person{aspect-ratio:1/1}
+.skel-txt{margin:8px 9px;height:9px;border-radius:4px;background:linear-gradient(90deg,var(--s2) 25%,#282828 50%,var(--s2) 75%);background-size:200% 100%;animation:shim 1.3s infinite}
+.skel-txt.s{width:55%}
+@keyframes shim{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* WIN */
+#winScreen{min-height:100vh;align-items:center;justify-content:center;padding:40px 20px;position:relative;overflow:hidden}
+.win-box{background:var(--s1);border:1px solid var(--bdr);border-radius:16px;padding:36px 28px;max-width:460px;width:100%;text-align:center}
+.win-em{font-size:2.4rem;margin-bottom:10px}
+.win-h{font-size:1.5rem;font-weight:700;margin-bottom:4px}
+.win-sub{color:var(--mut);font-size:.86rem;margin-bottom:24px}
+.stats{display:flex;gap:10px;margin-bottom:22px}
+.stat{flex:1;background:var(--s2);border-radius:10px;padding:14px 10px}
+.stat-n{font-size:1.8rem;font-weight:700;color:var(--gold)}
+.stat-l{font-size:.68rem;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
+.win-cmp{font-size:.83rem;color:var(--mut);margin-bottom:18px;padding:11px;background:var(--s2);border-radius:8px}
+.win-path{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-bottom:24px}
+.wp{font-size:.72rem;padding:4px 9px;border-radius:20px;background:var(--s2)}
+.wp.person{border:1px solid rgba(232,160,0,.3)}
+.wp.movie{border:1px solid var(--bdr)}
+.win-btns{display:flex;gap:10px}
+.confetti{position:absolute;pointer-events:none;border-radius:2px;animation:fall linear forwards}
+@keyframes fall{0%{transform:translateY(-10px) rotate(0);opacity:1}100%{transform:translateY(550px) rotate(720deg);opacity:0}}
+</style>
 </head>
 <body>
-    <div class="container">
-        <!-- START SCREEN -->
-        <div id="startScreen" class="screen active">
-            <div class="start-content">
-                <div class="logo"><span class="logo-emoji">🎬</span>CineLinks</div>
-                <div class="tagline">Find the shortest path between movies and actors</div>
 
-                <div class="button-group">
-                    <button class="btn-primary" onclick="game.startDaily()">Today's Challenge</button>
-                    <button class="btn-secondary" onclick="game.startRandom()">Random Game</button>
-                </div>
-
-                <div class="instructions">
-                    <h3>How to Play</h3>
-                    <ul>
-                        <li>Start at one actor or movie, reach your goal in the fewest clicks</li>
-                        <li>Navigate through cast members and filmography</li>
-                        <li>Each click moves you to a connected actor or film</li>
-                        <li>Try to find the shortest path!</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- LOADING SCREEN -->
-        <div id="loadingScreen" class="screen">
-            <div class="loading-content">
-                <div class="loading-spinner"></div>
-                <div class="loading-text">Finding your challenge...</div>
-            </div>
-        </div>
-
-        <!-- GAME SCREEN -->
-        <div id="gameScreen" class="screen">
-            <div class="game-header">
-                <div class="challenge-header">
-                    <div class="challenge-node">
-                        <div class="challenge-node-image" id="startNodeImage"></div>
-                        <div class="challenge-node-name" id="startNodeName"></div>
-                    </div>
-                    <div class="challenge-arrow">→</div>
-                    <div class="challenge-node">
-                        <div class="challenge-node-image" id="endNodeImage"></div>
-                        <div class="challenge-node-name" id="endNodeName"></div>
-                    </div>
-                </div>
-                <div class="click-counter-header">
-                    <div>
-                        <div class="click-counter" id="clickCounter">0</div>
-                        <div class="click-counter-label">Clicks</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="game-content">
-                <div class="current-node-card">
-                    <div class="current-node-image" id="currentNodeImage">
-                        <div class="no-img">Loading...</div>
-                    </div>
-                    <div class="current-node-info">
-                        <div class="current-node-type" id="currentType"></div>
-                        <div class="current-node-name" id="currentName"></div>
-                    </div>
-                </div>
-
-                <div class="path-trail">
-                    <div class="path-label">Your Path</div>
-                    <div class="path-items" id="breadcrumb"></div>
-                </div>
-
-                <div class="connections-section">
-                    <div class="connections-label">Connections (Top 25)</div>
-                    <div id="connections"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- WIN SCREEN -->
-        <div id="winScreen" class="screen">
-            <div class="win-content">
-                <div class="win-emoji">🎬</div>
-                <div class="win-heading">You Won!</div>
-                <div class="win-subtitle">Connected in <span id="finalClicks">0</span> clicks</div>
-
-                <div class="win-stats">
-                    <div class="stat-row">
-                        <div class="stat">
-                            <div class="stat-label">Your Clicks</div>
-                            <div class="stat-value" id="playerClicks">0</div>
-                        </div>
-                        <div class="stat">
-                            <div class="stat-label">Optimal (est.)</div>
-                            <div class="stat-value" id="optimalClicks">?</div>
-                        </div>
-                    </div>
-                    <div class="comparison" id="comparison"></div>
-                </div>
-
-                <div class="win-path">
-                    <div class="path-label">Your Winning Path</div>
-                    <div id="winPath"></div>
-                </div>
-
-                <div class="button-group">
-                    <button class="btn-primary" onclick="game.reset()">Play Again</button>
-                    <button class="btn-secondary" onclick="game.startRandom()">New Random Game</button>
-                </div>
-            </div>
-        </div>
+<div id="startScreen" class="screen active">
+  <div class="start-inner">
+    <div class="logo">&#127916; <span class="logo-accent">CineLinks</span></div>
+    <p class="tagline">Find the shortest path between movies and actors</p>
+    <button class="btn btn-gold" onclick="game.startDaily()">Today&#39;s Challenge</button>
+    <button class="btn btn-ghost" onclick="game.startRandom()">Random Game</button>
+    <div class="how">
+      <div class="how-title">How to play</div>
+      <ul>
+        <li>Start at one actor or movie</li>
+        <li>Click to navigate through cast members and filmographies</li>
+        <li>Reach the goal in as few clicks as possible</li>
+      </ul>
     </div>
+  </div>
+</div>
 
-    <script>
-        const DAILY_CHALLENGES = [
-            {start: {name:"Tom Hanks", type:"person", id:31}, end: {name:"The Dark Knight", type:"movie", id:155}},
-            {start: {name:"Meryl Streep", type:"person", id:5064}, end: {name:"Inception", type:"movie", id:27205}},
-            {start: {name:"Johnny Depp", type:"person", id:85}, end: {name:"The Shawshank Redemption", type:"movie", id:278}},
-            {start: {name:"Natalie Portman", type:"person", id:524}, end: {name:"Pulp Fiction", type:"movie", id:680}},
-            {start: {name:"Brad Pitt", type:"person", id:287}, end: {name:"Forrest Gump", type:"movie", id:13}},
-            {start: {name:"Cate Blanchett", type:"person", id:112}, end: {name:"The Matrix", type:"movie", id:603}},
-            {start: {name:"Scarlett Johansson", type:"person", id:1245}, end: {name:"Goodfellas", type:"movie", id:769}},
-            {start: {name:"The Godfather", type:"movie", id:238}, end: {name:"Diane Keaton", type:"person", id:2063}},
-            {start: {name:"Morgan Freeman", type:"person", id:192}, end: {name:"Fight Club", type:"movie", id:550}},
-            {start: {name:"Titanic", type:"movie", id:597}, end: {name:"Tom Cruise", type:"person", id:500}},
-        ];
+<div id="loadingScreen" class="screen">
+  <div class="spinner"></div>
+  <p class="load-txt">Finding your challenge&#8230;</p>
+</div>
 
-        const game = {
-            currentNode: null,
-            startNode: null,
-            endNode: null,
-            path: [],
-            clicks: 0,
-            visited: new Set(),
-            optimalDistance: null,
+<div id="gameScreen" class="screen">
+  <header class="g-header">
+    <button class="hdr-back" onclick="game.reset()">&#8592; Back</button>
+    <div class="hdr-mid">
+      <div class="hdr-node">
+        <div id="startThumb" class="hdr-thumb"></div>
+        <span id="startNodeName" class="hdr-name"></span>
+      </div>
+      <span class="hdr-arr">&#8594;</span>
+      <div class="hdr-node">
+        <div id="endThumb" class="hdr-thumb"></div>
+        <span id="endNodeName" class="hdr-name"></span>
+      </div>
+    </div>
+    <div class="hdr-clicks">
+      <span id="clickCounter" class="clicks-n">0</span>
+      <span class="clicks-l">clicks</span>
+    </div>
+  </header>
+  <div class="g-body">
+    <div class="cur-card">
+      <div id="curImg" class="cur-img"></div>
+      <div class="cur-info">
+        <div id="curType" class="cur-badge">ACTOR</div>
+        <div id="curName" class="cur-name"></div>
+      </div>
+    </div>
+    <div id="pathRow" class="path-row"></div>
+    <div id="secLbl" class="sec-lbl">CONNECTIONS</div>
+    <div id="grid" class="grid"></div>
+  </div>
+</div>
 
-            getDayOfYear() {
-                const now = new Date();
-                const start = new Date(now.getFullYear(), 0, 0);
-                const diff = now - start;
-                const oneDay = 1000 * 60 * 60 * 24;
-                return Math.floor(diff / oneDay);
-            },
+<div id="winScreen" class="screen">
+  <div class="win-box">
+    <div class="win-em">&#127916;</div>
+    <h1 class="win-h">You made it\!</h1>
+    <p class="win-sub">You connected the dots.</p>
+    <div class="stats">
+      <div class="stat"><div id="playerClicks" class="stat-n">0</div><div class="stat-l">Your clicks</div></div>
+      <div class="stat"><div id="optimalClicks" class="stat-n">&#8212;</div><div class="stat-l">Est. optimal</div></div>
+    </div>
+    <div id="winCmp" class="win-cmp"></div>
+    <div id="winPath" class="win-path"></div>
+    <div class="win-btns">
+      <button class="btn btn-ghost" style="margin:0" onclick="game.reset()">Home</button>
+      <button class="btn btn-gold" style="margin:0" onclick="game.startRandom()">Random</button>
+    </div>
+  </div>
+</div>
 
-            startDaily() {
-                const dayOfYear = this.getDayOfYear();
-                const challenge = DAILY_CHALLENGES[dayOfYear % DAILY_CHALLENGES.length];
-                this.init(challenge.start, challenge.end, true);
-            },
+<script>
+const DAILY = [
+  {s:{name:"Tom Hanks",type:"person",id:31},e:{name:"The Dark Knight",type:"movie",id:155}},
+  {s:{name:"Meryl Streep",type:"person",id:5064},e:{name:"Inception",type:"movie",id:27205}},
+  {s:{name:"Johnny Depp",type:"person",id:85},e:{name:"The Shawshank Redemption",type:"movie",id:278}},
+  {s:{name:"Natalie Portman",type:"person",id:524},e:{name:"Pulp Fiction",type:"movie",id:680}},
+  {s:{name:"Brad Pitt",type:"person",id:287},e:{name:"Forrest Gump",type:"movie",id:13}},
+  {s:{name:"Cate Blanchett",type:"person",id:112},e:{name:"The Matrix",type:"movie",id:603}},
+  {s:{name:"Scarlett Johansson",type:"person",id:1245},e:{name:"Goodfellas",type:"movie",id:769}},
+  {s:{name:"The Godfather",type:"movie",id:238},e:{name:"Diane Keaton",type:"person",id:2063}},
+  {s:{name:"Morgan Freeman",type:"person",id:192},e:{name:"Fight Club",type:"movie",id:550}},
+  {s:{name:"Titanic",type:"movie",id:597},e:{name:"Tom Cruise",type:"person",id:500}},
+];
 
-            async startRandom() {
-                this.showLoading();
-                await this.generateRandomChallenge();
-            },
+const IMGBASE = 'https://image.tmdb.org/t/p/w342';
 
-            async generateRandomChallenge() {
-                let challenge = null;
-                let attempts = 0;
-                const maxAttempts = 5;
+function api(path) { return fetch('/api/tmdb?path=' + path).then(r => r.json()); }
 
-                while (!challenge && attempts < maxAttempts) {
-                    try {
-                        const options = ['person->movie', 'movie->person', 'person->person', 'movie->movie'];
-                        const option = options[Math.floor(Math.random() * options.length)];
+function showOnly(id) {
+  ['startScreen','loadingScreen','gameScreen','winScreen'].forEach(s => {
+    const el = document.getElementById(s);
+    const active = s === id;
+    el.classList.toggle('active', active);
+    el.style.display = active ? 'flex' : 'none';
+  });
+}
 
-                        let start, end;
+function thumbEl(elId, node, url) {
+  const el = document.getElementById(elId);
+  el.className = 'hdr-thumb' + (node.type === 'movie' ? ' movie' : '');
+  el.innerHTML = url ? '<img src="' + url + '" alt="">' : '';
+}
 
-                        if (option === 'person->movie' || option === 'person->person') {
-                            start = await this.getRandomPerson();
-                            if (!start) { attempts++; continue; }
-                        }
-                        if (option === 'movie->person' || option === 'movie->movie') {
-                            start = await this.getRandomMovie();
-                            if (!start) { attempts++; continue; }
-                        }
+const game = {
+  cur: null, start: null, end: null,
+  path: [], clicks: 0, visited: new Set(), optDist: null,
 
-                        if (option === 'person->movie' || option === 'movie->movie') {
-                            end = await this.getRandomMovie();
-                            if (!end) { attempts++; continue; }
-                        } else {
-                            end = await this.getRandomPerson();
-                            if (!end) { attempts++; continue; }
-                        }
+  dayOfYear() {
+    const n = new Date();
+    return Math.floor((n - new Date(n.getFullYear(),0,0)) / 86400000);
+  },
 
-                        const depth = await this.bfsDepth(start, end, 4);
-                        if (depth >= 3) {
-                            challenge = {start, end};
-                            this.optimalDistance = depth;
-                        } else {
-                            attempts++;
-                        }
-                    } catch (err) {
-                        console.error('Error generating challenge:', err);
-                        attempts++;
-                    }
-                }
+  startDaily() {
+    const c = DAILY[this.dayOfYear() % DAILY.length];
+    this.init(c.s, c.e);
+  },
 
-                if (challenge) {
-                    this.init(challenge.start, challenge.end, false);
-                } else {
-                    const idx = Math.floor(Math.random() * DAILY_CHALLENGES.length);
-                    const fallback = DAILY_CHALLENGES[idx];
-                    this.init(fallback.start, fallback.end, false);
-                }
-            },
+  async startRandom() {
+    showOnly('loadingScreen');
+    try {
+      const [pd, md] = await Promise.all([
+        api('person/popular&language=en-US'),
+        api('movie/popular&language=en-US')
+      ]);
+      const people = (pd.results||[]).filter(p => p.profile_path && p.popularity > 5).slice(0,20);
+      const movies = (md.results||[]).filter(m => m.poster_path && m.original_language === 'en').slice(0,20);
+      if (people.length < 2 || movies.length < 2) throw 0;
+      const sh = a => [...a].sort(() => Math.random() - 0.5);
+      const sp = sh(people), sm = sh(movies);
+      let s, e;
+      if (Math.random() < 0.5) {
+        const p = sp[0];
+        const kids = (p.known_for || []).map(k => k.id);
+        const m = sm.find(mv => \!kids.includes(mv.id)) || sm[1];
+        s = {name:p.name, type:'person', id:p.id};
+        e = {name:m.title, type:'movie',  id:m.id};
+      } else {
+        s = {name:sm[0].title, type:'movie',  id:sm[0].id};
+        e = {name:sp[0].name,  type:'person', id:sp[0].id};
+      }
+      this.optDist = null;
+      this.init(s, e);
+    } catch(_) {
+      const c = DAILY[Math.floor(Math.random() * DAILY.length)];
+      this.init(c.s, c.e);
+    }
+  },
 
-            async getRandomPerson() {
-                try {
-                    const data = await fetch('/api/tmdb?path=person/popular').then(r => r.json());
-                    const candidates = (data.results || []).filter(p => p.profile_path && p.id);
-                    if (candidates.length === 0) return null;
-                    const person = candidates[Math.floor(Math.random() * candidates.length)];
-                    return {name: person.name, type: 'person', id: person.id};
-                } catch (err) {
-                    console.error('Error getting random person:', err);
-                    return null;
-                }
-            },
+  async init(start, end) {
+    this.start = start; this.end = end;
+    this.cur = start; this.path = [start];
+    this.clicks = 0; this.visited = new Set([start.type+'-'+start.id]);
 
-            async getRandomMovie() {
-                try {
-                    const data = await fetch('/api/tmdb?path=movie/popular').then(r => r.json());
-                    const candidates = (data.results || []).filter(m => m.poster_path && m.id);
-                    if (candidates.length === 0) return null;
-                    const movie = candidates[Math.floor(Math.random() * candidates.length)];
-                    return {name: movie.title, type: 'movie', id: movie.id};
-                } catch (err) {
-                    console.error('Error getting random movie:', err);
-                    return null;
-                }
-            },
+    document.getElementById('startNodeName').textContent = start.name;
+    document.getElementById('endNodeName').textContent   = end.name;
+    document.getElementById('clickCounter').textContent  = '0';
 
-            async bfsDepth(start, end, maxDepth) {
-                try {
-                    if (start.id === end.id && start.type === end.type) return 0;
+    showOnly('gameScreen');
+    this.renderCurrent();
+    this.renderPath();
 
-                    const level1 = await this.getConnectionsQuick(start);
-                    for (const node of level1) {
-                        if (node.id === end.id && node.type === end.type) return 1;
-                    }
-                    if (maxDepth === 1) return Infinity;
+    // Load header + current-node images async
+    this.loadHeaderImages(start, end);
+    await this.loadConnections(start);
+  },
 
-                    const level2 = [];
-                    for (const node of level1) {
-                        const connections = await this.getConnectionsQuick(node);
-                        for (const conn of connections) {
-                            if (conn.id === end.id && conn.type === end.type) return 2;
-                            level2.push(conn);
-                        }
-                    }
-                    if (maxDepth === 2) return Infinity;
+  async loadHeaderImages(start, end) {
+    try {
+      const [sd, ed] = await Promise.all([
+        api((start.type === 'person' ? 'person/' : 'movie/') + start.id),
+        api((end.type   === 'person' ? 'person/' : 'movie/') + end.id)
+      ]);
+      const su = start.type === 'person'
+        ? (sd.profile_path ? IMGBASE + sd.profile_path : '')
+        : (sd.poster_path  ? IMGBASE + sd.poster_path  : '');
+      const eu = end.type === 'person'
+        ? (ed.profile_path ? IMGBASE + ed.profile_path : '')
+        : (ed.poster_path  ? IMGBASE + ed.poster_path  : '');
+      thumbEl('startThumb', start, su);
+      thumbEl('endThumb',   end,   eu);
+      // Also set current node image if still at start
+      if (this.cur.id === start.id && this.cur.type === start.type) {
+        this.setCurImg(su);
+      }
+    } catch(_) {}
+  },
 
-                    const sampled = level2.slice(0, 30);
-                    for (const node of sampled) {
-                        const connections = await this.getConnectionsQuick(node);
-                        for (const conn of connections) {
-                            if (conn.id === end.id && conn.type === end.type) return 3;
-                        }
-                    }
+  async loadCurImg(node) {
+    try {
+      const d = await api((node.type === 'person' ? 'person/' : 'movie/') + node.id);
+      const url = node.type === 'person'
+        ? (d.profile_path ? IMGBASE + d.profile_path : '')
+        : (d.poster_path  ? IMGBASE + d.poster_path  : '');
+      this.setCurImg(url);
+    } catch(_) {}
+  },
 
-                    return Infinity;
-                } catch (err) {
-                    console.error('BFS error:', err);
-                    return Infinity;
-                }
-            },
+  setCurImg(url) {
+    const el = document.getElementById('curImg');
+    el.innerHTML = url
+      ? '<img src="' + url + '" alt="">'
+      : '<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:#555;font-size:.7rem">No image</div>';
+  },
 
-            async getConnectionsQuick(node) {
-                try {
-                    let items = [];
-                    if (node.type === 'movie') {
-                        const data = await fetch('/api/tmdb?path=movie/' + node.id + '/credits').then(r => r.json());
-                        items = (data.cast || []).slice(0, 10).map(p => ({
-                            name: p.name,
-                            type: 'person',
-                            id: p.id
-                        }));
-                    } else {
-                        const data = await fetch('/api/tmdb?path=person/' + node.id + '/movie_credits').then(r => r.json());
-                        items = (data.cast || []).slice(0, 10).map(m => ({
-                            name: m.title,
-                            type: 'movie',
-                            id: m.id
-                        }));
-                    }
-                    return items;
-                } catch (err) {
-                    return [];
-                }
-            },
+  renderCurrent() {
+    const el = document.getElementById('curImg');
+    el.className = 'cur-img' + (this.cur.type === 'person' ? ' person' : '');
+    el.innerHTML = '';
+    document.getElementById('curType').textContent = this.cur.type === 'movie' ? 'MOVIE' : 'ACTOR';
+    document.getElementById('curName').textContent = this.cur.name;
+  },
 
-            showLoading() {
-                document.getElementById('startScreen').classList.remove('active');
-                document.getElementById('loadingScreen').classList.add('active');
-                document.getElementById('gameScreen').classList.remove('active');
-                document.getElementById('winScreen').classList.remove('active');
-            },
+  renderPath() {
+    const el = document.getElementById('pathRow');
+    el.innerHTML = '';
+    this.path.forEach((n, i) => {
+      const d = document.createElement('div');
+      d.className = 'pill' + (i === this.path.length - 1 ? ' active' : '');
+      d.textContent = n.name;
+      d.title = n.name;
+      el.appendChild(d);
+    });
+  },
 
-            async init(start, end, isDaily) {
-                this.startNode = start;
-                this.endNode = end;
-                this.currentNode = start;
-                this.path = [start];
-                this.clicks = 0;
-                this.visited.clear();
-                this.visited.add(start.type + '-' + start.id);
+  async loadConnections(node) {
+    const grid = document.getElementById('grid');
+    const lbl  = document.getElementById('secLbl');
+    lbl.textContent = node.type === 'movie' ? 'CAST' : 'FILMOGRAPHY';
 
-                document.getElementById('startScreen').classList.remove('active');
-                document.getElementById('loadingScreen').classList.remove('active');
-                document.getElementById('gameScreen').classList.add('active');
-                document.getElementById('winScreen').classList.remove('active');
+    // Skeletons
+    grid.innerHTML = '';
+    const isPersonNode = node.type \!== 'movie';
+    for (let i = 0; i < 15; i++) {
+      grid.innerHTML += '<div class="skel"><div class="skel-img' + (isPersonNode ? '' : ' person') + '"></div><div class="skel-txt"></div><div class="skel-txt s"></div></div>';
+    }
 
-                await this.updateNodeImages(start, 'start');
-                await this.updateNodeImages(end, 'end');
+    try {
+      let items = [];
+      if (node.type === 'movie') {
+        const d = await api('movie/' + node.id + '/credits');
+        items = (d.cast||[]).sort((a,b)=>(a.order||999)-(b.order||999)).slice(0,25).map(p=>({
+          name:p.name, type:'person', id:p.id, img:p.profile_path, sub:p.character||''
+        }));
+      } else {
+        const d = await api('person/' + node.id + '/movie_credits');
+        items = (d.cast||[]).sort((a,b)=>(b.vote_count||0)-(a.vote_count||0)).slice(0,25).map(m=>({
+          name:m.title, type:'movie', id:m.id, img:m.poster_path, sub:m.release_date?m.release_date.slice(0,4):''
+        }));
+      }
 
-                document.getElementById('startNodeName').textContent = start.name;
-                document.getElementById('endNodeName').textContent = end.name;
+      grid.innerHTML = '';
+      items.forEach(item => {
+        const isGoal = item.id === this.end.id && item.type === this.end.type;
+        const div = document.createElement('div');
+        div.className = 'card' + (isGoal ? ' goal' : '');
+        const imgClass = 'card-img' + (item.type === 'person' ? ' person' : '');
+        const imgHtml = item.img
+          ? '<img src="' + IMGBASE + item.img + '" alt="" loading="lazy">'
+          : '<div class="card-noimg">No image</div>';
+        div.innerHTML =
+          '<div class="' + imgClass + '">' + imgHtml + '</div>' +
+          '<div class="card-info">' +
+          '<div class="card-name">' + item.name.replace(/</g,'&lt;') + '</div>' +
+          '<div class="card-sub">'  + item.sub.replace(/</g,'&lt;')  + '</div>' +
+          '</div>';
+        div.onclick = () => this.navigateTo({name:item.name, type:item.type, id:item.id});
+        grid.appendChild(div);
+      });
+    } catch(_) {
+      grid.innerHTML = '<p style="color:#777;font-size:.85rem">Could not load connections.</p>';
+    }
+  },
 
-                this.updateUI();
-                await this.loadConnections(start);
-            },
+  async navigateTo(node) {
+    const key = node.type + '-' + node.id;
+    if (this.visited.has(key)) return;
+    this.visited.add(key);
+    this.cur = node;
+    this.clicks++;
+    this.path.push(node);
 
-            async updateNodeImages(node, position) {
-                try {
-                    let imageUrl = '';
-                    if (node.type === 'person') {
-                        const data = await fetch('/api/tmdb?path=person/' + node.id).then(r => r.json());
-                        if (data.profile_path) {
-                            imageUrl = 'https://image.tmdb.org/t/p/w342' + data.profile_path;
-                        }
-                    } else {
-                        const data = await fetch('/api/tmdb?path=movie/' + node.id).then(r => r.json());
-                        if (data.poster_path) {
-                            imageUrl = 'https://image.tmdb.org/t/p/w342' + data.poster_path;
-                        }
-                    }
+    const ctr = document.getElementById('clickCounter');
+    ctr.textContent = this.clicks;
+    ctr.classList.remove('popping');
+    void ctr.offsetWidth;
+    ctr.classList.add('popping');
 
-                    const container = document.getElementById(position + 'NodeImage');
-                    container.classList.remove('actor');
-                    if (node.type === 'person') {
-                        container.classList.add('actor');
-                    }
-                    if (imageUrl) {
-                        container.innerHTML = '<img src="' + imageUrl + '" alt="" onerror="this.style.display=\'none\'">';
-                    } else {
-                        container.innerHTML = '<div class="no-img">No Image</div>';
-                    }
-                } catch (err) {
-                    console.error('Error loading node image:', err);
-                    const container = document.getElementById(position + 'NodeImage');
-                    container.classList.remove('actor');
-                    if (node.type === 'person') {
-                        container.classList.add('actor');
-                    }
-                    container.innerHTML = '<div class="no-img">No Image</div>';
-                }
-            },
+    this.renderCurrent();
+    this.renderPath();
+    this.loadCurImg(node);
 
-            updateUI() {
-                document.getElementById('currentType').textContent = this.currentNode.type === 'movie' ? 'MOVIE' : 'ACTOR';
-                document.getElementById('currentName').textContent = this.currentNode.name;
+    if (node.id === this.end.id && node.type === this.end.type) {
+      await new Promise(r => setTimeout(r, 300));
+      this.showWin();
+      return;
+    }
+    await this.loadConnections(node);
+  },
 
-                const counter = document.getElementById('clickCounter');
-                counter.textContent = this.clicks;
-                counter.classList.add('animate');
-                setTimeout(() => counter.classList.remove('animate'), 400);
+  showWin() {
+    showOnly('winScreen');
+    document.getElementById('playerClicks').textContent = this.clicks;
+    const est = this.optDist || Math.max(2, Math.ceil(this.clicks * 0.7));
+    document.getElementById('optimalClicks').textContent = est;
+    document.getElementById('winCmp').textContent = this.clicks <= est
+      ? 'Impressive — you matched or beat the estimated optimal\!'
+      : 'Good run\! There might be a shorter path — give it another go?';
 
-                const breadcrumbDiv = document.getElementById('breadcrumb');
-                breadcrumbDiv.innerHTML = '';
-                this.path.forEach((node, idx) => {
-                    const div = document.createElement('div');
-                    div.className = 'path-item' + (idx === this.path.length - 1 ? ' current' : '');
-                    div.textContent = node.name;
-                    breadcrumbDiv.appendChild(div);
-                });
+    const wp = document.getElementById('winPath');
+    wp.innerHTML = '';
+    this.path.forEach(n => {
+      const d = document.createElement('div');
+      d.className = 'wp ' + n.type;
+      d.textContent = n.name;
+      wp.appendChild(d);
+    });
 
-                this.updateCurrentNodeImage();
-            },
+    const colors = ['#e8a000','#f0f0f0','#c0392b','#27ae60','#3498db'];
+    for (let i = 0; i < 50; i++) {
+      const c = document.createElement('div');
+      c.className = 'confetti';
+      const s = c.style;
+      s.left = Math.random()*100 + '%';
+      s.top  = '-10px';
+      s.background = colors[i % colors.length];
+      s.width  = (5 + Math.random()*7) + 'px';
+      s.height = (5 + Math.random()*7) + 'px';
+      s.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+      s.animationDuration  = (1.5 + Math.random()*1.5) + 's';
+      s.animationDelay     = (Math.random()*0.6) + 's';
+      document.getElementById('winScreen').appendChild(c);
+      setTimeout(() => c.remove(), 3200);
+    }
+  },
 
-            async updateCurrentNodeImage() {
-                try {
-                    let imageUrl = '';
-                    if (this.currentNode.type === 'person') {
-                        const data = await fetch('/api/tmdb?path=person/' + this.currentNode.id).then(r => r.json());
-                        if (data.profile_path) {
-                            imageUrl = 'https://image.tmdb.org/t/p/w342' + data.profile_path;
-                        }
-                    } else {
-                        const data = await fetch('/api/tmdb?path=movie/' + this.currentNode.id).then(r => r.json());
-                        if (data.poster_path) {
-                            imageUrl = 'https://image.tmdb.org/t/p/w342' + data.poster_path;
-                        }
-                    }
+  reset() {
+    document.getElementById('winScreen').querySelectorAll('.confetti').forEach(c => c.remove());
+    showOnly('startScreen');
+  }
+};
 
-                    const container = document.getElementById('currentNodeImage');
-                    container.classList.remove('actor');
-                    if (this.currentNode.type === 'person') {
-                        container.classList.add('actor');
-                    }
-                    if (imageUrl) {
-                        container.innerHTML = '<img src="' + imageUrl + '" alt="" onerror="this.style.display=\'none\'">';
-                    } else {
-                        container.innerHTML = '<div class="no-img">No Image</div>';
-                    }
-                } catch (err) {
-                    console.error('Error loading current node image:', err);
-                }
-            },
-
-            async loadConnections(node) {
-                const container = document.getElementById('connections');
-                container.innerHTML = '';
-
-                for (let i = 0; i < 12; i++) {
-                    const skeleton = document.createElement('div');
-                    skeleton.className = 'connection-item skeleton-card';
-                    container.appendChild(skeleton);
-                }
-
-                try {
-                    let items = [];
-                    if (node.type === 'movie') {
-                        const data = await fetch('/api/tmdb?path=movie/' + node.id + '/credits').then(r => r.json());
-                        items = (data.cast || []).sort((a, b) => (a.order || 999) - (b.order || 999)).slice(0, 25).map(p => ({
-                            name: p.name,
-                            type: 'person',
-                            id: p.id,
-                            image: p.profile_path,
-                            subtitle: p.character || 'Actor'
-                        }));
-                    } else {
-                        const data = await fetch('/api/tmdb?path=person/' + node.id + '/movie_credits').then(r => r.json());
-                        items = (data.cast || []).sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0)).slice(0, 25).map(m => ({
-                            name: m.title,
-                            type: 'movie',
-                            id: m.id,
-                            image: m.poster_path,
-                            subtitle: m.release_date ? m.release_date.slice(0, 4) : 'No date'
-                        }));
-                    }
-
-                    container.innerHTML = '';
-                    if (items.length === 0) {
-                        container.innerHTML = '<p class="loading">No connections found</p>';
-                        return;
-                    }
-
-                    items.forEach((item, idx) => {
-                        const div = document.createElement('div');
-                        div.className = 'connection-item';
-                        div.style.animationDelay = (idx * 0.04) + 's';
-                        if (item.id === this.endNode.id && item.type === this.endNode.type) {
-                            div.classList.add('goal-node');
-                        }
-
-                        const imgDiv = document.createElement('div');
-                        imgDiv.className = 'connection-item-image';
-                        if (item.type === 'person') {
-                            imgDiv.classList.add('actor');
-                        }
-                        if (item.image) {
-                            imgDiv.innerHTML = '<img src="https://image.tmdb.org/t/p/w342' + item.image + '" alt="" onerror="this.parentElement.innerHTML=\'<div class=\\\"no-img\\\">No Image</div>\'">';
-                        } else {
-                            imgDiv.innerHTML = '<div class="no-img">No Image</div>';
-                        }
-
-                        const infoDiv = document.createElement('div');
-                        infoDiv.className = 'connection-item-info';
-                        infoDiv.innerHTML = '<div class="item-name">' + this.escapeHtml(item.name) + '</div><div class="item-sub">' + this.escapeHtml(item.subtitle) + '</div>';
-
-                        div.appendChild(imgDiv);
-                        div.appendChild(infoDiv);
-                        div.onclick = () => this.navigateTo({name: item.name, type: item.type, id: item.id});
-                        container.appendChild(div);
-                    });
-                } catch (err) {
-                    console.error('Error loading connections:', err);
-                    container.innerHTML = '<p class="error-message">Failed to load connections. Please try again.</p>';
-                }
-            },
-
-            escapeHtml(text) {
-                const div = document.createElement('div');
-                div.textContent = text;
-                return div.innerHTML;
-            },
-
-            async navigateTo(node) {
-                const key = node.type + '-' + node.id;
-                if (this.visited.has(key)) {
-                    return;
-                }
-
-                this.visited.add(key);
-                this.currentNode = node;
-                this.clicks++;
-                this.path.push(node);
-                this.updateUI();
-
-                if (node.id === this.endNode.id && node.type === this.endNode.type) {
-                    await new Promise(resolve => setTimeout(resolve, 300));
-                    this.showWin();
-                    return;
-                }
-
-                await this.loadConnections(node);
-            },
-
-            showWin() {
-                document.getElementById('gameScreen').classList.remove('active');
-                document.getElementById('winScreen').classList.add('active');
-
-                this.createConfetti();
-
-                document.getElementById('finalClicks').textContent = this.clicks;
-                document.getElementById('playerClicks').textContent = this.clicks;
-
-                const winPathDiv = document.getElementById('winPath');
-                winPathDiv.innerHTML = '';
-                this.path.forEach(node => {
-                    const div = document.createElement('div');
-                    div.className = 'path-item ' + node.type;
-                    div.textContent = node.name;
-                    winPathDiv.appendChild(div);
-                });
-
-                const comparisonDiv = document.getElementById('comparison');
-
-                let estimatedOptimal = this.optimalDistance || Math.max(2, Math.floor(Math.random() * (this.clicks - 1)) + 2);
-
-                document.getElementById('optimalClicks').textContent = estimatedOptimal;
-
-                if (this.clicks <= estimatedOptimal) {
-                    comparisonDiv.classList.remove('bad');
-                    comparisonDiv.innerHTML = '✓ Excellent! You matched or beat the estimated optimal path!';
-                } else {
-                    comparisonDiv.classList.add('bad');
-                    comparisonDiv.innerHTML = '↓ There was likely a shorter path, but great job connecting!';
-                }
-            },
-
-            createConfetti() {
-                const colors = ['#e8a000', '#f0b020', '#f0f0f0'];
-                for (let i = 0; i < 40; i++) {
-                    const confetti = document.createElement('div');
-                    confetti.className = 'confetti';
-                    confetti.style.left = Math.random() * 100 + '%';
-                    confetti.style.top = '-10px';
-                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                    confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
-                    document.getElementById('winScreen').appendChild(confetti);
-
-                    const duration = 2000 + Math.random() * 1000;
-                    confetti.style.animation = 'confetti ' + (duration / 1000) + 's ease-out forwards';
-
-                    setTimeout(() => confetti.remove(), duration);
-                }
-            },
-
-            reset() {
-                document.getElementById('startScreen').classList.add('active');
-                document.getElementById('gameScreen').classList.remove('active');
-                document.getElementById('winScreen').classList.remove('active');
-                document.getElementById('loadingScreen').classList.remove('active');
-            }
-        };
-    </script>
+showOnly('startScreen');
+</script>
 </body>
 </html>
