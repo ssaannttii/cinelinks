@@ -206,6 +206,23 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .win-btns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .confetti{position:absolute;pointer-events:none;border-radius:2px;animation:fall linear forwards}
 @keyframes fall{0%{transform:translateY(-10px) rotate(0);opacity:1}100%{transform:translateY(550px) rotate(720deg);opacity:0}}
+
+/* Transition: fade-out on navigate */
+.g-body.nav-out .cur-card,.g-body.nav-out #grid,.g-body.nav-out .path-row{opacity:0;transform:translateY(6px);transition:opacity .15s ease,transform .15s ease}
+.g-body.nav-in .cur-card{opacity:0;transform:translateY(-8px)}
+.g-body.nav-in .cur-card{animation:slideInCard .22s ease forwards}
+@keyframes slideInCard{to{opacity:1;transform:translateY(0)}}
+.g-body.nav-in #grid{opacity:0}
+
+/* Win screen: staggered path items */
+@keyframes wpEntry{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes wpArrowEntry{from{opacity:0;transform:scaleY(0)}to{opacity:1;transform:scaleY(1)}}
+.wp.anim-in{animation:wpEntry .3s ease both}
+.wp-arrow.anim-in{animation:wpArrowEntry .2s ease both;transform-origin:top}
+@keyframes statPop{0%{transform:scale(.8);opacity:0}70%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+.stat.anim-in{animation:statPop .35s ease both}
+@keyframes winBoxIn{from{opacity:0;transform:translateY(22px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.win-box.anim-in{animation:winBoxIn .35s cubic-bezier(.22,1,.36,1) both}
 @media (max-width:560px){
   #winScreen{justify-content:flex-start;padding:24px 14px}
   .win-box{padding:24px 16px}
@@ -878,18 +895,35 @@ const game = window.game = {
     const empty = document.createElement('div');
     empty.className = 'empty-state';
 
+    // Icon
+    const icon = document.createElement('div');
+    icon.style.cssText = 'font-size:2rem;margin-bottom:10px';
+    icon.textContent = didError ? '⚠️' : '🎬';
+    empty.appendChild(icon);
+
     const title = document.createElement('div');
     title.className = 'empty-title';
-    title.textContent = didError ? 'Could not load this step' : 'No usable links here';
+    title.textContent = didError ? 'Could not load this step' : 'Dead end — no cast data';
 
     const copy = document.createElement('p');
     copy.className = 'empty-copy';
+
+    const nodeLabel = node.type === 'tv' ? 'TV show' : node.type === 'movie' ? 'film' : 'title';
     copy.textContent = didError
-      ? 'The connection data failed to load. Copy this step link and send it over so we can inspect the exact spot.'
-      : 'TMDB does not list usable cast or director data for this title yet. Copy this step link and send it over so we can inspect the exact spot.';
+      ? 'The connection data failed to load. Try going back or start a new game.'
+      : `TMDB doesn't have usable cast or crew for this ${nodeLabel}. This is a data gap on their end — try a different path.`;
 
     const actions = document.createElement('div');
     actions.className = 'empty-actions';
+
+    // Back button — only if we've made at least one move
+    if (this.path.length > 1) {
+      const back = document.createElement('button');
+      back.className = 'btn btn-ghost btn-sm';
+      back.textContent = '← Go back';
+      back.onclick = () => this._goBack();
+      actions.appendChild(back);
+    }
 
     const debug = document.createElement('button');
     debug.className = 'btn btn-ghost btn-sm';
@@ -898,12 +932,30 @@ const game = window.game = {
 
     const random = document.createElement('button');
     random.className = 'btn btn-gold btn-sm';
-    random.textContent = 'Random';
+    random.textContent = 'New game';
     random.onclick = () => this.startRandom();
 
     actions.append(debug, random);
     empty.append(title, copy, actions);
     grid.appendChild(empty);
+  },
+
+  _goBack() {
+    if (this.path.length <= 1) return;
+    // Remove last node from path and visited
+    const removed = this.path.pop();
+    this.visited.delete(removed.type + '-' + removed.id);
+    this.clicks = Math.max(0, this.clicks - 1);
+    this.cur = this.path[this.path.length - 1];
+
+    const ctr = document.getElementById('clickCounter');
+    ctr.textContent = this.clicks;
+    document.querySelector('.hdr-clicks')?.style.setProperty('--click-ring', this.clickRing());
+
+    this.renderCurrent();
+    this.renderPath();
+    this.loadCurImg(this.cur);
+    this.loadConnections(this.cur);
   },
 
   async loadConnections(node) {
@@ -1084,6 +1136,13 @@ const game = window.game = {
     // Hide reverse button after first move
     const rb = document.getElementById('reverseBtn');
     if (rb) rb.style.display = 'none';
+
+    // Transition out
+    const body = document.querySelector('.g-body');
+    body.classList.add('nav-out');
+    await new Promise(r => setTimeout(r, 140));
+    body.classList.remove('nav-out');
+
     this.visited.add(key);
     this.cur = node;
     this.clicks++;
@@ -1096,9 +1155,14 @@ const game = window.game = {
     void ctr.offsetWidth;
     ctr.classList.add('popping');
 
+    // Transition in: card slides in
+    body.classList.add('nav-in');
     this.renderCurrent();
     this.renderPath();
     this.loadCurImg(node);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => { body.classList.remove('nav-in'); });
+    });
 
     if (node.id === this.end.id && node.type === this.end.type) {
       await new Promise(r => setTimeout(r, 300));
@@ -1111,7 +1175,34 @@ const game = window.game = {
   async showWin() {
     await Promise.all(this.path.map(n => hydrateNodeImage(n)));
     showOnly('winScreen');
-    document.getElementById('playerClicks').textContent = this.clicks;
+
+    // Animate win box entrance
+    const winBox = document.querySelector('.win-box');
+    winBox.classList.remove('anim-in');
+    void winBox.offsetWidth;
+    winBox.classList.add('anim-in');
+
+    // Animate stats
+    document.querySelectorAll('.stat').forEach((el, i) => {
+      el.classList.remove('anim-in');
+      el.style.animationDelay = (i * 0.08) + 's';
+      void el.offsetWidth;
+      el.classList.add('anim-in');
+    });
+
+    // Counter-up for playerClicks
+    const targetClicks = this.clicks;
+    const clickEl = document.getElementById('playerClicks');
+    clickEl.textContent = '0';
+    let current = 0;
+    const duration = Math.min(600, targetClicks * 80);
+    const step = Math.max(1, Math.floor(targetClicks / 12));
+    const ticker = setInterval(() => {
+      current = Math.min(current + step, targetClicks);
+      clickEl.textContent = current;
+      if (current >= targetClicks) clearInterval(ticker);
+    }, duration / Math.ceil(targetClicks / step));
+
     const est = this.optDist || Math.max(2, Math.ceil(this.clicks * 0.7));
     document.getElementById('optimalClicks').textContent = est;
     document.getElementById('shareBtn').textContent = 'Share link';
@@ -1123,19 +1214,24 @@ const game = window.game = {
 
     const wp = document.getElementById('winPath');
     wp.innerHTML = '';
+    let staggerIdx = 0;
     this.path.forEach((n, i) => {
       if (i > 0) {
         const arrow = document.createElement('div');
-        arrow.className = 'wp-arrow';
+        arrow.className = 'wp-arrow anim-in';
+        arrow.style.animationDelay = (0.22 + staggerIdx * 0.09) + 's';
         arrow.setAttribute('aria-hidden', 'true');
         const arrowIcon = document.createElement('span');
         arrowIcon.textContent = '\u2193';
         arrow.appendChild(arrowIcon);
         wp.appendChild(arrow);
+        staggerIdx++;
       }
 
       const d = document.createElement('div');
-      d.className = 'wp ' + n.type;
+      d.className = 'wp anim-in ' + n.type;
+      d.style.animationDelay = (0.28 + staggerIdx * 0.09) + 's';
+      staggerIdx++;
 
       const step = document.createElement('div');
       step.className = 'wp-step';
