@@ -65,8 +65,11 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var
 .cur-info{flex:1;min-width:0;padding-top:2px}
 .cur-badge{font-size:.62rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
 .cur-name{font-size:1.3rem;font-weight:700;letter-spacing:-.02em;line-height:1.2}
+.cur-meta{color:var(--mut);font-size:.82rem;font-weight:600;margin-top:5px}
 .cur-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
-.debug-btn{width:auto;padding:6px 10px;color:var(--mut)}
+.debug-footer{text-align:center;margin-top:24px}
+.debug-btn{width:auto;padding:5px 10px;color:var(--mut);font-size:.68rem;opacity:.55}
+.debug-btn:hover{opacity:.9}
 
 /* Path pills */
 .path-row{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:20px}
@@ -212,11 +215,11 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var
       <div class="cur-info">
         <div id="curType" class="cur-badge">ACTOR</div>
         <div id="curName" class="cur-name"></div>
+        <div id="curMeta" class="cur-meta"></div>
         <div class="cur-actions">
           <div id="reverseBtn">
             <button class="btn btn-ghost btn-sm" onclick="game.reverseGame()">&#8645; Reverse direction</button>
           </div>
-          <button id="debugBtn" class="btn btn-ghost btn-sm debug-btn" onclick="game.copyDebugLink()">Debug link</button>
         </div>
       </div>
     </div>
@@ -228,6 +231,9 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var
       <button class="tab" id="tabTV" onclick="game.setTab('tv')">TV</button>
     </div>
     <div id="grid" class="grid"></div>
+    <div class="debug-footer">
+      <button id="debugBtn" class="btn btn-ghost btn-sm debug-btn" onclick="game.copyDebugLink()">Debug link</button>
+    </div>
   </div>
 </div>
 
@@ -347,6 +353,21 @@ function nodeImagePath(node, data) {
   return node.type === 'person' ? data.profile_path : data.poster_path;
 }
 
+function nodeYearLabel(node, data) {
+  if (node.type === 'movie') {
+    return (data.release_date || '').slice(0, 4);
+  }
+  if (node.type === 'tv') {
+    const first = (data.first_air_date || '').slice(0, 4);
+    const last = (data.last_air_date || '').slice(0, 4);
+    if (!first) return '';
+    if (data.in_production) return first + '-present';
+    if (last && last !== first) return first + '-' + last;
+    return first;
+  }
+  return '';
+}
+
 function nodeImageUrl(node) {
   if (!node.img) return '';
   return node.img.startsWith('http') ? node.img : IMGBASE + node.img;
@@ -407,12 +428,18 @@ function appBaseUrl() {
   return location.origin === 'null' ? cleanHref : location.origin + location.pathname;
 }
 
-async function hydrateNodeImage(node) {
-  if (node.img) return node.img;
+async function hydrateNodeDetails(node) {
+  if (node.img && (node.type === 'person' || node.yearLabel)) return node;
   try {
     const d = await api(nodeApiPrefix(node) + node.id);
-    node.img = nodeImagePath(node, d) || '';
+    node.img = node.img || nodeImagePath(node, d) || '';
+    node.yearLabel = node.yearLabel || nodeYearLabel(node, d);
   } catch(_) {}
+  return node;
+}
+
+async function hydrateNodeImage(node) {
+  await hydrateNodeDetails(node);
   return node.img || '';
 }
 
@@ -449,9 +476,9 @@ const game = window.game = {
         const kids = (p.known_for || []).map(k => k.id);
         const m = sm.find(mv => !kids.includes(mv.id)) || sm[1];
         s = {name:p.name, type:'person', id:p.id, img:p.profile_path};
-        e = {name:m.title, type:'movie',  id:m.id, img:m.poster_path};
+        e = {name:m.title, type:'movie',  id:m.id, img:m.poster_path, yearLabel:(m.release_date||'').slice(0,4)};
       } else {
-        s = {name:sm[0].title, type:'movie',  id:sm[0].id, img:sm[0].poster_path};
+        s = {name:sm[0].title, type:'movie',  id:sm[0].id, img:sm[0].poster_path, yearLabel:(sm[0].release_date||'').slice(0,4)};
         e = {name:sp[0].name,  type:'person', id:sp[0].id, img:sp[0].profile_path};
       }
       this.optDist = null;
@@ -500,6 +527,8 @@ const game = window.game = {
       ]);
       start.img = start.img || nodeImagePath(start, sd) || '';
       end.img = end.img || nodeImagePath(end, ed) || '';
+      start.yearLabel = start.yearLabel || nodeYearLabel(start, sd);
+      end.yearLabel = end.yearLabel || nodeYearLabel(end, ed);
       const su = nodeImageUrl(start);
       const eu = nodeImageUrl(end);
       thumbEl('startThumb', start, su);
@@ -507,14 +536,16 @@ const game = window.game = {
       // Also set current node image if still at start
       if (this.cur.id === start.id && this.cur.type === start.type) {
         this.setCurImg(su);
+        this.renderCurrentMeta();
       }
     } catch(_) {}
   },
 
   async loadCurImg(node) {
     try {
-      await hydrateNodeImage(node);
+      await hydrateNodeDetails(node);
       this.setCurImg(nodeImageUrl(node));
+      if (node === this.cur) this.renderCurrentMeta();
     } catch(_) {}
   },
 
@@ -534,8 +565,16 @@ const game = window.game = {
       this.cur.type === 'tv' ? 'TV SHOW' :
       role === 'director' ? 'DIRECTOR' : 'ACTOR';
     document.getElementById('curName').textContent = this.cur.name;
+    this.renderCurrentMeta();
     const debugBtn = document.getElementById('debugBtn');
     if (debugBtn) debugBtn.textContent = 'Debug link';
+  },
+
+  renderCurrentMeta() {
+    const meta = document.getElementById('curMeta');
+    const text = this.cur.type === 'movie' || this.cur.type === 'tv' ? (this.cur.yearLabel || '') : '';
+    meta.textContent = text;
+    meta.style.display = text ? 'block' : 'none';
   },
 
   renderPath() {
@@ -724,6 +763,7 @@ const game = window.game = {
           type: m.media_type === 'tv' ? 'tv' : 'movie',
           id: m.id,
           img: m.poster_path,
+          yearLabel: (m.release_date||m.first_air_date||'').slice(0,4),
           sub: (m.release_date||m.first_air_date||'').slice(0,4) + (m.media_type==='tv' ? ' · TV' : '')
         }));
       }
@@ -914,7 +954,7 @@ const game = window.game = {
       '<div class="card-info"><div class="card-name">' + item.name.replace(/</g,'&lt;') + '</div>' +
       '<div class="card-sub">' + item.sub.replace(/</g,'&lt;') + '</div></div>';
     if (!isVisited) {
-      div.onclick = () => this.navigateTo({name:item.name, type:item.type, id:item.id, img:item.img, role:isDir?'director':null});
+      div.onclick = () => this.navigateTo({name:item.name, type:item.type, id:item.id, img:item.img, yearLabel:item.yearLabel, role:isDir?'director':null});
     }
     return div;
   },
