@@ -346,12 +346,42 @@ function randInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function sample(items) {
-  return items[Math.floor(Math.random() * items.length)];
+function dateKey(date = new Date()) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + d;
 }
 
-function shuffle(items) {
-  return [...items].sort(() => Math.random() - 0.5);
+function hashString(str) {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+function seededRandom(seed) {
+  let t = seed >>> 0;
+  return function() {
+    t += 0x6D2B79F5;
+    let r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function randIntWith(rand, min, max) {
+  return Math.floor(rand() * (max - min + 1)) + min;
+}
+
+function sampleWith(rand, items) {
+  return items[Math.floor(rand() * items.length)];
+}
+
+function shuffleWith(rand, items) {
+  return [...items].sort(() => rand() - 0.5);
 }
 
 function movieYear(movie) {
@@ -379,6 +409,62 @@ function isKnownFor(person, node) {
     const type = item.media_type === 'tv' ? 'tv' : 'movie';
     return item.id === node.id && type === node.type;
   });
+}
+
+function filterPeople(results) {
+  return (results||[]).filter(p => p.profile_path && p.popularity > 8 && (p.known_for||[]).length > 0);
+}
+
+function filterMovies(results) {
+  const currentYear = new Date().getFullYear();
+  return (results||[]).filter(m => {
+    const year = movieYear(m)|0;
+    return m.poster_path && m.original_language === 'en' && !m.adult &&
+      (m.vote_count||0) > 300 && (!year || year <= currentYear);
+  });
+}
+
+function filterTvShows(results) {
+  const currentYear = new Date().getFullYear();
+  const skipGenres = [10763,10764,10767]; // news, reality, talk
+  return (results||[]).filter(t => {
+    const year = tvYear(t)|0;
+    return t.poster_path && t.original_language === 'en' &&
+      (t.vote_count||0) > 100 && (!year || year <= currentYear) &&
+      !(t.genre_ids||[]).some(g => skipGenres.includes(g));
+  });
+}
+
+async function fetchChallengePools(pages) {
+  const [pd, md, td] = await Promise.all([
+    api('person/popular&language=en-US&page=' + pages.people),
+    api('movie/popular&language=en-US&page=' + pages.movies),
+    api('tv/popular&language=en-US&page=' + pages.tv)
+  ]);
+  return {
+    people: filterPeople(pd.results),
+    titles: [...filterMovies(md.results).map(movieNode), ...filterTvShows(td.results).map(tvNode)]
+  };
+}
+
+function buildChallenge(people, titles, rand = Math.random) {
+  const shuffledTitles = shuffleWith(rand, titles);
+  if (people.length < 2 || shuffledTitles.length < 2) return null;
+
+  if (rand() < 0.58) {
+    const p = sampleWith(rand, people);
+    const title = shuffledTitles.find(t => !isKnownFor(p, t)) || shuffledTitles[0];
+    return {s:personNode(p), e:title};
+  }
+
+  const title = sampleWith(rand, shuffledTitles);
+  const p = shuffleWith(rand, people).find(person => !isKnownFor(person, title)) || people[0];
+  return {s:title, e:personNode(p)};
+}
+
+function fallbackDailyChallenge(key) {
+  const c = DAILY[hashString(key) % DAILY.length];
+  return {s:{...c.s}, e:{...c.e}};
 }
 
 function gameParamsFromUrl() {
@@ -541,57 +627,39 @@ const game = window.game = {
   path: [], clicks: 0, visited: new Set(), optDist: null,
   _allItems: [], _tab: 'all',
 
-  dayOfYear() {
-    const n = new Date();
-    return Math.floor((n - new Date(n.getFullYear(),0,0)) / 86400000);
-  },
-
-  startDaily() {
-    const c = DAILY[this.dayOfYear() % DAILY.length];
-    this.init(c.s, c.e);
+  async startDaily() {
+    const key = dateKey();
+    const rand = seededRandom(hashString('daily-' + key));
+    showOnly('loadingScreen');
+    try {
+      const pools = await fetchChallengePools({
+        people: randIntWith(rand, 1, 5),
+        movies: randIntWith(rand, 1, 8),
+        tv: randIntWith(rand, 1, 6)
+      });
+      const challenge = buildChallenge(pools.people, pools.titles, rand);
+      if (!challenge) throw 0;
+      this.optDist = null;
+      this.init(challenge.s, challenge.e);
+    } catch(_) {
+      const c = fallbackDailyChallenge(key);
+      this.optDist = null;
+      this.init(c.s, c.e);
+    }
   },
 
   async startRandom() {
     showOnly('loadingScreen');
     try {
-      const [pd, md, td] = await Promise.all([
-        api('person/popular&language=en-US&page=' + randInt(1, 5)),
-        api('movie/popular&language=en-US&page=' + randInt(1, 8)),
-        api('tv/popular&language=en-US&page=' + randInt(1, 6))
-      ]);
-      const currentYear = new Date().getFullYear();
-      const people = (pd.results||[])
-        .filter(p => p.profile_path && p.popularity > 8 && (p.known_for||[]).length > 0);
-      const movies = (md.results||[])
-        .filter(m => {
-          const year = movieYear(m)|0;
-          return m.poster_path && m.original_language === 'en' && !m.adult &&
-            (m.vote_count||0) > 300 && (!year || year <= currentYear);
-        });
-      const tvShows = (td.results||[])
-        .filter(t => {
-          const year = tvYear(t)|0;
-          const skipGenres = [10763,10764,10767]; // news, reality, talk
-          return t.poster_path && t.original_language === 'en' &&
-            (t.vote_count||0) > 100 && (!year || year <= currentYear) &&
-            !(t.genre_ids||[]).some(g => skipGenres.includes(g));
-        });
-      const titles = shuffle([...movies.map(movieNode), ...tvShows.map(tvNode)]);
-      if (people.length < 2 || titles.length < 2) throw 0;
-      let s, e;
-      if (Math.random() < 0.58) {
-        const p = sample(people);
-        const title = titles.find(t => !isKnownFor(p, t)) || titles[0];
-        s = personNode(p);
-        e = title;
-      } else {
-        const title = sample(titles);
-        const p = shuffle(people).find(person => !isKnownFor(person, title)) || people[0];
-        s = title;
-        e = personNode(p);
-      }
+      const pools = await fetchChallengePools({
+        people: randInt(1, 5),
+        movies: randInt(1, 8),
+        tv: randInt(1, 6)
+      });
+      const challenge = buildChallenge(pools.people, pools.titles);
+      if (!challenge) throw 0;
       this.optDist = null;
-      this.init(s, e);
+      this.init(challenge.s, challenge.e);
     } catch(_) {
       const c = DAILY[Math.floor(Math.random() * DAILY.length)];
       this.init(c.s, c.e);
