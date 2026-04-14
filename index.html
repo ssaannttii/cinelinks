@@ -250,7 +250,7 @@ const game = window.game = {
       if (Math.random() < 0.5) {
         const p = sp[0];
         const kids = (p.known_for || []).map(k => k.id);
-        const m = sm.find(mv => \!kids.includes(mv.id)) || sm[1];
+        const m = sm.find(mv => !kids.includes(mv.id)) || sm[1];
         s = {name:p.name, type:'person', id:p.id};
         e = {name:m.title, type:'movie',  id:m.id};
       } else {
