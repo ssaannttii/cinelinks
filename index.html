@@ -342,6 +342,45 @@ function tvEpisodeCount(person) {
   return person.total_episode_count || ((person.roles || [])[0] || {}).episode_count || 0;
 }
 
+function randInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function sample(items) {
+  return items[Math.floor(Math.random() * items.length)];
+}
+
+function shuffle(items) {
+  return [...items].sort(() => Math.random() - 0.5);
+}
+
+function movieYear(movie) {
+  return (movie.release_date || '').slice(0, 4);
+}
+
+function tvYear(show) {
+  return (show.first_air_date || '').slice(0, 4);
+}
+
+function personNode(person) {
+  return {name:person.name, type:'person', id:person.id, img:person.profile_path};
+}
+
+function movieNode(movie) {
+  return {name:movie.title, type:'movie', id:movie.id, img:movie.poster_path, yearLabel:movieYear(movie)};
+}
+
+function tvNode(show) {
+  return {name:show.name, type:'tv', id:show.id, img:show.poster_path, yearLabel:tvYear(show)};
+}
+
+function isKnownFor(person, node) {
+  return (person.known_for || []).some(item => {
+    const type = item.media_type === 'tv' ? 'tv' : 'movie';
+    return item.id === node.id && type === node.type;
+  });
+}
+
 function gameParamsFromUrl() {
   const urlP = new URLSearchParams(location.search);
   const urlS = urlP.get('s'), urlST = urlP.get('st') || 'movie';
@@ -515,25 +554,41 @@ const game = window.game = {
   async startRandom() {
     showOnly('loadingScreen');
     try {
-      const [pd, md] = await Promise.all([
-        api('person/popular&language=en-US'),
-        api('movie/popular&language=en-US')
+      const [pd, md, td] = await Promise.all([
+        api('person/popular&language=en-US&page=' + randInt(1, 5)),
+        api('movie/popular&language=en-US&page=' + randInt(1, 8)),
+        api('tv/popular&language=en-US&page=' + randInt(1, 6))
       ]);
-      const people = (pd.results||[]).filter(p => p.profile_path && p.popularity > 5).slice(0,20);
-      const movies = (md.results||[]).filter(m => m.poster_path && m.original_language === 'en').slice(0,20);
-      if (people.length < 2 || movies.length < 2) throw 0;
-      const sh = a => [...a].sort(() => Math.random() - 0.5);
-      const sp = sh(people), sm = sh(movies);
+      const currentYear = new Date().getFullYear();
+      const people = (pd.results||[])
+        .filter(p => p.profile_path && p.popularity > 8 && (p.known_for||[]).length > 0);
+      const movies = (md.results||[])
+        .filter(m => {
+          const year = movieYear(m)|0;
+          return m.poster_path && m.original_language === 'en' && !m.adult &&
+            (m.vote_count||0) > 300 && (!year || year <= currentYear);
+        });
+      const tvShows = (td.results||[])
+        .filter(t => {
+          const year = tvYear(t)|0;
+          const skipGenres = [10763,10764,10767]; // news, reality, talk
+          return t.poster_path && t.original_language === 'en' &&
+            (t.vote_count||0) > 100 && (!year || year <= currentYear) &&
+            !(t.genre_ids||[]).some(g => skipGenres.includes(g));
+        });
+      const titles = shuffle([...movies.map(movieNode), ...tvShows.map(tvNode)]);
+      if (people.length < 2 || titles.length < 2) throw 0;
       let s, e;
-      if (Math.random() < 0.5) {
-        const p = sp[0];
-        const kids = (p.known_for || []).map(k => k.id);
-        const m = sm.find(mv => !kids.includes(mv.id)) || sm[1];
-        s = {name:p.name, type:'person', id:p.id, img:p.profile_path};
-        e = {name:m.title, type:'movie',  id:m.id, img:m.poster_path, yearLabel:(m.release_date||'').slice(0,4)};
+      if (Math.random() < 0.58) {
+        const p = sample(people);
+        const title = titles.find(t => !isKnownFor(p, t)) || titles[0];
+        s = personNode(p);
+        e = title;
       } else {
-        s = {name:sm[0].title, type:'movie',  id:sm[0].id, img:sm[0].poster_path, yearLabel:(sm[0].release_date||'').slice(0,4)};
-        e = {name:sp[0].name,  type:'person', id:sp[0].id, img:sp[0].profile_path};
+        const title = sample(titles);
+        const p = shuffle(people).find(person => !isKnownFor(person, title)) || people[0];
+        s = title;
+        e = personNode(p);
       }
       this.optDist = null;
       this.init(s, e);

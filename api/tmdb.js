@@ -3,6 +3,7 @@ const https = require('https');
 const ALLOWED_PATHS = [
   /^person\/popular$/,
   /^movie\/popular$/,
+  /^tv\/popular$/,
   /^person\/\d+$/,
   /^movie\/\d+$/,
   /^tv\/\d+$/,
