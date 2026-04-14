@@ -50,4 +50,4 @@ Deploy on Vercel and set the `TMDB_API_KEY` environment variable in the project 
 
 ## Notes
 
-This product uses the TMDB API but is not endorsed or certified by TMDB.
+This product uses the TMDB API and TMDB images, but is not endorsed or certified by TMDB.
