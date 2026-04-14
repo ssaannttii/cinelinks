@@ -36,6 +36,12 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .how-title{font-size:.65rem;font-weight:600;letter-spacing:.1em;color:var(--mut);text-transform:uppercase;margin-bottom:10px}
 .how li{list-style:none;color:var(--mut);font-size:.83rem;line-height:1.8;padding-left:14px;position:relative}
 .how li::before{content:"→";position:absolute;left:0;color:var(--gold)}
+.credits{margin-top:22px;border-top:1px solid var(--bdr);padding-top:18px;text-align:left}
+.credits-title{font-size:.65rem;font-weight:600;letter-spacing:.1em;color:var(--mut);text-transform:uppercase;margin-bottom:10px}
+.tmdb-credit{display:flex;align-items:center;gap:12px;color:var(--mut);font-size:.72rem;line-height:1.45}
+.tmdb-logo{width:58px;height:auto;display:block;flex-shrink:0}
+.tmdb-credit a{color:var(--txt);text-decoration:none}
+.tmdb-credit a:hover{color:var(--gold)}
 
 /* LOADING */
 #loadingScreen{min-height:100vh;align-items:center;justify-content:center;gap:14px}
@@ -86,6 +92,9 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .debug-footer{text-align:center;margin-top:24px}
 .debug-btn{width:auto;padding:5px 10px;color:var(--mut);font-size:.68rem;opacity:.55}
 .debug-btn:hover{opacity:.9}
+.game-credit{margin-top:12px;color:var(--mut);font-size:.68rem;opacity:.62}
+.game-credit a{color:var(--mut);text-decoration:none}
+.game-credit a:hover{color:var(--gold)}
 
 /* Path pills */
 .path-row{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;overflow-x:auto;margin-bottom:22px;padding-bottom:4px;scrollbar-width:none}
@@ -232,6 +241,15 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
         <li>Reach the goal in as few clicks as possible</li>
       </ul>
     </div>
+    <div class="credits">
+      <div class="credits-title">Credits</div>
+      <div class="tmdb-credit">
+        <a href="https://www.themoviedb.org/" target="_blank" rel="noopener">
+          <img class="tmdb-logo" src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_short-8e76e2a06f8c1c731a4c638a8e21c2e931ad4b39c0b77e6f18024d182b236bd6.svg" alt="TMDB">
+        </a>
+        <p>This product uses the TMDB API and TMDB images, but is not endorsed or certified by TMDB.</p>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -287,6 +305,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     <div id="grid" class="grid"></div>
     <div class="debug-footer">
       <button id="debugBtn" class="btn btn-ghost btn-sm debug-btn" onclick="game.copyDebugLink()">Debug link</button>
+      <div class="game-credit">Data and images by <a href="https://www.themoviedb.org/" target="_blank" rel="noopener">TMDB</a>.</div>
     </div>
   </div>
 </div>
