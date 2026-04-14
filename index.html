@@ -1319,9 +1319,10 @@
                         return;
                     }
 
-                    items.forEach(item => {
+                    items.forEach((item, idx) => {
                         const div = document.createElement('div');
                         div.className = 'connection-item';
+                        div.style.animationDelay = (idx * 0.04) + 's';
                         if (item.id === this.endNode.id && item.type === this.endNode.type) {
                             div.classList.add('goal-node');
                         }
