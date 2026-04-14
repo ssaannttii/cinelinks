@@ -954,11 +954,11 @@
             async generateRandomChallenge() {
                 try {
                     const [peopleData, moviesData] = await Promise.all([
-                        fetch('/api/tmdb?path=person/popular').then(r => r.json()),
-                        fetch('/api/tmdb?path=movie/popular').then(r => r.json())
+                        fetch('/api/tmdb?path=person/popular&language=en-US').then(r => r.json()),
+                        fetch('/api/tmdb?path=movie/popular&language=en-US').then(r => r.json())
                     ]);
-                    const people = (peopleData.results || []).filter(p => p.profile_path && p.known_for_department === 'Acting').slice(0, 15);
-                    const movies = (moviesData.results || []).filter(m => m.poster_path).slice(0, 15);
+                    const people = (peopleData.results || []).filter(p => p.profile_path && p.known_for_department === 'Acting' && p.popularity > 10).slice(0, 15);
+                    const movies = (moviesData.results || []).filter(m => m.poster_path && m.original_language === 'en').slice(0, 15);
                     if (people.length < 2 || movies.length < 2) throw new Error('Not enough results');
                     const shuffle = arr => [...arr].sort(() => Math.random() - 0.5);
                     const sp = shuffle(people);
@@ -1001,7 +1001,7 @@
 
             async getRandomMovie() {
                 try {
-                    const data = await fetch('/api/tmdb?path=movie/popular').then(r => r.json());
+                    const data = await fetch('/api/tmdb?path=movie/popular&language=en-US').then(r => r.json());
                     const candidates = (data.results || []).filter(m => m.poster_path && m.id);
                     if (candidates.length === 0) return null;
                     const movie = candidates[Math.floor(Math.random() * candidates.length)];
