@@ -1116,23 +1116,56 @@ const game = window.game = {
     if (badge) badge.style.display = 'none';
     showOnly('loadingScreen');
     try {
-      const pools = await fetchChallengePools({
-        people: randInt(1, 5),
-        movies: randInt(1, 8),
-        tv: randInt(1, 6)
-      });
-      const challenge = buildChallenge(pools.people, pools.titles);
+      // Try up to 4 times to get a challenge not seen recently
+      let challenge = null;
+      for (let attempt = 0; attempt < 4; attempt++) {
+        const pools = await fetchChallengePools({
+          people: randInt(1, 5),
+          movies: randInt(1, 8),
+          tv: randInt(1, 6)
+        });
+        const candidate = buildChallenge(pools.people, pools.titles);
+        if (!candidate) continue;
+        const key = candidate.s.type + '-' + candidate.s.id + '|' + candidate.e.type + '-' + candidate.e.id;
+        if (!this._recentRandom().includes(key)) {
+          challenge = candidate;
+          this._pushRecentRandom(key);
+          break;
+        }
+        // Last attempt — use it anyway
+        if (attempt === 3) { challenge = candidate; this._pushRecentRandom(key); }
+      }
       if (!challenge) throw 0;
       this.optDist = null;
       this._showLoadPreview(challenge.s, challenge.e);
       await new Promise(r => setTimeout(r, BRIEFING_DELAY_MS));
       this.init(challenge.s, challenge.e);
     } catch(_) {
-      const c = FALLBACK_DAILY[Math.floor(Math.random() * FALLBACK_DAILY.length)];
+      // Fallback: pick from FALLBACK_DAILY avoiding recent ones
+      const recent = this._recentRandom();
+      const pool = FALLBACK_DAILY.filter(c => {
+        const key = c.s.type + '-' + c.s.id + '|' + c.e.type + '-' + c.e.id;
+        return !recent.includes(key);
+      });
+      const c = (pool.length > 0 ? pool : FALLBACK_DAILY)[Math.floor(Math.random() * (pool.length || FALLBACK_DAILY.length))];
+      const key = c.s.type + '-' + c.s.id + '|' + c.e.type + '-' + c.e.id;
+      this._pushRecentRandom(key);
       this._showLoadPreview(c.s, c.e);
       await new Promise(r => setTimeout(r, BRIEFING_DELAY_MS));
       this.init(c.s, c.e);
     }
+  },
+
+  _recentRandom() {
+    try { return JSON.parse(sessionStorage.getItem('clRecentRandom') || '[]'); } catch(_) { return []; }
+  },
+
+  _pushRecentRandom(key) {
+    try {
+      const recent = this._recentRandom();
+      recent.unshift(key);
+      sessionStorage.setItem('clRecentRandom', JSON.stringify(recent.slice(0, 12)));
+    } catch(_) {}
   },
 
   _showLoadPreview(start, end) {
