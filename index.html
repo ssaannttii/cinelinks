@@ -31,6 +31,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .btn:active{transform:translateY(0)}
 .btn-gold{background:var(--gold);color:#111;border-color:var(--gold)}
 .btn-ghost{background:transparent;color:var(--txt);border-color:var(--bdr)}
+.btn-share{background:#f0f0f0;color:#111;border-color:#f0f0f0}
 .btn-sm{padding:6px 12px;font-size:.75rem;border-radius:8px;margin:0}
 .how{margin-top:26px;border-top:1px solid var(--bdr);padding-top:20px;text-align:left}
 .how-title{font-size:.65rem;font-weight:600;letter-spacing:.1em;color:var(--mut);text-transform:uppercase;margin-bottom:10px}
@@ -129,7 +130,9 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .empty-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 
 /* Cards */
-.card{background:rgba(255,255,255,.045);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.1);border-radius:8px;overflow:hidden;cursor:pointer;transition:border-color .15s,transform .15s,box-shadow .15s,background .15s;position:relative}
+.card{background:rgba(255,255,255,.045);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.1);border-radius:8px;overflow:hidden;cursor:pointer;transition:border-color .15s,transform .15s,box-shadow .15s,background .15s,opacity .15s;position:relative}
+@keyframes cardTap{0%{transform:scale(1)}40%{transform:scale(.96);border-color:var(--gold);box-shadow:0 0 0 2px rgba(232,160,0,.4)}100%{transform:scale(1)}}
+.card.tapping{animation:cardTap .18s ease both;pointer-events:none}
 .card:hover{border-color:var(--gold);transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.4)}
 .card:not(.visited)::before{content:"Choose";position:absolute;top:8px;right:8px;z-index:2;background:rgba(13,13,13,.78);border:1px solid rgba(232,160,0,.32);border-radius:8px;color:var(--gold);font-size:.58rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 6px;opacity:0;transform:translateY(-3px);transition:opacity .15s,transform .15s;pointer-events:none}
 .card:not(.visited):hover::before{opacity:1;transform:translateY(0)}
@@ -228,12 +231,15 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .confetti{position:absolute;pointer-events:none;border-radius:2px;animation:fall linear forwards}
 @keyframes fall{0%{transform:translateY(-10px) rotate(0);opacity:1}100%{transform:translateY(550px) rotate(720deg);opacity:0}}
 
-/* Transition: fade-out on navigate */
-.g-body.nav-out .cur-card,.g-body.nav-out #grid,.g-body.nav-out .path-row{opacity:0;transform:translateY(6px);transition:opacity .15s ease,transform .15s ease}
-.g-body.nav-in .cur-card{opacity:0;transform:translateY(-8px)}
-.g-body.nav-in .cur-card{animation:slideInCard .22s ease forwards}
-@keyframes slideInCard{to{opacity:1;transform:translateY(0)}}
-.g-body.nav-in #grid{opacity:0}
+/* Transition: navigate out */
+.g-body.nav-out .cur-card{opacity:0;transform:translateY(-10px) scale(.98);transition:opacity .18s ease,transform .18s ease}
+.g-body.nav-out #grid{opacity:0;transform:translateY(8px) scale(.99);transition:opacity .15s ease,transform .15s ease}
+.g-body.nav-out .path-row{opacity:0;transition:opacity .12s ease}
+/* Transition: navigate in */
+@keyframes slideInCard{from{opacity:0;transform:translateY(12px) scale(.99)}to{opacity:1;transform:translateY(0) scale(1)}}
+.g-body.nav-in .cur-card{animation:slideInCard .28s cubic-bezier(.22,1,.36,1) both}
+@keyframes fadeInGrid{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.g-body.nav-in #grid{animation:fadeInGrid .22s ease .05s both}
 
 /* Win screen: staggered path items */
 @keyframes wpEntry{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
@@ -282,10 +288,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     <div class="credits">
       <div class="credits-title">Credits</div>
       <div class="tmdb-credit">
-        <a href="https://www.themoviedb.org/" target="_blank" rel="noopener" style="display:flex;align-items:center">
-          <svg class="tmdb-logo" viewBox="0 0 190 24" xmlns="http://www.w3.org/2000/svg" fill="none">
-            <path d="M13.3 0H0v4.4h4.8V24h3.8V4.4h4.7V0zM27 0h-3.8v9.7h-5.5V0h-3.8v24h3.8v-10h5.5v10H27V0zM41.3 0H29.8v4.2h4.4V24h3.8V4.2h3.3V0zM57.2 19.6h-7.9V0h-3.8v24h11.7v-4.4zM72.3 0H60.9v24h11.4v-4.2h-7.6v-6h6.5v-4H64.7V4.2h7.6V0zM88.8 10.4c0-3-1-5.3-2.9-6.9C84 1.8 81.4 1 78 1h-.3V0h-3.8v24h4.2c3.4 0 6-.9 7.8-2.6 1.8-1.7 2.9-4.2 2.9-7.5v-3.5zm-3.8 3.4c0 2.2-.6 3.9-1.7 5-1.1 1.1-2.8 1.7-5 1.7h-.4V4.2h.3c2.3 0 4 .6 5.1 1.7 1.1 1.1 1.7 2.8 1.7 5v2.9zM108 0h-4.4l-3.6 16.8L96.4 0H92l5.5 24h4.3L108 0zM122.5 0H111v24h11.5v-4.2h-7.7v-6h6.6v-4h-6.6V4.2h7.7V0zM136.8 0H125v24h3.8V14h.3l5.6 10h4.4l-6-10.5c1.3-.4 2.3-1.2 3-2.2.8-1.1 1.2-2.5 1.2-4.2 0-2.3-.7-4-2-5.2-1.3-1.3-3.2-1.9-5.5-1.9zm-1 10h-7V4.2h7c1.1 0 2 .3 2.6.9.6.6.9 1.4.9 2.4 0 1-.3 1.9-.9 2.5-.6.6-1.5 1-2.6 1zM155 0h-3.8v9.7h-5.5V0H142v24h3.7v-10h5.5v10H155V0zM169.3 0h-11.5v24h11.5v-4.2h-7.7v-6h6.5v-4h-6.5V4.2h7.7V0zM184.8 0H173v24h3.8V14h.3l5.6 10h4.4l-6-10.5c1.3-.4 2.3-1.2 3-2.2.8-1.1 1.2-2.5 1.2-4.2 0-2.3-.7-4-2-5.2-1.3-1.3-3.2-1.9-5.5-1.9zm-1 10h-7V4.2h7c1.1 0 2 .3 2.6.9.6.6.9 1.4.9 2.4 0 1-.3 1.9-.9 2.5-.6.6-1.5 1-2.6 1z" fill="#01B4E4"/>
-          </svg>
+        <a href="https://www.themoviedb.org/" target="_blank" rel="noopener">
+          <img class="tmdb-logo" src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_short-8e76e2a06f8c1c731a4c638a8e21c2e931ad4b39c0b77e6f18024d182b236bd6.svg" alt="TMDB" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'"><span style="display:none;font-size:.8rem;font-weight:700;color:#01b4e4">TMDB</span>
         </a>
         <p>This product uses the TMDB API and TMDB images, but is not endorsed or certified by TMDB.</p>
       </div>
@@ -363,9 +367,9 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     <div class="win-btns">
       <button class="btn btn-ghost" style="margin:0" onclick="game.reset()">Home</button>
       <div class="share-wrap">
-        <button class="btn btn-ghost" style="margin:0;display:flex;align-items:center;justify-content:center;gap:7px" id="shareBtn" onclick="game.toggleShareMenu()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>Share</button>
+        <button class="btn btn-share" style="margin:0;display:flex;align-items:center;justify-content:center;gap:7px" id="shareBtn" onclick="game.toggleShareMenu()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>Share</button>
         <div class="share-menu" id="shareMenu">
-          <button class="share-opt" onclick="game.shareNative()"><span class="share-opt-icon">📤</span>Share…</button>
+          <button class="share-opt" onclick="game.shareNative()"><span class="share-opt-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></span>Share…</button>
           <button class="share-opt" onclick="game.shareTwitter()"><span class="share-opt-icon">𝕏</span>Post on X</button>
           <button class="share-opt" onclick="game.shareWhatsApp()"><span class="share-opt-icon">💬</span>WhatsApp</button>
           <button class="share-opt" onclick="game.copyLink()"><span class="share-opt-icon">🔗</span><span id="copyLinkLabel">Copy link</span></button>
@@ -1210,12 +1214,13 @@ const game = window.game = {
     const rb = document.getElementById('reverseBtn');
     if (rb) rb.style.display = 'none';
 
-    // Transition out
+    // Tap flash (card already has .tapping), then transition out
+    await new Promise(r => setTimeout(r, 100));
     const body = document.querySelector('.g-body');
     body.classList.add('nav-out');
-    await new Promise(r => setTimeout(r, 140));
+    await new Promise(r => setTimeout(r, 180));
     body.classList.remove('nav-out');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'instant' });
 
     this.visited.add(key);
     this.cur = node;
@@ -1277,7 +1282,7 @@ const game = window.game = {
       if (current >= targetClicks) clearInterval(ticker);
     }, duration / Math.ceil(targetClicks / step));
 
-    document.getElementById('shareBtn').innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>Share';
+    // share btn innerHTML is static in HTML, no reset needed
     document.getElementById('copyLinkLabel').textContent = 'Copy link';
     const menu = document.getElementById('shareMenu');
     if (menu) menu.classList.remove('open');
@@ -1399,7 +1404,10 @@ const game = window.game = {
       '<div class="card-info"><div class="card-name">' + item.name.replace(/</g,'&lt;') + '</div>' +
       '<div class="card-sub">' + subHtml + '</div></div>';
     if (!isVisited) {
-      div.onclick = () => this.navigateTo({name:item.name, type:item.type, id:item.id, img:item.img, yearLabel:item.yearLabel, role:isDir?'director':null});
+      div.onclick = () => {
+        div.classList.add('tapping');
+        this.navigateTo({name:item.name, type:item.type, id:item.id, img:item.img, yearLabel:item.yearLabel, role:isDir?'director':null});
+      };
     }
     return div;
   },
