@@ -104,23 +104,43 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var
 @keyframes shim{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
 /* WIN */
-#winScreen{min-height:100vh;align-items:center;justify-content:center;padding:40px 20px;position:relative;overflow:hidden}
-.win-box{background:var(--s1);border:1px solid var(--bdr);border-radius:16px;padding:36px 28px;max-width:460px;width:100%;text-align:center}
-.win-em{font-size:2.4rem;margin-bottom:10px}
-.win-h{font-size:1.5rem;font-weight:700;margin-bottom:4px}
-.win-sub{color:var(--mut);font-size:.86rem;margin-bottom:24px}
-.stats{display:flex;gap:10px;margin-bottom:22px}
-.stat{flex:1;background:var(--s2);border-radius:10px;padding:14px 10px}
+#winScreen{min-height:100vh;align-items:center;justify-content:center;padding:40px 20px;position:relative;overflow-x:hidden;overflow-y:auto}
+.win-box{background:linear-gradient(180deg,rgba(232,160,0,.08),transparent 150px),var(--s1);border:1px solid rgba(232,160,0,.18);border-radius:8px;padding:30px;max-width:680px;width:100%;text-align:center;box-shadow:0 24px 70px rgba(0,0,0,.35)}
+.win-em{font-size:2.1rem;margin-bottom:10px}
+.win-h{font-size:1.55rem;font-weight:700;margin-bottom:4px}
+.win-sub{color:var(--mut);font-size:.86rem;margin-bottom:22px}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.stat{background:rgba(255,255,255,.04);border:1px solid var(--bdr);border-radius:8px;padding:13px 10px}
 .stat-n{font-size:1.8rem;font-weight:700;color:var(--gold)}
 .stat-l{font-size:.68rem;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
-.win-cmp{font-size:.83rem;color:var(--mut);margin-bottom:18px;padding:11px;background:var(--s2);border-radius:8px}
-.win-path{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-bottom:24px}
-.wp{font-size:.72rem;padding:4px 9px;border-radius:20px;background:var(--s2)}
-.wp.person{border:1px solid rgba(232,160,0,.3)}
-.wp.movie{border:1px solid var(--bdr)}
-.win-btns{display:flex;gap:10px}
+.win-cmp{font-size:.83rem;color:var(--txt);margin-bottom:20px;padding:11px 12px;background:rgba(232,160,0,.08);border:1px solid rgba(232,160,0,.16);border-radius:8px}
+.win-route-lbl{display:flex;align-items:center;gap:10px;margin:0 0 12px;color:var(--mut);font-size:.66rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+.win-route-lbl::before,.win-route-lbl::after{content:"";height:1px;background:var(--bdr);flex:1}
+.win-path{display:flex;flex-direction:column;align-items:stretch;gap:0;margin-bottom:24px}
+.wp{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px;text-align:left;background:rgba(255,255,255,.045);border:1px solid var(--bdr);border-radius:8px;padding:10px 12px}
+.wp.person{border-color:rgba(232,160,0,.32)}
+.wp.movie,.wp.tv{border-color:rgba(255,255,255,.12)}
+.wp-step{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--s2);color:var(--gold);font-size:.72rem;font-weight:700;flex-shrink:0}
+.wp-copy{min-width:0}
+.wp-name{font-size:.9rem;font-weight:700;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wp-meta{display:flex;align-items:center;gap:6px;margin-top:3px;color:var(--mut);font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+.wp-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);display:inline-block}
+.wp.movie .wp-dot{background:#f0f0f0}
+.wp.tv .wp-dot{background:#3498db}
+.wp-edge{border:1px solid rgba(232,160,0,.28);border-radius:999px;color:var(--gold);font-size:.61rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 7px;white-space:nowrap}
+.wp-arrow{height:28px;display:flex;align-items:center;justify-content:center;color:var(--gold);position:relative}
+.wp-arrow::before{content:"";width:1px;height:100%;background:linear-gradient(180deg,var(--bdr),rgba(232,160,0,.55),var(--bdr));position:absolute;left:50%;top:0}
+.wp-arrow span{position:relative;z-index:1;background:var(--s1);border:1px solid rgba(232,160,0,.25);border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:.8rem;line-height:1}
+.win-btns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .confetti{position:absolute;pointer-events:none;border-radius:2px;animation:fall linear forwards}
 @keyframes fall{0%{transform:translateY(-10px) rotate(0);opacity:1}100%{transform:translateY(550px) rotate(720deg);opacity:0}}
+@media (max-width:560px){
+  #winScreen{justify-content:flex-start;padding:24px 14px}
+  .win-box{padding:24px 16px}
+  .stats,.win-btns{grid-template-columns:1fr}
+  .wp{grid-template-columns:auto minmax(0,1fr);gap:10px}
+  .wp-edge{grid-column:2;justify-self:start;margin-top:2px}
+}
 </style>
 </head>
 <body>
@@ -201,6 +221,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var
       <div class="stat"><div id="optimalClicks" class="stat-n">&#8212;</div><div class="stat-l">Est. optimal</div></div>
     </div>
     <div id="winCmp" class="win-cmp"></div>
+    <div class="win-route-lbl">Winning route</div>
     <div id="winPath" class="win-path"></div>
     <div class="win-btns">
       <button class="btn btn-ghost" style="margin:0" onclick="game.reset()">Home</button>
@@ -271,6 +292,10 @@ function thumbEl(elId, node, url) {
   const el = document.getElementById(elId);
   el.className = 'hdr-thumb' + (node.type !== 'person' ? ' movie' : '');
   el.innerHTML = url ? '<img src="' + url + '" alt="">' : '';
+}
+
+function nodeTypeLabel(type) {
+  return type === 'person' ? 'Person' : (type === 'tv' ? 'TV' : 'Movie');
 }
 
 const game = window.game = {
@@ -557,6 +582,7 @@ const game = window.game = {
     document.getElementById('playerClicks').textContent = this.clicks;
     const est = this.optDist || Math.max(2, Math.ceil(this.clicks * 0.7));
     document.getElementById('optimalClicks').textContent = est;
+    document.getElementById('shareBtn').textContent = 'Share link';
     history.replaceState(null,'',location.href);
 
     document.getElementById('winCmp').textContent = this.clicks <= est
@@ -565,10 +591,51 @@ const game = window.game = {
 
     const wp = document.getElementById('winPath');
     wp.innerHTML = '';
-    this.path.forEach(n => {
+    this.path.forEach((n, i) => {
+      if (i > 0) {
+        const arrow = document.createElement('div');
+        arrow.className = 'wp-arrow';
+        arrow.setAttribute('aria-hidden', 'true');
+        const arrowIcon = document.createElement('span');
+        arrowIcon.textContent = '\u2193';
+        arrow.appendChild(arrowIcon);
+        wp.appendChild(arrow);
+      }
+
       const d = document.createElement('div');
       d.className = 'wp ' + n.type;
-      d.textContent = n.name;
+
+      const step = document.createElement('div');
+      step.className = 'wp-step';
+      step.textContent = i + 1;
+
+      const copy = document.createElement('div');
+      copy.className = 'wp-copy';
+
+      const name = document.createElement('div');
+      name.className = 'wp-name';
+      name.textContent = n.name;
+
+      const meta = document.createElement('div');
+      meta.className = 'wp-meta';
+
+      const dot = document.createElement('span');
+      dot.className = 'wp-dot';
+
+      const type = document.createElement('span');
+      type.textContent = nodeTypeLabel(n.type);
+
+      meta.append(dot, type);
+      copy.append(name, meta);
+      d.append(step, copy);
+
+      if (i === 0 || i === this.path.length - 1) {
+        const edge = document.createElement('div');
+        edge.className = 'wp-edge';
+        edge.textContent = i === 0 ? 'Start' : 'Goal';
+        d.appendChild(edge);
+      }
+
       wp.appendChild(d);
     });
 
