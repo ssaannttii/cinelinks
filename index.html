@@ -168,12 +168,26 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 
 /* Connections */
 .sec-lbl{font-size:.65rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:12px}
-.goal-banner{display:none;align-items:center;gap:10px;background:linear-gradient(90deg,rgba(232,160,0,.12),rgba(232,160,0,.05));border:1px solid rgba(232,160,0,.35);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:.83rem;font-weight:600;color:var(--txt)}
-.goal-banner.visible{display:flex;animation:goalPulse .5s ease}
-.goal-banner-icon{font-size:1.1rem;flex-shrink:0}
-.goal-banner-text{flex:1}
-.goal-banner-text strong{color:var(--gold)}
-@keyframes goalPulse{0%{opacity:0;transform:translateY(-4px)}60%{opacity:1;transform:translateY(1px)}100%{transform:translateY(0)}}
+.goal-banner{display:none;align-items:center;gap:10px;
+  background:linear-gradient(90deg,rgba(232,160,0,.13),rgba(232,160,0,.05) 60%,transparent);
+  border:1px solid rgba(232,160,0,.45);border-radius:10px;padding:11px 14px;margin-bottom:14px;
+  font-size:.83rem;font-weight:600;color:var(--txt);position:relative;overflow:hidden}
+/* Shimmer sweep */
+.goal-banner::before{content:"";position:absolute;inset:0 auto 0 -60%;width:60%;
+  background:linear-gradient(90deg,transparent,rgba(232,160,0,.22),transparent);
+  animation:goalShimmer 1.8s ease-in-out infinite;pointer-events:none}
+/* Glow border pulse */
+.goal-banner::after{content:"";position:absolute;inset:0;border-radius:10px;
+  box-shadow:0 0 0 0 rgba(232,160,0,.5);
+  animation:goalGlow 1.8s ease-in-out infinite;pointer-events:none}
+.goal-banner.visible{display:flex;animation:goalEntry .45s cubic-bezier(.22,1,.36,1) both}
+.goal-banner-icon{font-size:1.15rem;flex-shrink:0;position:relative;z-index:1;animation:goalIconBounce .6s cubic-bezier(.22,1,.36,1) .3s both}
+.goal-banner-text{flex:1;position:relative;z-index:1}
+.goal-banner-text strong{color:var(--gold);text-shadow:0 0 12px rgba(232,160,0,.4)}
+@keyframes goalEntry{from{opacity:0;transform:translateY(-8px) scaleY(.88)}to{opacity:1;transform:translateY(0) scaleY(1)}}
+@keyframes goalIconBounce{0%{transform:scale(0) rotate(-20deg)}70%{transform:scale(1.3) rotate(5deg)}100%{transform:scale(1) rotate(0)}}
+@keyframes goalShimmer{0%{transform:translateX(0)}100%{transform:translateX(300%)}}
+@keyframes goalGlow{0%,100%{box-shadow:0 0 0 0 rgba(232,160,0,0)}50%{box-shadow:0 0 14px 2px rgba(232,160,0,.2)}}
 .tabs{display:flex;gap:2px;margin-bottom:14px;background:var(--s2);border-radius:8px;padding:3px}
 .tab{flex:1;padding:6px 10px;border-radius:6px;border:none;background:none;color:var(--mut);font-family:inherit;font-size:.75rem;font-weight:600;cursor:pointer;transition:background .15s,color .15s}
 .tab.active{background:var(--s1);color:var(--txt)}
