@@ -220,7 +220,7 @@ function thumbEl(elId, node, url) {
   el.innerHTML = url ? '<img src="' + url + '" alt="">' : '';
 }
 
-const game = {
+const game = window.game = {
   cur: null, start: null, end: null,
   path: [], clicks: 0, visited: new Set(), optDist: null,
 
