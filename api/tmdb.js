@@ -1,8 +1,9 @@
+import https from 'https';
+
 export default async function handler(req, res) {
-  // Allow CORS from same origin
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  
+
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
@@ -12,21 +13,42 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'API key not configured' });
   }
 
-  // Forward the path and query params to TMDB
   const { path, ...queryParams } = req.query;
   if (\!path) {
     return res.status(400).json({ error: 'Missing path parameter' });
   }
 
-  // Build TMDB URL with all query params + api_key
-  const tmdbParams = new URLSearchParams({ ...queryParams, api_key: apiKey });
-  const tmdbUrl = `https://api.themoviedb.org/3/${path}?${tmdbParams}`;
+  const params = new URLSearchParams({ ...queryParams, api_key: apiKey });
+  const tmdbPath = `/3/${path}?${params}`;
 
-  try {
-    const response = await fetch(tmdbUrl);
-    const data = await response.json();
-    res.status(response.status).json(data);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch from TMDB' });
-  }
+  return new Promise((resolve) => {
+    const options = {
+      hostname: 'api.themoviedb.org',
+      port: 443,
+      path: tmdbPath,
+      method: 'GET',
+      headers: { 'Accept': 'application/json' }
+    };
+
+    const request = https.request(options, (response) => {
+      let data = '';
+      response.on('data', chunk => data += chunk);
+      response.on('end', () => {
+        try {
+          const json = JSON.parse(data);
+          res.status(response.statusCode).json(json);
+        } catch (e) {
+          res.status(500).json({ error: 'Invalid response from TMDB' });
+        }
+        resolve();
+      });
+    });
+
+    request.on('error', (e) => {
+      res.status(500).json({ error: 'TMDB request failed: ' + e.message });
+      resolve();
+    });
+
+    request.end();
+  });
 }
