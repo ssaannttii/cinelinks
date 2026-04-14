@@ -700,21 +700,28 @@ const game = window.game = {
             api('tv/' + node.id + '/aggregate_credits')
           ]);
           const regularCast = (d.cast||[]).sort((a,b)=>creditOrder(a)-creditOrder(b)).slice(0,32).map(p=>({
-            name:p.name, type:'person', id:p.id, img:p.profile_path, sub:p.character||''
+            name:p.name, type:'person', id:p.id, img:p.profile_path, sub:p.character||'', castGroup:'main'
           }));
           const regularIds = new Set(regularCast.map(p=>p.id));
-          const recurringCast = (ad.cast||[])
+          const aggregateCast = (ad.cast||[])
             .filter(p => !regularIds.has(p.id))
             .filter(p => tvEpisodeCount(p) > 1 || (p.popularity||0) >= 10)
             .sort((a,b) => {
               const epDiff = tvEpisodeCount(b) - tvEpisodeCount(a);
               return epDiff || ((b.popularity||0) - (a.popularity||0));
             })
-            .slice(0,20)
             .map(p=>({
               name:p.name, type:'person', id:p.id, img:p.profile_path, sub:tvCharacter(p)
             }));
-          castItems = [...regularCast, ...recurringCast].slice(0,52);
+          const recurringCast = aggregateCast.slice(0,20).map(p=>({...p, castGroup:'additional'}));
+          if (regularCast.length === 0) {
+            castItems = [
+              ...aggregateCast.slice(0,32).map(p=>({...p, castGroup:'main'})),
+              ...aggregateCast.slice(32,52).map(p=>({...p, castGroup:'additional'}))
+            ];
+          } else {
+            castItems = [...regularCast, ...recurringCast].slice(0,52);
+          }
           directors = (d.crew||[]).filter(c=>c.job==='Director').map(c=>({
             name:c.name, type:'person', id:c.id, img:c.profile_path, sub:'Director'
           }));
@@ -816,7 +823,17 @@ const game = window.game = {
       }
 
       if (nonDirItems.length > 0) {
-        if (dirItems.length > 0) {
+        if (node.type === 'tv') {
+          if (dirItems.length === 0) lbl.textContent = 'CAST';
+          const mainCast = nonDirItems.filter(i => i.castGroup !== 'additional');
+          const additionalCast = nonDirItems.filter(i => i.castGroup === 'additional');
+          if (mainCast.length > 0) {
+            grid.appendChild(peopleSection('MAIN CAST', mainCast, item => this._makeCard(item)));
+          }
+          if (additionalCast.length > 0) {
+            grid.appendChild(peopleSection('ADDITIONAL CAST', additionalCast, item => this._makeCard(item)));
+          }
+        } else if (dirItems.length > 0) {
           grid.appendChild(peopleSection('CAST', nonDirItems, item => this._makeCard(item)));
         } else {
           const castGrid = document.createElement('div');
