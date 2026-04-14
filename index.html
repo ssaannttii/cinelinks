@@ -101,6 +101,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .debug-footer{text-align:center;margin-top:24px}
 .debug-btn{width:auto;padding:5px 10px;color:var(--mut);font-size:.68rem;opacity:.55}
 .debug-btn:hover{opacity:.9}
+.debug-stats{display:none;margin-top:8px;color:var(--mut);font-size:.68rem;opacity:.62}
+.debug-stats strong{color:var(--txt);font-weight:700}
 .game-credit{margin-top:12px;color:var(--mut);font-size:.68rem;opacity:.62}
 .game-credit a{color:var(--mut);text-decoration:none}
 .game-credit a:hover{color:var(--gold)}
@@ -374,6 +376,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     <div id="grid" class="grid"></div>
     <div class="debug-footer">
       <button id="debugBtn" class="btn btn-ghost btn-sm debug-btn" onclick="game.copyDebugLink()" style="display:none">Debug link</button>
+      <div id="debugStats" class="debug-stats"></div>
       <div class="game-credit">Data and images by <a href="https://www.themoviedb.org/" target="_blank" rel="noopener">TMDB</a>.</div>
     </div>
   </div>
@@ -1012,6 +1015,7 @@ const game = window.game = {
     document.getElementById('endNodeName').textContent   = end.name + nodeHeaderSuffix(end);
     document.getElementById('clickCounter').textContent  = this.clicks;
     document.querySelector('.hdr-clicks')?.style.setProperty('--click-ring', this.clickRing());
+    this.renderDebugStats();
 
     showOnly('gameScreen');
     if (!opts.keepUrl) {
@@ -1179,6 +1183,25 @@ const game = window.game = {
       navigator.clipboard.writeText(url).then(markCopied).catch(() => prompt('Debug link:', url));
     } else {
       prompt('Debug link:', url);
+    }
+  },
+
+  renderDebugStats() {
+    const el = document.getElementById('debugStats');
+    if (!el) return;
+    if (!this._debug) {
+      el.style.display = 'none';
+      return;
+    }
+
+    el.style.display = '';
+    const count = scoreNumber(this._scoreStats && this._scoreStats.count);
+    if (count) {
+      el.innerHTML = 'Daily finishers: <strong>' + count + '</strong>';
+    } else if (this.scoreDate) {
+      el.textContent = 'Daily finishers: none yet';
+    } else {
+      el.textContent = 'Daily finishers: unavailable for this game';
     }
   },
 
@@ -1459,6 +1482,7 @@ const game = window.game = {
     const visible = btn.style.display !== 'none';
     btn.style.display = visible ? 'none' : '';
     this._debug = !visible;
+    this.renderDebugStats();
     if (!visible) this._showToast('Debug mode on', 1200);
   },
 
@@ -1564,6 +1588,7 @@ const game = window.game = {
         const count = scoreNumber(data.count);
         const record = scoreNumber(data.record);
         if (!avg && !record) return;
+        this.renderDebugStats();
 
         const previousRecord = this.dailyRecord;
         const madeRecord = record && this.clicks <= record;
