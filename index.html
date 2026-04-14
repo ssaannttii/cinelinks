@@ -1075,10 +1075,14 @@
             },
 
             showLoading() {
-                document.getElementById('startScreen').classList.remove('active');
-                document.getElementById('loadingScreen').classList.add('active');
-                document.getElementById('gameScreen').classList.remove('active');
-                document.getElementById('winScreen').classList.remove('active');
+                ['startScreen','gameScreen','winScreen'].forEach(id => {
+                    const el = document.getElementById(id);
+                    el.classList.remove('active');
+                    el.style.display = 'none';
+                });
+                const ls = document.getElementById('loadingScreen');
+                ls.classList.add('active');
+                ls.style.display = 'flex';
             },
 
             async init(start, end, isDaily) {
@@ -1090,10 +1094,14 @@
                 this.visited.clear();
                 this.visited.add(start.type + '-' + start.id);
 
-                document.getElementById('startScreen').classList.remove('active');
-                document.getElementById('loadingScreen').classList.remove('active');
-                document.getElementById('gameScreen').classList.add('active');
-                document.getElementById('winScreen').classList.remove('active');
+                ['startScreen','loadingScreen','winScreen'].forEach(id => {
+                    const el = document.getElementById(id);
+                    el.classList.remove('active');
+                    el.style.display = 'none';
+                });
+                const gs = document.getElementById('gameScreen');
+                gs.classList.add('active');
+                gs.style.display = 'flex';
 
                 await this.updateNodeImages(start, 'start');
                 await this.updateNodeImages(end, 'end');
@@ -1328,9 +1336,14 @@
             },
 
             reset() {
-                document.getElementById('startScreen').classList.add('active');
-                document.getElementById('gameScreen').classList.remove('active');
-                document.getElementById('winScreen').classList.remove('active');
+                ['gameScreen','loadingScreen','winScreen'].forEach(id => {
+                    const el = document.getElementById(id);
+                    el.classList.remove('active');
+                    el.style.display = 'none';
+                });
+                const ss = document.getElementById('startScreen');
+                ss.classList.add('active');
+                ss.style.display = 'flex';
                 document.getElementById('loadingScreen').classList.remove('active');
             }
         };
