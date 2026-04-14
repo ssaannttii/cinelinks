@@ -470,19 +470,14 @@ const game = window.game = {
       }
 
       if (nonDirItems.length > 0) {
-        if (dirItems.length > 0) {
-          const clbl = document.createElement('div');
-          clbl.className = 'cast-label';
-          clbl.textContent = 'CAST';
-          grid.appendChild(clbl);
-        }
+      if (nonDirItems.length > 0) {
         const castGrid = document.createElement('div');
         castGrid.className = 'grid';
         castGrid.style.display = 'grid';
         nonDirItems.forEach(item => { const c = this._makeCard(item); if (c) castGrid.appendChild(c); });
         grid.appendChild(castGrid);
       }
-          } catch(_) {
+    } catch(_) {
       grid.innerHTML = '<p style="color:#777;font-size:.85rem">Could not load connections.</p>';
     }
   },
@@ -559,9 +554,7 @@ const game = window.game = {
   _makeCard(item) {
     const isGoal = item.id === this.end.id && item.type === this.end.type;
     const isVisited = this.visited.has(item.type + '-' + item.id);
-    const isStart = item.id === this.start.id && item.type === this.start.type;
-    // Skip start node entirely from connections
-    if (isStart) return null;
+    // Note: don't skip start node — show it as visited/blocked instead
     const div = document.createElement('div');
     const isDir = item.sub === 'Director';
     div.className = 'card' + (isGoal ? ' goal' : '') + (isVisited ? ' visited' : '') + (isDir ? ' director-card' : '');
