@@ -45,10 +45,14 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .tmdb-credit a:hover{color:var(--gold)}
 
 /* LOADING */
-#loadingScreen{min-height:100vh;align-items:center;justify-content:center;gap:14px}
+#loadingScreen{min-height:100vh;align-items:center;justify-content:center;gap:14px;flex-direction:column}
 .spinner{width:34px;height:34px;border:2px solid var(--bdr);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .load-txt{color:var(--mut);font-size:.88rem}
+.load-preview{display:none;align-items:center;gap:10px;background:rgba(255,255,255,.04);border:1px solid var(--bdr);border-radius:10px;padding:10px 16px;font-size:.8rem;color:var(--mut);margin-top:4px}
+.load-preview.visible{display:flex}
+.load-preview-node{font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px}
+.load-preview-arr{color:var(--gold);flex-shrink:0}
 
 /* GAME */
 #gameScreen{min-height:100vh}
@@ -104,7 +108,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 /* Path pills */
 .path-row{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;overflow-x:auto;margin-bottom:22px;padding-bottom:4px;scrollbar-width:none}
 .path-row::-webkit-scrollbar{display:none}
-.pill{display:flex;align-items:center;gap:7px;font-size:.72rem;padding:4px 10px 4px 5px;border-radius:20px;background:rgba(255,255,255,.045);border:1px solid var(--bdr);color:var(--mut);white-space:nowrap;max-width:190px;overflow:hidden;text-overflow:ellipsis;flex-shrink:0}
+.pill{display:flex;align-items:center;gap:7px;font-size:.72rem;padding:4px 10px 4px 5px;border-radius:20px;background:rgba(255,255,255,.045);border:1px solid var(--bdr);color:var(--mut);white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis;flex-shrink:0}
+.pill-step{font-size:.58rem;font-weight:700;color:var(--mut);opacity:.6;margin-right:-3px;flex-shrink:0}
 .pill.movie,.pill.tv{border-radius:8px}
 .pill.director{border-color:rgba(232,160,0,.22)}
 .pill-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);flex-shrink:0;opacity:.85}
@@ -120,6 +125,12 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 
 /* Connections */
 .sec-lbl{font-size:.65rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:12px}
+.goal-banner{display:none;align-items:center;gap:10px;background:linear-gradient(90deg,rgba(232,160,0,.12),rgba(232,160,0,.05));border:1px solid rgba(232,160,0,.35);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:.83rem;font-weight:600;color:var(--txt)}
+.goal-banner.visible{display:flex;animation:goalPulse .5s ease}
+.goal-banner-icon{font-size:1.1rem;flex-shrink:0}
+.goal-banner-text{flex:1}
+.goal-banner-text strong{color:var(--gold)}
+@keyframes goalPulse{0%{opacity:0;transform:translateY(-4px)}60%{opacity:1;transform:translateY(1px)}100%{transform:translateY(0)}}
 .tabs{display:flex;gap:2px;margin-bottom:14px;background:var(--s2);border-radius:8px;padding:3px}
 .tab{flex:1;padding:6px 10px;border-radius:6px;border:none;background:none;color:var(--mut);font-family:inherit;font-size:.75rem;font-weight:600;cursor:pointer;transition:background .15s,color .15s}
 .tab.active{background:var(--s1);color:var(--txt)}
@@ -273,6 +284,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
       <span class="start-link">&#8594;</span>
       <span class="start-node">Target</span>
     </div>
+    <div id="dailyDateLbl" class="start-kicker" style="margin-bottom:6px;opacity:.7"></div>
     <div class="start-actions">
       <button class="btn btn-gold" onclick="game.startDaily()">Today&#39;s Challenge</button>
       <button class="btn btn-ghost" onclick="game.startRandom()">Random Game</button>
@@ -299,7 +311,12 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 
 <div id="loadingScreen" class="screen">
   <div class="spinner"></div>
-  <p class="load-txt">Finding your challenge&#8230;</p>
+  <p class="load-txt" id="loadTxt">Finding your challenge&#8230;</p>
+  <div class="load-preview" id="loadPreview">
+    <span class="load-preview-node" id="loadPreviewStart"></span>
+    <span class="load-preview-arr">→</span>
+    <span class="load-preview-node" id="loadPreviewEnd"></span>
+  </div>
 </div>
 
 <div id="gameScreen" class="screen">
@@ -307,6 +324,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     <div style="display:flex;gap:10px;align-items:center;flex-shrink:0">
       <button class="hdr-back" onclick="game.reset()">&#8592; Home</button>
       <button class="hdr-back" onclick="game.startRandom()" style="color:var(--gold)">&#8635; New</button>
+      <span id="hdrDateBadge" style="display:none;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);border:1px solid var(--bdr);border-radius:6px;padding:3px 7px;white-space:nowrap"></span>
     </div>
     <div class="hdr-mid">
       <div class="hdr-node">
@@ -322,7 +340,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
         <button class="btn btn-ghost btn-sm" onclick="game.reverseGame()" title="Reverse direction" style="padding:5px 8px;font-size:.9rem;line-height:1">&#8644;</button>
       </div>
     </div>
-    <div class="hdr-clicks">
+    <div class="hdr-clicks" ondblclick="game.toggleDebug()">
       <span id="clickCounter" class="clicks-n">0</span>
       <span class="clicks-l">clicks</span>
     </div>
@@ -340,6 +358,10 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
       </div>
     </div>
     <div id="pathRow" class="path-row"></div>
+    <div id="goalBanner" class="goal-banner">
+      <span class="goal-banner-icon">🎯</span>
+      <span class="goal-banner-text">The goal is in reach — <strong id="goalBannerName"></strong> is here!</span>
+    </div>
     <div id="secLbl" class="sec-lbl">CONNECTIONS</div>
     <div id="tabsRow" class="tabs" style="display:none">
       <button class="tab active" id="tabAll" onclick="game.setTab('all')">All</button>
@@ -348,7 +370,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     </div>
     <div id="grid" class="grid"></div>
     <div class="debug-footer">
-      <button id="debugBtn" class="btn btn-ghost btn-sm debug-btn" onclick="game.copyDebugLink()">Debug link</button>
+      <button id="debugBtn" class="btn btn-ghost btn-sm debug-btn" onclick="game.copyDebugLink()" style="display:none">Debug link</button>
       <div class="game-credit">Data and images by <a href="https://www.themoviedb.org/" target="_blank" rel="noopener">TMDB</a>.</div>
     </div>
   </div>
@@ -724,6 +746,12 @@ const game = window.game = {
   async startDaily() {
     const key = dateKey();
     const rand = seededRandom(hashString('daily-' + key));
+    // Show date badge in header
+    const badge = document.getElementById('hdrDateBadge');
+    if (badge) {
+      badge.textContent = new Date().toLocaleDateString('en-US', {month:'short', day:'numeric'});
+      badge.style.display = '';
+    }
     showOnly('loadingScreen');
     try {
       const pools = await fetchChallengePools({
@@ -734,15 +762,21 @@ const game = window.game = {
       const challenge = buildChallenge(pools.people, pools.titles, rand);
       if (!challenge) throw 0;
       this.optDist = null;
+      this._showLoadPreview(challenge.s, challenge.e);
+      await new Promise(r => setTimeout(r, 320));
       this.init(challenge.s, challenge.e);
     } catch(_) {
       const c = fallbackDailyChallenge(key);
       this.optDist = null;
+      this._showLoadPreview(c.s, c.e);
+      await new Promise(r => setTimeout(r, 320));
       this.init(c.s, c.e);
     }
   },
 
   async startRandom() {
+    const badge = document.getElementById('hdrDateBadge');
+    if (badge) badge.style.display = 'none';
     showOnly('loadingScreen');
     try {
       const pools = await fetchChallengePools({
@@ -753,11 +787,25 @@ const game = window.game = {
       const challenge = buildChallenge(pools.people, pools.titles);
       if (!challenge) throw 0;
       this.optDist = null;
+      this._showLoadPreview(challenge.s, challenge.e);
+      await new Promise(r => setTimeout(r, 320));
       this.init(challenge.s, challenge.e);
     } catch(_) {
       const c = DAILY[Math.floor(Math.random() * DAILY.length)];
+      this._showLoadPreview(c.s, c.e);
+      await new Promise(r => setTimeout(r, 320));
       this.init(c.s, c.e);
     }
+  },
+
+  _showLoadPreview(start, end) {
+    const preview = document.getElementById('loadPreview');
+    const txt = document.getElementById('loadTxt');
+    if (!preview) return;
+    document.getElementById('loadPreviewStart').textContent = start.name;
+    document.getElementById('loadPreviewEnd').textContent = end.name;
+    preview.classList.add('visible');
+    if (txt) txt.textContent = 'Your challenge:';
   },
 
   async init(start, end, opts = {}) {
@@ -865,10 +913,12 @@ const game = window.game = {
   renderCurrentPrompt() {
     const prompt = document.getElementById('curPrompt');
     if (!prompt) return;
-    const label = this.cur.type === 'person'
+    // Only show prompt on first step — after that the player knows how it works
+    if (this.clicks > 0) { prompt.style.display = 'none'; return; }
+    prompt.style.display = '';
+    prompt.textContent = this.cur.type === 'person'
       ? 'Choose a film or show from this filmography.'
       : 'Choose the next person connected to this title.';
-    prompt.textContent = label;
   },
 
   renderCurrentMeta() {
@@ -910,11 +960,14 @@ const game = window.game = {
         marker = document.createElement('span');
         marker.className = 'pill-dot';
       }
+      const stepNum = document.createElement('span');
+      stepNum.className = 'pill-step';
+      stepNum.textContent = i + 1;
       const name = document.createElement('span');
       name.className = 'pill-name';
       name.textContent = n.name;
-      d.append(marker, name);
-      d.title = n.name;
+      d.append(marker, stepNum, name);
+      d.title = n.name + ' (step ' + (i + 1) + ')';
       el.appendChild(d);
     });
     el.scrollLeft = el.scrollWidth;
@@ -1140,6 +1193,20 @@ const game = window.game = {
         this.renderEmptyConnections(node);
         return;
       }
+
+      // Goal banner
+      const goalItem = items.find(i => i.id === this.end.id && i.type === this.end.type);
+      const banner = document.getElementById('goalBanner');
+      if (banner) {
+        if (goalItem) {
+          document.getElementById('goalBannerName').textContent = this.end.name;
+          banner.classList.remove('visible');
+          void banner.offsetWidth;
+          banner.classList.add('visible');
+        } else {
+          banner.classList.remove('visible');
+        }
+      }
       // Show tabs if person node (has movies+tv)
       const hasBothTypes = items.some(i=>i.type==='movie'||i.type==='tv') &&
                            items.some(i=>i.type==='tv');
@@ -1196,6 +1263,14 @@ const game = window.game = {
     } catch(_) {
       this.renderEmptyConnections(node, true);
     }
+  },
+
+  toggleDebug() {
+    const btn = document.getElementById('debugBtn');
+    if (!btn) return;
+    const visible = btn.style.display !== 'none';
+    btn.style.display = visible ? 'none' : '';
+    if (!visible) this._showToast('Debug mode on', 1200);
   },
 
   _showToast(html, duration = 2600) {
@@ -1451,6 +1526,9 @@ const game = window.game = {
 
   reset() {
     document.getElementById('winScreen').querySelectorAll('.confetti').forEach(c => c.remove());
+    document.getElementById('loadPreview')?.classList.remove('visible');
+    const loadTxt = document.getElementById('loadTxt');
+    if (loadTxt) loadTxt.textContent = 'Finding your challenge\u2026';
     history.replaceState(null, '', location.pathname + location.hash);
     showOnly('startScreen');
   },
@@ -1517,6 +1595,15 @@ const game = window.game = {
     }
   }
 };
+
+// Populate daily date label on home screen
+(function() {
+  const el = document.getElementById('dailyDateLbl');
+  if (!el) return;
+  const now = new Date();
+  const label = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  el.textContent = label;
+})();
 
 if (!loadGameFromUrl()) {
   showOnly('startScreen');
