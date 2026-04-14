@@ -11,29 +11,38 @@
             box-sizing: border-box;
         }
 
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #0f0f0f;
+            background-color: #0a0a0a;
             color: #ffffff;
-            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 20px;
         }
 
         .container {
-            max-width: 900px;
             width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
         }
 
         .screen {
             display: none;
+            width: 100%;
+            height: 100%;
             animation: fadeIn 0.3s ease-in;
         }
 
         .screen.active {
-            display: block;
+            display: flex;
+            flex-direction: column;
         }
 
         @keyframes fadeIn {
@@ -41,45 +50,64 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        @keyframes confetti {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+        }
+
         /* START SCREEN */
         #startScreen {
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            overflow-y: auto;
+        }
+
+        .start-content {
             text-align: center;
+            max-width: 600px;
+            width: 100%;
         }
 
         .logo {
-            font-size: 64px;
+            font-size: 72px;
             font-weight: 900;
             margin-bottom: 10px;
-            color: #ffd700;
-            text-shadow: 2px 2px 4px rgba(229, 9, 20, 0.5);
-            letter-spacing: 2px;
+            color: #f5c518;
+            text-shadow: 3px 3px 6px rgba(229, 9, 20, 0.6);
+            letter-spacing: 3px;
         }
 
         .tagline {
             font-size: 18px;
             color: #e50914;
-            margin-bottom: 40px;
+            margin-bottom: 50px;
             font-weight: 300;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
         }
 
         .button-group {
             display: flex;
             flex-direction: column;
             gap: 15px;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
         }
 
         button {
             padding: 16px 32px;
             font-size: 16px;
-            font-weight: 600;
+            font-weight: 700;
             border: none;
-            border-radius: 4px;
+            border-radius: 2px;
             cursor: pointer;
             transition: all 0.3s ease;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
         }
 
         .btn-primary {
@@ -89,39 +117,39 @@
 
         .btn-primary:hover {
             background-color: #f50920;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(229, 9, 20, 0.4);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 24px rgba(229, 9, 20, 0.5);
         }
 
         .btn-secondary {
-            background-color: #333333;
-            color: #ffd700;
-            border: 2px solid #ffd700;
+            background-color: transparent;
+            color: #f5c518;
+            border: 2px solid #f5c518;
         }
 
         .btn-secondary:hover {
-            background-color: #ffd700;
-            color: #0f0f0f;
-            transform: translateY(-2px);
+            background-color: #f5c518;
+            color: #0a0a0a;
+            transform: translateY(-3px);
+            box-shadow: 0 12px 24px rgba(245, 197, 24, 0.3);
         }
 
         .instructions {
             text-align: left;
             background-color: #1a1a1a;
-            padding: 20px;
-            border-radius: 4px;
+            padding: 25px;
+            border-radius: 2px;
             border-left: 4px solid #e50914;
-            margin-top: 30px;
             font-size: 14px;
-            line-height: 1.6;
+            line-height: 1.8;
         }
 
         .instructions h3 {
-            color: #ffd700;
-            margin-bottom: 10px;
+            color: #f5c518;
+            margin-bottom: 15px;
             text-transform: uppercase;
             font-size: 12px;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
         }
 
         .instructions ul {
@@ -130,8 +158,8 @@
         }
 
         .instructions li {
-            margin-bottom: 8px;
-            padding-left: 20px;
+            margin-bottom: 10px;
+            padding-left: 24px;
             position: relative;
         }
 
@@ -140,85 +168,190 @@
             position: absolute;
             left: 0;
             color: #e50914;
+            font-size: 10px;
+        }
+
+        /* LOADING SCREEN */
+        #loadingScreen {
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+        }
+
+        .loading-content {
+            text-align: center;
+        }
+
+        .loading-spinner {
+            width: 80px;
+            height: 80px;
+            border: 3px solid #2a2a2a;
+            border-top-color: #e50914;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 30px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 18px;
+            color: #f5c518;
+            font-weight: 600;
+            letter-spacing: 1px;
         }
 
         /* GAME SCREEN */
         #gameScreen {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-color: #0a0a0a;
+        }
+
+        .game-header {
+            padding: 20px 30px;
             background-color: #1a1a1a;
-            padding: 30px;
-            border-radius: 4px;
-            border: 1px solid #333333;
+            border-bottom: 1px solid #2a2a2a;
         }
 
         .challenge-header {
             display: grid;
             grid-template-columns: 1fr auto 1fr;
             gap: 20px;
-            margin-bottom: 30px;
             align-items: center;
+            margin-bottom: 15px;
         }
 
         .challenge-node {
-            background-color: #0f0f0f;
+            background-color: #0a0a0a;
             padding: 15px;
-            border-radius: 4px;
+            border-radius: 2px;
             border: 2px solid #e50914;
             text-align: center;
+            position: relative;
         }
 
         .challenge-node.end {
-            border-color: #ffd700;
+            border-color: #f5c518;
+        }
+
+        .challenge-node img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 2px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .challenge-node .no-img {
+            width: 100%;
+            height: 120px;
+            background: linear-gradient(135deg, #2a2a2a 0%, #333333 100%);
+            border-radius: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666666;
+            font-size: 11px;
+            margin-bottom: 8px;
         }
 
         .challenge-label {
-            font-size: 11px;
-            color: #999999;
+            font-size: 10px;
+            color: #888888;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
             margin-bottom: 5px;
         }
 
         .challenge-name {
-            font-size: 16px;
-            font-weight: 600;
-            color: #ffd700;
+            font-size: 14px;
+            font-weight: 700;
+            color: #f5c518;
+            line-height: 1.3;
         }
 
         .challenge-arrow {
-            font-size: 24px;
+            font-size: 28px;
             color: #e50914;
         }
 
+        .click-counter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #2a2a2a;
+        }
+
+        .click-counter {
+            background: linear-gradient(135deg, #e50914 0%, #b80710 100%);
+            padding: 8px 16px;
+            border-radius: 2px;
+            font-size: 14px;
+            color: white;
+            font-weight: 700;
+            letter-spacing: 1px;
+            min-width: 100px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(229, 9, 20, 0.3);
+        }
+
+        .click-counter.animate {
+            animation: pulse 0.4s ease;
+        }
+
+        .game-content {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 0;
+            overflow: hidden;
+        }
+
+        .left-panel {
+            background-color: #1a1a1a;
+            border-right: 1px solid #2a2a2a;
+            padding: 25px;
+            overflow-y: auto;
+        }
+
+        .right-panel {
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
         .current-node-section {
-            background-color: #0f0f0f;
+            background-color: #0a0a0a;
             padding: 20px;
-            border-radius: 4px;
+            border-radius: 2px;
             border: 2px solid #e50914;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
 
         .current-node-label {
-            font-size: 11px;
-            color: #999999;
+            font-size: 10px;
+            color: #888888;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 10px;
-        }
-
-        .current-node-content {
-            display: grid;
-            grid-template-columns: auto 1fr;
-            gap: 15px;
-            align-items: center;
+            letter-spacing: 1.5px;
+            margin-bottom: 12px;
         }
 
         .current-node-image {
-            width: 80px;
-            height: 120px;
-            background-color: #333333;
-            border-radius: 4px;
+            width: 100%;
+            height: 200px;
+            background-color: #2a2a2a;
+            border-radius: 2px;
             overflow: hidden;
-            flex-shrink: 0;
+            margin-bottom: 15px;
         }
 
         .current-node-image img {
@@ -227,116 +360,153 @@
             object-fit: cover;
         }
 
-        .no-img {
+        .current-node-image .no-img {
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, #333333 0%, #555555 100%);
+            background: linear-gradient(135deg, #2a2a2a 0%, #333333 100%);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #999999;
+            color: #666666;
             font-size: 12px;
         }
 
         .current-node-info h2 {
-            font-size: 24px;
-            color: #ffd700;
+            font-size: 22px;
+            color: #f5c518;
             margin-bottom: 5px;
+            font-weight: 700;
         }
 
         .current-node-type {
-            font-size: 12px;
+            font-size: 11px;
             color: #e50914;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 10px;
+            letter-spacing: 1.5px;
+            margin-bottom: 12px;
+            font-weight: 700;
         }
 
         .path-breadcrumb {
-            margin-bottom: 15px;
+            margin-top: 15px;
         }
 
         .breadcrumb-label {
-            font-size: 11px;
-            color: #999999;
+            font-size: 10px;
+            color: #888888;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 8px;
+            letter-spacing: 1.5px;
+            margin-bottom: 10px;
         }
 
         .breadcrumb {
             display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
+            flex-direction: column;
+            gap: 6px;
             font-size: 12px;
         }
 
         .breadcrumb-item {
-            background-color: #333333;
-            padding: 6px 12px;
-            border-radius: 12px;
+            background-color: #2a2a2a;
+            padding: 8px 12px;
+            border-radius: 2px;
             color: #cccccc;
+            border-left: 3px solid #2a2a2a;
+            transition: all 0.3s ease;
         }
 
         .breadcrumb-item.current {
             background-color: #e50914;
             color: white;
-            font-weight: 600;
+            font-weight: 700;
+            border-left-color: #e50914;
+            box-shadow: 0 4px 12px rgba(229, 9, 20, 0.3);
         }
 
-        .click-counter {
-            display: inline-block;
-            background-color: #333333;
-            padding: 6px 12px;
-            border-radius: 12px;
-            font-size: 12px;
-            color: #ffd700;
-            font-weight: 600;
+        .connections-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
 
         .connections-label {
-            font-size: 11px;
-            color: #999999;
+            font-size: 10px;
+            color: #888888;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin: 20px 0 15px 0;
+            letter-spacing: 1.5px;
+            margin-bottom: 15px;
         }
 
         #connections {
+            flex: 1;
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 12px;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 15px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        #connections::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #connections::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        #connections::-webkit-scrollbar-thumb {
+            background: #333333;
+            border-radius: 3px;
+        }
+
+        #connections::-webkit-scrollbar-thumb:hover {
+            background: #444444;
         }
 
         .connection-item {
-            background-color: #0f0f0f;
-            border: 1px solid #333333;
-            border-radius: 4px;
+            background-color: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 2px;
             cursor: pointer;
             transition: all 0.3s ease;
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            height: 100%;
         }
 
         .connection-item:hover {
             border-color: #e50914;
-            transform: translateY(-4px);
-            box-shadow: 0 8px 16px rgba(229, 9, 20, 0.3);
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 12px 24px rgba(229, 9, 20, 0.4), inset 0 0 20px rgba(229, 9, 20, 0.1);
         }
 
-        .connection-item img {
+        .connection-item-image {
             width: 100%;
-            height: 180px;
+            height: 160px;
+            background-color: #2a2a2a;
+            overflow: hidden;
+        }
+
+        .connection-item-image img {
+            width: 100%;
+            height: 100%;
             object-fit: cover;
         }
 
-        .connection-item .no-img {
+        .connection-item-image .no-img {
             width: 100%;
-            height: 180px;
+            height: 100%;
+            background: linear-gradient(135deg, #2a2a2a 0%, #333333 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666666;
+            font-size: 10px;
         }
 
-        .connection-item > div:last-child {
+        .connection-item-info {
             padding: 10px;
             flex-grow: 1;
             display: flex;
@@ -345,23 +515,40 @@
         }
 
         .item-name {
-            font-size: 12px;
-            font-weight: 600;
-            color: #ffd700;
+            font-size: 11px;
+            font-weight: 700;
+            color: #f5c518;
             line-height: 1.3;
             margin-bottom: 4px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
 
         .item-sub {
             font-size: 10px;
-            color: #999999;
+            color: #888888;
+        }
+
+        .skeleton-card {
+            background: linear-gradient(90deg, #2a2a2a 0%, #1a1a1a 50%, #2a2a2a 100%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 2px;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
         }
 
         .loading {
             color: #e50914;
             text-align: center;
-            padding: 20px;
+            padding: 30px;
             font-size: 14px;
+            grid-column: 1 / -1;
         }
 
         .error-message {
@@ -369,40 +556,63 @@
             border: 1px solid #e50914;
             color: #ffcccc;
             padding: 15px;
-            border-radius: 4px;
+            border-radius: 2px;
             margin-bottom: 20px;
             font-size: 13px;
         }
 
         /* WIN SCREEN */
         #winScreen {
-            background: linear-gradient(135deg, #1a1a1a 0%, #2a1a1a 100%);
+            justify-content: center;
+            align-items: center;
             padding: 40px;
-            border-radius: 4px;
-            border: 2px solid #e50914;
+            background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            pointer-events: none;
+        }
+
+        .win-content {
             text-align: center;
+            max-width: 700px;
+            width: 100%;
+            background-color: #1a1a1a;
+            padding: 50px;
+            border-radius: 2px;
+            border: 2px solid #e50914;
+            box-shadow: 0 20px 60px rgba(229, 9, 20, 0.3);
+            position: relative;
+            z-index: 10;
         }
 
         .win-title {
-            font-size: 48px;
+            font-size: 64px;
             font-weight: 900;
-            color: #ffd700;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(229, 9, 20, 0.5);
+            color: #f5c518;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 8px rgba(229, 9, 20, 0.5);
+            letter-spacing: 2px;
         }
 
         .win-subtitle {
             font-size: 24px;
             color: #e50914;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
+            font-weight: 600;
         }
 
         .win-stats {
-            background-color: #0f0f0f;
-            padding: 20px;
-            border-radius: 4px;
+            background-color: #0a0a0a;
+            padding: 25px;
+            border-radius: 2px;
             margin-bottom: 30px;
-            border: 1px solid #333333;
+            border: 1px solid #2a2a2a;
         }
 
         .stat-row {
@@ -418,13 +628,13 @@
 
         .stat {
             background-color: #1a1a1a;
-            padding: 15px;
-            border-radius: 4px;
+            padding: 20px;
+            border-radius: 2px;
             border-left: 4px solid #e50914;
         }
 
         .stat.good {
-            border-left-color: #00ff00;
+            border-left-color: #00cc00;
         }
 
         .stat.bad {
@@ -432,35 +642,36 @@
         }
 
         .stat-label {
-            font-size: 11px;
-            color: #999999;
+            font-size: 10px;
+            color: #888888;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 5px;
+            letter-spacing: 1.5px;
+            margin-bottom: 8px;
         }
 
         .stat-value {
-            font-size: 28px;
+            font-size: 36px;
             font-weight: 900;
-            color: #ffd700;
+            color: #f5c518;
         }
 
         .win-path {
-            background-color: #0f0f0f;
-            padding: 15px;
-            border-radius: 4px;
+            background-color: #0a0a0a;
+            padding: 20px;
+            border-radius: 2px;
             margin-bottom: 30px;
-            border: 1px solid #333333;
+            border: 1px solid #2a2a2a;
             text-align: left;
-            max-height: 150px;
+            max-height: 180px;
             overflow-y: auto;
         }
 
         .path-item {
             font-size: 12px;
             color: #cccccc;
-            padding: 4px 0;
-            border-bottom: 1px solid #333333;
+            padding: 8px 0;
+            border-bottom: 1px solid #2a2a2a;
+            font-weight: 500;
         }
 
         .path-item:last-child {
@@ -469,46 +680,89 @@
 
         .path-item.movie::before {
             content: "🎬 ";
+            margin-right: 8px;
             color: #e50914;
         }
 
         .path-item.person::before {
             content: "👤 ";
-            color: #ffd700;
+            margin-right: 8px;
+            color: #f5c518;
+        }
+
+        .comparison {
+            font-size: 13px;
+            color: #e50914;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #2a2a2a;
+            font-weight: 600;
         }
 
         .btn-again {
-            background-color: #ffd700;
-            color: #0f0f0f;
+            background-color: #f5c518;
+            color: #0a0a0a;
             font-weight: 700;
         }
 
         .btn-again:hover {
             background-color: #ffed4e;
-            transform: translateY(-2px);
-        }
-
-        .comparison {
-            font-size: 13px;
-            color: #999999;
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #333333;
+            transform: translateY(-3px);
+            box-shadow: 0 12px 24px rgba(245, 197, 24, 0.3);
         }
 
         /* RESPONSIVE */
+        @media (max-width: 1200px) {
+            .game-content {
+                grid-template-columns: 280px 1fr;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .game-content {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr;
+            }
+
+            .left-panel {
+                border-right: none;
+                border-bottom: 1px solid #2a2a2a;
+                padding: 20px;
+                max-height: 40vh;
+                overflow-y: auto;
+            }
+
+            .right-panel {
+                padding: 20px;
+            }
+
+            #connections {
+                grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+                gap: 10px;
+            }
+        }
+
         @media (max-width: 600px) {
             .logo {
-                font-size: 42px;
+                font-size: 48px;
             }
 
             .challenge-header {
                 grid-template-columns: 1fr;
-                gap: 10px;
+                gap: 12px;
             }
 
             .challenge-arrow {
                 transform: rotate(90deg);
+                font-size: 24px;
+            }
+
+            .challenge-node img {
+                height: 100px;
+            }
+
+            .challenge-node .no-img {
+                height: 100px;
             }
 
             #connections {
@@ -516,20 +770,27 @@
             }
 
             .win-title {
-                font-size: 36px;
+                font-size: 42px;
             }
 
-            #gameScreen {
-                padding: 20px;
+            .win-content {
+                padding: 30px;
             }
 
-            .current-node-content {
+            .game-header {
+                padding: 15px 20px;
+            }
+
+            .left-panel {
+                padding: 15px;
+            }
+
+            .right-panel {
+                padding: 15px;
+            }
+
+            .stat-row {
                 grid-template-columns: 1fr;
-            }
-
-            .current-node-image {
-                width: 100%;
-                height: auto;
             }
         }
     </style>
@@ -538,88 +799,113 @@
     <div class="container">
         <!-- START SCREEN -->
         <div id="startScreen" class="screen active">
-            <div class="logo">CINELINKS</div>
-            <div class="tagline">CONNECT MOVIES & ACTORS IN FEWER CLICKS</div>
+            <div class="start-content">
+                <div class="logo">CINELINKS</div>
+                <div class="tagline">CONNECT MOVIES & ACTORS IN FEWER CLICKS</div>
 
-            <div class="button-group">
-                <button class="btn-primary" onclick="game.startDaily()">TODAY'S CHALLENGE</button>
-                <button class="btn-secondary" onclick="game.startRandom()">RANDOM CHALLENGE</button>
+                <div class="button-group">
+                    <button class="btn-primary" onclick="game.startDaily()">TODAY'S CHALLENGE</button>
+                    <button class="btn-secondary" onclick="game.startRandom()">RANDOM CHALLENGE</button>
+                </div>
+
+                <div class="instructions">
+                    <h3>How to Play</h3>
+                    <ul>
+                        <li>You start at one actor or movie</li>
+                        <li>Navigate through connections (actors in films or films featuring actors)</li>
+                        <li>Reach your goal in as few clicks as possible</li>
+                        <li>Click any connection card to move to the next node</li>
+                        <li>Your path is tracked at the left — try to find the shortest route!</li>
+                    </ul>
+                </div>
             </div>
+        </div>
 
-            <div class="instructions">
-                <h3>How to Play</h3>
-                <ul>
-                    <li>Start from an actor or movie</li>
-                    <li>Navigate through connections (movies or actors)</li>
-                    <li>Reach the target in as few clicks as possible</li>
-                    <li>Click on any connection to move to the next node</li>
-                    <li>Track your path and click count</li>
-                </ul>
+        <!-- LOADING SCREEN -->
+        <div id="loadingScreen" class="screen">
+            <div class="loading-content">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">Finding your challenge...</div>
             </div>
         </div>
 
         <!-- GAME SCREEN -->
         <div id="gameScreen" class="screen">
-            <div class="challenge-header">
-                <div class="challenge-node">
-                    <div class="challenge-label">Start</div>
-                    <div class="challenge-name" id="startNodeName"></div>
+            <div class="game-header">
+                <div class="challenge-header">
+                    <div class="challenge-node">
+                        <div class="challenge-label">Start</div>
+                        <div id="startNodeImage"></div>
+                        <div class="challenge-name" id="startNodeName"></div>
+                    </div>
+                    <div class="challenge-arrow">→</div>
+                    <div class="challenge-node end">
+                        <div class="challenge-label">Goal</div>
+                        <div id="endNodeImage"></div>
+                        <div class="challenge-name" id="endNodeName"></div>
+                    </div>
                 </div>
-                <div class="challenge-arrow">→</div>
-                <div class="challenge-node end">
-                    <div class="challenge-label">Goal</div>
-                    <div class="challenge-name" id="endNodeName"></div>
+                <div class="click-counter-header">
+                    <div></div>
+                    <div class="click-counter" id="clickCounter">CLICKS: 0</div>
                 </div>
             </div>
 
-            <div class="current-node-section">
-                <div class="current-node-label">Current Node</div>
-                <div class="current-node-content">
-                    <div class="current-node-image">
-                        <div id="currentImage"></div>
-                    </div>
-                    <div>
-                        <div class="current-node-type" id="currentType"></div>
-                        <h2 id="currentName"></h2>
-                        <div class="path-breadcrumb">
-                            <div class="breadcrumb-label">Path (<span id="clickCount">0</span> clicks)</div>
-                            <div class="breadcrumb" id="breadcrumb"></div>
+            <div class="game-content">
+                <div class="left-panel">
+                    <div class="current-node-section">
+                        <div class="current-node-label">Current Node</div>
+                        <div class="current-node-image" id="currentNodeImage">
+                            <div class="no-img">Loading...</div>
+                        </div>
+                        <div class="current-node-info">
+                            <div class="current-node-type" id="currentType"></div>
+                            <h2 id="currentName"></h2>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <div class="connections-label">Available Connections (Top 25)</div>
-            <div id="connections">
-                <p class="loading">Loading connections...</p>
+                    <div class="path-breadcrumb">
+                        <div class="breadcrumb-label">Your Path</div>
+                        <div class="breadcrumb" id="breadcrumb"></div>
+                    </div>
+                </div>
+
+                <div class="right-panel">
+                    <div class="connections-section">
+                        <div class="connections-label">Available Connections (Top 25)</div>
+                        <div id="connections"></div>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- WIN SCREEN -->
         <div id="winScreen" class="screen">
-            <div class="win-title">YOU WON!</div>
-            <div class="win-subtitle">Connected in <span id="finalClicks">0</span> clicks!</div>
+            <div class="win-content">
+                <div class="win-title">YOU WON!</div>
+                <div class="win-subtitle">Connected in <span id="finalClicks">0</span> clicks!</div>
 
-            <div class="win-stats">
-                <div class="stat-row">
-                    <div class="stat">
-                        <div class="stat-label">Your Clicks</div>
-                        <div class="stat-value" id="playerClicks">0</div>
+                <div class="win-stats">
+                    <div class="stat-row">
+                        <div class="stat">
+                            <div class="stat-label">Your Clicks</div>
+                            <div class="stat-value" id="playerClicks">0</div>
+                        </div>
+                        <div class="stat good" id="optimalStat">
+                            <div class="stat-label">Optimal (est.)</div>
+                            <div class="stat-value" id="optimalClicks">?</div>
+                        </div>
                     </div>
-                    <div class="stat good" id="optimalStat">
-                        <div class="stat-label">Optimal (est.)</div>
-                        <div class="stat-value" id="optimalClicks">?</div>
-                    </div>
+                    <div class="comparison" id="comparison"></div>
                 </div>
-                <div class="comparison" id="comparison"></div>
-            </div>
 
-            <div class="win-path">
-                <div class="breadcrumb-label">Your Path</div>
-                <div id="winPath"></div>
-            </div>
+                <div class="win-path">
+                    <div class="breadcrumb-label">Your Winning Path</div>
+                    <div id="winPath"></div>
+                </div>
 
-            <button class="btn-again btn-primary" onclick="game.reset()">PLAY AGAIN</button>
+                <button class="btn-again btn-primary" onclick="game.reset()">PLAY AGAIN</button>
+            </div>
         </div>
     </div>
 
@@ -629,9 +915,12 @@
             {start: {name:"Meryl Streep", type:"person", id:5064}, end: {name:"Inception", type:"movie", id:27205}},
             {start: {name:"Johnny Depp", type:"person", id:85}, end: {name:"The Shawshank Redemption", type:"movie", id:278}},
             {start: {name:"Natalie Portman", type:"person", id:524}, end: {name:"Pulp Fiction", type:"movie", id:680}},
-            {start: {name:"The Matrix", type:"movie", id:603}, end: {name:"Cate Blanchett", type:"person", id:112}},
             {start: {name:"Brad Pitt", type:"person", id:287}, end: {name:"Forrest Gump", type:"movie", id:13}},
-            {start: {name:"Titanic", type:"movie", id:597}, end: {name:"Leonardo DiCaprio", type:"person", id:6193}}
+            {start: {name:"Cate Blanchett", type:"person", id:112}, end: {name:"The Matrix", type:"movie", id:603}},
+            {start: {name:"Scarlett Johansson", type:"person", id:1245}, end: {name:"Goodfellas", type:"movie", id:769}},
+            {start: {name:"The Godfather", type:"movie", id:238}, end: {name:"Diane Keaton", type:"person", id:2063}},
+            {start: {name:"Morgan Freeman", type:"person", id:192}, end: {name:"Fight Club", type:"movie", id:550}},
+            {start: {name:"Titanic", type:"movie", id:597}, end: {name:"Tom Cruise", type:"person", id:500}},
         ];
 
         const game = {
@@ -640,6 +929,8 @@
             endNode: null,
             path: [],
             clicks: 0,
+            visited: new Set(),
+            optimalDistance: null,
 
             getDayOfYear() {
                 const now = new Date();
@@ -652,44 +943,222 @@
             startDaily() {
                 const dayOfYear = this.getDayOfYear();
                 const challenge = DAILY_CHALLENGES[dayOfYear % DAILY_CHALLENGES.length];
-                this.init(challenge.start, challenge.end);
+                this.init(challenge.start, challenge.end, true);
             },
 
-            startRandom() {
-                const idx1 = Math.floor(Math.random() * DAILY_CHALLENGES.length);
-                let idx2 = Math.floor(Math.random() * DAILY_CHALLENGES.length);
-                while (idx2 === idx1) idx2 = Math.floor(Math.random() * DAILY_CHALLENGES.length);
-
-                const start = DAILY_CHALLENGES[idx1].start;
-                const end = DAILY_CHALLENGES[idx2].end;
-                this.init(start, end);
+            async startRandom() {
+                this.showLoading();
+                await this.generateRandomChallenge();
             },
 
-            init(start, end) {
+            async generateRandomChallenge() {
+                let challenge = null;
+                let attempts = 0;
+                const maxAttempts = 5;
+
+                while (!challenge && attempts < maxAttempts) {
+                    try {
+                        const options = ['person->movie', 'movie->person', 'person->person', 'movie->movie'];
+                        const option = options[Math.floor(Math.random() * options.length)];
+
+                        let start, end;
+
+                        if (option === 'person->movie' || option === 'person->person') {
+                            start = await this.getRandomPerson();
+                            if (!start) { attempts++; continue; }
+                        }
+                        if (option === 'movie->person' || option === 'movie->movie') {
+                            start = await this.getRandomMovie();
+                            if (!start) { attempts++; continue; }
+                        }
+
+                        if (option === 'person->movie' || option === 'movie->movie') {
+                            end = await this.getRandomMovie();
+                            if (!end) { attempts++; continue; }
+                        } else {
+                            end = await this.getRandomPerson();
+                            if (!end) { attempts++; continue; }
+                        }
+
+                        // Check path exists and is >= 3 steps
+                        const depth = await this.bfsDepth(start, end, 4);
+                        if (depth >= 3) {
+                            challenge = {start, end};
+                            this.optimalDistance = depth;
+                        } else {
+                            attempts++;
+                        }
+                    } catch (err) {
+                        console.error('Error generating challenge:', err);
+                        attempts++;
+                    }
+                }
+
+                if (challenge) {
+                    this.init(challenge.start, challenge.end, false);
+                } else {
+                    // Fallback to a random daily challenge
+                    const idx = Math.floor(Math.random() * DAILY_CHALLENGES.length);
+                    const fallback = DAILY_CHALLENGES[idx];
+                    this.init(fallback.start, fallback.end, false);
+                }
+            },
+
+            async getRandomPerson() {
+                try {
+                    const data = await fetch('/api/tmdb?path=person/popular').then(r => r.json());
+                    const candidates = (data.results || []).filter(p => p.profile_path && p.id);
+                    if (candidates.length === 0) return null;
+                    const person = candidates[Math.floor(Math.random() * candidates.length)];
+                    return {name: person.name, type: 'person', id: person.id};
+                } catch (err) {
+                    console.error('Error getting random person:', err);
+                    return null;
+                }
+            },
+
+            async getRandomMovie() {
+                try {
+                    const data = await fetch('/api/tmdb?path=movie/popular').then(r => r.json());
+                    const candidates = (data.results || []).filter(m => m.poster_path && m.id);
+                    if (candidates.length === 0) return null;
+                    const movie = candidates[Math.floor(Math.random() * candidates.length)];
+                    return {name: movie.title, type: 'movie', id: movie.id};
+                } catch (err) {
+                    console.error('Error getting random movie:', err);
+                    return null;
+                }
+            },
+
+            async bfsDepth(start, end, maxDepth) {
+                try {
+                    if (start.id === end.id && start.type === end.type) return 0;
+
+                    // Level 1: connections of start
+                    const level1 = await this.getConnectionsQuick(start);
+                    for (const node of level1) {
+                        if (node.id === end.id && node.type === end.type) return 1;
+                    }
+                    if (maxDepth === 1) return Infinity;
+
+                    // Level 2: connections of level 1 nodes
+                    const level2 = [];
+                    for (const node of level1) {
+                        const connections = await this.getConnectionsQuick(node);
+                        for (const conn of connections) {
+                            if (conn.id === end.id && conn.type === end.type) return 2;
+                            level2.push(conn);
+                        }
+                    }
+                    if (maxDepth === 2) return Infinity;
+
+                    // Level 3: connections of level 2 nodes (sampled)
+                    const sampled = level2.slice(0, 30);
+                    for (const node of sampled) {
+                        const connections = await this.getConnectionsQuick(node);
+                        for (const conn of connections) {
+                            if (conn.id === end.id && conn.type === end.type) return 3;
+                        }
+                    }
+
+                    return Infinity;
+                } catch (err) {
+                    console.error('BFS error:', err);
+                    return Infinity;
+                }
+            },
+
+            async getConnectionsQuick(node) {
+                try {
+                    let items = [];
+                    if (node.type === 'movie') {
+                        const data = await fetch('/api/tmdb?path=movie/' + node.id + '/credits').then(r => r.json());
+                        items = (data.cast || []).slice(0, 10).map(p => ({
+                            name: p.name,
+                            type: 'person',
+                            id: p.id
+                        }));
+                    } else {
+                        const data = await fetch('/api/tmdb?path=person/' + node.id + '/movie_credits').then(r => r.json());
+                        items = (data.cast || []).slice(0, 10).map(m => ({
+                            name: m.title,
+                            type: 'movie',
+                            id: m.id
+                        }));
+                    }
+                    return items;
+                } catch (err) {
+                    return [];
+                }
+            },
+
+            showLoading() {
+                document.getElementById('startScreen').classList.remove('active');
+                document.getElementById('loadingScreen').classList.add('active');
+                document.getElementById('gameScreen').classList.remove('active');
+                document.getElementById('winScreen').classList.remove('active');
+            },
+
+            async init(start, end, isDaily) {
                 this.startNode = start;
                 this.endNode = end;
                 this.currentNode = start;
                 this.path = [start];
                 this.clicks = 0;
+                this.visited.clear();
+                this.visited.add(start.type + '-' + start.id);
 
                 document.getElementById('startScreen').classList.remove('active');
+                document.getElementById('loadingScreen').classList.remove('active');
                 document.getElementById('gameScreen').classList.add('active');
                 document.getElementById('winScreen').classList.remove('active');
+
+                await this.updateNodeImages(start, 'start');
+                await this.updateNodeImages(end, 'end');
 
                 document.getElementById('startNodeName').textContent = start.name;
                 document.getElementById('endNodeName').textContent = end.name;
 
                 this.updateUI();
-                this.loadConnections(start);
+                await this.loadConnections(start);
+            },
+
+            async updateNodeImages(node, position) {
+                try {
+                    let imageUrl = '';
+                    if (node.type === 'person') {
+                        const data = await fetch('/api/tmdb?path=person/' + node.id).then(r => r.json());
+                        if (data.profile_path) {
+                            imageUrl = 'https://image.tmdb.org/t/p/w342' + data.profile_path;
+                        }
+                    } else {
+                        const data = await fetch('/api/tmdb?path=movie/' + node.id).then(r => r.json());
+                        if (data.poster_path) {
+                            imageUrl = 'https://image.tmdb.org/t/p/w342' + data.poster_path;
+                        }
+                    }
+
+                    const container = document.getElementById(position + 'NodeImage');
+                    if (imageUrl) {
+                        container.innerHTML = '<img src="' + imageUrl + '" alt="" onerror="this.style.display=\'none\'">';
+                    } else {
+                        container.innerHTML = '<div class="no-img">No Image</div>';
+                    }
+                } catch (err) {
+                    console.error('Error loading node image:', err);
+                    const container = document.getElementById(position + 'NodeImage');
+                    container.innerHTML = '<div class="no-img">No Image</div>';
+                }
             },
 
             updateUI() {
-                document.getElementById('currentType').textContent = this.currentNode.type === 'movie' ? 'Movie' : 'Actor';
+                document.getElementById('currentType').textContent = this.currentNode.type === 'movie' ? 'MOVIE' : 'ACTOR';
                 document.getElementById('currentName').textContent = this.currentNode.name;
-                document.getElementById('clickCount').textContent = this.clicks;
 
-                const imageContainer = document.getElementById('currentImage');
-                imageContainer.innerHTML = '<div class="no-img"></div>';
+                const counter = document.getElementById('clickCounter');
+                counter.textContent = 'CLICKS: ' + this.clicks;
+                counter.classList.add('animate');
+                setTimeout(() => counter.classList.remove('animate'), 400);
 
                 const breadcrumbDiv = document.getElementById('breadcrumb');
                 breadcrumbDiv.innerHTML = '';
@@ -699,31 +1168,66 @@
                     div.textContent = node.name;
                     breadcrumbDiv.appendChild(div);
                 });
+
+                this.updateCurrentNodeImage();
+            },
+
+            async updateCurrentNodeImage() {
+                try {
+                    let imageUrl = '';
+                    if (this.currentNode.type === 'person') {
+                        const data = await fetch('/api/tmdb?path=person/' + this.currentNode.id).then(r => r.json());
+                        if (data.profile_path) {
+                            imageUrl = 'https://image.tmdb.org/t/p/w342' + data.profile_path;
+                        }
+                    } else {
+                        const data = await fetch('/api/tmdb?path=movie/' + this.currentNode.id).then(r => r.json());
+                        if (data.poster_path) {
+                            imageUrl = 'https://image.tmdb.org/t/p/w342' + data.poster_path;
+                        }
+                    }
+
+                    const container = document.getElementById('currentNodeImage');
+                    if (imageUrl) {
+                        container.innerHTML = '<img src="' + imageUrl + '" alt="" onerror="this.style.display=\'none\'">';
+                    } else {
+                        container.innerHTML = '<div class="no-img">No Image</div>';
+                    }
+                } catch (err) {
+                    console.error('Error loading current node image:', err);
+                }
             },
 
             async loadConnections(node) {
                 const container = document.getElementById('connections');
-                container.innerHTML = '<p class="loading">Loading connections...</p>';
+                container.innerHTML = '';
+
+                // Create skeleton loaders
+                for (let i = 0; i < 12; i++) {
+                    const skeleton = document.createElement('div');
+                    skeleton.className = 'connection-item skeleton-card';
+                    container.appendChild(skeleton);
+                }
 
                 try {
                     let items = [];
                     if (node.type === 'movie') {
                         const data = await fetch('/api/tmdb?path=movie/' + node.id + '/credits').then(r => r.json());
-                        items = (data.cast || []).slice(0, 25).map(p => ({
+                        items = (data.cast || []).sort((a, b) => (a.order || 999) - (b.order || 999)).slice(0, 25).map(p => ({
                             name: p.name,
                             type: 'person',
                             id: p.id,
                             image: p.profile_path,
-                            subtitle: p.character
+                            subtitle: p.character || 'Actor'
                         }));
                     } else {
                         const data = await fetch('/api/tmdb?path=person/' + node.id + '/movie_credits').then(r => r.json());
-                        items = (data.cast || []).slice(0, 25).map(m => ({
+                        items = (data.cast || []).sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0)).slice(0, 25).map(m => ({
                             name: m.title,
                             type: 'movie',
                             id: m.id,
                             image: m.poster_path,
-                            subtitle: m.release_date ? m.release_date.slice(0, 4) : ''
+                            subtitle: m.release_date ? m.release_date.slice(0, 4) : 'No date'
                         }));
                     }
 
@@ -738,32 +1242,48 @@
                         div.className = 'connection-item';
 
                         const imgDiv = document.createElement('div');
+                        imgDiv.className = 'connection-item-image';
                         if (item.image) {
-                            imgDiv.innerHTML = '<img src="https://image.tmdb.org/t/p/w185' + item.image + '" alt="" onerror="this.replaceWith(document.createElement(\'div\')).classList.add(\'no-img\')">';
+                            imgDiv.innerHTML = '<img src="https://image.tmdb.org/t/p/w342' + item.image + '" alt="" onerror="this.parentElement.innerHTML=\'<div class=\\\"no-img\\\">No Image</div>\'">';
                         } else {
-                            imgDiv.innerHTML = '<div class="no-img"></div>';
+                            imgDiv.innerHTML = '<div class="no-img">No Image</div>';
                         }
 
                         const infoDiv = document.createElement('div');
-                        infoDiv.innerHTML = '<div class="item-name">' + item.name + '</div><div class="item-sub">' + (item.subtitle || '') + '</div>';
+                        infoDiv.className = 'connection-item-info';
+                        infoDiv.innerHTML = '<div class="item-name">' + this.escapeHtml(item.name) + '</div><div class="item-sub">' + this.escapeHtml(item.subtitle) + '</div>';
 
                         div.appendChild(imgDiv);
                         div.appendChild(infoDiv);
-                        div.onclick = () => game.navigateTo({name: item.name, type: item.type, id: item.id});
+                        div.onclick = () => this.navigateTo({name: item.name, type: item.type, id: item.id});
                         container.appendChild(div);
                     });
                 } catch (err) {
+                    console.error('Error loading connections:', err);
                     container.innerHTML = '<p class="error-message">Failed to load connections. Please try again.</p>';
                 }
             },
 
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            },
+
             async navigateTo(node) {
+                const key = node.type + '-' + node.id;
+                if (this.visited.has(key)) {
+                    return; // Prevent revisiting
+                }
+
+                this.visited.add(key);
                 this.currentNode = node;
                 this.clicks++;
                 this.path.push(node);
                 this.updateUI();
 
                 if (node.id === this.endNode.id && node.type === this.endNode.type) {
+                    await new Promise(resolve => setTimeout(resolve, 300));
                     this.showWin();
                     return;
                 }
@@ -774,6 +1294,8 @@
             showWin() {
                 document.getElementById('gameScreen').classList.remove('active');
                 document.getElementById('winScreen').classList.add('active');
+
+                this.createConfetti();
 
                 document.getElementById('finalClicks').textContent = this.clicks;
                 document.getElementById('playerClicks').textContent = this.clicks;
@@ -789,23 +1311,37 @@
 
                 const optimalStat = document.getElementById('optimalStat');
                 const comparisonDiv = document.getElementById('comparison');
-                if (this.clicks === 1) {
-                    document.getElementById('optimalClicks').textContent = '1';
+
+                let estimatedOptimal = this.optimalDistance || Math.max(2, Math.floor(Math.random() * (this.clicks - 1)) + 2);
+
+                document.getElementById('optimalClicks').textContent = estimatedOptimal;
+
+                if (this.clicks <= estimatedOptimal) {
                     optimalStat.classList.remove('bad');
                     optimalStat.classList.add('good');
-                    comparisonDiv.innerHTML = '🎯 Perfect! You found the direct connection!';
+                    comparisonDiv.innerHTML = '✓ Excellent! You matched or beat the estimated optimal path!';
                 } else {
-                    const estimated = Math.max(1, Math.floor(Math.random() * 3) + 2);
-                    document.getElementById('optimalClicks').textContent = estimated;
-                    if (this.clicks <= estimated) {
-                        optimalStat.classList.remove('bad');
-                        optimalStat.classList.add('good');
-                        comparisonDiv.innerHTML = '✓ Great job! You matched or beat the estimated path.';
-                    } else {
-                        optimalStat.classList.remove('good');
-                        optimalStat.classList.add('bad');
-                        comparisonDiv.innerHTML = '• There may have been a shorter path, but nice try!';
-                    }
+                    optimalStat.classList.remove('good');
+                    optimalStat.classList.add('bad');
+                    comparisonDiv.innerHTML = '↓ There was likely a shorter path, but great job connecting!';
+                }
+            },
+
+            createConfetti() {
+                const colors = ['#e50914', '#f5c518', '#ffffff'];
+                for (let i = 0; i < 40; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.top = '-10px';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                    document.getElementById('winScreen').appendChild(confetti);
+
+                    const duration = 2000 + Math.random() * 1000;
+                    confetti.style.animation = 'confetti ' + (duration / 1000) + 's ease-out forwards';
+
+                    setTimeout(() => confetti.remove(), duration);
                 }
             },
 
@@ -813,6 +1349,7 @@
                 document.getElementById('startScreen').classList.add('active');
                 document.getElementById('gameScreen').classList.remove('active');
                 document.getElementById('winScreen').classList.remove('active');
+                document.getElementById('loadingScreen').classList.remove('active');
             }
         };
     </script>
