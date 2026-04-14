@@ -428,6 +428,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 
 <div id="deadEndToast"></div>
 
+<script src="daily-challenges.js"></script>
 <script>
 const DAILY_TIME_ZONE = 'Europe/Madrid';
 const DAILY_ALGO_VERSION = 2;
@@ -790,6 +791,37 @@ function fallbackDailyChallenge(key) {
   return {s:{...c.s}, e:{...c.e}};
 }
 
+function dailyListIndex(key, length) {
+  const [year, month, day] = key.split('-').map(Number);
+  const days = Math.floor(Date.UTC(year, month - 1, day) / 86400000);
+  return ((days % length) + length) % length;
+}
+
+function dailyPoolNode(type, id) {
+  const source = type === 'person' ? DAILY_POOL.people : DAILY_POOL.titles;
+  const node = source.find(item => item.type === type && item.id === id);
+  return node ? curatedNode(node) : null;
+}
+
+function challengeFromKey(rawKey) {
+  const match = /^(person|movie|tv):(\d+)>(person|movie|tv):(\d+)$/.exec(rawKey || '');
+  if (!match) return null;
+  const start = dailyPoolNode(match[1], Number(match[2]));
+  const end = dailyPoolNode(match[3], Number(match[4]));
+  return start && end ? {s:start, e:end} : null;
+}
+
+function listedDailyChallenge(key) {
+  const list = (window.DAILY_CHALLENGE_KEYS || []).filter(Boolean);
+  if (!list.length) return null;
+  const start = dailyListIndex(key, list.length);
+  for (let i = 0; i < list.length; i++) {
+    const challenge = challengeFromKey(list[(start + i) % list.length]);
+    if (challenge) return challenge;
+  }
+  return null;
+}
+
 function scoreNumber(value) {
   const n = Number.parseInt(value, 10);
   return Number.isFinite(n) && n > 0 ? n : null;
@@ -987,7 +1019,7 @@ const game = window.game = {
       badge.style.display = '';
     }
     showOnly('loadingScreen');
-    const challenge = buildDailyChallenge(key);
+    const challenge = listedDailyChallenge(key) || buildDailyChallenge(key);
     const score = await fetchDailyScore(key);
     this.optDist = null;
     this._showLoadPreview(challenge.s, challenge.e);
