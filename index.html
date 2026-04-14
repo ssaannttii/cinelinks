@@ -182,6 +182,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var
     <div id="winPath" class="win-path"></div>
     <div class="win-btns">
       <button class="btn btn-ghost" style="margin:0" onclick="game.reset()">Home</button>
+      <button class="btn btn-ghost" style="margin:0" id="shareBtn" onclick="navigator.clipboard.writeText(location.href).then(()=>{document.getElementById('shareBtn').textContent='Copied!'}).catch(()=>prompt('Share:',location.href))">Share link</button>
       <button class="btn btn-gold" style="margin:0" onclick="game.startRandom()">Random</button>
     </div>
   </div>
@@ -216,7 +217,7 @@ function showOnly(id) {
 
 function thumbEl(elId, node, url) {
   const el = document.getElementById(elId);
-  el.className = 'hdr-thumb' + (node.type === 'movie' ? ' movie' : '');
+  el.className = 'hdr-thumb' + (node.type !== 'person' ? ' movie' : '');
   el.innerHTML = url ? '<img src="' + url + '" alt="">' : '';
 }
 
@@ -275,6 +276,8 @@ const game = window.game = {
     document.getElementById('clickCounter').textContent  = '0';
 
     showOnly('gameScreen');
+    const sp = new URLSearchParams({s:start.id,st:start.type,sn:start.name,e:end.id,et:end.type,en:end.name});
+    history.replaceState(null,'','?'+sp.toString());
     this.renderCurrent();
     this.renderPath();
 
@@ -306,7 +309,8 @@ const game = window.game = {
 
   async loadCurImg(node) {
     try {
-      const d = await api((node.type === 'person' ? 'person/' : 'movie/') + node.id);
+      const prefix = node.type === 'person' ? 'person/' : (node.type === 'tv' ? 'tv/' : 'movie/');
+      const d = await api(prefix + node.id);
       const url = node.type === 'person'
         ? (d.profile_path ? IMGBASE + d.profile_path : '')
         : (d.poster_path  ? IMGBASE + d.poster_path  : '');
@@ -355,15 +359,28 @@ const game = window.game = {
 
     try {
       let items = [];
-      if (node.type === 'movie') {
-        const d = await api('movie/' + node.id + '/credits');
-        items = (d.cast||[]).sort((a,b)=>(a.order||999)-(b.order||999)).slice(0,25).map(p=>({
+      if (node.type === 'movie' || node.type === 'tv') {
+        const ep = node.type === 'tv' ? 'tv/' + node.id + '/credits' : 'movie/' + node.id + '/credits';
+        const d = await api(ep);
+        items = (d.cast||[]).sort((a,b)=>(a.order||999)-(b.order||999)).slice(0,40).map(p=>({
           name:p.name, type:'person', id:p.id, img:p.profile_path, sub:p.character||''
         }));
       } else {
-        const d = await api('person/' + node.id + '/movie_credits');
-        items = (d.cast||[]).sort((a,b)=>(b.vote_count||0)-(a.vote_count||0)).slice(0,25).map(m=>({
-          name:m.title, type:'movie', id:m.id, img:m.poster_path, sub:m.release_date?m.release_date.slice(0,4):''
+        const d = await api('person/' + node.id + '/combined_credits');
+        const allCredits = (d.cast||[]).filter(m => m.media_type === 'movie' || m.media_type === 'tv');
+        const thisYear = new Date().getFullYear();
+        items = allCredits.sort((a,b) => {
+          const yearA = (a.release_date||a.first_air_date||'').slice(0,4)|0;
+          const yearB = (b.release_date||b.first_air_date||'').slice(0,4)|0;
+          const boostA = yearA >= thisYear - 1 ? 2000 : 0;
+          const boostB = yearB >= thisYear - 1 ? 2000 : 0;
+          return ((b.vote_count||0) + boostB) - ((a.vote_count||0) + boostA);
+        }).slice(0,30).map(m=>({
+          name: m.title || m.name,
+          type: m.media_type === 'tv' ? 'tv' : 'movie',
+          id: m.id,
+          img: m.poster_path,
+          sub: (m.release_date||m.first_air_date||'').slice(0,4) + (m.media_type==='tv' ? ' · TV' : '')
         }));
       }
 
@@ -421,6 +438,8 @@ const game = window.game = {
     document.getElementById('playerClicks').textContent = this.clicks;
     const est = this.optDist || Math.max(2, Math.ceil(this.clicks * 0.7));
     document.getElementById('optimalClicks').textContent = est;
+    history.replaceState(null,'',location.href);
+
     document.getElementById('winCmp').textContent = this.clicks <= est
       ? 'Impressive — you matched or beat the estimated optimal!'
       : 'Good run! There might be a shorter path — give it another go?';
@@ -454,11 +473,29 @@ const game = window.game = {
 
   reset() {
     document.getElementById('winScreen').querySelectorAll('.confetti').forEach(c => c.remove());
-    showOnly('startScreen');
+    const urlP = new URLSearchParams(location.search);
+const urlS = urlP.get('s'), urlST = urlP.get('st')||'movie';
+const urlE = urlP.get('e'), urlET = urlP.get('et')||'person';
+const urlSN = urlP.get('sn'), urlEN = urlP.get('en');
+if (urlS && urlE && urlSN && urlEN) {
+  game.init({name:decodeURIComponent(urlSN),type:urlST,id:parseInt(urlS)},
+            {name:decodeURIComponent(urlEN),type:urlET,id:parseInt(urlE)});
+} else {
+  showOnly('startScreen');
+}
   }
 };
 
-showOnly('startScreen');
+const urlP = new URLSearchParams(location.search);
+const urlS = urlP.get('s'), urlST = urlP.get('st')||'movie';
+const urlE = urlP.get('e'), urlET = urlP.get('et')||'person';
+const urlSN = urlP.get('sn'), urlEN = urlP.get('en');
+if (urlS && urlE && urlSN && urlEN) {
+  game.init({name:decodeURIComponent(urlSN),type:urlST,id:parseInt(urlS)},
+            {name:decodeURIComponent(urlEN),type:urlET,id:parseInt(urlE)});
+} else {
+  showOnly('startScreen');
+}
 </script>
 </body>
 </html>
