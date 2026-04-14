@@ -1,4 +1,4 @@
-<\!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -754,21 +754,14 @@
     </style>
 </head>
 <body>
-    <\!-- Start Screen -->
+    <!-- Start Screen -->
     <div id="startScreen" class="screen active">
         <div class="container" style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; gap: 40px;">
             <div class="logo">
                 <h1>🎬 CineLinks</h1>
                 <p>Connect the dots between movies and actors</p>
             </div>
-            <input
-                    type="text"
-                    id="apiKeyInput"
-                    class="api-key-input"
-                    placeholder="Enter your TMDB API key (v4 Bearer Token)"
-                    autocomplete="off"
-                >
-                <div id="apiKeyError" class="error-message" style="display: none;"></div>
+            <div id="apiKeyError" class="error-message" style="display: none;"></div>
             </div>
 
             <div class="menu-buttons">
@@ -785,7 +778,7 @@
         </div>
     </div>
 
-    <\!-- Game Screen -->
+    <!-- Game Screen -->
     <div id="gameScreen" class="screen">
         <div class="container">
             <div class="game-header">
@@ -822,7 +815,7 @@
             </div>
 
             <div class="game-board">
-                <\!-- Left Node -->
+                <!-- Left Node -->
                 <div class="node-display current">
                     <div class="node-image" id="currentImage">
                         <span id="imageLoadingSpinner" class="loading" style="display: none;"></span>
@@ -834,7 +827,7 @@
                     </div>
                 </div>
 
-                <\!-- Center: Connections -->
+                <!-- Center: Connections -->
                 <div style="display: flex; flex-direction: column;">
                     <h3 style="color: var(--gray); text-transform: uppercase; font-size: 0.9rem; margin-bottom: 15px; letter-spacing: 1px;">
                         <span id="connectionsLabel">Connections</span>
@@ -844,7 +837,7 @@
                     </div>
                 </div>
 
-                <\!-- Right Node -->
+                <!-- Right Node -->
                 <div class="node-display">
                     <div class="node-image" id="targetImage"></div>
                     <div class="node-info">
@@ -857,11 +850,11 @@
         </div>
     </div>
 
-    <\!-- Win Screen -->
+    <!-- Win Screen -->
     <div id="winScreen" class="screen">
         <div class="container" style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; gap: 30px;">
             <div class="win-header">
-                <h1>🎉 Success\!</h1>
+                <h1>🎉 Success!</h1>
                 <p id="winMessage"></p>
             </div>
 
@@ -929,7 +922,7 @@
             async checkApiKey() {
                 try {
                     const response = await fetch(`${this.baseUrl}?path=movie/550`);
-                    if (\!response.ok) {
+                    if (!response.ok) {
                         console.error('TMDB proxy error');
                         return false;
                     }
@@ -949,7 +942,7 @@
 
             // Challenge Modes
             async startDailyChallenge() {
-                if (\!await this.checkApiKey()) return;
+                if (!await this.checkApiKey()) return;
 
                 const date = new Date();
                 const seed = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate();
@@ -971,7 +964,7 @@
             },
 
             async startRandomChallenge() {
-                if (\!await this.checkApiKey()) return;
+                if (!await this.checkApiKey()) return;
 
                 // Popular actors and movies
                 const actors = [
@@ -1011,18 +1004,18 @@
             },
 
             async startCustomChallenge() {
-                if (\!await this.checkApiKey()) return;
+                if (!await this.checkApiKey()) return;
 
                 // Show search modal for start node
                 const start = await this.showSearchModal('Select Start Node');
-                if (\!start) return;
+                if (!start) return;
 
                 // Show search modal for end node
                 const end = await this.showSearchModal('Select End Node');
-                if (\!end) return;
+                if (!end) return;
 
                 if (start.id === end.id && start.type === end.type) {
-                    alert('Start and end must be different\!');
+                    alert('Start and end must be different!');
                     return this.startCustomChallenge();
                 }
 
@@ -1118,7 +1111,7 @@
                             modal.remove();
                             resolve(result);
                         }
-                        if (\!document.body.contains(modal)) {
+                        if (!document.body.contains(modal)) {
                             clearInterval(checkInterval);
                             resolve(null);
                         }
@@ -1276,7 +1269,7 @@
                             </div>
                         `;
                         item.addEventListener('click', async () => {
-                            if (\!this.visited.has(`${conn.type}-${conn.id}`)) {
+                            if (!this.visited.has(`${conn.type}-${conn.id}`)) {
                                 this.currentNode = conn;
                                 this.path.push(conn);
                                 this.visited.add(`${conn.type}-${conn.id}`);
@@ -1315,8 +1308,8 @@
                 document.getElementById('optimalPath').textContent = optimalPathStr;
 
                 const message = playerClicks === optimalClicks
-                    ? '🏆 Perfect path\!'
-                    : `You found it in ${playerClicks} clicks\!`;
+                    ? '🏆 Perfect path!'
+                    : `You found it in ${playerClicks} clicks!`;
                 document.getElementById('winMessage').textContent = message;
             },
 
@@ -1347,7 +1340,7 @@
 
                     connections.forEach(conn => {
                         const key = `${conn.type}-${conn.id}`;
-                        if (\!visited.has(key)) {
+                        if (!visited.has(key)) {
                             visited.add(key);
                             queue.push([...path, conn]);
                         }
@@ -1377,7 +1370,7 @@
             },
 
             shareResult() {
-                const text = `I completed CineLinks in ${this.clickCount} clicks\! 🎬 Can you do better? Play at cinelinks.com`;
+                const text = `I completed CineLinks in ${this.clickCount} clicks! 🎬 Can you do better? Play at cinelinks.com`;
                 const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
                 window.open(url, '_blank');
             },
