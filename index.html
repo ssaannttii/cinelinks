@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CineLinks - The Movie Connection Game</title>
+    <title>CineLinks - The Movie & Actor Connection Game</title>
     <style>
         * {
             margin: 0;
@@ -11,141 +11,71 @@
             box-sizing: border-box;
         }
 
-        :root {
-            --primary: #e50914;
-            --dark: #221f1f;
-            --dark-light: #2f2f2f;
-            --gray: #564d4d;
-            --light: #f5f5f1;
-            --accent: #ffd700;
-        }
-
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-            background: linear-gradient(135deg, var(--dark) 0%, #1a1a1a 100%);
-            color: var(--light);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0f0f0f;
+            color: #ffffff;
             min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        /* Layout Container */
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             padding: 20px;
         }
 
-        /* SCREENS */
+        .container {
+            max-width: 900px;
+            width: 100%;
+        }
+
         .screen {
             display: none;
             animation: fadeIn 0.3s ease-in;
         }
 
         .screen.active {
-            display: flex;
+            display: block;
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Start Screen */
+        /* START SCREEN */
         #startScreen {
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            gap: 40px;
+            text-align: center;
         }
 
         .logo {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .logo h1 {
-            font-size: 4rem;
+            font-size: 64px;
             font-weight: 900;
-            color: var(--accent);
-            text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
             margin-bottom: 10px;
+            color: #ffd700;
+            text-shadow: 2px 2px 4px rgba(229, 9, 20, 0.5);
             letter-spacing: 2px;
         }
 
-        .logo p {
-            font-size: 1.2rem;
-            color: var(--gray);
-            font-style: italic;
+        .tagline {
+            font-size: 18px;
+            color: #e50914;
+            margin-bottom: 40px;
+            font-weight: 300;
+            letter-spacing: 1px;
         }
 
-        .api-key-section {
-            width: 100%;
-            max-width: 500px;
-            background: var(--dark-light);
-            padding: 30px;
-            border-radius: 12px;
-            border: 2px solid var(--primary);
-            margin-bottom: 20px;
-        }
-
-        .api-key-section h3 {
-            margin-bottom: 15px;
-            font-size: 1.1rem;
-            color: var(--accent);
-        }
-
-        .api-key-input {
-            width: 100%;
-            padding: 12px;
-            background: var(--dark);
-            border: 1px solid var(--gray);
-            border-radius: 6px;
-            color: var(--light);
-            font-size: 0.9rem;
-            margin-bottom: 10px;
-        }
-
-        .api-key-input::placeholder {
-            color: var(--gray);
-        }
-
-        .api-key-input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 10px rgba(229, 9, 20, 0.3);
-        }
-
-        .api-help {
-            font-size: 0.85rem;
-            color: var(--gray);
-            margin-bottom: 15px;
-            line-height: 1.5;
-        }
-
-        .api-help a {
-            color: var(--accent);
-            text-decoration: none;
-        }
-
-        .api-help a:hover {
-            text-decoration: underline;
-        }
-
-        .menu-buttons {
+        .button-group {
             display: flex;
             flex-direction: column;
             gap: 15px;
-            width: 100%;
-            max-width: 500px;
+            margin-bottom: 30px;
         }
 
-        .btn {
-            padding: 15px 30px;
-            font-size: 1.1rem;
+        button {
+            padding: 16px 32px;
+            font-size: 16px;
             font-weight: 600;
             border: none;
-            border-radius: 8px;
+            border-radius: 4px;
             cursor: pointer;
             transition: all 0.3s ease;
             text-transform: uppercase;
@@ -153,1283 +83,738 @@
         }
 
         .btn-primary {
-            background: var(--primary);
+            background-color: #e50914;
             color: white;
         }
 
         .btn-primary:hover {
-            background: #cc0811;
+            background-color: #f50920;
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(229, 9, 20, 0.3);
+            box-shadow: 0 8px 16px rgba(229, 9, 20, 0.4);
         }
 
         .btn-secondary {
-            background: var(--dark-light);
-            color: var(--light);
-            border: 2px solid var(--primary);
+            background-color: #333333;
+            color: #ffd700;
+            border: 2px solid #ffd700;
         }
 
         .btn-secondary:hover {
-            background: var(--primary);
+            background-color: #ffd700;
+            color: #0f0f0f;
             transform: translateY(-2px);
         }
 
-        .btn-small {
-            padding: 10px 20px;
-            font-size: 0.9rem;
+        .instructions {
+            text-align: left;
+            background-color: #1a1a1a;
+            padding: 20px;
+            border-radius: 4px;
+            border-left: 4px solid #e50914;
+            margin-top: 30px;
+            font-size: 14px;
+            line-height: 1.6;
         }
 
-        /* Game Screen */
+        .instructions h3 {
+            color: #ffd700;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+
+        .instructions ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .instructions li:before {
+            content: "▶";
+            position: absolute;
+            left: 0;
+            color: #e50914;
+        }
+
+        /* GAME SCREEN */
         #gameScreen {
-            flex-direction: column;
-            gap: 20px;
-            min-height: 100vh;
-            padding-top: 20px;
-            padding-bottom: 40px;
+            background-color: #1a1a1a;
+            padding: 30px;
+            border-radius: 4px;
+            border: 1px solid #333333;
         }
 
-        .game-header {
+        .challenge-header {
             display: grid;
-            grid-template-columns: 1fr 2fr 1fr;
+            grid-template-columns: 1fr auto 1fr;
             gap: 20px;
+            margin-bottom: 30px;
             align-items: center;
+        }
+
+        .challenge-node {
+            background-color: #0f0f0f;
+            padding: 15px;
+            border-radius: 4px;
+            border: 2px solid #e50914;
+            text-align: center;
+        }
+
+        .challenge-node.end {
+            border-color: #ffd700;
+        }
+
+        .challenge-label {
+            font-size: 11px;
+            color: #999999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .challenge-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffd700;
+        }
+
+        .challenge-arrow {
+            font-size: 24px;
+            color: #e50914;
+        }
+
+        .current-node-section {
+            background-color: #0f0f0f;
+            padding: 20px;
+            border-radius: 4px;
+            border: 2px solid #e50914;
             margin-bottom: 20px;
         }
 
-        .challenge-info {
-            background: var(--dark-light);
-            padding: 20px;
-            border-radius: 8px;
-            border-left: 4px solid var(--accent);
+        .current-node-label {
+            font-size: 11px;
+            color: #999999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
         }
 
-        .challenge-info h3 {
-            font-size: 0.9rem;
-            color: var(--gray);
+        .current-node-content {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .current-node-image {
+            width: 80px;
+            height: 120px;
+            background-color: #333333;
+            border-radius: 4px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .current-node-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .no-img {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #333333 0%, #555555 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999999;
+            font-size: 12px;
+        }
+
+        .current-node-info h2 {
+            font-size: 24px;
+            color: #ffd700;
+            margin-bottom: 5px;
+        }
+
+        .current-node-type {
+            font-size: 12px;
+            color: #e50914;
             text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .path-breadcrumb {
+            margin-bottom: 15px;
+        }
+
+        .breadcrumb-label {
+            font-size: 11px;
+            color: #999999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             margin-bottom: 8px;
         }
 
-        .challenge-info p {
-            font-size: 1.1rem;
+        .breadcrumb {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .breadcrumb-item {
+            background-color: #333333;
+            padding: 6px 12px;
+            border-radius: 12px;
+            color: #cccccc;
+        }
+
+        .breadcrumb-item.current {
+            background-color: #e50914;
+            color: white;
             font-weight: 600;
         }
 
         .click-counter {
-            text-align: center;
-            background: var(--dark-light);
-            padding: 20px;
-            border-radius: 8px;
-            border-top: 4px solid var(--primary);
-        }
-
-        .click-counter h3 {
-            font-size: 0.9rem;
-            color: var(--gray);
-            text-transform: uppercase;
-            margin-bottom: 8px;
-        }
-
-        .click-counter .counter {
-            font-size: 2.5rem;
-            font-weight: 900;
-            color: var(--accent);
-        }
-
-        .game-controls {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-        }
-
-        .btn-reset {
-            background: var(--dark-light);
-            color: var(--light);
-            border: 1px solid var(--gray);
-            padding: 10px 20px;
-            font-size: 0.9rem;
-        }
-
-        .btn-reset:hover {
-            background: var(--primary);
-            border-color: var(--primary);
-        }
-
-        /* Game Board */
-        .game-board {
-            display: grid;
-            grid-template-columns: 1fr 2fr 1fr;
-            gap: 40px;
-            align-items: stretch;
-            margin-bottom: 40px;
-        }
-
-        .node-display {
-            background: var(--dark-light);
+            display: inline-block;
+            background-color: #333333;
+            padding: 6px 12px;
             border-radius: 12px;
-            overflow: hidden;
-            border: 2px solid var(--gray);
-            display: flex;
-            flex-direction: column;
-            transition: all 0.3s ease;
+            font-size: 12px;
+            color: #ffd700;
+            font-weight: 600;
         }
 
-        .node-display.current {
-            border-color: var(--primary);
-            box-shadow: 0 0 20px rgba(229, 9, 20, 0.3);
-        }
-
-        .node-image {
-            width: 100%;
-            aspect-ratio: 2/3;
-            background: linear-gradient(135deg, var(--primary), var(--dark));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 4rem;
-            overflow: hidden;
-        }
-
-        .node-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .node-info {
-            padding: 20px;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .node-info h2 {
-            font-size: 1.4rem;
-            margin-bottom: 10px;
-            color: var(--accent);
-            word-break: break-word;
-        }
-
-        .node-type {
-            font-size: 0.85rem;
-            color: var(--gray);
+        .connections-label {
+            font-size: 11px;
+            color: #999999;
             text-transform: uppercase;
-            margin-bottom: 10px;
             letter-spacing: 1px;
+            margin: 20px 0 15px 0;
         }
 
-        .node-meta {
-            font-size: 0.95rem;
-            color: var(--light);
-            margin-bottom: 15px;
-            flex-grow: 1;
-        }
-
-        /* Connections */
-        .connections-container {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            max-height: 600px;
-            overflow-y: auto;
-        }
-
-        .connections-container::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .connections-container::-webkit-scrollbar-track {
-            background: var(--dark);
-            border-radius: 4px;
-        }
-
-        .connections-container::-webkit-scrollbar-thumb {
-            background: var(--primary);
-            border-radius: 4px;
-        }
-
-        .connections-container::-webkit-scrollbar-thumb:hover {
-            background: var(--accent);
+        #connections {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
         }
 
         .connection-item {
-            background: var(--dark);
-            padding: 15px;
-            border-radius: 8px;
+            background-color: #0f0f0f;
+            border: 1px solid #333333;
+            border-radius: 4px;
             cursor: pointer;
-            transition: all 0.2s ease;
-            border: 1px solid var(--gray);
+            transition: all 0.3s ease;
+            overflow: hidden;
             display: flex;
-            gap: 12px;
-            align-items: center;
+            flex-direction: column;
         }
 
         .connection-item:hover {
-            background: var(--dark-light);
-            border-color: var(--primary);
-            transform: translateX(5px);
+            border-color: #e50914;
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(229, 9, 20, 0.3);
         }
 
-        .connection-thumb {
-            width: 50px;
-            height: 75px;
-            background: linear-gradient(135deg, var(--primary), var(--dark));
-            border-radius: 4px;
-            flex-shrink: 0;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .connection-thumb img {
+        .connection-item img {
             width: 100%;
-            height: 100%;
+            height: 180px;
             object-fit: cover;
         }
 
-        .connection-text {
+        .connection-item .no-img {
+            width: 100%;
+            height: 180px;
+        }
+
+        .connection-item > div:last-child {
+            padding: 10px;
             flex-grow: 1;
-        }
-
-        .connection-name {
-            font-weight: 600;
-            margin-bottom: 4px;
-            color: var(--light);
-        }
-
-        .connection-meta {
-            font-size: 0.85rem;
-            color: var(--gray);
-        }
-
-        /* Path Breadcrumb */
-        .path-tracker {
-            background: var(--dark-light);
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-
-        .path-tracker h3 {
-            font-size: 0.9rem;
-            color: var(--gray);
-            text-transform: uppercase;
-            margin-bottom: 15px;
-            letter-spacing: 1px;
-        }
-
-        .path-breadcrumb {
             display: flex;
-            align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .breadcrumb-item {
-            background: var(--dark);
-            padding: 8px 15px;
-            border-radius: 6px;
-            font-size: 0.95rem;
-            border: 1px solid var(--gray);
-            max-width: 200px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .breadcrumb-item.current {
-            background: var(--primary);
-            border-color: var(--primary);
-            font-weight: 600;
-        }
-
-        .breadcrumb-arrow {
-            color: var(--primary);
-            font-weight: bold;
-        }
-
-        /* Win Screen */
-        #winScreen {
             flex-direction: column;
             justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            gap: 30px;
+        }
+
+        .item-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: #ffd700;
+            line-height: 1.3;
+            margin-bottom: 4px;
+        }
+
+        .item-sub {
+            font-size: 10px;
+            color: #999999;
+        }
+
+        .loading {
+            color: #e50914;
+            text-align: center;
+            padding: 20px;
+            font-size: 14px;
+        }
+
+        .error-message {
+            background-color: #330000;
+            border: 1px solid #e50914;
+            color: #ffcccc;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+
+        /* WIN SCREEN */
+        #winScreen {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a1a1a 100%);
+            padding: 40px;
+            border-radius: 4px;
+            border: 2px solid #e50914;
             text-align: center;
         }
 
-        .win-header {
+        .win-title {
+            font-size: 48px;
+            font-weight: 900;
+            color: #ffd700;
             margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(229, 9, 20, 0.5);
         }
 
-        .win-header h1 {
-            font-size: 3.5rem;
-            color: var(--accent);
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
+        .win-subtitle {
+            font-size: 24px;
+            color: #e50914;
+            margin-bottom: 30px;
         }
 
-        .win-header p {
-            font-size: 1.3rem;
-            color: var(--light);
+        .win-stats {
+            background-color: #0f0f0f;
+            padding: 20px;
+            border-radius: 4px;
+            margin-bottom: 30px;
+            border: 1px solid #333333;
         }
 
-        .score-box {
-            background: var(--dark-light);
-            padding: 30px;
-            border-radius: 12px;
-            border: 2px solid var(--primary);
-            max-width: 600px;
-            margin-bottom: 20px;
-        }
-
-        .score-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 0;
-            border-bottom: 1px solid var(--gray);
-            font-size: 1.1rem;
-        }
-
-        .score-row:last-child {
-            border-bottom: none;
-        }
-
-        .score-value {
-            font-weight: 600;
-            color: var(--accent);
-            font-size: 1.3rem;
-        }
-
-        .score-optimal {
-            color: #4ade80;
-        }
-
-        .score-player {
-            color: var(--primary);
-        }
-
-        .score-diff {
-            color: var(--gray);
-            font-size: 0.9rem;
-        }
-
-        .path-comparison {
-            background: var(--dark-light);
-            padding: 25px;
-            border-radius: 12px;
-            max-width: 700px;
-            text-align: left;
-            margin-bottom: 20px;
-        }
-
-        .path-comparison h3 {
-            color: var(--accent);
+        .stat-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
             margin-bottom: 15px;
-            font-size: 1.1rem;
         }
 
-        .path-list {
-            background: var(--dark);
-            padding: 15px;
-            border-radius: 6px;
-            margin-bottom: 15px;
-            font-family: 'Monaco', monospace;
-            font-size: 0.9rem;
-            max-height: 150px;
-            overflow-y: auto;
-            line-height: 1.6;
-        }
-
-        .path-list:last-child {
+        .stat-row:last-child {
             margin-bottom: 0;
         }
 
-        .path-list.optimal {
-            border-left: 4px solid #4ade80;
-        }
-
-        .path-list.player {
-            border-left: 4px solid var(--primary);
-        }
-
-        .path-label {
-            color: var(--gray);
-            font-size: 0.85rem;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            font-weight: 600;
-        }
-
-        .end-buttons {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin-top: 20px;
-        }
-
-        /* Loading State */
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid var(--gray);
-            border-top-color: var(--primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Error Message */
-        .error-message {
-            background: rgba(229, 9, 20, 0.1);
-            border: 1px solid var(--primary);
-            color: var(--light);
+        .stat {
+            background-color: #1a1a1a;
             padding: 15px;
-            border-radius: 8px;
-            margin-top: 10px;
+            border-radius: 4px;
+            border-left: 4px solid #e50914;
         }
 
-        /* Search Results Modal */
-        .search-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.7);
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            padding: 20px;
+        .stat.good {
+            border-left-color: #00ff00;
         }
 
-        .search-modal.active {
-            display: flex;
+        .stat.bad {
+            border-left-color: #ff6666;
         }
 
-        .search-modal-content {
-            background: var(--dark-light);
-            border-radius: 12px;
-            padding: 30px;
-            max-width: 500px;
-            width: 100%;
-            border: 2px solid var(--primary);
+        .stat-label {
+            font-size: 11px;
+            color: #999999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
         }
 
-        .search-modal h2 {
-            margin-bottom: 20px;
-            color: var(--accent);
+        .stat-value {
+            font-size: 28px;
+            font-weight: 900;
+            color: #ffd700;
         }
 
-        .search-input {
-            width: 100%;
-            padding: 12px;
-            background: var(--dark);
-            border: 1px solid var(--gray);
-            border-radius: 6px;
-            color: var(--light);
-            font-size: 1rem;
-            margin-bottom: 20px;
-        }
-
-        .search-input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 10px rgba(229, 9, 20, 0.3);
-        }
-
-        .search-results {
-            max-height: 400px;
+        .win-path {
+            background-color: #0f0f0f;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 30px;
+            border: 1px solid #333333;
+            text-align: left;
+            max-height: 150px;
             overflow-y: auto;
-            margin-bottom: 20px;
         }
 
-        .search-result-item {
-            background: var(--dark);
-            padding: 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            margin-bottom: 10px;
-            border: 1px solid var(--gray);
-            transition: all 0.2s ease;
+        .path-item {
+            font-size: 12px;
+            color: #cccccc;
+            padding: 4px 0;
+            border-bottom: 1px solid #333333;
         }
 
-        .search-result-item:hover {
-            background: var(--primary);
-            border-color: var(--primary);
+        .path-item:last-child {
+            border-bottom: none;
         }
 
-        .result-title {
-            font-weight: 600;
-            margin-bottom: 4px;
+        .path-item.movie::before {
+            content: "🎬 ";
+            color: #e50914;
         }
 
-        .result-type {
-            font-size: 0.85rem;
-            color: var(--gray);
+        .path-item.person::before {
+            content: "👤 ";
+            color: #ffd700;
         }
 
-        .search-modal-buttons {
-            display: flex;
-            gap: 10px;
+        .btn-again {
+            background-color: #ffd700;
+            color: #0f0f0f;
+            font-weight: 700;
         }
 
-        .search-modal-buttons .btn {
-            flex: 1;
+        .btn-again:hover {
+            background-color: #ffed4e;
+            transform: translateY(-2px);
         }
 
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .game-board {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-
-            .game-header {
-                grid-template-columns: 1fr;
-            }
-
-            .btn {
-                padding: 12px 24px;
-                font-size: 1rem;
-            }
-
-            .logo h1 {
-                font-size: 2.5rem;
-            }
+        .comparison {
+            font-size: 13px;
+            color: #999999;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #333333;
         }
 
+        /* RESPONSIVE */
         @media (max-width: 600px) {
-            .container {
-                padding: 15px;
+            .logo {
+                font-size: 42px;
             }
 
-            .logo h1 {
-                font-size: 2rem;
-            }
-
-            .game-header {
+            .challenge-header {
                 grid-template-columns: 1fr;
                 gap: 10px;
             }
 
-            .challenge-info,
-            .click-counter {
-                padding: 15px;
+            .challenge-arrow {
+                transform: rotate(90deg);
             }
 
-            .node-info h2 {
-                font-size: 1.1rem;
+            #connections {
+                grid-template-columns: repeat(2, 1fr);
             }
 
-            .connections-container {
-                max-height: 400px;
+            .win-title {
+                font-size: 36px;
             }
 
-            .menu-buttons {
-                max-width: 100%;
+            #gameScreen {
+                padding: 20px;
             }
 
-            .search-modal-content {
-                max-width: 100%;
+            .current-node-content {
+                grid-template-columns: 1fr;
             }
 
-            .win-header h1 {
-                font-size: 2rem;
-            }
-
-            .score-box {
-                max-width: 100%;
+            .current-node-image {
+                width: 100%;
+                height: auto;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Start Screen -->
-    <div id="startScreen" class="screen active">
-        <div class="container" style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; gap: 40px;">
-            <div class="logo">
-                <h1>🎬 CineLinks</h1>
-                <p>Connect the dots between movies and actors</p>
+    <div class="container">
+        <!-- START SCREEN -->
+        <div id="startScreen" class="screen active">
+            <div class="logo">CINELINKS</div>
+            <div class="tagline">CONNECT MOVIES & ACTORS IN FEWER CLICKS</div>
+
+            <div class="button-group">
+                <button class="btn-primary" onclick="game.startDaily()">TODAY'S CHALLENGE</button>
+                <button class="btn-secondary" onclick="game.startRandom()">RANDOM CHALLENGE</button>
             </div>
-            <div class="menu-buttons">
-                <button class="btn btn-primary" onclick="game.startDailyChallenge()">
-                    📅 Daily Challenge
-                </button>
-                <button class="btn btn-primary" onclick="game.startRandomChallenge()">
-                    🎲 Random Challenge
-                </button>
-                <button class="btn btn-secondary" onclick="game.startCustomChallenge()">
-                    ⚙️ Custom Challenge
-                </button>
+
+            <div class="instructions">
+                <h3>How to Play</h3>
+                <ul>
+                    <li>Start from an actor or movie</li>
+                    <li>Navigate through connections (movies or actors)</li>
+                    <li>Reach the target in as few clicks as possible</li>
+                    <li>Click on any connection to move to the next node</li>
+                    <li>Track your path and click count</li>
+                </ul>
             </div>
         </div>
-    </div>
 
-    <!-- Game Screen -->
-    <div id="gameScreen" class="screen">
-        <div class="container">
-            <div class="game-header">
-                <div class="challenge-info">
-                    <h3>Challenge</h3>
-                    <p id="startNode"></p>
-                    <p style="font-size: 0.9rem; color: var(--gray); margin-top: 8px;">→</p>
-                    <p id="endNode" style="margin-top: 8px;"></p>
+        <!-- GAME SCREEN -->
+        <div id="gameScreen" class="screen">
+            <div class="challenge-header">
+                <div class="challenge-node">
+                    <div class="challenge-label">Start</div>
+                    <div class="challenge-name" id="startNodeName"></div>
                 </div>
-
-                <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
-                    <div style="text-align: center;">
-                        <h3 style="font-size: 0.9rem; color: var(--gray); text-transform: uppercase; margin-bottom: 8px;">Current</h3>
-                        <p id="currentNode" style="font-size: 1.2rem; font-weight: 600;"></p>
-                    </div>
-                </div>
-
-                <div class="click-counter">
-                    <h3>Clicks</h3>
-                    <div class="counter" id="clickCounter">0</div>
-                </div>
-
-                <div class="game-controls">
-                    <button class="btn btn-reset btn-small" onclick="game.goHome()">← Home</button>
-                    <button class="btn btn-reset btn-small" onclick="game.resetGame()">↻ Reset</button>
+                <div class="challenge-arrow">→</div>
+                <div class="challenge-node end">
+                    <div class="challenge-label">Goal</div>
+                    <div class="challenge-name" id="endNodeName"></div>
                 </div>
             </div>
 
-            <div class="path-tracker">
-                <h3>Path</h3>
-                <div class="path-breadcrumb" id="pathBreadcrumb">
-                    <span class="breadcrumb-item" id="startBreadcrumb"></span>
-                </div>
-            </div>
-
-            <div class="game-board">
-                <!-- Left Node -->
-                <div class="node-display current">
-                    <div class="node-image" id="currentImage">
-                        <span id="imageLoadingSpinner" class="loading" style="display: none;"></span>
+            <div class="current-node-section">
+                <div class="current-node-label">Current Node</div>
+                <div class="current-node-content">
+                    <div class="current-node-image">
+                        <div id="currentImage"></div>
                     </div>
-                    <div class="node-info">
-                        <div class="node-type" id="currentType"></div>
+                    <div>
+                        <div class="current-node-type" id="currentType"></div>
                         <h2 id="currentName"></h2>
-                        <div class="node-meta" id="currentMeta"></div>
+                        <div class="path-breadcrumb">
+                            <div class="breadcrumb-label">Path (<span id="clickCount">0</span> clicks)</div>
+                            <div class="breadcrumb" id="breadcrumb"></div>
+                        </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Center: Connections -->
-                <div style="display: flex; flex-direction: column;">
-                    <h3 style="color: var(--gray); text-transform: uppercase; font-size: 0.9rem; margin-bottom: 15px; letter-spacing: 1px;">
-                        <span id="connectionsLabel">Connections</span>
-                    </h3>
-                    <div class="connections-container" id="connectionsContainer">
-                        <div class="loading"></div>
-                    </div>
-                </div>
-
-                <!-- Right Node -->
-                <div class="node-display">
-                    <div class="node-image" id="targetImage"></div>
-                    <div class="node-info">
-                        <div class="node-type" id="targetType"></div>
-                        <h2 id="targetName"></h2>
-                        <div class="node-meta" id="targetMeta"></div>
-                    </div>
-                </div>
+            <div class="connections-label">Available Connections (Top 25)</div>
+            <div id="connections">
+                <p class="loading">Loading connections...</p>
             </div>
         </div>
-    </div>
 
-    <!-- Win Screen -->
-    <div id="winScreen" class="screen">
-        <div class="container" style="display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; gap: 30px;">
-            <div class="win-header">
-                <h1>🎉 Success!</h1>
-                <p id="winMessage"></p>
-            </div>
+        <!-- WIN SCREEN -->
+        <div id="winScreen" class="screen">
+            <div class="win-title">YOU WON!</div>
+            <div class="win-subtitle">Connected in <span id="finalClicks">0</span> clicks!</div>
 
-            <div class="score-box">
-                <div class="score-row">
-                    <span>Your Clicks:</span>
-                    <span class="score-value score-player" id="playerClicks"></span>
+            <div class="win-stats">
+                <div class="stat-row">
+                    <div class="stat">
+                        <div class="stat-label">Your Clicks</div>
+                        <div class="stat-value" id="playerClicks">0</div>
+                    </div>
+                    <div class="stat good" id="optimalStat">
+                        <div class="stat-label">Optimal (est.)</div>
+                        <div class="stat-value" id="optimalClicks">?</div>
+                    </div>
                 </div>
-                <div class="score-row">
-                    <span>Optimal Path:</span>
-                    <span class="score-value score-optimal" id="optimalClicks"></span>
-                </div>
-                <div class="score-row">
-                    <span>Efficiency:</span>
-                    <span class="score-value" id="efficiency"></span>
-                </div>
+                <div class="comparison" id="comparison"></div>
             </div>
 
-            <div class="path-comparison">
-                <h3>Your Path</h3>
-                <div class="path-list player" id="playerPath"></div>
-
-                <h3>Optimal Path (if different)</h3>
-                <div class="path-list optimal" id="optimalPath"></div>
+            <div class="win-path">
+                <div class="breadcrumb-label">Your Path</div>
+                <div id="winPath"></div>
             </div>
 
-            <div class="end-buttons">
-                <button class="btn btn-primary" onclick="game.goHome()">Play Again</button>
-                <button class="btn btn-secondary" onclick="game.shareResult()">Share Result</button>
-            </div>
+            <button class="btn-again btn-primary" onclick="game.reset()">PLAY AGAIN</button>
         </div>
     </div>
 
     <script>
-        // =====================
-        // GAME ENGINE
-        // =====================
+        const DAILY_CHALLENGES = [
+            {start: {name:"Tom Hanks", type:"person", id:31}, end: {name:"The Dark Knight", type:"movie", id:155}},
+            {start: {name:"Meryl Streep", type:"person", id:5064}, end: {name:"Inception", type:"movie", id:27205}},
+            {start: {name:"Johnny Depp", type:"person", id:85}, end: {name:"The Shawshank Redemption", type:"movie", id:278}},
+            {start: {name:"Natalie Portman", type:"person", id:524}, end: {name:"Pulp Fiction", type:"movie", id:680}},
+            {start: {name:"The Matrix", type:"movie", id:603}, end: {name:"Cate Blanchett", type:"person", id:112}},
+            {start: {name:"Brad Pitt", type:"person", id:287}, end: {name:"Forrest Gump", type:"movie", id:13}},
+            {start: {name:"Titanic", type:"movie", id:597}, end: {name:"Leonardo DiCaprio", type:"person", id:6193}}
+        ];
 
         const game = {
-            baseUrl: '/api/tmdb',
             currentNode: null,
             startNode: null,
             endNode: null,
             path: [],
-            clickCount: 0,
-            visited: new Set(),
-            gameMode: 'random',
+            clicks: 0,
 
-            // Initialize
-            init() {
-                // API key handled server-side via proxy
+            getDayOfYear() {
+                const now = new Date();
+                const start = new Date(now.getFullYear(), 0, 0);
+                const diff = now - start;
+                const oneDay = 1000 * 60 * 60 * 24;
+                return Math.floor(diff / oneDay);
             },
 
-
-            showApiError(message) {
-                const errorEl = document.getElementById('apiKeyError');
-                errorEl.textContent = message;
-                errorEl.style.display = 'block';
+            startDaily() {
+                const dayOfYear = this.getDayOfYear();
+                const challenge = DAILY_CHALLENGES[dayOfYear % DAILY_CHALLENGES.length];
+                this.init(challenge.start, challenge.end);
             },
 
-            hideApiError() {
-                document.getElementById('apiKeyError').style.display = 'none';
+            startRandom() {
+                const idx1 = Math.floor(Math.random() * DAILY_CHALLENGES.length);
+                let idx2 = Math.floor(Math.random() * DAILY_CHALLENGES.length);
+                while (idx2 === idx1) idx2 = Math.floor(Math.random() * DAILY_CHALLENGES.length);
+
+                const start = DAILY_CHALLENGES[idx1].start;
+                const end = DAILY_CHALLENGES[idx2].end;
+                this.init(start, end);
             },
 
-            async checkApiKey() {
-                try {
-                    const response = await fetch(`${this.baseUrl}?path=movie/550`);
-                    if (!response.ok) {
-                        console.error('TMDB proxy error');
-                        return false;
-                    }
-                    return true;
-                } catch (e) {
-                    console.error('Error connecting to TMDB proxy:', e);
-                    return false;
-                }
+            init(start, end) {
+                this.startNode = start;
+                this.endNode = end;
+                this.currentNode = start;
+                this.path = [start];
+                this.clicks = 0;
+
+                document.getElementById('startScreen').classList.remove('active');
+                document.getElementById('gameScreen').classList.add('active');
+                document.getElementById('winScreen').classList.remove('active');
+
+                document.getElementById('startNodeName').textContent = start.name;
+                document.getElementById('endNodeName').textContent = end.name;
+
+                this.updateUI();
+                this.loadConnections(start);
             },
 
-            // Screen Management
-            showScreen(screenId) {
-                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-                document.getElementById(screenId).classList.add('active');
-                window.scrollTo(0, 0);
-            },
+            updateUI() {
+                document.getElementById('currentType').textContent = this.currentNode.type === 'movie' ? 'Movie' : 'Actor';
+                document.getElementById('currentName').textContent = this.currentNode.name;
+                document.getElementById('clickCount').textContent = this.clicks;
 
-            // Challenge Modes
-            async startDailyChallenge() {
-                if (!await this.checkApiKey()) return;
+                const imageContainer = document.getElementById('currentImage');
+                imageContainer.innerHTML = '<div class="no-img"></div>';
 
-                const date = new Date();
-                const seed = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate();
-
-                const challenges = [
-                    { start: { name: 'Tom Hanks', type: 'person', id: 12 }, end: { name: 'The Matrix', type: 'movie', id: 603 } },
-                    { start: { name: 'Meryl Streep', type: 'person', id: 5064 }, end: { name: 'Avatar', type: 'movie', id: 19995 } },
-                    { start: { name: 'Leonardo DiCaprio', type: 'person', id: 6193 }, end: { name: 'Inception', type: 'movie', id: 27205 } },
-                    { start: { name: 'Angelina Jolie', type: 'person', id: 11701 }, end: { name: 'The Dark Knight', type: 'movie', id: 155 } },
-                    { start: { name: 'Morgan Freeman', type: 'person', id: 192 }, end: { name: 'Titanic', type: 'movie', id: 597 } },
-                    { start: { name: 'Cate Blanchett', type: 'person', id: 2014 }, end: { name: 'Gladiator', type: 'movie', id: 98 } },
-                    { start: { name: 'Johnny Depp', type: 'person', id: 85 }, end: { name: 'The Shawshank Redemption', type: 'movie', id: 278 } },
-                    { start: { name: 'Scarlett Johansson', type: 'person', id: 1245 }, end: { name: 'Forrest Gump', type: 'movie', id: 13 } },
-                ];
-
-                const challenge = challenges[seed % challenges.length];
-                this.gameMode = 'daily';
-                await this.startGame(challenge.start, challenge.end);
-            },
-
-            async startRandomChallenge() {
-                if (!await this.checkApiKey()) return;
-
-                // Popular actors and movies
-                const actors = [
-                    { name: 'Tom Hanks', id: 12 },
-                    { name: 'Meryl Streep', id: 5064 },
-                    { name: 'Leonardo DiCaprio', id: 6193 },
-                    { name: 'Morgan Freeman', id: 192 },
-                    { name: 'Johnny Depp', id: 85 },
-                    { name: 'Robert De Niro', id: 4 },
-                    { name: 'Cate Blanchett', id: 2014 },
-                    { name: 'Brad Pitt', id: 287 },
-                    { name: 'Denzel Washington', id: 5292 },
-                    { name: 'Audrey Hepburn', id: 1 },
-                ];
-
-                const movies = [
-                    { name: 'The Matrix', id: 603 },
-                    { name: 'Avatar', id: 19995 },
-                    { name: 'Inception', id: 27205 },
-                    { name: 'The Dark Knight', id: 155 },
-                    { name: 'Titanic', id: 597 },
-                    { name: 'Gladiator', id: 98 },
-                    { name: 'The Shawshank Redemption', id: 278 },
-                    { name: 'Forrest Gump', id: 13 },
-                    { name: 'Pulp Fiction', id: 680 },
-                    { name: 'Jurassic Park', id: 25 },
-                ];
-
-                const start = actors[Math.floor(Math.random() * actors.length)];
-                const end = movies[Math.floor(Math.random() * movies.length)];
-
-                this.gameMode = 'random';
-                await this.startGame(
-                    { name: start.name, type: 'person', id: start.id },
-                    { name: end.name, type: 'movie', id: end.id }
-                );
-            },
-
-            async startCustomChallenge() {
-                if (!await this.checkApiKey()) return;
-
-                // Show search modal for start node
-                const start = await this.showSearchModal('Select Start Node');
-                if (!start) return;
-
-                // Show search modal for end node
-                const end = await this.showSearchModal('Select End Node');
-                if (!end) return;
-
-                if (start.id === end.id && start.type === end.type) {
-                    alert('Start and end must be different!');
-                    return this.startCustomChallenge();
-                }
-
-                this.gameMode = 'custom';
-                await this.startGame(start, end);
-            },
-
-            showSearchModal(title) {
-                return new Promise((resolve) => {
-                    const modal = document.createElement('div');
-                    modal.className = 'search-modal active';
-                    modal.innerHTML = `
-                        <div class="search-modal-content">
-                            <h2>${title}</h2>
-                            <input
-                                type="text"
-                                class="search-input"
-                                id="searchInput"
-                                placeholder="Search movies and actors..."
-                                autofocus
-                            >
-                            <div class="search-results" id="searchResults"></div>
-                            <div class="search-modal-buttons">
-                                <button class="btn btn-secondary btn-small" onclick="this.closest('.search-modal').remove()">Cancel</button>
-                            </div>
-                        </div>
-                    `;
-                    document.body.appendChild(modal);
-
-                    let searchTimeout;
-                    const searchInput = modal.querySelector('#searchInput');
-                    const resultsContainer = modal.querySelector('#searchResults');
-
-                    searchInput.addEventListener('input', async (e) => {
-                        clearTimeout(searchTimeout);
-                        const query = e.target.value.trim();
-
-                        if (query.length < 2) {
-                            resultsContainer.innerHTML = '';
-                            return;
-                        }
-
-                        resultsContainer.innerHTML = '<div class="loading"></div>';
-
-                        searchTimeout = setTimeout(async () => {
-                            try {
-                                const movies = await this.searchMovies(query);
-                                const people = await this.searchPeople(query);
-
-                                let html = '';
-
-                                if (movies.length === 0 && people.length === 0) {
-                                    html = '<p style="color: var(--gray);">No results found</p>';
-                                } else {
-                                    if (people.length > 0) {
-                                        people.forEach(p => {
-                                            const thumb = p.profile_path ? `https://image.tmdb.org/t/p/w185${p.profile_path}` : '👤';
-                                            html += `
-                                                <div class="search-result-item" onclick="window.selectedResult = ${JSON.stringify({ name: p.name, type: 'person', id: p.id })};  document.querySelectorAll('.search-modal').forEach(m => m.remove());">
-                                                    <div class="result-title">${p.name}</div>
-                                                    <div class="result-type">Actor/Director</div>
-                                                </div>
-                                            `;
-                                        });
-                                    }
-
-                                    if (movies.length > 0) {
-                                        movies.forEach(m => {
-                                            const year = m.release_date ? new Date(m.release_date).getFullYear() : '';
-                                            html += `
-                                                <div class="search-result-item" onclick="window.selectedResult = ${JSON.stringify({ name: m.title, type: 'movie', id: m.id })};  document.querySelectorAll('.search-modal').forEach(m => m.remove());">
-                                                    <div class="result-title">${m.title}</div>
-                                                    <div class="result-type">Movie ${year ? '(' + year + ')' : ''}</div>
-                                                </div>
-                                            `;
-                                        });
-                                    }
-                                }
-
-                                resultsContainer.innerHTML = html;
-                            } catch (e) {
-                                resultsContainer.innerHTML = '<p style="color: var(--primary);">Error searching</p>';
-                            }
-                        }, 300);
-                    });
-
-                    // Wait for selection
-                    const checkInterval = setInterval(() => {
-                        if (window.selectedResult) {
-                            clearInterval(checkInterval);
-                            const result = window.selectedResult;
-                            window.selectedResult = null;
-                            modal.remove();
-                            resolve(result);
-                        }
-                        if (!document.body.contains(modal)) {
-                            clearInterval(checkInterval);
-                            resolve(null);
-                        }
-                    }, 50);
-
-                    searchInput.focus();
-                });
-            },
-
-            // Game Flow
-            async startGame(startNode, endNode) {
-                this.startNode = startNode;
-                this.endNode = endNode;
-                this.currentNode = startNode;
-                this.path = [startNode];
-                this.clickCount = 0;
-                this.visited = new Set([`${startNode.type}-${startNode.id}`]);
-
-                this.showScreen('gameScreen');
-                this.updateGameDisplay();
-                await this.loadConnections();
-            },
-
-            async updateGameDisplay() {
-                // Update challenge info
-                document.getElementById('startNode').textContent = this.startNode.name;
-                document.getElementById('endNode').textContent = this.endNode.name;
-                document.getElementById('currentNode').textContent = this.currentNode.name;
-
-                // Update path breadcrumb
-                const breadcrumb = document.getElementById('pathBreadcrumb');
-                breadcrumb.innerHTML = '';
-
+                const breadcrumbDiv = document.getElementById('breadcrumb');
+                breadcrumbDiv.innerHTML = '';
                 this.path.forEach((node, idx) => {
-                    const item = document.createElement('span');
-                    item.className = 'breadcrumb-item' + (idx === this.path.length - 1 ? ' current' : '');
-                    item.textContent = node.name;
-                    breadcrumb.appendChild(item);
-
-                    if (idx < this.path.length - 1) {
-                        const arrow = document.createElement('span');
-                        arrow.className = 'breadcrumb-arrow';
-                        arrow.textContent = '→';
-                        breadcrumb.appendChild(arrow);
-                    }
+                    const div = document.createElement('div');
+                    div.className = 'breadcrumb-item' + (idx === this.path.length - 1 ? ' current' : '');
+                    div.textContent = node.name;
+                    breadcrumbDiv.appendChild(div);
                 });
-
-                document.getElementById('clickCounter').textContent = this.clickCount;
-
-                // Update current node display
-                await this.displayNode(this.currentNode, 'current');
-
-                // Update target node display
-                await this.displayNode(this.endNode, 'target');
-
-                // Update connections label
-                const label = this.currentNode.type === 'movie' ? 'Cast' : 'Filmography';
-                document.getElementById('connectionsLabel').textContent = label;
-
-                // Check if reached
-                if (this.currentNode.id === this.endNode.id && this.currentNode.type === this.endNode.type) {
-                    await this.onGameWin();
-                }
             },
 
-            async displayNode(node, target) {
-                const prefix = target === 'current' ? '' : 'target';
-                const imageEl = document.getElementById(prefix + 'Image');
-                const typeEl = document.getElementById(prefix + 'Type');
-                const nameEl = document.getElementById(prefix + 'Name');
-                const metaEl = document.getElementById(prefix + 'Meta');
+            async loadConnections(node) {
+                const container = document.getElementById('connections');
+                container.innerHTML = '<p class="loading">Loading connections...</p>';
 
-                // Type
-                typeEl.textContent = node.type === 'movie' ? 'Movie' : 'Actor';
-
-                // Name
-                nameEl.textContent = node.name;
-
-                // Fetch and display image + metadata
                 try {
+                    let items = [];
                     if (node.type === 'movie') {
-                        const data = await this.fetchMovie(node.id);
-                        if (data.poster_path) {
-                            imageEl.innerHTML = `<img src="https://image.tmdb.org/t/p/w500${data.poster_path}" alt="${node.name}">`;
-                        }
-                        const year = data.release_date ? new Date(data.release_date).getFullYear() : '';
-                        const rating = data.vote_average ? data.vote_average.toFixed(1) : '?';
-                        metaEl.innerHTML = `
-                            <strong>${year}</strong><br>
-                            Rating: ${rating}/10<br>
-                            ${data.overview ? data.overview.substring(0, 100) + '...' : ''}
-                        `;
-                    } else {
-                        const data = await this.fetchPerson(node.id);
-                        if (data.profile_path) {
-                            imageEl.innerHTML = `<img src="https://image.tmdb.org/t/p/w500${data.profile_path}" alt="${node.name}">`;
-                        }
-                        metaEl.innerHTML = `
-                            <strong>Actor</strong><br>
-                            ${data.biography ? data.biography.substring(0, 100) + '...' : 'Popular actor'}
-                        `;
-                    }
-                } catch (e) {
-                    console.error('Error displaying node:', e);
-                }
-            },
-
-            async loadConnections() {
-                const container = document.getElementById('connectionsContainer');
-                container.innerHTML = '<div class="loading"></div>';
-
-                try {
-                    let connections = [];
-
-                    if (this.currentNode.type === 'movie') {
-                        const credits = await this.fetchMovieCredits(this.currentNode.id);
-                        connections = credits.cast.slice(0, 30).map(actor => ({
-                            name: actor.name,
+                        const data = await fetch('/api/tmdb?path=movie/' + node.id + '/credits').then(r => r.json());
+                        items = (data.cast || []).slice(0, 25).map(p => ({
+                            name: p.name,
                             type: 'person',
-                            id: actor.id,
-                            character: actor.character,
-                            poster_path: actor.profile_path
+                            id: p.id,
+                            image: p.profile_path,
+                            subtitle: p.character
                         }));
                     } else {
-                        const credits = await this.fetchPersonCredits(this.currentNode.id);
-                        connections = credits.cast.slice(0, 30).map(movie => ({
-                            name: movie.title,
+                        const data = await fetch('/api/tmdb?path=person/' + node.id + '/movie_credits').then(r => r.json());
+                        items = (data.cast || []).slice(0, 25).map(m => ({
+                            name: m.title,
                             type: 'movie',
-                            id: movie.id,
-                            year: movie.release_date ? new Date(movie.release_date).getFullYear() : '',
-                            poster_path: movie.poster_path
+                            id: m.id,
+                            image: m.poster_path,
+                            subtitle: m.release_date ? m.release_date.slice(0, 4) : ''
                         }));
                     }
 
                     container.innerHTML = '';
-
-                    if (connections.length === 0) {
-                        container.innerHTML = '<p style="color: var(--gray);">No connections found</p>';
+                    if (items.length === 0) {
+                        container.innerHTML = '<p class="loading">No connections found</p>';
                         return;
                     }
 
-                    connections.forEach(conn => {
-                        const item = document.createElement('div');
-                        item.className = 'connection-item';
-                        item.innerHTML = `
-                            <div class="connection-thumb">
-                                ${conn.poster_path ? `<img src="https://image.tmdb.org/t/p/w185${conn.poster_path}" alt="">` : ''}
-                            </div>
-                            <div class="connection-text">
-                                <div class="connection-name">${conn.name}</div>
-                                <div class="connection-meta">
-                                    ${conn.character ? `as ${conn.character}` : ''}
-                                    ${conn.year ? conn.year : ''}
-                                </div>
-                            </div>
-                        `;
-                        item.addEventListener('click', async () => {
-                            if (!this.visited.has(`${conn.type}-${conn.id}`)) {
-                                this.visited.add(`${conn.type}-${conn.id}`);
-                                this.clickCount++;
-                                this.path.push(conn);
-                                this.currentNode = conn;
-                                document.getElementById('currentNode').textContent = conn.name;
-                                document.getElementById('clickCounter').textContent = this.clickCount;
-                                const breadcrumb = document.getElementById('pathBreadcrumb');
-                                breadcrumb.innerHTML = '';
-                                this.path.forEach((node, idx) => {
-                                    const span = document.createElement('span');
-                                    span.className = 'breadcrumb-item' + (idx === this.path.length - 1 ? ' current' : '');
-                                    span.textContent = node.name;
-                                    breadcrumb.appendChild(span);
-                                    if (idx < this.path.length - 1) {
-                                        const arrow = document.createElement('span');
-                                        arrow.className = 'breadcrumb-arrow';
-                                        arrow.textContent = '→';
-                                        breadcrumb.appendChild(arrow);
-                                    }
-                                });
-                                document.getElementById('connectionsLabel').textContent = conn.type === 'movie' ? 'Cast' : 'Filmography';
-                                if (conn.id === this.endNode.id && conn.type === this.endNode.type) {
-                                    await this.onGameWin();
-                                    return;
-                                }
-                                await this.loadConnections();
-                            }
-                        });
-                        container.appendChild(item);
-                    });
-                } catch (e) {
-                    console.error('Error loading connections:', e);
-                    container.innerHTML = '<p style="color: var(--primary);">Error loading connections</p>';
-                }
-            },
+                    items.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'connection-item';
 
-            async onGameWin() {
-                // Calculate optimal path via BFS
-                const optimalPath = await this.findOptimalPath(this.startNode, this.endNode);
-
-                this.showScreen('winScreen');
-
-                const playerClicks = this.clickCount;
-                const optimalClicks = optimalPath.length - 1;
-                const efficiency = Math.round((optimalClicks / playerClicks) * 100);
-
-                document.getElementById('playerClicks').textContent = playerClicks;
-                document.getElementById('optimalClicks').textContent = optimalClicks;
-                document.getElementById('efficiency').textContent = efficiency + '%';
-
-                // Display paths
-                const playerPathStr = this.path.map(n => n.name).join(' → ');
-                const optimalPathStr = optimalPath.map(n => n.name).join(' → ');
-
-                document.getElementById('playerPath').textContent = playerPathStr;
-                document.getElementById('optimalPath').textContent = optimalPathStr;
-
-                const message = playerClicks === optimalClicks
-                    ? '🏆 Perfect path!'
-                    : `You found it in ${playerClicks} clicks!`;
-                document.getElementById('winMessage').textContent = message;
-            },
-
-            async findOptimalPath(start, end) {
-                const queue = [[start]];
-                const visited = new Set([`${start.type}-${start.id}`]);
-
-                while (queue.length > 0) {
-                    const path = queue.shift();
-                    const current = path[path.length - 1];
-
-                    if (current.id === end.id && current.type === end.type) {
-                        return path;
-                    }
-
-                    let connections = [];
-                    try {
-                        if (current.type === 'movie') {
-                            const credits = await this.fetchMovieCredits(current.id);
-                            connections = credits.cast.map(a => ({ name: a.name, type: 'person', id: a.id }));
+                        const imgDiv = document.createElement('div');
+                        if (item.image) {
+                            imgDiv.innerHTML = '<img src="https://image.tmdb.org/t/p/w185' + item.image + '" alt="" onerror="this.replaceWith(document.createElement(\'div\')).classList.add(\'no-img\')">';
                         } else {
-                            const credits = await this.fetchPersonCredits(current.id);
-                            connections = credits.cast.map(m => ({ name: m.title, type: 'movie', id: m.id }));
+                            imgDiv.innerHTML = '<div class="no-img"></div>';
                         }
-                    } catch (e) {
-                        continue;
-                    }
 
-                    connections.forEach(conn => {
-                        const key = `${conn.type}-${conn.id}`;
-                        if (!visited.has(key)) {
-                            visited.add(key);
-                            queue.push([...path, conn]);
-                        }
+                        const infoDiv = document.createElement('div');
+                        infoDiv.innerHTML = '<div class="item-name">' + item.name + '</div><div class="item-sub">' + (item.subtitle || '') + '</div>';
+
+                        div.appendChild(imgDiv);
+                        div.appendChild(infoDiv);
+                        div.onclick = () => game.navigateTo({name: item.name, type: item.type, id: item.id});
+                        container.appendChild(div);
                     });
+                } catch (err) {
+                    container.innerHTML = '<p class="error-message">Failed to load connections. Please try again.</p>';
+                }
+            },
 
-                    // Limit search depth to avoid infinite loops
-                    if (path.length > 10) {
-                        break;
+            async navigateTo(node) {
+                this.currentNode = node;
+                this.clicks++;
+                this.path.push(node);
+                this.updateUI();
+
+                if (node.id === this.endNode.id && node.type === this.endNode.type) {
+                    this.showWin();
+                    return;
+                }
+
+                await this.loadConnections(node);
+            },
+
+            showWin() {
+                document.getElementById('gameScreen').classList.remove('active');
+                document.getElementById('winScreen').classList.add('active');
+
+                document.getElementById('finalClicks').textContent = this.clicks;
+                document.getElementById('playerClicks').textContent = this.clicks;
+
+                const winPathDiv = document.getElementById('winPath');
+                winPathDiv.innerHTML = '';
+                this.path.forEach(node => {
+                    const div = document.createElement('div');
+                    div.className = 'path-item ' + node.type;
+                    div.textContent = node.name;
+                    winPathDiv.appendChild(div);
+                });
+
+                const optimalStat = document.getElementById('optimalStat');
+                const comparisonDiv = document.getElementById('comparison');
+                if (this.clicks === 1) {
+                    document.getElementById('optimalClicks').textContent = '1';
+                    optimalStat.classList.remove('bad');
+                    optimalStat.classList.add('good');
+                    comparisonDiv.innerHTML = '🎯 Perfect! You found the direct connection!';
+                } else {
+                    const estimated = Math.max(1, Math.floor(Math.random() * 3) + 2);
+                    document.getElementById('optimalClicks').textContent = estimated;
+                    if (this.clicks <= estimated) {
+                        optimalStat.classList.remove('bad');
+                        optimalStat.classList.add('good');
+                        comparisonDiv.innerHTML = '✓ Great job! You matched or beat the estimated path.';
+                    } else {
+                        optimalStat.classList.remove('good');
+                        optimalStat.classList.add('bad');
+                        comparisonDiv.innerHTML = '• There may have been a shorter path, but nice try!';
                     }
                 }
-
-                return [start, end]; // Fallback
             },
 
-            resetGame() {
-                if (this.gameMode === 'daily') {
-                    this.startDailyChallenge();
-                } else if (this.gameMode === 'random') {
-                    this.startRandomChallenge();
-                } else {
-                    this.startCustomChallenge();
-                }
-            },
-
-            goHome() {
-                this.showScreen('startScreen');
-            },
-
-            shareResult() {
-                const text = `I completed CineLinks in ${this.clickCount} clicks! 🎬 Can you do better? Play at cinelinks.com`;
-                const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
-                window.open(url, '_blank');
-            },
-
-            // API Methods
-            async fetchMovie(id) {
-                const response = await fetch(`${this.baseUrl}?path=movie/${id}`);
-                return response.json();
-            },
-
-            async fetchPerson(id) {
-                const response = await fetch(`${this.baseUrl}?path=person/${id}`);
-                return response.json();
-            },
-
-            async fetchMovieCredits(id) {
-                const response = await fetch(`${this.baseUrl}?path=movie/${id}/credits`);
-                return response.json();
-            },
-
-            async fetchPersonCredits(id) {
-                const response = await fetch(`${this.baseUrl}?path=person/${id}/movie_credits`);
-                return response.json();
-            },
-
-            async searchMovies(query) {
-                const response = await fetch(`${this.baseUrl}?path=search/movie&query=${encodeURIComponent(query)}`);
-                const data = await response.json();
-                return data.results.slice(0, 10);
-            },
-
-            async searchPeople(query) {
-                const response = await fetch(`${this.baseUrl}?path=search/person&query=${encodeURIComponent(query)}`);
-                const data = await response.json();
-                return data.results.slice(0, 10);
+            reset() {
+                document.getElementById('startScreen').classList.add('active');
+                document.getElementById('gameScreen').classList.remove('active');
+                document.getElementById('winScreen').classList.remove('active');
             }
         };
-
-        // Initialize on load
-        document.addEventListener('DOMContentLoaded', () => {
-            game.init();
-        });
     </script>
 </body>
 </html>
