@@ -58,8 +58,10 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var
 /* Current node card */
 .cur-card{background:var(--s1);border:1px solid var(--bdr);border-radius:12px;padding:18px;display:flex;align-items:flex-start;gap:18px;margin-bottom:16px}
 .cur-img{flex-shrink:0;width:80px;height:120px;border-radius:8px;overflow:hidden;background:var(--s2)}
-.cur-img.person{width:80px;height:80px;border-radius:50%;margin-top:4px}
+.cur-img.person{height:120px;border-radius:8px;background:transparent;display:flex;align-items:flex-start;justify-content:center;overflow:visible;margin-top:0}
 .cur-img img{width:100%;height:100%;object-fit:cover;display:block}
+.cur-img.person img,.cur-img.person .cur-noimg{width:80px;height:80px;border-radius:50%;box-shadow:0 8px 22px rgba(0,0,0,.28)}
+.cur-noimg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#555;font-size:.7rem;background:var(--s2)}
 .cur-info{flex:1;min-width:0;padding-top:2px}
 .cur-badge{font-size:.62rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
 .cur-name{font-size:1.3rem;font-weight:700;letter-spacing:-.02em;line-height:1.2}
@@ -269,6 +271,15 @@ function api(path) { return fetch('/api/tmdb?path=' + path).then(r => r.json());
 
 function creditOrder(credit) {
   return Number.isFinite(credit.order) ? credit.order : 999;
+}
+
+function tvCharacter(person) {
+  const role = (person.roles || [])[0] || {};
+  return role.character || person.character || '';
+}
+
+function tvEpisodeCount(person) {
+  return person.total_episode_count || ((person.roles || [])[0] || {}).episode_count || 0;
 }
 
 function gameParamsFromUrl() {
@@ -511,7 +522,7 @@ const game = window.game = {
     const el = document.getElementById('curImg');
     el.innerHTML = url
       ? '<img src="' + url + '" alt="">'
-      : '<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:#555;font-size:.7rem">No image</div>';
+      : '<div class="cur-noimg">No image</div>';
   },
 
   renderCurrent() {
@@ -623,24 +634,44 @@ const game = window.game = {
     try {
       let items = [];
       if (node.type === 'movie' || node.type === 'tv') {
-        const ep = node.type === 'tv' ? 'tv/' + node.id + '/credits' : 'movie/' + node.id + '/credits';
-        const d = await api(ep);
-        let castItems = (d.cast||[]).sort((a,b)=>creditOrder(a)-creditOrder(b)).slice(0,38).map(p=>({
-          name:p.name, type:'person', id:p.id, img:p.profile_path, sub:p.character||''
-        }));
-        let directors = (d.crew||[]).filter(c=>c.job==='Director').map(c=>({
-          name:c.name, type:'person', id:c.id, img:c.profile_path, sub:'Director'
-        }));
-        if (node.type === 'tv' && castItems.length === 0 && directors.length === 0) {
-          const ad = await api('tv/' + node.id + '/aggregate_credits');
-          castItems = (ad.cast||[]).sort((a,b)=>(b.total_episode_count||0)-(a.total_episode_count||0)).slice(0,38).map(p=>({
-            name:p.name,
-            type:'person',
-            id:p.id,
-            img:p.profile_path,
-            sub:((p.roles||[])[0]||{}).character || ''
+        let castItems = [];
+        let directors = [];
+
+        if (node.type === 'tv') {
+          const [d, ad] = await Promise.all([
+            api('tv/' + node.id + '/credits'),
+            api('tv/' + node.id + '/aggregate_credits')
+          ]);
+          const regularCast = (d.cast||[]).sort((a,b)=>creditOrder(a)-creditOrder(b)).slice(0,32).map(p=>({
+            name:p.name, type:'person', id:p.id, img:p.profile_path, sub:p.character||''
           }));
-          directors = (ad.crew||[]).filter(c=>(c.jobs||[]).some(j=>j.job==='Director')).map(c=>({
+          const regularIds = new Set(regularCast.map(p=>p.id));
+          const recurringCast = (ad.cast||[])
+            .filter(p => !regularIds.has(p.id))
+            .filter(p => tvEpisodeCount(p) > 1 || (p.popularity||0) >= 10)
+            .sort((a,b) => {
+              const epDiff = tvEpisodeCount(b) - tvEpisodeCount(a);
+              return epDiff || ((b.popularity||0) - (a.popularity||0));
+            })
+            .slice(0,20)
+            .map(p=>({
+              name:p.name, type:'person', id:p.id, img:p.profile_path, sub:tvCharacter(p)
+            }));
+          castItems = [...regularCast, ...recurringCast].slice(0,52);
+          directors = (d.crew||[]).filter(c=>c.job==='Director').map(c=>({
+            name:c.name, type:'person', id:c.id, img:c.profile_path, sub:'Director'
+          }));
+          if (directors.length === 0 && castItems.length === 0) {
+            directors = (ad.crew||[]).filter(c=>(c.jobs||[]).some(j=>j.job==='Director')).map(c=>({
+              name:c.name, type:'person', id:c.id, img:c.profile_path, sub:'Director'
+            }));
+          }
+        } else {
+          const d = await api('movie/' + node.id + '/credits');
+          castItems = (d.cast||[]).sort((a,b)=>creditOrder(a)-creditOrder(b)).slice(0,38).map(p=>({
+            name:p.name, type:'person', id:p.id, img:p.profile_path, sub:p.character||''
+          }));
+          directors = (d.crew||[]).filter(c=>c.job==='Director').map(c=>({
             name:c.name, type:'person', id:c.id, img:c.profile_path, sub:'Director'
           }));
         }
