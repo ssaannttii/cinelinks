@@ -952,52 +952,34 @@
             },
 
             async generateRandomChallenge() {
-                let challenge = null;
-                let attempts = 0;
-                const maxAttempts = 5;
-
-                while (!challenge && attempts < maxAttempts) {
-                    try {
-                        const options = ['person->movie', 'movie->person', 'person->person', 'movie->movie'];
-                        const option = options[Math.floor(Math.random() * options.length)];
-
-                        let start, end;
-
-                        if (option === 'person->movie' || option === 'person->person') {
-                            start = await this.getRandomPerson();
-                            if (!start) { attempts++; continue; }
-                        }
-                        if (option === 'movie->person' || option === 'movie->movie') {
-                            start = await this.getRandomMovie();
-                            if (!start) { attempts++; continue; }
-                        }
-
-                        if (option === 'person->movie' || option === 'movie->movie') {
-                            end = await this.getRandomMovie();
-                            if (!end) { attempts++; continue; }
-                        } else {
-                            end = await this.getRandomPerson();
-                            if (!end) { attempts++; continue; }
-                        }
-
-                        // Check path exists and is >= 3 steps
-                        const depth = await this.bfsDepth(start, end, 4);
-                        if (depth >= 3) {
-                            challenge = {start, end};
-                            this.optimalDistance = depth;
-                        } else {
-                            attempts++;
-                        }
-                    } catch (err) {
-                        console.error('Error generating challenge:', err);
-                        attempts++;
+                try {
+                    const [peopleData, moviesData] = await Promise.all([
+                        fetch('/api/tmdb?path=person/popular').then(r => r.json()),
+                        fetch('/api/tmdb?path=movie/popular').then(r => r.json())
+                    ]);
+                    const people = (peopleData.results || []).filter(p => p.profile_path && p.known_for_department === 'Acting').slice(0, 15);
+                    const movies = (moviesData.results || []).filter(m => m.poster_path).slice(0, 15);
+                    if (people.length < 2 || movies.length < 2) throw new Error('Not enough results');
+                    const shuffle = arr => [...arr].sort(() => Math.random() - 0.5);
+                    const sp = shuffle(people);
+                    const sm = shuffle(movies);
+                    let start, end;
+                    if (Math.random() < 0.5) {
+                        const p = sp[0];
+                        const knownIds = (p.known_for || []).map(k => k.id);
+                        const m = sm.find(mv => \!knownIds.includes(mv.id)) || sm[1];
+                        start = {name: p.name, type: 'person', id: p.id};
+                        end = {name: m.title, type: 'movie', id: m.id};
+                    } else {
+                        const m = sm[0];
+                        const p = sp[0];
+                        start = {name: m.title, type: 'movie', id: m.id};
+                        end = {name: p.name, type: 'person', id: p.id};
                     }
-                }
-
-                if (challenge) {
-                    this.init(challenge.start, challenge.end, false);
-                } else {
-                    // Fallback to a random daily challenge
+                    this.optimalDistance = null;
+                    this.init(start, end, false);
+                } catch (err) {
+                    console.error('Random challenge error, fallback:', err);
                     const idx = Math.floor(Math.random() * DAILY_CHALLENGES.length);
                     const fallback = DAILY_CHALLENGES[idx];
                     this.init(fallback.start, fallback.end, false);
