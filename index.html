@@ -356,7 +356,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     <div class="win-btns">
       <button class="btn btn-ghost" style="margin:0" onclick="game.reset()">Home</button>
       <div class="share-wrap">
-        <button class="btn btn-ghost" style="margin:0" id="shareBtn" onclick="game.toggleShareMenu()">Share ↑</button>
+        <button class="btn btn-ghost" style="margin:0;display:flex;align-items:center;justify-content:center;gap:7px" id="shareBtn" onclick="game.toggleShareMenu()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>Share</button>
         <div class="share-menu" id="shareMenu">
           <button class="share-opt" onclick="game.shareNative()"><span class="share-opt-icon">📤</span>Share…</button>
           <button class="share-opt" onclick="game.shareTwitter()"><span class="share-opt-icon">𝕏</span>Post on X</button>
@@ -1247,7 +1247,7 @@ const game = window.game = {
       if (current >= targetClicks) clearInterval(ticker);
     }, duration / Math.ceil(targetClicks / step));
 
-    document.getElementById('shareBtn').textContent = 'Share ↑';
+    document.getElementById('shareBtn').innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>Share';
     document.getElementById('copyLinkLabel').textContent = 'Copy link';
     const menu = document.getElementById('shareMenu');
     if (menu) menu.classList.remove('open');
@@ -1340,6 +1340,13 @@ const game = window.game = {
       document.getElementById('winScreen').appendChild(c);
       setTimeout(() => c.remove(), 3200);
     }
+
+    // Auto-scroll to CTA buttons after score reveal
+    const totalStaggerMs = 280 + (staggerIdx * 90) + 400;
+    setTimeout(() => {
+      const btns = document.querySelector('.win-btns');
+      if (btns) btns.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }, totalStaggerMs);
   },
 
   _makeCard(item) {
