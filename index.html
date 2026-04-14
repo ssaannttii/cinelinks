@@ -433,6 +433,10 @@ const DAILY_TIME_ZONE = 'Europe/Madrid';
 const DAILY_ALGO_VERSION = 2;
 const BRIEFING_DELAY_MS = 1050;
 
+const CANONICAL_NODE_FIXES = {
+  'person-2063-Diane Keaton': {id:3092}
+};
+
 const FALLBACK_DAILY = [
   {s:{name:"Tom Hanks",type:"person",id:31},e:{name:"The Dark Knight",type:"movie",id:155}},
   {s:{name:"Meryl Streep",type:"person",id:5064},e:{name:"Inception",type:"movie",id:27205}},
@@ -457,7 +461,7 @@ const DAILY_POOL = {
     {name:"Scarlett Johansson",type:"person",id:1245,knownFor:["movie-299534","movie-24428","movie-153"]},
     {name:"Morgan Freeman",type:"person",id:192,knownFor:["movie-278","movie-807","movie-155"]},
     {name:"Tom Cruise",type:"person",id:500,knownFor:["movie-361743","movie-954","movie-597"]},
-    {name:"Diane Keaton",type:"person",id:2063,knownFor:["movie-238"]},
+    {name:"Diane Keaton",type:"person",id:3092,knownFor:["movie-238"]},
     {name:"Leonardo DiCaprio",type:"person",id:6193,knownFor:["movie-597","movie-27205","movie-1422"]},
     {name:"Robert De Niro",type:"person",id:380,knownFor:["movie-769","movie-240","movie-103"]},
     {name:"Al Pacino",type:"person",id:1158,knownFor:["movie-238","movie-240","movie-949"]},
@@ -751,6 +755,12 @@ function sameNode(a, b) {
   return !!a && !!b && a.id === b.id && a.type === b.type;
 }
 
+function normalizeNode(node) {
+  if (!node) return node;
+  const fix = CANONICAL_NODE_FIXES[node.type + '-' + node.id + '-' + node.name];
+  return fix ? {...node, ...fix} : node;
+}
+
 function isCuratedKnownFor(person, title) {
   return (person.knownFor || []).includes(nodeKey(title));
 }
@@ -815,14 +825,18 @@ function gameParamsFromUrl() {
   if (urlC || urlCT || urlCN) {
     if (!urlC || !urlCT || !urlCN) return null;
     if (!Number.isFinite(curId) || !validTypes.has(urlCT)) return null;
-    current = {name:urlCN, type:urlCT, id:curId};
+    current = normalizeNode({name:urlCN, type:urlCT, id:curId});
     if (urlCR) current.role = urlCR;
     if (sameNode(current, {type:urlST, id:startId})) current = null;
   }
 
+  const start = normalizeNode({name:urlSN, type:urlST, id:startId});
+  const end = normalizeNode({name:urlEN, type:urlET, id:endId});
+  if (sameNode(current, start)) current = null;
+
   return {
-    start: {name:urlSN, type:urlST, id:startId},
-    end: {name:urlEN, type:urlET, id:endId},
+    start,
+    end,
     current
   };
 }
