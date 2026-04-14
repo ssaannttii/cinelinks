@@ -1,4 +1,4 @@
-<\!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -172,7 +172,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var
 <div id="winScreen" class="screen">
   <div class="win-box">
     <div class="win-em">&#127916;</div>
-    <h1 class="win-h">You made it\!</h1>
+    <h1 class="win-h">You made it!</h1>
     <p class="win-sub">You connected the dots.</p>
     <div class="stats">
       <div class="stat"><div id="playerClicks" class="stat-n">0</div><div class="stat-l">Your clicks</div></div>
@@ -348,7 +348,7 @@ const game = window.game = {
 
     // Skeletons
     grid.innerHTML = '';
-    const isPersonNode = node.type \!== 'movie';
+    const isPersonNode = node.type !== 'movie';
     for (let i = 0; i < 15; i++) {
       grid.innerHTML += '<div class="skel"><div class="skel-img' + (isPersonNode ? '' : ' person') + '"></div><div class="skel-txt"></div><div class="skel-txt s"></div></div>';
     }
@@ -422,8 +422,8 @@ const game = window.game = {
     const est = this.optDist || Math.max(2, Math.ceil(this.clicks * 0.7));
     document.getElementById('optimalClicks').textContent = est;
     document.getElementById('winCmp').textContent = this.clicks <= est
-      ? 'Impressive — you matched or beat the estimated optimal\!'
-      : 'Good run\! There might be a shorter path — give it another go?';
+      ? 'Impressive — you matched or beat the estimated optimal!'
+      : 'Good run! There might be a shorter path — give it another go?';
 
     const wp = document.getElementById('winPath');
     wp.innerHTML = '';
