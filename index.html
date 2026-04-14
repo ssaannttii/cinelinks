@@ -8,6 +8,7 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#0d0d0d;--s1:#181818;--s2:#222;--bdr:rgba(255,255,255,0.09);--txt:#f0f0f0;--mut:#777;--gold:#e8a000;--golddim:rgba(232,160,0,0.15)}
+@property --click-ring{syntax:'<angle>';inherits:false;initial-value:0deg}
 body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(circle at 50% -10%,rgba(232,160,0,.08),transparent 34%),linear-gradient(180deg,#101010 0%,var(--bg) 330px);color:var(--txt);min-height:100vh}
 .screen{display:none}
 .screen.active{display:flex;flex-direction:column}
@@ -65,7 +66,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .hdr-thumb img{width:100%;height:100%;object-fit:cover;display:block}
 .hdr-name{font-size:.78rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
 .hdr-arr{color:var(--mut);flex-shrink:0;font-size:.85rem}
-.hdr-clicks{--click-ring:0deg;text-align:center;flex-shrink:0;background:linear-gradient(rgba(13,13,13,.9),rgba(13,13,13,.9)) padding-box,conic-gradient(var(--gold) var(--click-ring),rgba(255,255,255,.1) 0) border-box;border:1px solid transparent;border-radius:8px;min-width:62px;padding:6px 9px;box-shadow:0 8px 18px rgba(0,0,0,.16)}
+.hdr-clicks{--click-ring:0deg;text-align:center;flex-shrink:0;background:linear-gradient(rgba(13,13,13,.9),rgba(13,13,13,.9)) padding-box,conic-gradient(var(--gold) var(--click-ring),rgba(255,255,255,.1) 0) border-box;border:1px solid transparent;border-radius:8px;min-width:62px;padding:6px 9px;box-shadow:0 8px 18px rgba(0,0,0,.16);transition:--click-ring .32s ease}
 .clicks-n{font-size:1.45rem;font-weight:700;color:var(--gold);display:block;line-height:.95}
 .clicks-l{font-size:.58rem;color:var(--mut);text-transform:uppercase;letter-spacing:.1em;margin-top:3px;display:block}
 @keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.35)}100%{transform:scale(1)}}
@@ -204,6 +205,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .win-cmp{font-size:.83rem;color:var(--txt);margin-bottom:20px;padding:11px 12px;background:rgba(232,160,0,.08);border:1px solid rgba(232,160,0,.16);border-radius:8px}
 .win-avg{font-size:.78rem;color:var(--mut);margin-top:8px;min-height:1.2em;text-align:center}
 .win-avg strong{color:var(--txt)}
+.win-record-callout{display:inline-block;margin-bottom:7px;color:var(--gold);font-size:.8rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.win-debug-score{color:var(--mut)}
 .win-route-lbl{display:flex;align-items:center;gap:10px;margin:0 0 12px;color:var(--mut);font-size:.66rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
 .win-route-lbl::before,.win-route-lbl::after{content:"";height:1px;background:var(--bdr);flex:1}
 .win-path{display:flex;flex-direction:column;align-items:stretch;gap:0;margin-bottom:24px}
@@ -752,6 +755,21 @@ function fallbackDailyChallenge(key) {
   return {s:{...c.s}, e:{...c.e}};
 }
 
+function scoreNumber(value) {
+  const n = Number.parseInt(value, 10);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+async function fetchDailyScore(key) {
+  try {
+    const res = await fetch('/api/score?date=' + encodeURIComponent(key));
+    if (!res.ok) return null;
+    return res.json();
+  } catch(_) {
+    return null;
+  }
+}
+
 function gameParamsFromUrl() {
   const urlP = new URLSearchParams(location.search);
   const urlS = urlP.get('s'), urlST = urlP.get('st') || 'movie';
@@ -918,7 +936,8 @@ async function hydrateNodeImage(node) {
 const game = window.game = {
   cur: null, start: null, end: null,
   path: [], clicks: 0, visited: new Set(), optDist: null,
-  _allItems: [], _tab: 'all',
+  scoreDate: null, dailyRecord: null, _scoreStats: null,
+  _allItems: [], _tab: 'all', _debug: false,
 
   async startDaily() {
     const key = dateKey();
@@ -929,10 +948,15 @@ const game = window.game = {
     }
     showOnly('loadingScreen');
     const challenge = buildDailyChallenge(key);
+    const score = await fetchDailyScore(key);
     this.optDist = null;
     this._showLoadPreview(challenge.s, challenge.e);
     await new Promise(r => setTimeout(r, 320));
-    this.init(challenge.s, challenge.e);
+    this.init(challenge.s, challenge.e, {
+      scoreDate: key,
+      dailyRecord: scoreNumber(score && score.record),
+      scoreStats: score
+    });
   },
 
   async startRandom() {
@@ -971,6 +995,9 @@ const game = window.game = {
 
   async init(start, end, opts = {}) {
     this.start = start; this.end = end;
+    this.scoreDate = opts.scoreDate || null;
+    this.dailyRecord = scoreNumber(opts.dailyRecord);
+    this._scoreStats = opts.scoreStats || null;
     const current = opts.current || start;
     const isAtStart = current.id === start.id && current.type === start.type;
     this.cur = current;
@@ -1090,7 +1117,7 @@ const game = window.game = {
   },
 
   clickRing() {
-    const maxClicks = 20;
+    const maxClicks = this.dailyRecord || 20;
     return Math.min(360, Math.round((this.clicks / maxClicks) * 360)) + 'deg';
   },
 
@@ -1431,6 +1458,7 @@ const game = window.game = {
     if (!btn) return;
     const visible = btn.style.display !== 'none';
     btn.style.display = visible ? 'none' : '';
+    this._debug = !visible;
     if (!visible) this._showToast('Debug mode on', 1200);
   },
 
@@ -1520,28 +1548,40 @@ const game = window.game = {
 
     // share btn innerHTML is static in HTML, no reset needed
 
-    // Submit score and show today's average
+    // Submit daily score and show today's average + record
     const avgEl = document.getElementById('winAvg');
-    if (avgEl) {
+    if (avgEl && this.scoreDate) {
       avgEl.textContent = '';
-      const today = dateKey();
       fetch('/api/score', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date: today, clicks: this.clicks })
+        body: JSON.stringify({ date: this.scoreDate, clicks: this.clicks })
       })
       .then(r => r.json())
       .then(data => {
-        if (data.avg && data.count) {
-          if (data.count === 1) {
-            avgEl.innerHTML = "You're the first to finish today! 🎬";
-          } else {
-            const better = this.clicks <= data.avg;
-            avgEl.innerHTML = "Today's average: <strong>" + data.avg + " clicks</strong> · " + data.count + " players" + (better ? " · you beat it 🎉" : "");
-          }
-        }
+        this._scoreStats = data;
+        const avg = scoreNumber(data.avg);
+        const count = scoreNumber(data.count);
+        const record = scoreNumber(data.record);
+        if (!avg && !record) return;
+
+        const previousRecord = this.dailyRecord;
+        const madeRecord = record && this.clicks <= record;
+        const recordVerb = previousRecord && this.clicks === previousRecord ? 'tied' : 'set';
+        const recordCallout = madeRecord
+          ? '<div class="win-record-callout">You ' + recordVerb + " today's record!</div>"
+          : '';
+        this.dailyRecord = record || this.dailyRecord;
+        const debugCount = this._debug && count ? ' <span class="win-debug-score">· ' + count + ' players</span>' : '';
+
+        const better = avg && count !== 1 && this.clicks <= avg;
+        const recordText = record ? " · Daily record: <strong>" + record + " clicks</strong>" : "";
+        const firstText = count === 1 ? " · first finish today" : "";
+        avgEl.innerHTML = recordCallout + "Today's average: <strong>" + avg + " clicks</strong>" + recordText + firstText + (better ? " · you beat it" : "") + debugCount;
       })
       .catch(() => {});
+    } else if (avgEl) {
+      avgEl.textContent = '';
     }
     document.getElementById('copyLinkLabel').textContent = 'Copy link';
     const menu = document.getElementById('shareMenu');
@@ -1688,12 +1728,16 @@ const game = window.game = {
 
   reverseGame() {
     if (this.clicks > 0) return; // only at start
+    this.scoreDate = null;
+    this.dailyRecord = null;
+    this._scoreStats = null;
     const tmp = this.start;
     this.start = this.end;
     this.end = tmp;
     this.cur = this.start;
     this.path = [this.start];
     this.visited = new Set([this.start.type+'-'+this.start.id]);
+    document.querySelector('.hdr-clicks')?.style.setProperty('--click-ring', this.clickRing());
     // Update header
     document.getElementById('startNodeName').textContent = this.start.name + nodeHeaderSuffix(this.start);
     document.getElementById('endNodeName').textContent = this.end.name + nodeHeaderSuffix(this.end);

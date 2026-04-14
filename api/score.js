@@ -4,6 +4,7 @@
 // Redis keys (per date):
 //   score:YYYY-MM-DD:total   – sum of all clicks
 //   score:YYYY-MM-DD:count   – number of completions
+//   score:YYYY-MM-DD:records – sorted click scores for the daily record
 
 async function redisCommand(commands) {
   const url = process.env.KV_REST_API_URL;
@@ -17,6 +18,18 @@ async function redisCommand(commands) {
   });
   if (!res.ok) throw new Error('Redis error: ' + res.status);
   return res.json();
+}
+
+function parseNumber(value) {
+  const n = parseInt(value, 10);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function parseRecord(value) {
+  if (!Array.isArray(value) || value.length === 0) return null;
+  const flat = value.flat(Infinity);
+  const score = parseNumber(flat[flat.length - 1]);
+  return score > 0 ? score : null;
 }
 
 module.exports = async function handler(req, res) {
@@ -34,6 +47,7 @@ module.exports = async function handler(req, res) {
 
   const totalKey = 'score:' + dateParam + ':total';
   const countKey = 'score:' + dateParam + ':count';
+  const recordsKey = 'score:' + dateParam + ':records';
 
   try {
     if (req.method === 'POST') {
@@ -42,32 +56,40 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({ error: 'Invalid clicks value' });
       }
 
-      // Increment total and count atomically
+      const recordMember = Date.now() + '-' + Math.random().toString(36).slice(2);
+
+      // Increment total/count and store this score so the record can be read as the lowest score.
       const results = await redisCommand([
         ['INCRBY', totalKey, clicks],
         ['INCR', countKey],
+        ['ZADD', recordsKey, clicks, recordMember],
+        ['ZRANGE', recordsKey, 0, 0, 'WITHSCORES'],
         // Expire after 48h so old data cleans itself up
         ['EXPIRE', totalKey, 172800],
-        ['EXPIRE', countKey, 172800]
+        ['EXPIRE', countKey, 172800],
+        ['EXPIRE', recordsKey, 172800]
       ]);
 
-      const total = results[0].result;
-      const count = results[1].result;
+      const total = parseNumber(results[0].result);
+      const count = parseNumber(results[1].result);
       const avg = Math.round(total / count);
+      const record = parseRecord(results[3].result);
 
-      return res.status(200).json({ avg, count, total });
+      return res.status(200).json({ avg, count, total, record });
 
     } else if (req.method === 'GET') {
       const results = await redisCommand([
         ['GET', totalKey],
-        ['GET', countKey]
+        ['GET', countKey],
+        ['ZRANGE', recordsKey, 0, 0, 'WITHSCORES']
       ]);
 
-      const total = parseInt(results[0].result, 10) || 0;
-      const count = parseInt(results[1].result, 10) || 0;
+      const total = parseNumber(results[0].result);
+      const count = parseNumber(results[1].result);
       const avg = count > 0 ? Math.round(total / count) : null;
+      const record = parseRecord(results[2].result);
 
-      return res.status(200).json({ avg, count, total });
+      return res.status(200).json({ avg, count, total, record });
     }
 
     return res.status(405).json({ error: 'Method not allowed' });
