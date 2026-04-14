@@ -1265,8 +1265,8 @@
                                 </div>
                             </div>
                         `;
-                                                item.addEventListener('click', async () => {
-                            if (\!this.visited.has(`${conn.type}-${conn.id}`)) {
+                        item.addEventListener('click', async () => {
+                            if (!this.visited.has(`${conn.type}-${conn.id}`)) {
                                 this.visited.add(`${conn.type}-${conn.id}`);
                                 this.clickCount++;
                                 this.path.push(conn);
