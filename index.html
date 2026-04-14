@@ -761,13 +761,7 @@
                 <h1>🎬 CineLinks</h1>
                 <p>Connect the dots between movies and actors</p>
             </div>
-
-            <div class="api-key-section">
-                <h3>TMDB API Key</h3>
-                <div class="api-help">
-                    Get your free API key from <a href="https://www.themoviedb.org/settings/api" target="_blank">TMDB.org</a>
-                </div>
-                <input
+            <input
                     type="text"
                     id="apiKeyInput"
                     class="api-key-input"
@@ -907,8 +901,7 @@
         // =====================
 
         const game = {
-            apiKey: null,
-            baseUrl: 'https://api.themoviedb.org/3',
+            baseUrl: '/api/tmdb',
             currentNode: null,
             startNode: null,
             endNode: null,
@@ -917,34 +910,11 @@
             visited: new Set(),
             gameMode: 'random',
 
-            // Initialize API Key
+            // Initialize
             init() {
-                const savedKey = localStorage?.getItem?.('tmdb_api_key');
-                if (savedKey) {
-                    this.apiKey = savedKey;
-                }
-
-                document.getElementById('apiKeyInput').addEventListener('keyup', (e) => {
-                    if (e.key === 'Enter') {
-                        this.setApiKey();
-                    }
-                });
+                // API key handled server-side via proxy
             },
 
-            setApiKey() {
-                const key = document.getElementById('apiKeyInput').value.trim();
-                if (\!key) {
-                    this.showApiError('Please enter your TMDB API key');
-                    return;
-                }
-                this.apiKey = key;
-                try {
-                    localStorage?.setItem?.('tmdb_api_key', key);
-                } catch (e) {
-                    // localStorage not available, storing in memory only
-                }
-                this.hideApiError();
-            },
 
             showApiError(message) {
                 const errorEl = document.getElementById('apiKeyError');
@@ -957,21 +927,15 @@
             },
 
             async checkApiKey() {
-                if (\!this.apiKey) {
-                    this.showApiError('API Key required to play');
-                    return false;
-                }
-
-                // Test the API key
                 try {
-                    const response = await fetch(`${this.baseUrl}/movie/550?api_key=${this.apiKey}`);
+                    const response = await fetch(`${this.baseUrl}?path=movie/550`);
                     if (\!response.ok) {
-                        this.showApiError('Invalid API key. Check your key and try again.');
+                        console.error('TMDB proxy error');
                         return false;
                     }
                     return true;
                 } catch (e) {
-                    this.showApiError('Error connecting to TMDB. Check your connection.');
+                    console.error('Error connecting to TMDB proxy:', e);
                     return false;
                 }
             },
@@ -1420,33 +1384,33 @@
 
             // API Methods
             async fetchMovie(id) {
-                const response = await fetch(`${this.baseUrl}/movie/${id}?api_key=${this.apiKey}`);
+                const response = await fetch(`${this.baseUrl}?path=movie/${id}`);
                 return response.json();
             },
 
             async fetchPerson(id) {
-                const response = await fetch(`${this.baseUrl}/person/${id}?api_key=${this.apiKey}`);
+                const response = await fetch(`${this.baseUrl}?path=person/${id}`);
                 return response.json();
             },
 
             async fetchMovieCredits(id) {
-                const response = await fetch(`${this.baseUrl}/movie/${id}/credits?api_key=${this.apiKey}`);
+                const response = await fetch(`${this.baseUrl}?path=movie/${id}/credits`);
                 return response.json();
             },
 
             async fetchPersonCredits(id) {
-                const response = await fetch(`${this.baseUrl}/person/${id}/movie_credits?api_key=${this.apiKey}`);
+                const response = await fetch(`${this.baseUrl}?path=person/${id}/movie_credits`);
                 return response.json();
             },
 
             async searchMovies(query) {
-                const response = await fetch(`${this.baseUrl}/search/movie?query=${encodeURIComponent(query)}&api_key=${this.apiKey}`);
+                const response = await fetch(`${this.baseUrl}?path=search/movie&query=${encodeURIComponent(query)}`);
                 const data = await response.json();
                 return data.results.slice(0, 10);
             },
 
             async searchPeople(query) {
-                const response = await fetch(`${this.baseUrl}/search/person?query=${encodeURIComponent(query)}&api_key=${this.apiKey}`);
+                const response = await fetch(`${this.baseUrl}?path=search/person&query=${encodeURIComponent(query)}`);
                 const data = await response.json();
                 return data.results.slice(0, 10);
             }
