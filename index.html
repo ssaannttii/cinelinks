@@ -228,6 +228,32 @@ const IMGBASE = 'https://image.tmdb.org/t/p/w342';
 
 function api(path) { return fetch('/api/tmdb?path=' + path).then(r => r.json()); }
 
+function gameParamsFromUrl() {
+  const urlP = new URLSearchParams(location.search);
+  const urlS = urlP.get('s'), urlST = urlP.get('st') || 'movie';
+  const urlE = urlP.get('e'), urlET = urlP.get('et') || 'person';
+  const urlSN = urlP.get('sn'), urlEN = urlP.get('en');
+  const validTypes = new Set(['movie', 'person', 'tv']);
+  const startId = Number.parseInt(urlS, 10);
+  const endId = Number.parseInt(urlE, 10);
+
+  if (!urlS || !urlE || !urlSN || !urlEN) return null;
+  if (!Number.isFinite(startId) || !Number.isFinite(endId)) return null;
+  if (!validTypes.has(urlST) || !validTypes.has(urlET)) return null;
+
+  return {
+    start: {name:urlSN, type:urlST, id:startId},
+    end: {name:urlEN, type:urlET, id:endId}
+  };
+}
+
+function loadGameFromUrl() {
+  const params = gameParamsFromUrl();
+  if (!params) return false;
+  game.init(params.start, params.end);
+  return true;
+}
+
 function showOnly(id) {
   ['startScreen','loadingScreen','gameScreen','winScreen'].forEach(s => {
     const el = document.getElementById(s);
@@ -293,6 +319,8 @@ const game = window.game = {
     this.start = start; this.end = end;
     this.cur = start; this.path = [start];
     this.clicks = 0; this.visited = new Set([start.type+'-'+start.id]);
+    const rb = document.getElementById('reverseBtn');
+    if (rb) rb.style.display = 'block';
 
     document.getElementById('startNodeName').textContent = start.name;
     document.getElementById('endNodeName').textContent   = end.name;
@@ -617,27 +645,12 @@ const game = window.game = {
 
   reset() {
     document.getElementById('winScreen').querySelectorAll('.confetti').forEach(c => c.remove());
-    const urlP = new URLSearchParams(location.search);
-const urlS = urlP.get('s'), urlST = urlP.get('st')||'movie';
-const urlE = urlP.get('e'), urlET = urlP.get('et')||'person';
-const urlSN = urlP.get('sn'), urlEN = urlP.get('en');
-if (urlS && urlE && urlSN && urlEN) {
-  game.init({name:decodeURIComponent(urlSN),type:urlST,id:parseInt(urlS)},
-            {name:decodeURIComponent(urlEN),type:urlET,id:parseInt(urlE)});
-} else {
-  showOnly('startScreen');
-}
+    history.replaceState(null, '', location.pathname + location.hash);
+    showOnly('startScreen');
   }
 };
 
-const urlP = new URLSearchParams(location.search);
-const urlS = urlP.get('s'), urlST = urlP.get('st')||'movie';
-const urlE = urlP.get('e'), urlET = urlP.get('et')||'person';
-const urlSN = urlP.get('sn'), urlEN = urlP.get('en');
-if (urlS && urlE && urlSN && urlEN) {
-  game.init({name:decodeURIComponent(urlSN),type:urlST,id:parseInt(urlS)},
-            {name:decodeURIComponent(urlEN),type:urlET,id:parseInt(urlE)});
-} else {
+if (!loadGameFromUrl()) {
   showOnly('startScreen');
 }
 </script>
