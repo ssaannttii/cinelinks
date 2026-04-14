@@ -65,6 +65,10 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .clicks-n{font-size:1.45rem;font-weight:700;color:var(--gold);display:block;line-height:.95}
 .clicks-l{font-size:.58rem;color:var(--mut);text-transform:uppercase;letter-spacing:.1em;margin-top:3px;display:block}
 @keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.35)}100%{transform:scale(1)}}
+
+/* Home screen entrance */
+@keyframes homeIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.start-inner.anim-in{animation:homeIn .45s cubic-bezier(.22,1,.36,1) both}
 .clicks-n.popping{animation:pop .22s ease}
 
 .g-body{max-width:940px;margin:0 auto;padding:20px 20px 60px;width:100%}
@@ -278,8 +282,10 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     <div class="credits">
       <div class="credits-title">Credits</div>
       <div class="tmdb-credit">
-        <a href="https://www.themoviedb.org/" target="_blank" rel="noopener">
-          <img class="tmdb-logo" src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_short-8e76e2a06f8c1c731a4c638a8e21c2e931ad4b39c0b77e6f18024d182b236bd6.svg" alt="TMDB">
+        <a href="https://www.themoviedb.org/" target="_blank" rel="noopener" style="display:flex;align-items:center">
+          <svg class="tmdb-logo" viewBox="0 0 190 24" xmlns="http://www.w3.org/2000/svg" fill="none">
+            <path d="M13.3 0H0v4.4h4.8V24h3.8V4.4h4.7V0zM27 0h-3.8v9.7h-5.5V0h-3.8v24h3.8v-10h5.5v10H27V0zM41.3 0H29.8v4.2h4.4V24h3.8V4.2h3.3V0zM57.2 19.6h-7.9V0h-3.8v24h11.7v-4.4zM72.3 0H60.9v24h11.4v-4.2h-7.6v-6h6.5v-4H64.7V4.2h7.6V0zM88.8 10.4c0-3-1-5.3-2.9-6.9C84 1.8 81.4 1 78 1h-.3V0h-3.8v24h4.2c3.4 0 6-.9 7.8-2.6 1.8-1.7 2.9-4.2 2.9-7.5v-3.5zm-3.8 3.4c0 2.2-.6 3.9-1.7 5-1.1 1.1-2.8 1.7-5 1.7h-.4V4.2h.3c2.3 0 4 .6 5.1 1.7 1.1 1.1 1.7 2.8 1.7 5v2.9zM108 0h-4.4l-3.6 16.8L96.4 0H92l5.5 24h4.3L108 0zM122.5 0H111v24h11.5v-4.2h-7.7v-6h6.6v-4h-6.6V4.2h7.7V0zM136.8 0H125v24h3.8V14h.3l5.6 10h4.4l-6-10.5c1.3-.4 2.3-1.2 3-2.2.8-1.1 1.2-2.5 1.2-4.2 0-2.3-.7-4-2-5.2-1.3-1.3-3.2-1.9-5.5-1.9zm-1 10h-7V4.2h7c1.1 0 2 .3 2.6.9.6.6.9 1.4.9 2.4 0 1-.3 1.9-.9 2.5-.6.6-1.5 1-2.6 1zM155 0h-3.8v9.7h-5.5V0H142v24h3.7v-10h5.5v10H155V0zM169.3 0h-11.5v24h11.5v-4.2h-7.7v-6h6.5v-4h-6.5V4.2h7.7V0zM184.8 0H173v24h3.8V14h.3l5.6 10h4.4l-6-10.5c1.3-.4 2.3-1.2 3-2.2.8-1.1 1.2-2.5 1.2-4.2 0-2.3-.7-4-2-5.2-1.3-1.3-3.2-1.9-5.5-1.9zm-1 10h-7V4.2h7c1.1 0 2 .3 2.6.9.6.6.9 1.4.9 2.4 0 1-.3 1.9-.9 2.5-.6.6-1.5 1-2.6 1z" fill="#01B4E4"/>
+          </svg>
         </a>
         <p>This product uses the TMDB API and TMDB images, but is not endorsed or certified by TMDB.</p>
       </div>
@@ -308,6 +314,9 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
         <div id="endThumb" class="hdr-thumb"></div>
         <span id="endNodeName" class="hdr-name"></span>
       </div>
+      <div id="reverseBtn" style="flex-shrink:0">
+        <button class="btn btn-ghost btn-sm" onclick="game.reverseGame()" title="Reverse direction" style="padding:5px 8px;font-size:.9rem;line-height:1">&#8644;</button>
+      </div>
     </div>
     <div class="hdr-clicks">
       <span id="clickCounter" class="clicks-n">0</span>
@@ -323,9 +332,6 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
         <div id="curMeta" class="cur-meta"></div>
         <div id="curPrompt" class="cur-prompt">Choose your next connection.</div>
         <div class="cur-actions">
-          <div id="reverseBtn">
-            <button class="btn btn-ghost btn-sm" onclick="game.reverseGame()">&#8645; Reverse direction</button>
-          </div>
         </div>
       </div>
     </div>
@@ -588,6 +594,14 @@ function showOnly(id) {
     el.classList.toggle('active', active);
     el.style.display = active ? 'flex' : 'none';
   });
+  if (id === 'startScreen') {
+    const inner = document.querySelector('.start-inner');
+    if (inner) {
+      inner.classList.remove('anim-in');
+      void inner.offsetWidth;
+      inner.classList.add('anim-in');
+    }
+  }
 }
 
 function thumbEl(elId, node, url) {
