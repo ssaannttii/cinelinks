@@ -63,6 +63,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var
 .cur-info{flex:1;min-width:0;padding-top:2px}
 .cur-badge{font-size:.62rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
 .cur-name{font-size:1.3rem;font-weight:700;letter-spacing:-.02em;line-height:1.2}
+.cur-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.debug-btn{width:auto;padding:6px 10px;color:var(--mut)}
 
 /* Path pills */
 .path-row{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:20px}
@@ -76,6 +78,10 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var
 .tab{flex:1;padding:6px 10px;border-radius:6px;border:none;background:none;color:var(--mut);font-family:inherit;font-size:.75rem;font-weight:600;cursor:pointer;transition:background .15s,color .15s}
 .tab.active{background:var(--s1);color:var(--txt)}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:10px}
+.empty-state{border:1px dashed var(--bdr);border-radius:8px;background:rgba(255,255,255,.03);padding:22px;text-align:center;color:var(--mut)}
+.empty-title{font-size:.95rem;font-weight:700;color:var(--txt);margin-bottom:6px}
+.empty-copy{font-size:.82rem;line-height:1.45;max-width:430px;margin:0 auto 14px}
+.empty-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 
 /* Cards */
 .card{background:var(--s1);border:1px solid var(--bdr);border-radius:8px;overflow:hidden;cursor:pointer;transition:border-color .15s,transform .15s,box-shadow .15s}
@@ -204,8 +210,11 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var
       <div class="cur-info">
         <div id="curType" class="cur-badge">ACTOR</div>
         <div id="curName" class="cur-name"></div>
-        <div id="reverseBtn" style="margin-top:10px">
-          <button class="btn btn-ghost btn-sm" onclick="game.reverseGame()">&#8645; Reverse direction</button>
+        <div class="cur-actions">
+          <div id="reverseBtn">
+            <button class="btn btn-ghost btn-sm" onclick="game.reverseGame()">&#8645; Reverse direction</button>
+          </div>
+          <button id="debugBtn" class="btn btn-ghost btn-sm debug-btn" onclick="game.copyDebugLink()">Debug link</button>
         </div>
       </div>
     </div>
@@ -267,24 +276,36 @@ function gameParamsFromUrl() {
   const urlS = urlP.get('s'), urlST = urlP.get('st') || 'movie';
   const urlE = urlP.get('e'), urlET = urlP.get('et') || 'person';
   const urlSN = urlP.get('sn'), urlEN = urlP.get('en');
+  const urlC = urlP.get('c'), urlCT = urlP.get('ct'), urlCN = urlP.get('cn');
+  const urlCR = urlP.get('cr');
   const validTypes = new Set(['movie', 'person', 'tv']);
   const startId = Number.parseInt(urlS, 10);
   const endId = Number.parseInt(urlE, 10);
+  const curId = Number.parseInt(urlC, 10);
 
   if (!urlS || !urlE || !urlSN || !urlEN) return null;
   if (!Number.isFinite(startId) || !Number.isFinite(endId)) return null;
   if (!validTypes.has(urlST) || !validTypes.has(urlET)) return null;
 
+  let current = null;
+  if (urlC || urlCT || urlCN) {
+    if (!urlC || !urlCT || !urlCN) return null;
+    if (!Number.isFinite(curId) || !validTypes.has(urlCT)) return null;
+    current = {name:urlCN, type:urlCT, id:curId};
+    if (urlCR) current.role = urlCR;
+  }
+
   return {
     start: {name:urlSN, type:urlST, id:startId},
-    end: {name:urlEN, type:urlET, id:endId}
+    end: {name:urlEN, type:urlET, id:endId},
+    current
   };
 }
 
 function loadGameFromUrl() {
   const params = gameParamsFromUrl();
   if (!params) return false;
-  game.init(params.start, params.end);
+  game.init(params.start, params.end, {current:params.current, keepUrl:!!params.current});
   return true;
 }
 
@@ -354,6 +375,27 @@ function peopleSection(labelText, items, makeCard) {
   return section;
 }
 
+function buildGameSearchParams(start, end, current) {
+  const params = {
+    s:start.id, st:start.type, sn:start.name,
+    e:end.id, et:end.type, en:end.name
+  };
+
+  if (current) {
+    params.c = current.id;
+    params.ct = current.type;
+    params.cn = current.name;
+    if (current.role) params.cr = current.role;
+  }
+
+  return new URLSearchParams(params);
+}
+
+function appBaseUrl() {
+  const cleanHref = location.href.split('?')[0].split('#')[0];
+  return location.origin === 'null' ? cleanHref : location.origin + location.pathname;
+}
+
 async function hydrateNodeImage(node) {
   if (node.img) return node.img;
   try {
@@ -409,26 +451,34 @@ const game = window.game = {
     }
   },
 
-  async init(start, end) {
+  async init(start, end, opts = {}) {
     this.start = start; this.end = end;
-    this.cur = start; this.path = [start];
-    this.clicks = 0; this.visited = new Set([start.type+'-'+start.id]);
+    const current = opts.current || start;
+    const isAtStart = current.id === start.id && current.type === start.type;
+    this.cur = current;
+    this.path = isAtStart ? [start] : [start, current];
+    this.clicks = isAtStart ? 0 : 1;
+    this.visited = new Set([start.type+'-'+start.id]);
+    if (!isAtStart) this.visited.add(current.type+'-'+current.id);
     const rb = document.getElementById('reverseBtn');
-    if (rb) rb.style.display = 'block';
+    if (rb) rb.style.display = isAtStart ? 'block' : 'none';
 
     document.getElementById('startNodeName').textContent = start.name;
     document.getElementById('endNodeName').textContent   = end.name;
-    document.getElementById('clickCounter').textContent  = '0';
+    document.getElementById('clickCounter').textContent  = this.clicks;
 
     showOnly('gameScreen');
-    const sp = new URLSearchParams({s:start.id,st:start.type,sn:start.name,e:end.id,et:end.type,en:end.name});
-    history.replaceState(null,'','?'+sp.toString());
+    if (!opts.keepUrl) {
+      const sp = buildGameSearchParams(start, end);
+      history.replaceState(null,'','?'+sp.toString());
+    }
     this.renderCurrent();
     this.renderPath();
 
     // Load header + current-node images async
     this.loadHeaderImages(start, end);
-    await this.loadConnections(start);
+    if (!isAtStart) this.loadCurImg(current);
+    await this.loadConnections(current);
   },
 
   async loadHeaderImages(start, end) {
@@ -473,6 +523,8 @@ const game = window.game = {
       this.cur.type === 'tv' ? 'TV SHOW' :
       role === 'director' ? 'DIRECTOR' : 'ACTOR';
     document.getElementById('curName').textContent = this.cur.name;
+    const debugBtn = document.getElementById('debugBtn');
+    if (debugBtn) debugBtn.textContent = 'Debug link';
   },
 
   renderPath() {
@@ -495,6 +547,67 @@ const game = window.game = {
     });
   },
 
+  debugUrl() {
+    return appBaseUrl() + '?' + buildGameSearchParams(this.start, this.end, this.cur).toString();
+  },
+
+  copyDebugLink(button) {
+    const btn = button || document.getElementById('debugBtn');
+    const url = this.debugUrl();
+    const markCopied = () => {
+      if (!btn) return;
+      const original = btn.textContent;
+      btn.textContent = 'Copied';
+      setTimeout(() => { btn.textContent = original; }, 1200);
+    };
+
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url).then(markCopied).catch(() => prompt('Debug link:', url));
+    } else {
+      prompt('Debug link:', url);
+    }
+  },
+
+  renderEmptyConnections(node, didError = false) {
+    const grid = document.getElementById('grid');
+    const lbl = document.getElementById('secLbl');
+    const tabsRow = document.getElementById('tabsRow');
+    tabsRow.style.display = 'none';
+    lbl.textContent = didError ? 'CONNECTIONS UNAVAILABLE' : 'NO CONNECTIONS';
+    grid.innerHTML = '';
+    grid.style.display = 'block';
+
+    const empty = document.createElement('div');
+    empty.className = 'empty-state';
+
+    const title = document.createElement('div');
+    title.className = 'empty-title';
+    title.textContent = didError ? 'Could not load this step' : 'No usable links here';
+
+    const copy = document.createElement('p');
+    copy.className = 'empty-copy';
+    copy.textContent = didError
+      ? 'The connection data failed to load. Copy this step link and send it over so we can inspect the exact spot.'
+      : 'TMDB does not list usable cast or director data for this title yet. Copy this step link and send it over so we can inspect the exact spot.';
+
+    const actions = document.createElement('div');
+    actions.className = 'empty-actions';
+
+    const debug = document.createElement('button');
+    debug.className = 'btn btn-ghost btn-sm';
+    debug.textContent = 'Copy debug link';
+    debug.onclick = () => this.copyDebugLink(debug);
+
+    const random = document.createElement('button');
+    random.className = 'btn btn-gold btn-sm';
+    random.textContent = 'Random';
+    random.onclick = () => this.startRandom();
+
+    actions.append(debug, random);
+    empty.append(title, copy, actions);
+    grid.appendChild(empty);
+  },
+
   async loadConnections(node) {
     const grid = document.getElementById('grid');
     const lbl  = document.getElementById('secLbl');
@@ -502,9 +615,9 @@ const game = window.game = {
 
     // Skeletons
     grid.innerHTML = '';
-    const isPersonNode = node.type !== 'movie';
+    const showsPeople = node.type === 'movie' || node.type === 'tv';
     for (let i = 0; i < 15; i++) {
-      grid.innerHTML += '<div class="skel"><div class="skel-img' + (isPersonNode ? '' : ' person') + '"></div><div class="skel-txt"></div><div class="skel-txt s"></div></div>';
+      grid.innerHTML += '<div class="skel"><div class="skel-img' + (showsPeople ? ' person' : '') + '"></div><div class="skel-txt"></div><div class="skel-txt s"></div></div>';
     }
 
     try {
@@ -512,12 +625,25 @@ const game = window.game = {
       if (node.type === 'movie' || node.type === 'tv') {
         const ep = node.type === 'tv' ? 'tv/' + node.id + '/credits' : 'movie/' + node.id + '/credits';
         const d = await api(ep);
-        const castItems = (d.cast||[]).sort((a,b)=>creditOrder(a)-creditOrder(b)).slice(0,38).map(p=>({
+        let castItems = (d.cast||[]).sort((a,b)=>creditOrder(a)-creditOrder(b)).slice(0,38).map(p=>({
           name:p.name, type:'person', id:p.id, img:p.profile_path, sub:p.character||''
         }));
-        const directors = (d.crew||[]).filter(c=>c.job==='Director').map(c=>({
+        let directors = (d.crew||[]).filter(c=>c.job==='Director').map(c=>({
           name:c.name, type:'person', id:c.id, img:c.profile_path, sub:'Director'
         }));
+        if (node.type === 'tv' && castItems.length === 0 && directors.length === 0) {
+          const ad = await api('tv/' + node.id + '/aggregate_credits');
+          castItems = (ad.cast||[]).sort((a,b)=>(b.total_episode_count||0)-(a.total_episode_count||0)).slice(0,38).map(p=>({
+            name:p.name,
+            type:'person',
+            id:p.id,
+            img:p.profile_path,
+            sub:((p.roles||[])[0]||{}).character || ''
+          }));
+          directors = (ad.crew||[]).filter(c=>(c.jobs||[]).some(j=>j.job==='Director')).map(c=>({
+            name:c.name, type:'person', id:c.id, img:c.profile_path, sub:'Director'
+          }));
+        }
         // Dedupe directors already in cast
         const castIds = new Set(castItems.map(c=>c.id));
         const newDirs = directors.filter(c=>!castIds.has(c.id));
@@ -574,6 +700,10 @@ const game = window.game = {
       // Store all items for tab filtering
       this._allItems = items;
       this._tab = 'all';
+      if (items.length === 0) {
+        this.renderEmptyConnections(node);
+        return;
+      }
       // Show tabs if person node (has movies+tv)
       const hasBothTypes = items.some(i=>i.type==='movie'||i.type==='tv') &&
                            items.some(i=>i.type==='tv');
@@ -608,7 +738,7 @@ const game = window.game = {
         }
       }
     } catch(_) {
-      grid.innerHTML = '<p style="color:#777;font-size:.85rem">Could not load connections.</p>';
+      this.renderEmptyConnections(node, true);
     }
   },
 
@@ -618,8 +748,6 @@ const game = window.game = {
     // Hide reverse button after first move
     const rb = document.getElementById('reverseBtn');
     if (rb) rb.style.display = 'none';
-    // Store role info on node if provided
-    if (node.role) this.cur.role = node.role;
     this.visited.add(key);
     this.cur = node;
     this.clicks++;

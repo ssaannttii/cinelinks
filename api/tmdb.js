@@ -8,6 +8,7 @@ const ALLOWED_PATHS = [
   /^tv\/\d+$/,
   /^movie\/\d+\/credits$/,
   /^tv\/\d+\/credits$/,
+  /^tv\/\d+\/aggregate_credits$/,
   /^person\/\d+\/combined_credits$/
 ];
 
