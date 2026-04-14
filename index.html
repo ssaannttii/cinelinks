@@ -45,27 +45,55 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .tmdb-credit a:hover{color:var(--gold)}
 
 /* LOADING */
-#loadingScreen{min-height:100vh;align-items:center;justify-content:center;gap:14px;flex-direction:column;padding:28px;position:relative;overflow:hidden}
-#loadingScreen::before{content:"";position:absolute;inset:0;background:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),radial-gradient(circle at 50% 30%,rgba(232,160,0,.14),transparent 34%);background-size:100% 4px,100% 100%;opacity:.5;animation:briefingScan 2.4s linear infinite}
-#loadingScreen::after{content:"";position:absolute;inset:auto 0 0;height:34%;background:linear-gradient(180deg,transparent,var(--bg));pointer-events:none}
+#loadingScreen{min-height:100vh;align-items:center;justify-content:center;flex-direction:column;padding:28px;position:relative;overflow:hidden;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(232,160,0,.11),transparent 65%),var(--bg)}
+/* Animated grid lines */
+#loadingScreen::before{content:"";position:absolute;inset:0;background:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:48px 48px;animation:gridDrift 8s linear infinite;pointer-events:none}
+@keyframes gridDrift{to{background-position:0 48px,48px 0}}
+/* Bottom fade */
+#loadingScreen::after{content:"";position:absolute;inset:auto 0 0;height:40%;background:linear-gradient(180deg,transparent,var(--bg));pointer-events:none}
+
 .load-shell{position:relative;z-index:1;width:min(520px,100%);display:flex;flex-direction:column;align-items:center;text-align:center}
-.spinner{width:46px;height:46px;border:2px solid var(--bdr);border-top-color:var(--gold);border-right-color:rgba(232,160,0,.45);border-radius:50%;animation:spin .8s linear infinite,spinnerGlow 1.4s ease-in-out infinite}
+
+/* Hexagon spinner */
+.spinner{position:relative;width:56px;height:56px;flex-shrink:0}
+.spinner::before,.spinner::after{content:"";position:absolute;inset:0;border-radius:8px;border:2px solid transparent}
+.spinner::before{border-top-color:var(--gold);border-right-color:rgba(232,160,0,.4);animation:spin .9s linear infinite}
+.spinner::after{border-bottom-color:rgba(232,160,0,.2);border-left-color:rgba(232,160,0,.6);animation:spin 1.4s linear infinite reverse}
+.spinner-inner{position:absolute;inset:12px;border-radius:50%;background:radial-gradient(circle,rgba(232,160,0,.18),transparent 70%);animation:spinnerPulse 1.6s ease-in-out infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-@keyframes spinnerGlow{50%{box-shadow:0 0 26px rgba(232,160,0,.28)}}
-@keyframes briefingScan{to{background-position:0 4px,0 0}}
-.load-kicker{margin:18px 0 6px;color:var(--gold);font-size:.66rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;animation:briefingIn .35s ease both}
-.load-txt{color:var(--txt);font-size:1.05rem;font-weight:800;animation:briefingIn .35s ease .08s both}
-.load-sub{color:var(--mut);font-size:.76rem;margin-top:8px;animation:briefingIn .35s ease .16s both}
-.load-preview{display:none;position:relative;align-items:center;justify-content:center;gap:12px;width:100%;background:rgba(255,255,255,.055);border:1px solid rgba(232,160,0,.24);border-radius:8px;padding:18px 16px 21px;font-size:.82rem;color:var(--mut);margin-top:20px;box-shadow:0 22px 60px rgba(0,0,0,.34);overflow:hidden}
-.load-preview::before{content:"";position:absolute;inset:0 auto 0 -35%;width:35%;background:linear-gradient(90deg,transparent,rgba(232,160,0,.18),transparent);animation:briefingSweep 1.2s ease-in-out .22s both}
-.load-preview::after{content:"";position:absolute;left:16px;right:16px;bottom:10px;height:2px;background:linear-gradient(90deg,var(--gold),rgba(232,160,0,.16));transform-origin:left;animation:briefingBar 1.05s ease-out both}
-.load-preview.visible{display:flex;animation:briefingIn .38s cubic-bezier(.22,1,.36,1) both}
-.load-preview-node{position:relative;z-index:1;min-width:0;flex:1 1 0;font-weight:800;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px;border:1px solid var(--bdr);border-radius:8px;padding:8px 10px;background:rgba(13,13,13,.46)}
-.load-preview-arr{position:relative;z-index:1;color:var(--gold);flex-shrink:0;font-size:1.1rem;font-weight:800;animation:arrowPulse .7s ease-in-out infinite alternate}
-@keyframes briefingIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
-@keyframes briefingSweep{to{transform:translateX(390%)}}
+@keyframes spinnerPulse{0%,100%{transform:scale(.85);opacity:.5}50%{transform:scale(1.15);opacity:1}}
+
+/* Floating particles */
+.load-particle{position:absolute;border-radius:50%;background:var(--gold);pointer-events:none;animation:particleFloat linear infinite}
+@keyframes particleFloat{0%{transform:translateY(0) translateX(0) scale(1);opacity:0}10%{opacity:1}90%{opacity:.4}100%{transform:translateY(-110vh) translateX(var(--drift)) scale(.3);opacity:0}}
+
+.load-kicker{margin:22px 0 8px;color:var(--gold);font-size:.66rem;font-weight:800;letter-spacing:.18em;text-transform:uppercase;animation:briefingIn .4s ease both}
+.load-txt{color:var(--txt);font-size:1.12rem;font-weight:800;letter-spacing:-.01em;animation:briefingIn .4s ease .1s both}
+.load-sub{color:var(--mut);font-size:.76rem;margin-top:6px;animation:briefingIn .4s ease .2s both}
+
+/* Challenge reveal card */
+.load-preview{display:none;position:relative;align-items:center;justify-content:center;gap:12px;width:100%;
+  background:linear-gradient(135deg,rgba(232,160,0,.07),rgba(255,255,255,.04));
+  border:1px solid rgba(232,160,0,.32);border-radius:12px;padding:20px 18px 24px;
+  margin-top:24px;box-shadow:0 0 0 1px rgba(232,160,0,.08),0 28px 64px rgba(0,0,0,.4);overflow:hidden}
+/* Sweep shimmer */
+.load-preview::before{content:"";position:absolute;inset:0 auto 0 -60%;width:60%;background:linear-gradient(90deg,transparent,rgba(232,160,0,.14),transparent);animation:briefingSweep 1.4s ease-in-out .1s both}
+/* Bottom progress bar */
+.load-preview::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),rgba(232,160,0,.3),transparent);transform-origin:left;animation:briefingBar 1.1s cubic-bezier(.22,1,.36,1) .1s both}
+.load-preview.visible{display:flex;animation:briefingReveal .5s cubic-bezier(.22,1,.36,1) both}
+@keyframes briefingReveal{from{opacity:0;transform:translateY(16px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+
+.load-preview-node{position:relative;z-index:1;min-width:0;flex:1 1 0;font-weight:800;color:var(--txt);font-size:.88rem;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px;
+  border:1px solid rgba(232,160,0,.2);border-radius:8px;padding:10px 12px;
+  background:rgba(13,13,13,.6);backdrop-filter:blur(6px);
+  box-shadow:0 4px 14px rgba(0,0,0,.3)}
+.load-preview-arr{position:relative;z-index:1;color:var(--gold);flex-shrink:0;font-size:1.3rem;font-weight:800;animation:arrowPulse .65s ease-in-out infinite alternate;filter:drop-shadow(0 0 6px rgba(232,160,0,.6))}
+
+@keyframes briefingIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes briefingSweep{to{transform:translateX(280%)}}
 @keyframes briefingBar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
-@keyframes arrowPulse{to{transform:translateX(3px)}}
+@keyframes arrowPulse{to{transform:translateX(5px)}}
 
 /* GAME */
 #gameScreen{min-height:100vh}
@@ -329,7 +357,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 
 <div id="loadingScreen" class="screen">
   <div class="load-shell">
-    <div class="spinner"></div>
+    <div class="spinner"><div class="spinner-inner"></div></div>
     <div class="load-kicker">Mission briefing</div>
     <p class="load-txt" id="loadTxt">Locking target chain</p>
     <div class="load-sub">Study the endpoints. Every click counts.</div>
@@ -905,7 +933,31 @@ function showOnly(id) {
       void inner.offsetWidth;
       inner.classList.add('anim-in');
     }
+    _clearParticles();
   }
+  if (id === 'loadingScreen') _spawnParticles();
+  else _clearParticles();
+}
+
+function _spawnParticles() {
+  const screen = document.getElementById('loadingScreen');
+  if (!screen) return;
+  screen.querySelectorAll('.load-particle').forEach(p => p.remove());
+  for (let i = 0; i < 18; i++) {
+    const p = document.createElement('div');
+    p.className = 'load-particle';
+    const size = 2 + Math.random() * 4;
+    const left = 5 + Math.random() * 90;
+    const delay = Math.random() * 4;
+    const duration = 4 + Math.random() * 5;
+    const drift = (Math.random() - 0.5) * 80;
+    p.style.cssText = `width:${size}px;height:${size}px;left:${left}%;bottom:-10px;opacity:0;--drift:${drift}px;animation-duration:${duration}s;animation-delay:${delay}s`;
+    screen.appendChild(p);
+  }
+}
+
+function _clearParticles() {
+  document.getElementById('loadingScreen')?.querySelectorAll('.load-particle').forEach(p => p.remove());
 }
 
 function thumbEl(elId, node, url) {
