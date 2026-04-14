@@ -8,7 +8,7 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#0d0d0d;--s1:#181818;--s2:#222;--bdr:rgba(255,255,255,0.09);--txt:#f0f0f0;--mut:#777;--gold:#e8a000;--golddim:rgba(232,160,0,0.15)}
-body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh}
+body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(circle at 50% -10%,rgba(232,160,0,.08),transparent 34%),linear-gradient(180deg,#101010 0%,var(--bg) 330px);color:var(--txt);min-height:100vh}
 .screen{display:none}
 .screen.active{display:flex;flex-direction:column}
 
@@ -47,9 +47,9 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var
 .hdr-thumb img{width:100%;height:100%;object-fit:cover;display:block}
 .hdr-name{font-size:.78rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px}
 .hdr-arr{color:var(--mut);flex-shrink:0;font-size:.85rem}
-.hdr-clicks{text-align:center;flex-shrink:0}
-.clicks-n{font-size:1.25rem;font-weight:700;color:var(--gold);display:block;line-height:1}
-.clicks-l{font-size:.62rem;color:var(--mut);text-transform:uppercase;letter-spacing:.08em}
+.hdr-clicks{text-align:center;flex-shrink:0;background:rgba(232,160,0,.08);border:1px solid rgba(232,160,0,.22);border-radius:8px;min-width:62px;padding:6px 9px;box-shadow:0 8px 18px rgba(0,0,0,.16)}
+.clicks-n{font-size:1.45rem;font-weight:700;color:var(--gold);display:block;line-height:.95}
+.clicks-l{font-size:.58rem;color:var(--mut);text-transform:uppercase;letter-spacing:.1em;margin-top:3px;display:block}
 @keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.35)}100%{transform:scale(1)}}
 .clicks-n.popping{animation:pop .22s ease}
 
@@ -72,19 +72,32 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var
 .cur-badge{font-size:.62rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
 .cur-name{font-size:1.3rem;font-weight:700;letter-spacing:-.02em;line-height:1.2}
 .cur-meta{color:var(--mut);font-size:.82rem;font-weight:600;margin-top:5px}
+.cur-prompt{color:var(--mut);font-size:.78rem;line-height:1.4;margin-top:12px;max-width:420px}
 .cur-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.cur-run{align-self:stretch;min-width:132px;border-left:1px solid var(--bdr);padding-left:16px;display:flex;flex-direction:column;justify-content:center;gap:14px}
+.run-metric{display:block}
+.run-n{display:block;color:var(--gold);font-size:1.45rem;font-weight:700;line-height:1}
+.run-l{display:block;color:var(--mut);font-size:.58rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-top:4px}
 .debug-footer{text-align:center;margin-top:24px}
 .debug-btn{width:auto;padding:5px 10px;color:var(--mut);font-size:.68rem;opacity:.55}
 .debug-btn:hover{opacity:.9}
 
 /* Path pills */
-.path-row{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:20px}
-.pill{font-size:.72rem;padding:3px 10px;border-radius:20px;background:var(--s2);color:var(--mut);white-space:nowrap;max-width:140px;overflow:hidden;text-overflow:ellipsis}
-.pill.active{background:var(--gold);color:#111;font-weight:600}
-.path-arrow{color:var(--mut);opacity:.45;font-size:.72rem;line-height:1;transform:translateY(-1px)}
+.path-row{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;overflow-x:auto;margin-bottom:22px;padding-bottom:4px;scrollbar-width:none}
+.path-row::-webkit-scrollbar{display:none}
+.pill{display:flex;align-items:center;gap:6px;font-size:.72rem;padding:4px 10px;border-radius:20px;background:rgba(255,255,255,.045);border:1px solid var(--bdr);color:var(--mut);white-space:nowrap;max-width:170px;overflow:hidden;text-overflow:ellipsis;flex-shrink:0}
+.pill.movie,.pill.tv{border-radius:8px}
+.pill.director{border-color:rgba(232,160,0,.22)}
+.pill-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);flex-shrink:0;opacity:.85}
+.pill.movie .pill-dot{background:#f0f0f0}
+.pill.tv .pill-dot{background:#3498db}
+.pill-name{overflow:hidden;text-overflow:ellipsis}
+.pill.active{background:var(--gold);border-color:var(--gold);color:#111;font-weight:700}
+.pill.active .pill-dot{background:#111}
+.path-arrow{color:var(--mut);opacity:.38;font-size:.72rem;line-height:1;transform:translateY(-1px);flex-shrink:0}
 
 /* Connections */
-.sec-lbl{font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin-bottom:12px}
+.sec-lbl{font-size:.65rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:12px}
 .tabs{display:flex;gap:2px;margin-bottom:14px;background:var(--s2);border-radius:8px;padding:3px}
 .tab{flex:1;padding:6px 10px;border-radius:6px;border:none;background:none;color:var(--mut);font-family:inherit;font-size:.75rem;font-weight:600;cursor:pointer;transition:background .15s,color .15s}
 .tab.active{background:var(--s1);color:var(--txt)}
@@ -95,8 +108,11 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var
 .empty-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 
 /* Cards */
-.card{background:var(--s1);border:1px solid var(--bdr);border-radius:8px;overflow:hidden;cursor:pointer;transition:border-color .15s,transform .15s,box-shadow .15s}
+.card{background:var(--s1);border:1px solid var(--bdr);border-radius:8px;overflow:hidden;cursor:pointer;transition:border-color .15s,transform .15s,box-shadow .15s;position:relative}
 .card:hover{border-color:var(--gold);transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.4)}
+.card:not(.visited)::before{content:"Choose";position:absolute;top:8px;right:8px;z-index:2;background:rgba(13,13,13,.78);border:1px solid rgba(232,160,0,.32);border-radius:8px;color:var(--gold);font-size:.58rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 6px;opacity:0;transform:translateY(-3px);transition:opacity .15s,transform .15s;pointer-events:none}
+.card:not(.visited):hover::before{opacity:1;transform:translateY(0)}
+.card:hover .card-img img{filter:brightness(.72) saturate(1.08)}
 .card.goal{border-color:rgba(232,160,0,.45);box-shadow:0 0 10px var(--golddim)}
 .card.visited{opacity:.38;cursor:not-allowed;pointer-events:none;position:relative}
 .card.visited::after{content:"Already visited";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:600;color:var(--mut);background:rgba(0,0,0,.55);text-align:center;padding:4px;pointer-events:none}
@@ -108,7 +124,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var
 .card.director-card .card-sub{color:var(--gold);font-weight:600}
 .card-img{width:100%;aspect-ratio:2/3;overflow:hidden;background:var(--s2)}
 .card-img.person{aspect-ratio:1/1}
-.card-img img{width:100%;height:100%;object-fit:cover;display:block}
+.card-img img{width:100%;height:100%;object-fit:cover;display:block;transition:filter .15s}
 .card-noimg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--mut);font-size:.68rem}
 .card-info{padding:7px 9px 9px}
 .card-name{font-size:.78rem;font-weight:600;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
@@ -121,6 +137,16 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var
 .skel-txt{margin:8px 9px;height:9px;border-radius:4px;background:linear-gradient(90deg,var(--s2) 25%,#282828 50%,var(--s2) 75%);background-size:200% 100%;animation:shim 1.3s infinite}
 .skel-txt.s{width:55%}
 @keyframes shim{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+@media (max-width:680px){
+  .g-header{padding:10px 14px;gap:8px}
+  .hdr-name{max-width:82px}
+  .hdr-clicks{min-width:54px;padding:5px 7px}
+  .clicks-n{font-size:1.25rem}
+  .cur-card{gap:14px;flex-wrap:wrap}
+  .cur-info{flex-basis:calc(100% - 98px)}
+  .cur-run{width:100%;min-width:0;border-left:0;border-top:1px solid var(--bdr);padding:12px 0 0;flex-direction:row;justify-content:flex-start}
+}
 
 /* WIN */
 #winScreen{min-height:100vh;align-items:center;justify-content:center;padding:40px 20px;position:relative;overflow-x:hidden;overflow-y:auto}
@@ -222,11 +248,16 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var
         <div id="curType" class="cur-badge">ACTOR</div>
         <div id="curName" class="cur-name"></div>
         <div id="curMeta" class="cur-meta"></div>
+        <div id="curPrompt" class="cur-prompt">Choose your next connection.</div>
         <div class="cur-actions">
           <div id="reverseBtn">
             <button class="btn btn-ghost btn-sm" onclick="game.reverseGame()">&#8645; Reverse direction</button>
           </div>
         </div>
+      </div>
+      <div class="cur-run">
+        <div class="run-metric"><span id="runSteps" class="run-n">0</span><span class="run-l">Steps</span></div>
+        <div class="run-metric"><span id="runConnections" class="run-n">&#8212;</span><span class="run-l">Links</span></div>
       </div>
     </div>
     <div id="pathRow" class="path-row"></div>
@@ -452,7 +483,7 @@ async function hydrateNodeImage(node) {
 const game = window.game = {
   cur: null, start: null, end: null,
   path: [], clicks: 0, visited: new Set(), optDist: null,
-  _allItems: [], _tab: 'all',
+  _allItems: [], _tab: 'all', _connectionCount: null,
 
   dayOfYear() {
     const n = new Date();
@@ -502,6 +533,7 @@ const game = window.game = {
     this.cur = current;
     this.path = isAtStart ? [start] : [start, current];
     this.clicks = isAtStart ? 0 : 1;
+    this._connectionCount = null;
     this.visited = new Set([start.type+'-'+start.id]);
     if (!isAtStart) this.visited.add(current.type+'-'+current.id);
     const rb = document.getElementById('reverseBtn');
@@ -510,6 +542,7 @@ const game = window.game = {
     document.getElementById('startNodeName').textContent = start.name;
     document.getElementById('endNodeName').textContent   = end.name;
     document.getElementById('clickCounter').textContent  = this.clicks;
+    this.renderRunMetrics();
 
     showOnly('gameScreen');
     if (!opts.keepUrl) {
@@ -585,8 +618,19 @@ const game = window.game = {
       role === 'director' ? 'DIRECTOR' : 'ACTOR';
     document.getElementById('curName').textContent = this.cur.name;
     this.renderCurrentMeta();
+    this.renderCurrentPrompt();
+    this.renderRunMetrics();
     const debugBtn = document.getElementById('debugBtn');
     if (debugBtn) debugBtn.textContent = 'Debug link';
+  },
+
+  renderCurrentPrompt() {
+    const prompt = document.getElementById('curPrompt');
+    if (!prompt) return;
+    const label = this.cur.type === 'person'
+      ? 'Choose a film or show from this filmography.'
+      : 'Choose the next person connected to this title.';
+    prompt.textContent = label;
   },
 
   renderCurrentMeta() {
@@ -594,6 +638,13 @@ const game = window.game = {
     const text = this.cur.type === 'movie' || this.cur.type === 'tv' ? (this.cur.yearLabel || '') : '';
     meta.textContent = text;
     meta.style.display = text ? 'block' : 'none';
+  },
+
+  renderRunMetrics() {
+    const steps = document.getElementById('runSteps');
+    const links = document.getElementById('runConnections');
+    if (steps) steps.textContent = this.clicks;
+    if (links) links.textContent = this._connectionCount === null ? '\u2014' : this._connectionCount;
   },
 
   renderPath() {
@@ -609,11 +660,17 @@ const game = window.game = {
       }
 
       const d = document.createElement('div');
-      d.className = 'pill' + (i === this.path.length - 1 ? ' active' : '');
-      d.textContent = n.name;
+      d.className = 'pill ' + n.type + (n.role === 'director' ? ' director' : '') + (i === this.path.length - 1 ? ' active' : '');
+      const dot = document.createElement('span');
+      dot.className = 'pill-dot';
+      const name = document.createElement('span');
+      name.className = 'pill-name';
+      name.textContent = n.name;
+      d.append(dot, name);
       d.title = n.name;
       el.appendChild(d);
     });
+    el.scrollLeft = el.scrollWidth;
   },
 
   debugUrl() {
@@ -643,6 +700,8 @@ const game = window.game = {
     const tabsRow = document.getElementById('tabsRow');
     tabsRow.style.display = 'none';
     lbl.textContent = didError ? 'CONNECTIONS UNAVAILABLE' : 'NO CONNECTIONS';
+    this._connectionCount = didError ? null : 0;
+    this.renderRunMetrics();
     grid.innerHTML = '';
     grid.style.display = 'block';
 
@@ -680,7 +739,9 @@ const game = window.game = {
   async loadConnections(node) {
     const grid = document.getElementById('grid');
     const lbl  = document.getElementById('secLbl');
-    lbl.textContent = node.type === 'movie' ? 'CAST' : 'FILMOGRAPHY';
+    lbl.textContent = 'CHOOSE YOUR NEXT CONNECTION';
+    this._connectionCount = null;
+    this.renderRunMetrics();
 
     // Skeletons
     grid.innerHTML = '';
@@ -801,6 +862,8 @@ const game = window.game = {
         this.renderEmptyConnections(node);
         return;
       }
+      this._connectionCount = items.length;
+      this.renderRunMetrics();
       // Show tabs if person node (has movies+tv)
       const hasBothTypes = items.some(i=>i.type==='movie'||i.type==='tv') &&
                            items.some(i=>i.type==='tv');
@@ -815,7 +878,7 @@ const game = window.game = {
       const nonDirItems = items.filter(i => i.sub !== 'Director');
 
       if (dirItems.length > 0) {
-        lbl.textContent = 'PEOPLE';
+        lbl.textContent = 'CHOOSE YOUR NEXT CONNECTION';
         grid.appendChild(peopleSection(
           dirItems.length === 1 ? 'DIRECTOR' : 'DIRECTORS',
           dirItems,
@@ -825,7 +888,7 @@ const game = window.game = {
 
       if (nonDirItems.length > 0) {
         if (node.type === 'tv') {
-          if (dirItems.length === 0) lbl.textContent = 'CAST';
+          if (dirItems.length === 0) lbl.textContent = 'CHOOSE YOUR NEXT CONNECTION';
           const mainCast = nonDirItems.filter(i => i.castGroup !== 'additional');
           const additionalCast = nonDirItems.filter(i => i.castGroup === 'additional');
           if (mainCast.length > 0) {
