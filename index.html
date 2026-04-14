@@ -465,6 +465,12 @@ function tvNode(show) {
   return {name:show.name, type:'tv', id:show.id, img:show.poster_path, yearLabel:tvYear(show)};
 }
 
+function nodeHeaderSuffix(node) {
+  if (node.type === 'tv') return node.yearLabel ? ' (' + node.yearLabel + ' · TV)' : ' (TV)';
+  if (node.type === 'movie') return node.yearLabel ? ' (' + node.yearLabel + ')' : '';
+  return '';
+}
+
 function isKnownFor(person, node) {
   return (person.known_for || []).some(item => {
     const type = item.media_type === 'tv' ? 'tv' : 'movie';
@@ -748,8 +754,8 @@ const game = window.game = {
     const rb = document.getElementById('reverseBtn');
     if (rb) rb.style.display = isAtStart ? 'block' : 'none';
 
-    document.getElementById('startNodeName').textContent = start.name;
-    document.getElementById('endNodeName').textContent   = end.name;
+    document.getElementById('startNodeName').textContent = start.name + nodeHeaderSuffix(start);
+    document.getElementById('endNodeName').textContent   = end.name + nodeHeaderSuffix(end);
     document.getElementById('clickCounter').textContent  = this.clicks;
     document.querySelector('.hdr-clicks')?.style.setProperty('--click-ring', this.clickRing());
 
@@ -1407,8 +1413,8 @@ const game = window.game = {
     this.path = [this.start];
     this.visited = new Set([this.start.type+'-'+this.start.id]);
     // Update header
-    document.getElementById('startNodeName').textContent = this.start.name;
-    document.getElementById('endNodeName').textContent = this.end.name;
+    document.getElementById('startNodeName').textContent = this.start.name + nodeHeaderSuffix(this.start);
+    document.getElementById('endNodeName').textContent = this.end.name + nodeHeaderSuffix(this.end);
     this.loadHeaderImages(this.start, this.end);
     this.renderCurrent();
     this.renderPath();
