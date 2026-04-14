@@ -45,14 +45,27 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .tmdb-credit a:hover{color:var(--gold)}
 
 /* LOADING */
-#loadingScreen{min-height:100vh;align-items:center;justify-content:center;gap:14px;flex-direction:column}
-.spinner{width:34px;height:34px;border:2px solid var(--bdr);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite}
+#loadingScreen{min-height:100vh;align-items:center;justify-content:center;gap:14px;flex-direction:column;padding:28px;position:relative;overflow:hidden}
+#loadingScreen::before{content:"";position:absolute;inset:0;background:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),radial-gradient(circle at 50% 30%,rgba(232,160,0,.14),transparent 34%);background-size:100% 4px,100% 100%;opacity:.5;animation:briefingScan 2.4s linear infinite}
+#loadingScreen::after{content:"";position:absolute;inset:auto 0 0;height:34%;background:linear-gradient(180deg,transparent,var(--bg));pointer-events:none}
+.load-shell{position:relative;z-index:1;width:min(520px,100%);display:flex;flex-direction:column;align-items:center;text-align:center}
+.spinner{width:46px;height:46px;border:2px solid var(--bdr);border-top-color:var(--gold);border-right-color:rgba(232,160,0,.45);border-radius:50%;animation:spin .8s linear infinite,spinnerGlow 1.4s ease-in-out infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.load-txt{color:var(--mut);font-size:.88rem}
-.load-preview{display:none;align-items:center;gap:10px;background:rgba(255,255,255,.04);border:1px solid var(--bdr);border-radius:10px;padding:10px 16px;font-size:.8rem;color:var(--mut);margin-top:4px}
-.load-preview.visible{display:flex}
-.load-preview-node{font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px}
-.load-preview-arr{color:var(--gold);flex-shrink:0}
+@keyframes spinnerGlow{50%{box-shadow:0 0 26px rgba(232,160,0,.28)}}
+@keyframes briefingScan{to{background-position:0 4px,0 0}}
+.load-kicker{margin:18px 0 6px;color:var(--gold);font-size:.66rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;animation:briefingIn .35s ease both}
+.load-txt{color:var(--txt);font-size:1.05rem;font-weight:800;animation:briefingIn .35s ease .08s both}
+.load-sub{color:var(--mut);font-size:.76rem;margin-top:8px;animation:briefingIn .35s ease .16s both}
+.load-preview{display:none;position:relative;align-items:center;justify-content:center;gap:12px;width:100%;background:rgba(255,255,255,.055);border:1px solid rgba(232,160,0,.24);border-radius:8px;padding:18px 16px 21px;font-size:.82rem;color:var(--mut);margin-top:20px;box-shadow:0 22px 60px rgba(0,0,0,.34);overflow:hidden}
+.load-preview::before{content:"";position:absolute;inset:0 auto 0 -35%;width:35%;background:linear-gradient(90deg,transparent,rgba(232,160,0,.18),transparent);animation:briefingSweep 1.2s ease-in-out .22s both}
+.load-preview::after{content:"";position:absolute;left:16px;right:16px;bottom:10px;height:2px;background:linear-gradient(90deg,var(--gold),rgba(232,160,0,.16));transform-origin:left;animation:briefingBar 1.05s ease-out both}
+.load-preview.visible{display:flex;animation:briefingIn .38s cubic-bezier(.22,1,.36,1) both}
+.load-preview-node{position:relative;z-index:1;min-width:0;flex:1 1 0;font-weight:800;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px;border:1px solid var(--bdr);border-radius:8px;padding:8px 10px;background:rgba(13,13,13,.46)}
+.load-preview-arr{position:relative;z-index:1;color:var(--gold);flex-shrink:0;font-size:1.1rem;font-weight:800;animation:arrowPulse .7s ease-in-out infinite alternate}
+@keyframes briefingIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes briefingSweep{to{transform:translateX(390%)}}
+@keyframes briefingBar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes arrowPulse{to{transform:translateX(3px)}}
 
 /* GAME */
 #gameScreen{min-height:100vh}
@@ -315,12 +328,16 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 </div>
 
 <div id="loadingScreen" class="screen">
-  <div class="spinner"></div>
-  <p class="load-txt" id="loadTxt">Finding your challenge&#8230;</p>
-  <div class="load-preview" id="loadPreview">
-    <span class="load-preview-node" id="loadPreviewStart"></span>
-    <span class="load-preview-arr">→</span>
-    <span class="load-preview-node" id="loadPreviewEnd"></span>
+  <div class="load-shell">
+    <div class="spinner"></div>
+    <div class="load-kicker">Mission briefing</div>
+    <p class="load-txt" id="loadTxt">Locking target chain</p>
+    <div class="load-sub">Study the endpoints. Every click counts.</div>
+    <div class="load-preview" id="loadPreview">
+      <span class="load-preview-node" id="loadPreviewStart"></span>
+      <span class="load-preview-arr">→</span>
+      <span class="load-preview-node" id="loadPreviewEnd"></span>
+    </div>
   </div>
 </div>
 
@@ -414,6 +431,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 <script>
 const DAILY_TIME_ZONE = 'Europe/Madrid';
 const DAILY_ALGO_VERSION = 2;
+const BRIEFING_DELAY_MS = 1050;
 
 const FALLBACK_DAILY = [
   {s:{name:"Tom Hanks",type:"person",id:31},e:{name:"The Dark Knight",type:"movie",id:155}},
@@ -954,7 +972,7 @@ const game = window.game = {
     const score = await fetchDailyScore(key);
     this.optDist = null;
     this._showLoadPreview(challenge.s, challenge.e);
-    await new Promise(r => setTimeout(r, 320));
+    await new Promise(r => setTimeout(r, BRIEFING_DELAY_MS));
     this.init(challenge.s, challenge.e, {
       scoreDate: key,
       dailyRecord: scoreNumber(score && score.record),
@@ -976,12 +994,12 @@ const game = window.game = {
       if (!challenge) throw 0;
       this.optDist = null;
       this._showLoadPreview(challenge.s, challenge.e);
-      await new Promise(r => setTimeout(r, 320));
+      await new Promise(r => setTimeout(r, BRIEFING_DELAY_MS));
       this.init(challenge.s, challenge.e);
     } catch(_) {
       const c = FALLBACK_DAILY[Math.floor(Math.random() * FALLBACK_DAILY.length)];
       this._showLoadPreview(c.s, c.e);
-      await new Promise(r => setTimeout(r, 320));
+      await new Promise(r => setTimeout(r, BRIEFING_DELAY_MS));
       this.init(c.s, c.e);
     }
   },
@@ -992,8 +1010,10 @@ const game = window.game = {
     if (!preview) return;
     document.getElementById('loadPreviewStart').textContent = start.name;
     document.getElementById('loadPreviewEnd').textContent = end.name;
+    preview.classList.remove('visible');
+    void preview.offsetWidth;
     preview.classList.add('visible');
-    if (txt) txt.textContent = 'Your challenge:';
+    if (txt) txt.textContent = 'Target chain acquired';
   },
 
   async init(start, end, opts = {}) {
@@ -1782,7 +1802,7 @@ const game = window.game = {
     document.getElementById('winScreen').querySelectorAll('.confetti').forEach(c => c.remove());
     document.getElementById('loadPreview')?.classList.remove('visible');
     const loadTxt = document.getElementById('loadTxt');
-    if (loadTxt) loadTxt.textContent = 'Finding your challenge\u2026';
+    if (loadTxt) loadTxt.textContent = 'Locking target chain';
     history.replaceState(null, '', location.pathname + location.hash);
     showOnly('startScreen');
   },
