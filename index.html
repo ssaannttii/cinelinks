@@ -145,7 +145,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .card-noimg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--mut);font-size:.68rem}
 .card-info{padding:7px 9px 9px}
 .card-name{font-size:.78rem;font-weight:600;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.card-sub{font-size:.68rem;color:var(--mut);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-sub{font-size:.68rem;color:var(--mut);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:4px}
+.card-tv-badge{font-size:.55rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:rgba(52,152,219,.18);color:#3498db;border:1px solid rgba(52,152,219,.35);border-radius:4px;padding:1px 4px;flex-shrink:0;line-height:1.4}
 
 /* Skeleton */
 .skel{background:var(--s1);border:1px solid var(--bdr);border-radius:8px;overflow:hidden}
@@ -1369,9 +1370,14 @@ const game = window.game = {
     const imgHtml = item.img
       ? '<img src="' + IMGBASE + item.img + '" alt="" loading="lazy">'
       : '<div class="card-noimg">No image</div>';
+    const tvBadge = item.type === 'tv' ? '<span class="card-tv-badge">Series</span>' : '';
+    const yearText = item.type === 'tv' || item.type === 'movie' ? (item.yearLabel || item.sub.slice(0,4) || '') : item.sub;
+    const subHtml = item.type === 'tv' || item.type === 'movie'
+      ? tvBadge + '<span>' + yearText.replace(/</g,'&lt;') + '</span>'
+      : item.sub.replace(/</g,'&lt;');
     div.innerHTML = '<div class="' + imgClass + '">' + imgHtml + '</div>' +
       '<div class="card-info"><div class="card-name">' + item.name.replace(/</g,'&lt;') + '</div>' +
-      '<div class="card-sub">' + item.sub.replace(/</g,'&lt;') + '</div></div>';
+      '<div class="card-sub">' + subHtml + '</div></div>';
     if (!isVisited) {
       div.onclick = () => this.navigateTo({name:item.name, type:item.type, id:item.id, img:item.img, yearLabel:item.yearLabel, role:isDir?'director':null});
     }
