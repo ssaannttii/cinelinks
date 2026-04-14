@@ -425,7 +425,14 @@ const game = window.game = {
           if (seen.has(k)) return false;
           seen.add(k); return true;
         });
-        items = unique.sort((a,b) => {
+        // Filter out entries with very few votes (likely incomplete TMDB entries like duplicate IDs)
+        const thisYearVal = new Date().getFullYear();
+        const filtered = unique.filter(m => {
+          const yr = (m.release_date||m.first_air_date||'').slice(0,4)|0;
+          const isRecent = yr >= thisYearVal - 1;
+          return (m.vote_count||0) > 20 || isRecent;
+        });
+        items = filtered.sort((a,b) => {
           const yearA = (a.release_date||a.first_air_date||'').slice(0,4)|0;
           const yearB = (b.release_date||b.first_air_date||'').slice(0,4)|0;
           const boostA = yearA >= thisYear - 1 ? 2000 : 0;
