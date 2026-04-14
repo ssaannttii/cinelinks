@@ -117,10 +117,17 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var
 .win-route-lbl{display:flex;align-items:center;gap:10px;margin:0 0 12px;color:var(--mut);font-size:.66rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
 .win-route-lbl::before,.win-route-lbl::after{content:"";height:1px;background:var(--bdr);flex:1}
 .win-path{display:flex;flex-direction:column;align-items:stretch;gap:0;margin-bottom:24px}
-.wp{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px;text-align:left;background:rgba(255,255,255,.045);border:1px solid var(--bdr);border-radius:8px;padding:10px 12px}
+.wp{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;align-items:center;gap:12px;text-align:left;background:rgba(255,255,255,.045);border:1px solid var(--bdr);border-radius:8px;padding:10px 12px;position:relative;overflow:hidden}
+.wp::before{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:var(--gold);opacity:.65}
 .wp.person{border-color:rgba(232,160,0,.32)}
 .wp.movie,.wp.tv{border-color:rgba(255,255,255,.12)}
 .wp-step{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--s2);color:var(--gold);font-size:.72rem;font-weight:700;flex-shrink:0}
+.wp-art{width:48px;height:48px;border-radius:8px;overflow:hidden;background:linear-gradient(135deg,var(--s2),#111);border:1px solid rgba(255,255,255,.08);box-shadow:0 8px 20px rgba(0,0,0,.25);flex-shrink:0}
+.wp.person .wp-art{border-radius:50%}
+.wp.movie .wp-art,.wp.tv .wp-art{width:42px;height:63px}
+.wp-art img{width:100%;height:100%;display:block;object-fit:cover;object-position:center top}
+.wp.movie .wp-art img,.wp.tv .wp-art img{object-position:center center}
+.wp-noart{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--mut);font-size:1rem;font-weight:700;background:radial-gradient(circle at 30% 20%,rgba(232,160,0,.18),transparent 38%),var(--s2)}
 .wp-copy{min-width:0}
 .wp-name{font-size:.9rem;font-weight:700;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wp-meta{display:flex;align-items:center;gap:6px;margin-top:3px;color:var(--mut);font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
@@ -138,8 +145,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var
   #winScreen{justify-content:flex-start;padding:24px 14px}
   .win-box{padding:24px 16px}
   .stats,.win-btns{grid-template-columns:1fr}
-  .wp{grid-template-columns:auto minmax(0,1fr);gap:10px}
-  .wp-edge{grid-column:2;justify-self:start;margin-top:2px}
+  .wp{grid-template-columns:auto auto minmax(0,1fr);gap:10px}
+  .wp-edge{grid-column:3;justify-self:start;margin-top:2px}
 }
 </style>
 </head>
@@ -298,6 +305,38 @@ function nodeTypeLabel(type) {
   return type === 'person' ? 'Person' : (type === 'tv' ? 'TV' : 'Movie');
 }
 
+function nodeApiPrefix(node) {
+  return node.type === 'person' ? 'person/' : (node.type === 'tv' ? 'tv/' : 'movie/');
+}
+
+function nodeImagePath(node, data) {
+  return node.type === 'person' ? data.profile_path : data.poster_path;
+}
+
+function nodeImageUrl(node) {
+  if (!node.img) return '';
+  return node.img.startsWith('http') ? node.img : IMGBASE + node.img;
+}
+
+function nodeInitials(name) {
+  return (name || '?')
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(part => part[0])
+    .join('')
+    .toUpperCase() || '?';
+}
+
+async function hydrateNodeImage(node) {
+  if (node.img) return node.img;
+  try {
+    const d = await api(nodeApiPrefix(node) + node.id);
+    node.img = nodeImagePath(node, d) || '';
+  } catch(_) {}
+  return node.img || '';
+}
+
 const game = window.game = {
   cur: null, start: null, end: null,
   path: [], clicks: 0, visited: new Set(), optDist: null,
@@ -330,11 +369,11 @@ const game = window.game = {
         const p = sp[0];
         const kids = (p.known_for || []).map(k => k.id);
         const m = sm.find(mv => !kids.includes(mv.id)) || sm[1];
-        s = {name:p.name, type:'person', id:p.id};
-        e = {name:m.title, type:'movie',  id:m.id};
+        s = {name:p.name, type:'person', id:p.id, img:p.profile_path};
+        e = {name:m.title, type:'movie',  id:m.id, img:m.poster_path};
       } else {
-        s = {name:sm[0].title, type:'movie',  id:sm[0].id};
-        e = {name:sp[0].name,  type:'person', id:sp[0].id};
+        s = {name:sm[0].title, type:'movie',  id:sm[0].id, img:sm[0].poster_path};
+        e = {name:sp[0].name,  type:'person', id:sp[0].id, img:sp[0].profile_path};
       }
       this.optDist = null;
       this.init(s, e);
@@ -369,15 +408,13 @@ const game = window.game = {
   async loadHeaderImages(start, end) {
     try {
       const [sd, ed] = await Promise.all([
-        api((start.type === 'person' ? 'person/' : 'movie/') + start.id),
-        api((end.type   === 'person' ? 'person/' : 'movie/') + end.id)
+        api(nodeApiPrefix(start) + start.id),
+        api(nodeApiPrefix(end) + end.id)
       ]);
-      const su = start.type === 'person'
-        ? (sd.profile_path ? IMGBASE + sd.profile_path : '')
-        : (sd.poster_path  ? IMGBASE + sd.poster_path  : '');
-      const eu = end.type === 'person'
-        ? (ed.profile_path ? IMGBASE + ed.profile_path : '')
-        : (ed.poster_path  ? IMGBASE + ed.poster_path  : '');
+      start.img = start.img || nodeImagePath(start, sd) || '';
+      end.img = end.img || nodeImagePath(end, ed) || '';
+      const su = nodeImageUrl(start);
+      const eu = nodeImageUrl(end);
       thumbEl('startThumb', start, su);
       thumbEl('endThumb',   end,   eu);
       // Also set current node image if still at start
@@ -389,12 +426,8 @@ const game = window.game = {
 
   async loadCurImg(node) {
     try {
-      const prefix = node.type === 'person' ? 'person/' : (node.type === 'tv' ? 'tv/' : 'movie/');
-      const d = await api(prefix + node.id);
-      const url = node.type === 'person'
-        ? (d.profile_path ? IMGBASE + d.profile_path : '')
-        : (d.poster_path  ? IMGBASE + d.poster_path  : '');
-      this.setCurImg(url);
+      await hydrateNodeImage(node);
+      this.setCurImg(nodeImageUrl(node));
     } catch(_) {}
   },
 
@@ -571,13 +604,14 @@ const game = window.game = {
 
     if (node.id === this.end.id && node.type === this.end.type) {
       await new Promise(r => setTimeout(r, 300));
-      this.showWin();
+      await this.showWin();
       return;
     }
     await this.loadConnections(node);
   },
 
-  showWin() {
+  async showWin() {
+    await Promise.all(this.path.map(n => hydrateNodeImage(n)));
     showOnly('winScreen');
     document.getElementById('playerClicks').textContent = this.clicks;
     const est = this.optDist || Math.max(2, Math.ceil(this.clicks * 0.7));
@@ -609,6 +643,22 @@ const game = window.game = {
       step.className = 'wp-step';
       step.textContent = i + 1;
 
+      const art = document.createElement('div');
+      art.className = 'wp-art';
+      const imgUrl = nodeImageUrl(n);
+      if (imgUrl) {
+        const img = document.createElement('img');
+        img.src = imgUrl;
+        img.alt = '';
+        img.loading = 'lazy';
+        art.appendChild(img);
+      } else {
+        const noArt = document.createElement('div');
+        noArt.className = 'wp-noart';
+        noArt.textContent = nodeInitials(n.name);
+        art.appendChild(noArt);
+      }
+
       const copy = document.createElement('div');
       copy.className = 'wp-copy';
 
@@ -627,7 +677,7 @@ const game = window.game = {
 
       meta.append(dot, type);
       copy.append(name, meta);
-      d.append(step, copy);
+      d.append(step, art, copy);
 
       if (i === 0 || i === this.path.length - 1) {
         const edge = document.createElement('div');
@@ -672,7 +722,7 @@ const game = window.game = {
       '<div class="card-info"><div class="card-name">' + item.name.replace(/</g,'&lt;') + '</div>' +
       '<div class="card-sub">' + item.sub.replace(/</g,'&lt;') + '</div></div>';
     if (!isVisited) {
-      div.onclick = () => this.navigateTo({name:item.name, type:item.type, id:item.id, role:isDir?'director':null});
+      div.onclick = () => this.navigateTo({name:item.name, type:item.type, id:item.id, img:item.img, role:isDir?'director':null});
     }
     return div;
   },
