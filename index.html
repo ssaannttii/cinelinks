@@ -228,6 +228,10 @@ const IMGBASE = 'https://image.tmdb.org/t/p/w342';
 
 function api(path) { return fetch('/api/tmdb?path=' + path).then(r => r.json()); }
 
+function creditOrder(credit) {
+  return Number.isFinite(credit.order) ? credit.order : 999;
+}
+
 function gameParamsFromUrl() {
   const urlP = new URLSearchParams(location.search);
   const urlS = urlP.get('s'), urlST = urlP.get('st') || 'movie';
@@ -416,7 +420,7 @@ const game = window.game = {
       if (node.type === 'movie' || node.type === 'tv') {
         const ep = node.type === 'tv' ? 'tv/' + node.id + '/credits' : 'movie/' + node.id + '/credits';
         const d = await api(ep);
-        const castItems = (d.cast||[]).sort((a,b)=>(a.order||999)-(b.order||999)).slice(0,38).map(p=>({
+        const castItems = (d.cast||[]).sort((a,b)=>creditOrder(a)-creditOrder(b)).slice(0,38).map(p=>({
           name:p.name, type:'person', id:p.id, img:p.profile_path, sub:p.character||''
         }));
         const directors = (d.crew||[]).filter(c=>c.job==='Director').map(c=>({
