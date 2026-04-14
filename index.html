@@ -1265,13 +1265,33 @@
                                 </div>
                             </div>
                         `;
-                        item.addEventListener('click', async () => {
-                            if (!this.visited.has(`${conn.type}-${conn.id}`)) {
-                                this.currentNode = conn;
-                                this.path.push(conn);
+                                                item.addEventListener('click', async () => {
+                            if (\!this.visited.has(`${conn.type}-${conn.id}`)) {
                                 this.visited.add(`${conn.type}-${conn.id}`);
                                 this.clickCount++;
-                                await this.updateGameDisplay();
+                                this.path.push(conn);
+                                this.currentNode = conn;
+                                document.getElementById('currentNode').textContent = conn.name;
+                                document.getElementById('clickCounter').textContent = this.clickCount;
+                                const breadcrumb = document.getElementById('pathBreadcrumb');
+                                breadcrumb.innerHTML = '';
+                                this.path.forEach((node, idx) => {
+                                    const span = document.createElement('span');
+                                    span.className = 'breadcrumb-item' + (idx === this.path.length - 1 ? ' current' : '');
+                                    span.textContent = node.name;
+                                    breadcrumb.appendChild(span);
+                                    if (idx < this.path.length - 1) {
+                                        const arrow = document.createElement('span');
+                                        arrow.className = 'breadcrumb-arrow';
+                                        arrow.textContent = '→';
+                                        breadcrumb.appendChild(arrow);
+                                    }
+                                });
+                                document.getElementById('connectionsLabel').textContent = conn.type === 'movie' ? 'Cast' : 'Filmography';
+                                if (conn.id === this.endNode.id && conn.type === this.endNode.type) {
+                                    await this.onGameWin();
+                                    return;
+                                }
                                 await this.loadConnections();
                             }
                         });
