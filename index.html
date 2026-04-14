@@ -967,7 +967,7 @@
                     if (Math.random() < 0.5) {
                         const p = sp[0];
                         const knownIds = (p.known_for || []).map(k => k.id);
-                        const m = sm.find(mv => \!knownIds.includes(mv.id)) || sm[1];
+                        const m = sm.find(mv => !knownIds.includes(mv.id)) || sm[1];
                         start = {name: p.name, type: 'person', id: p.id};
                         end = {name: m.title, type: 'movie', id: m.id};
                     } else {
