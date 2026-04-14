@@ -451,7 +451,8 @@ const game = window.game = {
       ['tabAll','tabMovies','tabTV'].forEach(id => document.getElementById(id)?.classList.remove('active'));
       document.getElementById('tabAll')?.classList.add('active');
       grid.innerHTML = '';
-      // Separate directors from cast
+      grid.style.display = 'block';
+
       const dirItems = items.filter(i => i.sub === 'Director');
       const nonDirItems = items.filter(i => i.sub !== 'Director');
 
@@ -462,21 +463,26 @@ const game = window.game = {
         grid.appendChild(dlbl);
         const drow = document.createElement('div');
         drow.className = 'grid';
-        drow.style.marginBottom = '4px';
+        drow.style.display = 'grid';
+        drow.style.marginBottom = '16px';
         dirItems.forEach(item => { const c = this._makeCard(item); if (c) drow.appendChild(c); });
         grid.appendChild(drow);
-        if (nonDirItems.length > 0) {
+      }
+
+      if (nonDirItems.length > 0) {
+        if (dirItems.length > 0) {
           const clbl = document.createElement('div');
           clbl.className = 'cast-label';
           clbl.textContent = 'CAST';
           grid.appendChild(clbl);
         }
+        const castGrid = document.createElement('div');
+        castGrid.className = 'grid';
+        castGrid.style.display = 'grid';
+        nonDirItems.forEach(item => { const c = this._makeCard(item); if (c) castGrid.appendChild(c); });
+        grid.appendChild(castGrid);
       }
-      const castGrid = document.createElement('div');
-      castGrid.className = 'grid';
-      nonDirItems.forEach(item => { const c = this._makeCard(item); if (c) castGrid.appendChild(c); });
-      grid.appendChild(castGrid);
-    } catch(_) {
+          } catch(_) {
       grid.innerHTML = '<p style="color:#777;font-size:.85rem">Could not load connections.</p>';
     }
   },
@@ -582,6 +588,7 @@ const game = window.game = {
                      this._allItems.filter(i => i.type === 'tv');
     const grid = document.getElementById('grid');
     grid.innerHTML = '';
+    grid.style.display = 'grid';
     filtered.forEach(item => { const c = this._makeCard(item); if (c) grid.appendChild(c); });
   },
 
