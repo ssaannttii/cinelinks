@@ -345,7 +345,10 @@ const game = window.game = {
     const el = document.getElementById('curImg');
     el.className = 'cur-img' + (this.cur.type === 'person' ? ' person' : '');
     el.innerHTML = '';
-    document.getElementById('curType').textContent = this.cur.type === 'movie' ? 'MOVIE' : 'ACTOR';
+    const role = this.cur.role;
+    document.getElementById('curType').textContent = this.cur.type === 'movie' ? 'MOVIE' :
+      this.cur.type === 'tv' ? 'TV SHOW' :
+      role === 'director' ? 'DIRECTOR' : 'ACTOR';
     document.getElementById('curName').textContent = this.cur.name;
   },
 
@@ -390,13 +393,20 @@ const game = window.game = {
         items = [...newDirs, ...castItems];
       } else {
         const d = await api('person/' + node.id + '/combined_credits');
-        const allCredits = (d.cast||[]).filter(m => {
+        // Check if this person came in as director — show their directed works
+        const isDirector = node.role === 'director';
+        const directedWorks = isDirector ? (d.crew||[]).filter(c => c.job === 'Director') : [];
+        const actingCredits = (d.cast||[]);
+
+        const allCredits = (isDirector ? directedWorks : actingCredits).filter(m => {
           if (m.media_type === 'movie') return true;
           if (m.media_type === 'tv') {
             // Skip talk shows, news, reality (genre_ids), and shorts
-            const skipGenres = [10767,10763,99]; // talk show, news, documentary
+            const skipGenres = [10767,10763]; // talk show, news (keep documentaries)
             const hasSkipGenre = (m.genre_ids||[]).some(g => skipGenres.includes(g));
-            return !hasSkipGenre;
+            if (hasSkipGenre) return false;
+            const ttl = (m.name||m.title||"").toLowerCase();
+            return !(ttl.includes("oscar")||ttl.includes("emmy")||ttl.includes("golden globe")||ttl.includes(" awards"));
           }
           return false;
         });
@@ -448,7 +458,7 @@ const game = window.game = {
           '<div class="card-name">' + item.name.replace(/</g,'&lt;') + '</div>' +
           '<div class="card-sub">'  + item.sub.replace(/</g,'&lt;')  + '</div>' +
           '</div>';
-        div.onclick = () => this.navigateTo({name:item.name, type:item.type, id:item.id});
+        div.onclick = () => this.navigateTo({name:item.name, type:item.type, id:item.id, role:item.sub==='Director'?'director':null});
         grid.appendChild(div);
       });
     } catch(_) {
@@ -462,6 +472,8 @@ const game = window.game = {
     // Hide reverse button after first move
     const rb = document.getElementById('reverseBtn');
     if (rb) rb.style.display = 'none';
+    // Store role info on node if provided
+    if (node.role) this.cur.role = node.role;
     this.visited.add(key);
     this.cur = node;
     this.clicks++;
@@ -529,7 +541,7 @@ const game = window.game = {
     const activeId = tab === 'all' ? 'tabAll' : (tab === 'movies' ? 'tabMovies' : 'tabTV');
     document.getElementById(activeId)?.classList.add('active');
     const filtered = tab === 'all' ? this._allItems :
-                     tab === 'movies' ? this._allItems.filter(i => i.type === 'movie') :
+                     tab === 'movies' ? this._allItems.filter(i => i.type === 'movie' || i.type === 'person') :
                      this._allItems.filter(i => i.type === 'tv');
     const grid = document.getElementById('grid');
     grid.innerHTML = '';
@@ -544,7 +556,7 @@ const game = window.game = {
       div.innerHTML = '<div class="' + imgClass + '">' + imgHtml + '</div>' +
         '<div class="card-info"><div class="card-name">' + item.name.replace(/</g,'&lt;') + '</div>' +
         '<div class="card-sub">' + item.sub.replace(/</g,'&lt;') + '</div></div>';
-      div.onclick = () => this.navigateTo({name:item.name, type:item.type, id:item.id});
+      div.onclick = () => this.navigateTo({name:item.name, type:item.type, id:item.id, role:item.sub==='Director'?'director':null});
       grid.appendChild(div);
     });
   },
