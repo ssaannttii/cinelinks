@@ -456,6 +456,7 @@ const game = window.game = {
       const dirItems = items.filter(i => i.sub === 'Director');
       const nonDirItems = items.filter(i => i.sub !== 'Director');
 
+      if (dirItems.length > 0) lbl.textContent = 'CAST & CREW';
       if (dirItems.length > 0) {
         const dlbl = document.createElement('div');
         dlbl.className = 'director-label';
