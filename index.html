@@ -174,7 +174,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .win-em{font-size:2.1rem;margin-bottom:10px}
 .win-h{font-size:1.55rem;font-weight:700;margin-bottom:4px}
 .win-sub{color:var(--mut);font-size:.86rem;margin-bottom:22px}
-.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.stats{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:14px;max-width:180px;margin-left:auto;margin-right:auto}
 .stat{background:rgba(255,255,255,.04);border:1px solid var(--bdr);border-radius:8px;padding:13px 10px}
 .stat-n{font-size:1.8rem;font-weight:700;color:var(--gold)}
 .stat-l{font-size:.68rem;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
@@ -204,6 +204,12 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .wp-arrow::before{content:"";width:1px;height:100%;background:linear-gradient(180deg,var(--bdr),rgba(232,160,0,.55),var(--bdr));position:absolute;left:50%;top:0}
 .wp-arrow span{position:relative;z-index:1;background:var(--s1);border:1px solid rgba(232,160,0,.25);border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:.8rem;line-height:1}
 .win-btns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.share-menu{display:none;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--s2);border:1px solid var(--bdr);border-radius:10px;padding:6px;min-width:180px;z-index:10;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.share-menu.open{display:flex;flex-direction:column;gap:2px}
+.share-opt{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:7px;border:none;background:none;color:var(--txt);font-family:inherit;font-size:.82rem;font-weight:500;cursor:pointer;width:100%;text-align:left}
+.share-opt:hover{background:rgba(255,255,255,.07)}
+.share-opt-icon{font-size:1rem;width:20px;text-align:center;flex-shrink:0}
+.share-wrap{position:relative}
 .confetti{position:absolute;pointer-events:none;border-radius:2px;animation:fall linear forwards}
 @keyframes fall{0%{transform:translateY(-10px) rotate(0);opacity:1}100%{transform:translateY(550px) rotate(720deg);opacity:0}}
 
@@ -226,7 +232,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 @media (max-width:560px){
   #winScreen{justify-content:flex-start;padding:24px 14px}
   .win-box{padding:24px 16px}
-  .stats,.win-btns{grid-template-columns:1fr}
+  .win-btns{grid-template-columns:1fr}
   .wp{grid-template-columns:auto auto minmax(0,1fr);gap:10px}
   .wp-edge{grid-column:3;justify-self:start;margin-top:2px}
 }
@@ -333,16 +339,22 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     <h1 class="win-h">You made it!</h1>
     <p class="win-sub">You connected the dots.</p>
     <div class="stats">
-      <div class="stat"><div id="playerClicks" class="stat-n">0</div><div class="stat-l">Your clicks</div></div>
-      <div class="stat"><div id="optimalClicks" class="stat-n">&#8212;</div><div class="stat-l">Est. optimal</div></div>
+      <div class="stat"><div id="playerClicks" class="stat-n">0</div><div class="stat-l">Clicks</div></div>
     </div>
-    <div id="winCmp" class="win-cmp"></div>
     <div class="win-route-lbl">Winning route</div>
     <div id="winPath" class="win-path"></div>
     <div class="win-btns">
       <button class="btn btn-ghost" style="margin:0" onclick="game.reset()">Home</button>
-      <button class="btn btn-ghost" style="margin:0" id="shareBtn" onclick="navigator.clipboard.writeText(location.href).then(()=>{document.getElementById('shareBtn').textContent='Copied!'}).catch(()=>prompt('Share:',location.href))">Share link</button>
-      <button class="btn btn-gold" style="margin:0" onclick="game.startRandom()">Random</button>
+      <div class="share-wrap">
+        <button class="btn btn-ghost" style="margin:0" id="shareBtn" onclick="game.toggleShareMenu()">Share ↑</button>
+        <div class="share-menu" id="shareMenu">
+          <button class="share-opt" onclick="game.shareNative()"><span class="share-opt-icon">📤</span>Share…</button>
+          <button class="share-opt" onclick="game.shareTwitter()"><span class="share-opt-icon">𝕏</span>Post on X</button>
+          <button class="share-opt" onclick="game.shareWhatsApp()"><span class="share-opt-icon">💬</span>WhatsApp</button>
+          <button class="share-opt" onclick="game.copyLink()"><span class="share-opt-icon">🔗</span><span id="copyLinkLabel">Copy link</span></button>
+        </div>
+      </div>
+      <button class="btn btn-gold" style="margin:0" onclick="game.startRandom()">Play again</button>
     </div>
   </div>
 </div>
@@ -1203,14 +1215,11 @@ const game = window.game = {
       if (current >= targetClicks) clearInterval(ticker);
     }, duration / Math.ceil(targetClicks / step));
 
-    const est = this.optDist || Math.max(2, Math.ceil(this.clicks * 0.7));
-    document.getElementById('optimalClicks').textContent = est;
-    document.getElementById('shareBtn').textContent = 'Share link';
+    document.getElementById('shareBtn').textContent = 'Share ↑';
+    document.getElementById('copyLinkLabel').textContent = 'Copy link';
+    const menu = document.getElementById('shareMenu');
+    if (menu) menu.classList.remove('open');
     history.replaceState(null,'',location.href);
-
-    document.getElementById('winCmp').textContent = this.clicks <= est
-      ? 'Impressive — you matched or beat the estimated optimal!'
-      : 'Good run! There might be a shorter path — give it another go?';
 
     const wp = document.getElementById('winPath');
     wp.innerHTML = '';
@@ -1362,6 +1371,68 @@ const game = window.game = {
     document.getElementById('winScreen').querySelectorAll('.confetti').forEach(c => c.remove());
     history.replaceState(null, '', location.pathname + location.hash);
     showOnly('startScreen');
+  },
+
+  _shareText() {
+    const clicks = this.clicks;
+    const start = this.start.name;
+    const end = this.end.name;
+    return `🎬 CineLinks: ${start} → ${end} in ${clicks} click${clicks !== 1 ? 's' : ''}! Can you beat it?`;
+  },
+
+  _shareUrl() {
+    return location.href;
+  },
+
+  toggleShareMenu() {
+    const menu = document.getElementById('shareMenu');
+    if (!menu) return;
+    const isOpen = menu.classList.contains('open');
+    menu.classList.toggle('open', !isOpen);
+    if (!isOpen) {
+      const close = (e) => {
+        if (!menu.contains(e.target) && e.target.id !== 'shareBtn') {
+          menu.classList.remove('open');
+          document.removeEventListener('click', close);
+        }
+      };
+      setTimeout(() => document.addEventListener('click', close), 0);
+    }
+  },
+
+  async shareNative() {
+    document.getElementById('shareMenu')?.classList.remove('open');
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'CineLinks', text: this._shareText(), url: this._shareUrl() });
+      } catch(_) {}
+    } else {
+      this.copyLink();
+    }
+  },
+
+  shareTwitter() {
+    document.getElementById('shareMenu')?.classList.remove('open');
+    const text = encodeURIComponent(this._shareText() + '\n' + this._shareUrl());
+    window.open('https://x.com/intent/tweet?text=' + text, '_blank', 'noopener');
+  },
+
+  shareWhatsApp() {
+    document.getElementById('shareMenu')?.classList.remove('open');
+    const text = encodeURIComponent(this._shareText() + '\n' + this._shareUrl());
+    window.open('https://wa.me/?text=' + text, '_blank', 'noopener');
+  },
+
+  copyLink() {
+    document.getElementById('shareMenu')?.classList.remove('open');
+    const label = document.getElementById('copyLinkLabel');
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(this._shareUrl()).then(() => {
+        if (label) { label.textContent = 'Copied!'; setTimeout(() => { label.textContent = 'Copy link'; }, 1800); }
+      });
+    } else {
+      prompt('Copy this link:', this._shareUrl());
+    }
   }
 };
 
