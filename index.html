@@ -39,6 +39,10 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .how li::before{content:"→";position:absolute;left:0;color:var(--gold)}
 .credits{margin-top:22px;border-top:1px solid var(--bdr);padding-top:18px;text-align:left}
 .credits-title{font-size:.65rem;font-weight:600;letter-spacing:.1em;color:var(--mut);text-transform:uppercase;margin-bottom:10px}
+.lang-picker{display:flex;gap:6px;flex-wrap:wrap;margin-top:18px;padding-top:16px;border-top:1px solid var(--bdr)}
+.lang-btn{flex:1;min-width:0;padding:7px 8px;border-radius:8px;border:1px solid var(--bdr);background:transparent;color:var(--mut);font-family:inherit;font-size:.72rem;font-weight:600;cursor:pointer;transition:border-color .15s,color .15s,background .15s;white-space:nowrap}
+.lang-btn:hover{border-color:rgba(232,160,0,.4);color:var(--txt)}
+.lang-btn.active{border-color:var(--gold);color:var(--gold);background:rgba(232,160,0,.08)}
 .tmdb-credit{display:flex;align-items:center;gap:12px;color:var(--mut);font-size:.72rem;line-height:1.45}
 .tmdb-logo{width:58px;height:auto;display:block;flex-shrink:0}
 .tmdb-credit a{color:var(--txt);text-decoration:none}
@@ -365,6 +369,14 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
         </a>
         <p>This product uses the TMDB API and TMDB images, but is not endorsed or certified by TMDB.</p>
       </div>
+      <div class="lang-picker" id="langPicker">
+        <button class="lang-btn" data-lang="en-US" onclick="setLang('en-US')">English</button>
+        <button class="lang-btn" data-lang="es-ES" onclick="setLang('es-ES')">Español (ES)</button>
+        <button class="lang-btn" data-lang="es-MX" onclick="setLang('es-MX')">Español (MX)</button>
+        <button class="lang-btn" data-lang="fr-FR" onclick="setLang('fr-FR')">Français</button>
+        <button class="lang-btn" data-lang="de-DE" onclick="setLang('de-DE')">Deutsch</button>
+        <button class="lang-btn" data-lang="pt-BR" onclick="setLang('pt-BR')">Português</button>
+      </div>
     </div>
   </div>
 </div>
@@ -602,7 +614,22 @@ const DAILY_POOL = {
 
 const IMGBASE = 'https://image.tmdb.org/t/p/w342';
 
-function api(path) { return fetch('/api/tmdb?path=' + path).then(r => r.json()); }
+const LANGS = {
+  'en-US': 'English', 'es-ES': 'Español (ES)', 'es-MX': 'Español (MX)',
+  'fr-FR': 'Français', 'de-DE': 'Deutsch', 'pt-BR': 'Português'
+};
+let _lang = localStorage.getItem('clLang') || 'en-US';
+
+function setLang(lang) {
+  _lang = LANGS[lang] ? lang : 'en-US';
+  localStorage.setItem('clLang', _lang);
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === _lang));
+}
+
+function api(path) {
+  const url = '/api/tmdb?path=' + path + (_lang !== 'en-US' ? '&language=' + encodeURIComponent(_lang) : '');
+  return fetch(url).then(r => r.json());
+}
 
 function creditOrder(credit) {
   return Number.isFinite(credit.order) ? credit.order : 999;
@@ -2041,6 +2068,9 @@ const game = window.game = {
   const label = formatDailyDate(new Date(), { weekday:'long', month:'long', day:'numeric' });
   el.textContent = label;
 })();
+
+// Init language picker
+setLang(_lang);
 
 if (!loadGameFromUrl()) {
   showOnly('startScreen');
