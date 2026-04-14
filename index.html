@@ -17,8 +17,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 #startScreen::before{content:"";position:absolute;inset:-20%;background:radial-gradient(circle at 25% 20%,rgba(232,160,0,.16),transparent 28%),radial-gradient(circle at 75% 12%,rgba(80,106,135,.18),transparent 30%),linear-gradient(180deg,transparent,#0d0d0d 70%);pointer-events:none}
 .start-inner{width:100%;max-width:520px;text-align:center;position:relative;background:rgba(255,255,255,.045);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:34px 28px 28px;box-shadow:0 30px 80px rgba(0,0,0,.38)}
 .start-kicker{font-size:.62rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:12px}
-.logo{font-size:2.35rem;font-weight:700;letter-spacing:-0.03em;margin-bottom:8px}
-.logo-accent{color:var(--gold)}
+.start-logo{width:100%;max-width:280px;height:auto;display:block;margin:0 auto 20px}
 .tagline{color:var(--mut);font-size:0.95rem;line-height:1.5;margin:0 auto 24px;max-width:360px}
 .start-route{display:flex;align-items:center;justify-content:center;gap:9px;margin:0 0 26px;color:var(--mut);font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
 .start-node{border:1px solid var(--bdr);border-radius:999px;padding:7px 10px;background:rgba(13,13,13,.42)}
@@ -274,8 +273,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 
 <div id="startScreen" class="screen active">
   <div class="start-inner">
-    <div class="start-kicker">A cinematic link puzzle</div>
-    <div class="logo">&#127916; <span class="logo-accent">CineLinks</span></div>
+    <img src="/logo.png" alt="CineLinks — A Cinematic Link Puzzle" class="start-logo">
     <p class="tagline">Connect actors, movies, directors, and TV shows in the fewest clicks.</p>
     <div class="start-route" aria-hidden="true">
       <span class="start-node">Actor</span>
