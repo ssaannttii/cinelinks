@@ -13,18 +13,26 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .screen.active{display:flex;flex-direction:column}
 
 /* START */
-#startScreen{min-height:100vh;align-items:center;justify-content:center;padding:40px 20px}
-.start-inner{width:100%;max-width:420px;text-align:center}
-.logo{font-size:1.9rem;font-weight:700;letter-spacing:-0.03em;margin-bottom:6px}
+#startScreen{min-height:100vh;align-items:center;justify-content:center;padding:40px 20px;position:relative;overflow:hidden}
+#startScreen::before{content:"";position:absolute;inset:-20%;background:radial-gradient(circle at 25% 20%,rgba(232,160,0,.16),transparent 28%),radial-gradient(circle at 75% 12%,rgba(80,106,135,.18),transparent 30%),linear-gradient(180deg,transparent,#0d0d0d 70%);pointer-events:none}
+.start-inner{width:100%;max-width:520px;text-align:center;position:relative;background:rgba(255,255,255,.045);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:34px 28px 28px;box-shadow:0 30px 80px rgba(0,0,0,.38)}
+.start-kicker{font-size:.62rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:12px}
+.logo{font-size:2.35rem;font-weight:700;letter-spacing:-0.03em;margin-bottom:8px}
 .logo-accent{color:var(--gold)}
-.tagline{color:var(--mut);font-size:0.88rem;margin-bottom:32px}
+.tagline{color:var(--mut);font-size:0.95rem;line-height:1.5;margin:0 auto 24px;max-width:360px}
+.start-route{display:flex;align-items:center;justify-content:center;gap:9px;margin:0 0 26px;color:var(--mut);font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+.start-node{border:1px solid var(--bdr);border-radius:999px;padding:7px 10px;background:rgba(13,13,13,.42)}
+.start-node.movie{border-radius:8px;color:var(--txt)}
+.start-link{color:var(--gold);opacity:.8}
+.start-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.start-actions .btn{margin:0}
 .btn{display:block;width:100%;padding:14px;border-radius:10px;font-family:inherit;font-size:0.95rem;font-weight:600;cursor:pointer;border:1px solid transparent;transition:opacity .15s,transform .1s;margin-bottom:10px}
 .btn:hover{opacity:.85;transform:translateY(-1px)}
 .btn:active{transform:translateY(0)}
 .btn-gold{background:var(--gold);color:#111;border-color:var(--gold)}
 .btn-ghost{background:transparent;color:var(--txt);border-color:var(--bdr)}
 .btn-sm{padding:6px 12px;font-size:.75rem;border-radius:8px;margin:0}
-.how{margin-top:28px;border-top:1px solid var(--bdr);padding-top:22px;text-align:left}
+.how{margin-top:26px;border-top:1px solid var(--bdr);padding-top:20px;text-align:left}
 .how-title{font-size:.65rem;font-weight:600;letter-spacing:.1em;color:var(--mut);text-transform:uppercase;margin-bottom:10px}
 .how li{list-style:none;color:var(--mut);font-size:.83rem;line-height:1.8;padding-left:14px;position:relative}
 .how li::before{content:"→";position:absolute;left:0;color:var(--gold)}
@@ -75,10 +83,6 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .cur-meta{color:var(--mut);font-size:.82rem;font-weight:600;margin-top:5px}
 .cur-prompt{color:var(--mut);font-size:.78rem;line-height:1.4;margin-top:12px;max-width:420px}
 .cur-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
-.cur-run{align-self:stretch;min-width:132px;border-left:1px solid var(--bdr);padding-left:16px;display:flex;flex-direction:column;justify-content:center;gap:14px}
-.run-metric{display:block}
-.run-n{display:block;color:var(--gold);font-size:1.45rem;font-weight:700;line-height:1}
-.run-l{display:block;color:var(--mut);font-size:.58rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-top:4px}
 .debug-footer{text-align:center;margin-top:24px}
 .debug-btn{width:auto;padding:5px 10px;color:var(--mut);font-size:.68rem;opacity:.55}
 .debug-btn:hover{opacity:.9}
@@ -147,9 +151,12 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   .hdr-name{max-width:82px}
   .hdr-clicks{min-width:54px;padding:5px 7px}
   .clicks-n{font-size:1.25rem}
+  .start-inner{padding:30px 18px 24px}
+  .start-actions{grid-template-columns:1fr}
+  .start-route{gap:6px;font-size:.66rem}
+  .start-node{padding:6px 8px}
   .cur-card{gap:14px;flex-wrap:wrap}
   .cur-info{flex-basis:calc(100% - 98px)}
-  .cur-run{width:100%;min-width:0;border-left:0;border-top:1px solid var(--bdr);padding:12px 0 0;flex-direction:row;justify-content:flex-start}
 }
 
 /* WIN */
@@ -203,15 +210,25 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 
 <div id="startScreen" class="screen active">
   <div class="start-inner">
+    <div class="start-kicker">A cinematic link puzzle</div>
     <div class="logo">&#127916; <span class="logo-accent">CineLinks</span></div>
-    <p class="tagline">Find the shortest path between movies and actors</p>
-    <button class="btn btn-gold" onclick="game.startDaily()">Today&#39;s Challenge</button>
-    <button class="btn btn-ghost" onclick="game.startRandom()">Random Game</button>
+    <p class="tagline">Connect actors, movies, directors, and TV shows in the fewest clicks.</p>
+    <div class="start-route" aria-hidden="true">
+      <span class="start-node">Actor</span>
+      <span class="start-link">&#8594;</span>
+      <span class="start-node movie">Movie</span>
+      <span class="start-link">&#8594;</span>
+      <span class="start-node">Target</span>
+    </div>
+    <div class="start-actions">
+      <button class="btn btn-gold" onclick="game.startDaily()">Today&#39;s Challenge</button>
+      <button class="btn btn-ghost" onclick="game.startRandom()">Random Game</button>
+    </div>
     <div class="how">
-      <div class="how-title">How to play</div>
+      <div class="how-title">Rules</div>
       <ul>
         <li>Start at one actor or movie</li>
-        <li>Click to navigate through cast members and filmographies</li>
+        <li>Choose connections through cast, crew, and filmographies</li>
         <li>Reach the goal in as few clicks as possible</li>
       </ul>
     </div>
@@ -258,10 +275,6 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
             <button class="btn btn-ghost btn-sm" onclick="game.reverseGame()">&#8645; Reverse direction</button>
           </div>
         </div>
-      </div>
-      <div class="cur-run">
-        <div class="run-metric"><span id="runSteps" class="run-n">0</span><span class="run-l">Steps</span></div>
-        <div class="run-metric"><span id="runConnections" class="run-n">&#8212;</span><span class="run-l">Links</span></div>
       </div>
     </div>
     <div id="pathRow" class="path-row"></div>
@@ -487,7 +500,7 @@ async function hydrateNodeImage(node) {
 const game = window.game = {
   cur: null, start: null, end: null,
   path: [], clicks: 0, visited: new Set(), optDist: null,
-  _allItems: [], _tab: 'all', _connectionCount: null,
+  _allItems: [], _tab: 'all',
 
   dayOfYear() {
     const n = new Date();
@@ -537,7 +550,6 @@ const game = window.game = {
     this.cur = current;
     this.path = isAtStart ? [start] : [start, current];
     this.clicks = isAtStart ? 0 : 1;
-    this._connectionCount = null;
     this.visited = new Set([start.type+'-'+start.id]);
     if (!isAtStart) this.visited.add(current.type+'-'+current.id);
     const rb = document.getElementById('reverseBtn');
@@ -547,7 +559,6 @@ const game = window.game = {
     document.getElementById('endNodeName').textContent   = end.name;
     document.getElementById('clickCounter').textContent  = this.clicks;
     document.querySelector('.hdr-clicks')?.style.setProperty('--click-ring', this.clickRing());
-    this.renderRunMetrics();
 
     showOnly('gameScreen');
     if (!opts.keepUrl) {
@@ -630,7 +641,6 @@ const game = window.game = {
     nameEl.textContent = this.cur.name;
     this.renderCurrentMeta();
     this.renderCurrentPrompt();
-    this.renderRunMetrics();
     const debugBtn = document.getElementById('debugBtn');
     if (debugBtn) debugBtn.textContent = 'Debug link';
   },
@@ -649,13 +659,6 @@ const game = window.game = {
     const text = this.cur.type === 'movie' || this.cur.type === 'tv' ? (this.cur.yearLabel || '') : '';
     meta.textContent = text;
     meta.style.display = text ? 'block' : 'none';
-  },
-
-  renderRunMetrics() {
-    const steps = document.getElementById('runSteps');
-    const links = document.getElementById('runConnections');
-    if (steps) steps.textContent = this.clicks;
-    if (links) links.textContent = this._connectionCount === null ? '\u2014' : this._connectionCount;
   },
 
   clickRing() {
@@ -727,8 +730,6 @@ const game = window.game = {
     const tabsRow = document.getElementById('tabsRow');
     tabsRow.style.display = 'none';
     lbl.textContent = didError ? 'CONNECTIONS UNAVAILABLE' : 'NO CONNECTIONS';
-    this._connectionCount = didError ? null : 0;
-    this.renderRunMetrics();
     grid.innerHTML = '';
     grid.style.display = 'block';
 
@@ -767,8 +768,6 @@ const game = window.game = {
     const grid = document.getElementById('grid');
     const lbl  = document.getElementById('secLbl');
     lbl.textContent = 'CHOOSE YOUR NEXT CONNECTION';
-    this._connectionCount = null;
-    this.renderRunMetrics();
 
     // Skeletons
     grid.innerHTML = '';
@@ -889,8 +888,6 @@ const game = window.game = {
         this.renderEmptyConnections(node);
         return;
       }
-      this._connectionCount = items.length;
-      this.renderRunMetrics();
       // Show tabs if person node (has movies+tv)
       const hasBothTypes = items.some(i=>i.type==='movie'||i.type==='tv') &&
                            items.some(i=>i.type==='tv');
