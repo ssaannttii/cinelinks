@@ -202,6 +202,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .stat-n{font-size:1.8rem;font-weight:700;color:var(--gold)}
 .stat-l{font-size:.68rem;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
 .win-cmp{font-size:.83rem;color:var(--txt);margin-bottom:20px;padding:11px 12px;background:rgba(232,160,0,.08);border:1px solid rgba(232,160,0,.16);border-radius:8px}
+.win-avg{font-size:.78rem;color:var(--mut);margin-top:8px;min-height:1.2em;text-align:center}
+.win-avg strong{color:var(--txt)}
 .win-route-lbl{display:flex;align-items:center;gap:10px;margin:0 0 12px;color:var(--mut);font-size:.66rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
 .win-route-lbl::before,.win-route-lbl::after{content:"";height:1px;background:var(--bdr);flex:1}
 .win-path{display:flex;flex-direction:column;align-items:stretch;gap:0;margin-bottom:24px}
@@ -382,6 +384,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     <div class="stats">
       <div class="stat"><div id="playerClicks" class="stat-n">0</div><div class="stat-l">Clicks</div></div>
     </div>
+    <div id="winAvg" class="win-avg"></div>
     <div class="win-route-lbl">Winning route</div>
     <div id="winPath" class="win-path"></div>
     <div class="win-btns">
@@ -1356,6 +1359,30 @@ const game = window.game = {
     }, duration / Math.ceil(targetClicks / step));
 
     // share btn innerHTML is static in HTML, no reset needed
+
+    // Submit score and show today's average
+    const avgEl = document.getElementById('winAvg');
+    if (avgEl) {
+      avgEl.textContent = '';
+      const today = dateKey();
+      fetch('/api/score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: today, clicks: this.clicks })
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.avg && data.count) {
+          if (data.count === 1) {
+            avgEl.innerHTML = "You're the first to finish today! 🎬";
+          } else {
+            const better = this.clicks <= data.avg;
+            avgEl.innerHTML = "Today's average: <strong>" + data.avg + " clicks</strong> · " + data.count + " players" + (better ? " · you beat it 🎉" : "");
+          }
+        }
+      })
+      .catch(() => {});
+    }
     document.getElementById('copyLinkLabel').textContent = 'Copy link';
     const menu = document.getElementById('shareMenu');
     if (menu) menu.classList.remove('open');
