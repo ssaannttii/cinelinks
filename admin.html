@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CineLinks Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0d0d0d;--s1:#181818;--s2:#232323;--s3:#2d2d2d;--bdr:rgba(255,255,255,.1);--txt:#f0f0f0;--mut:#8d8d8d;--gold:#e8a000;--green:#55d98d;--red:#ff6565}
+body{font-family:'Inter',-apple-system,sans-serif;background:linear-gradient(180deg,#121212,var(--bg));color:var(--txt);min-height:100vh}
+button,input{font:inherit}
+.top{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 22px;background:rgba(13,13,13,.9);backdrop-filter:blur(14px);border-bottom:1px solid var(--bdr)}
+.brand{font-size:.78rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+.monthbar{display:flex;align-items:center;gap:10px}
+.icon-btn,.btn{border:1px solid var(--bdr);border-radius:8px;background:var(--s1);color:var(--txt);cursor:pointer}
+.icon-btn{width:34px;height:34px}
+.btn{padding:9px 12px;font-size:.78rem;font-weight:700}
+.btn.gold{background:var(--gold);border-color:var(--gold);color:#111}
+.btn.red{color:var(--red)}
+.month-title{min-width:180px;text-align:center;font-weight:800}
+.wrap{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:18px;padding:20px;max-width:1320px;margin:0 auto}
+.calendar{background:var(--s1);border:1px solid var(--bdr);border-radius:8px;overflow:hidden}
+.dow,.days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+.dow div{padding:10px 8px;color:var(--mut);font-size:.66rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;border-bottom:1px solid var(--bdr);text-align:center}
+.day{min-height:118px;border-right:1px solid var(--bdr);border-bottom:1px solid var(--bdr);padding:10px;cursor:pointer;background:rgba(255,255,255,.025);transition:background .15s,border-color .15s}
+.day:nth-child(7n){border-right:none}
+.day:hover,.day.active{background:rgba(232,160,0,.08);border-color:rgba(232,160,0,.38)}
+.day.empty{cursor:default;background:rgba(255,255,255,.01)}
+.day-num{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-size:.72rem;font-weight:800;color:var(--mut)}
+.tag{border:1px solid var(--bdr);border-radius:999px;padding:2px 6px;font-size:.55rem;color:var(--mut);text-transform:uppercase;letter-spacing:.08em}
+.tag.override{border-color:rgba(85,217,141,.45);color:var(--green)}
+.challenge{font-size:.76rem;line-height:1.35;font-weight:700;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.panel{background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:16px;position:sticky;top:86px;align-self:start}
+.panel-kicker{font-size:.62rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+.panel-title{font-size:1.08rem;font-weight:800;margin-bottom:8px}
+.panel-copy{font-size:.78rem;line-height:1.45;color:var(--mut);margin-bottom:16px}
+.current{border:1px solid var(--bdr);border-radius:8px;padding:10px;background:rgba(255,255,255,.03);font-size:.8rem;line-height:1.35;margin-bottom:14px}
+.slots{display:grid;gap:10px;margin-bottom:14px}
+.slot{border:1px solid var(--bdr);border-radius:8px;padding:10px;background:rgba(255,255,255,.025)}
+.slot-label{display:flex;justify-content:space-between;align-items:center;color:var(--mut);font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px}
+.picked{min-height:40px;display:flex;align-items:center;gap:9px;font-size:.8rem;font-weight:700}
+.thumb{width:30px;height:30px;border-radius:50%;background:var(--s3);overflow:hidden;flex-shrink:0}
+.thumb.title{width:24px;height:36px;border-radius:4px}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.search{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:8px}
+.search input{min-width:0;border:1px solid var(--bdr);border-radius:8px;background:#101010;color:var(--txt);padding:9px 10px}
+.results{display:grid;gap:6px;margin-top:8px;max-height:230px;overflow:auto}
+.result{display:flex;gap:9px;align-items:center;border:1px solid var(--bdr);border-radius:8px;background:rgba(255,255,255,.025);padding:7px;cursor:pointer;text-align:left;color:var(--txt)}
+.result:hover{border-color:rgba(232,160,0,.45)}
+.result-name{font-size:.78rem;font-weight:800}
+.result-meta{font-size:.66rem;color:var(--mut);margin-top:2px;text-transform:uppercase;letter-spacing:.08em}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.status{min-height:20px;margin-top:12px;color:var(--mut);font-size:.76rem}
+.lock{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(13,13,13,.96);padding:20px}
+.lock-card{width:min(420px,100%);background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:22px}
+.lock-card h1{font-size:1.2rem;margin-bottom:8px}
+.lock-card p{color:var(--mut);font-size:.83rem;line-height:1.45;margin-bottom:14px}
+.lock-row{display:grid;grid-template-columns:1fr auto;gap:8px}
+.lock-row input{min-width:0;border:1px solid var(--bdr);border-radius:8px;background:#101010;color:var(--txt);padding:10px}
+@media (max-width:900px){.wrap{grid-template-columns:1fr}.panel{position:static}.day{min-height:96px}.challenge{-webkit-line-clamp:3}}
+@media (max-width:620px){.top{align-items:flex-start;flex-direction:column}.monthbar{width:100%;justify-content:space-between}.month-title{min-width:0}.dow div{font-size:.55rem}.day{min-height:84px;padding:7px}.challenge{font-size:.68rem}.wrap{padding:12px}}
+</style>
+</head>
+<body>
+<div class="top">
+  <div>
+    <div class="brand">CineLinks Admin</div>
+  </div>
+  <div class="monthbar">
+    <button class="icon-btn" id="prevMonth" aria-label="Previous month">&lt;</button>
+    <div class="month-title" id="monthTitle"></div>
+    <button class="icon-btn" id="nextMonth" aria-label="Next month">&gt;</button>
+  </div>
+</div>
+
+<main class="wrap">
+  <section class="calendar">
+    <div class="dow">
+      <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
+    </div>
+    <div class="days" id="days"></div>
+  </section>
+
+  <aside class="panel">
+    <div class="panel-kicker">Selected day</div>
+    <div class="panel-title" id="selectedDate">Pick a day</div>
+    <p class="panel-copy">Search TMDB, pick two endpoints, then save an override for that date.</p>
+    <div class="current" id="currentChallenge">No day selected.</div>
+
+    <div class="slots">
+      <div class="slot" data-slot="s">
+        <div class="slot-label"><span>Start</span><button class="btn" data-clear="s">Clear</button></div>
+        <div class="picked" id="pickedS">None selected</div>
+        <div class="search">
+          <input id="searchS" placeholder="Search person, movie, TV">
+          <button class="btn" data-search="s">Search</button>
+        </div>
+        <div class="results" id="resultsS"></div>
+      </div>
+
+      <div class="slot" data-slot="e">
+        <div class="slot-label"><span>End</span><button class="btn" data-clear="e">Clear</button></div>
+        <div class="picked" id="pickedE">None selected</div>
+        <div class="search">
+          <input id="searchE" placeholder="Search person, movie, TV">
+          <button class="btn" data-search="e">Search</button>
+        </div>
+        <div class="results" id="resultsE"></div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn gold" id="saveBtn">Save challenge</button>
+      <button class="btn red" id="clearOverrideBtn">Use base</button>
+    </div>
+    <div class="status" id="status"></div>
+  </aside>
+</main>
+
+<div class="lock" id="lock">
+  <div class="lock-card">
+    <h1>Admin password</h1>
+    <p>Calendar edits are stored as production overrides. Keep this one quiet.</p>
+    <div class="lock-row">
+      <input type="password" id="password" placeholder="Password">
+      <button class="btn gold" id="unlockBtn">Unlock</button>
+    </div>
+    <div class="status" id="lockStatus"></div>
+  </div>
+</div>
+
+<script>
+const IMGBASE = 'https://image.tmdb.org/t/p/w185';
+let password = sessionStorage.getItem('cinelinksAdminPassword') || '';
+let monthCursor = new Date();
+let days = [];
+let selected = null;
+let picked = {s:null, e:null};
+
+function monthKey(date) {
+  return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0');
+}
+
+function apiUrl(action, params = {}) {
+  const sp = new URLSearchParams({action, ...params});
+  return '/api/admin?' + sp;
+}
+
+async function apiGet(action, params = {}) {
+  const res = await fetch(apiUrl(action, params), {headers:{'X-Admin-Password':password}});
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error || 'Request failed');
+  return json;
+}
+
+async function apiPost(action, body = {}) {
+  const res = await fetch('/api/admin', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-Admin-Password':password},
+    body:JSON.stringify({action, ...body})
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error || 'Request failed');
+  return json;
+}
+
+function setStatus(text) {
+  document.getElementById('status').textContent = text || '';
+}
+
+function nodeType(node) {
+  return node.type === 'person' ? 'Person' : (node.type === 'tv' ? 'TV' : 'Movie');
+}
+
+function nodeImg(node) {
+  return node.img ? IMGBASE + node.img : '';
+}
+
+function nodeText(node) {
+  if (!node) return 'None selected';
+  return node.name + (node.yearLabel ? ' (' + node.yearLabel + ')' : '') + ' · ' + nodeType(node);
+}
+
+function renderPicked(slot) {
+  const el = document.getElementById(slot === 's' ? 'pickedS' : 'pickedE');
+  const node = picked[slot];
+  if (!node) {
+    el.textContent = 'None selected';
+    return;
+  }
+  const img = nodeImg(node);
+  el.innerHTML = '<span class="thumb ' + (node.type === 'person' ? '' : 'title') + '">' +
+    (img ? '<img src="' + img + '" alt="">' : '') +
+    '</span><span>' + nodeText(node) + '</span>';
+}
+
+function renderPanel() {
+  document.getElementById('selectedDate').textContent = selected ? selected.date : 'Pick a day';
+  document.getElementById('currentChallenge').textContent = selected
+    ? (selected.overridden ? 'Override: ' : 'Base: ') + selected.label
+    : 'No day selected.';
+  picked.s = selected && selected.override ? selected.override.s : null;
+  picked.e = selected && selected.override ? selected.override.e : null;
+  renderPicked('s');
+  renderPicked('e');
+}
+
+function renderCalendar() {
+  const title = new Intl.DateTimeFormat('en-US', {month:'long', year:'numeric'}).format(monthCursor);
+  document.getElementById('monthTitle').textContent = title;
+
+  const daysEl = document.getElementById('days');
+  daysEl.innerHTML = '';
+
+  const first = new Date(monthCursor.getFullYear(), monthCursor.getMonth(), 1);
+  const offset = (first.getDay() + 6) % 7;
+  for (let i = 0; i < offset; i++) {
+    const empty = document.createElement('div');
+    empty.className = 'day empty';
+    daysEl.appendChild(empty);
+  }
+
+  days.forEach(day => {
+    const el = document.createElement('button');
+    el.className = 'day' + (selected && selected.date === day.date ? ' active' : '');
+    el.innerHTML = '<div class="day-num"><span>' + Number(day.date.slice(-2)) + '</span><span class="tag ' + (day.overridden ? 'override' : '') + '">' + (day.overridden ? 'edited' : 'base') + '</span></div>' +
+      '<div class="challenge">' + day.label + '</div>';
+    el.onclick = () => {
+      selected = day;
+      renderCalendar();
+      renderPanel();
+    };
+    daysEl.appendChild(el);
+  });
+}
+
+async function loadMonth() {
+  setStatus('Loading calendar...');
+  const data = await apiGet('month', {month:monthKey(monthCursor)});
+  days = data.days;
+  if (!selected || !days.some(day => day.date === selected.date)) selected = days[0] || null;
+  renderCalendar();
+  renderPanel();
+  setStatus('');
+}
+
+async function search(slot) {
+  const input = document.getElementById(slot === 's' ? 'searchS' : 'searchE');
+  const resultsEl = document.getElementById(slot === 's' ? 'resultsS' : 'resultsE');
+  const q = input.value.trim();
+  if (q.length < 2) return;
+  resultsEl.textContent = 'Searching...';
+  try {
+    const data = await apiGet('search', {q});
+    resultsEl.innerHTML = '';
+    data.results.forEach(node => {
+      const img = nodeImg(node);
+      const btn = document.createElement('button');
+      btn.className = 'result';
+      btn.innerHTML = '<span class="thumb ' + (node.type === 'person' ? '' : 'title') + '">' +
+        (img ? '<img src="' + img + '" alt="">' : '') +
+        '</span><span><span class="result-name">' + node.name + '</span><span class="result-meta">' + nodeType(node) + (node.yearLabel ? ' · ' + node.yearLabel : '') + '</span></span>';
+      btn.onclick = () => {
+        picked[slot] = node;
+        renderPicked(slot);
+      };
+      resultsEl.appendChild(btn);
+    });
+  } catch (e) {
+    resultsEl.textContent = e.message;
+  }
+}
+
+async function saveChallenge() {
+  if (!selected) return setStatus('Pick a date first.');
+  if (!picked.s || !picked.e) return setStatus('Pick start and end.');
+  if (picked.s.type === picked.e.type && picked.s.id === picked.e.id) return setStatus('Start and end must be different.');
+  setStatus('Saving...');
+  try {
+    await apiPost('update', {date:selected.date, challenge:{s:picked.s, e:picked.e}});
+    await loadMonth();
+    selected = days.find(day => day.date === selected.date) || selected;
+    renderPanel();
+    setStatus('Saved.');
+  } catch (e) {
+    setStatus(e.message);
+  }
+}
+
+async function clearOverride() {
+  if (!selected) return;
+  setStatus('Clearing override...');
+  try {
+    const date = selected.date;
+    await apiPost('clear', {date});
+    await loadMonth();
+    selected = days.find(day => day.date === date) || selected;
+    renderPanel();
+    setStatus('Back to base challenge.');
+  } catch (e) {
+    setStatus(e.message);
+  }
+}
+
+async function unlock() {
+  password = document.getElementById('password').value;
+  sessionStorage.setItem('cinelinksAdminPassword', password);
+  try {
+    await loadMonth();
+    document.getElementById('lock').style.display = 'none';
+  } catch (e) {
+    document.getElementById('lockStatus').textContent = e.message;
+  }
+}
+
+document.getElementById('prevMonth').onclick = () => {
+  monthCursor = new Date(monthCursor.getFullYear(), monthCursor.getMonth() - 1, 1);
+  selected = null;
+  loadMonth().catch(e => setStatus(e.message));
+};
+document.getElementById('nextMonth').onclick = () => {
+  monthCursor = new Date(monthCursor.getFullYear(), monthCursor.getMonth() + 1, 1);
+  selected = null;
+  loadMonth().catch(e => setStatus(e.message));
+};
+document.getElementById('unlockBtn').onclick = unlock;
+document.getElementById('password').addEventListener('keydown', e => { if (e.key === 'Enter') unlock(); });
+document.querySelectorAll('[data-search]').forEach(btn => btn.onclick = () => search(btn.dataset.search));
+document.querySelectorAll('[data-clear]').forEach(btn => btn.onclick = () => {
+  picked[btn.dataset.clear] = null;
+  renderPicked(btn.dataset.clear);
+});
+document.getElementById('saveBtn').onclick = saveChallenge;
+document.getElementById('clearOverrideBtn').onclick = clearOverride;
+
+if (password) unlock();
+</script>
+</body>
+</html>

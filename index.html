@@ -837,6 +837,17 @@ async function fetchDailyScore(key) {
   }
 }
 
+async function fetchDailyOverride(key) {
+  try {
+    const res = await fetch('/api/daily?date=' + encodeURIComponent(key));
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data && data.challenge ? data.challenge : null;
+  } catch(_) {
+    return null;
+  }
+}
+
 function gameParamsFromUrl() {
   const urlP = new URLSearchParams(location.search);
   const urlS = urlP.get('s'), urlST = urlP.get('st') || 'movie';
@@ -1019,8 +1030,11 @@ const game = window.game = {
       badge.style.display = '';
     }
     showOnly('loadingScreen');
-    const challenge = listedDailyChallenge(key) || buildDailyChallenge(key);
-    const score = await fetchDailyScore(key);
+    const [override, score] = await Promise.all([
+      fetchDailyOverride(key),
+      fetchDailyScore(key)
+    ]);
+    const challenge = override || listedDailyChallenge(key) || buildDailyChallenge(key);
     this.optDist = null;
     this._showLoadPreview(challenge.s, challenge.e);
     await new Promise(r => setTimeout(r, BRIEFING_DELAY_MS));
