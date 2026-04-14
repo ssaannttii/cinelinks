@@ -23,6 +23,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var
 .btn:active{transform:translateY(0)}
 .btn-gold{background:var(--gold);color:#111;border-color:var(--gold)}
 .btn-ghost{background:transparent;color:var(--txt);border-color:var(--bdr)}
+.btn-sm{padding:6px 12px;font-size:.75rem;border-radius:8px;margin:0}
 .how{margin-top:28px;border-top:1px solid var(--bdr);padding-top:22px;text-align:left}
 .how-title{font-size:.65rem;font-weight:600;letter-spacing:.1em;color:var(--mut);text-transform:uppercase;margin-bottom:10px}
 .how li{list-style:none;color:var(--mut);font-size:.83rem;line-height:1.8;padding-left:14px;position:relative}
@@ -70,6 +71,9 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var
 
 /* Connections */
 .sec-lbl{font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin-bottom:12px}
+.tabs{display:flex;gap:2px;margin-bottom:14px;background:var(--s2);border-radius:8px;padding:3px}
+.tab{flex:1;padding:6px 10px;border-radius:6px;border:none;background:none;color:var(--mut);font-family:inherit;font-size:.75rem;font-weight:600;cursor:pointer;transition:background .15s,color .15s}
+.tab.active{background:var(--s1);color:var(--txt)}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:10px}
 
 /* Cards */
@@ -138,7 +142,10 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var
 
 <div id="gameScreen" class="screen">
   <header class="g-header">
-    <button class="hdr-back" onclick="game.reset()">&#8592; Back</button>
+    <div style="display:flex;gap:10px;align-items:center;flex-shrink:0">
+      <button class="hdr-back" onclick="game.reset()">&#8592; Home</button>
+      <button class="hdr-back" onclick="game.startRandom()" style="color:var(--gold)">&#8635; New</button>
+    </div>
     <div class="hdr-mid">
       <div class="hdr-node">
         <div id="startThumb" class="hdr-thumb"></div>
@@ -161,10 +168,18 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var
       <div class="cur-info">
         <div id="curType" class="cur-badge">ACTOR</div>
         <div id="curName" class="cur-name"></div>
+        <div id="reverseBtn" style="margin-top:10px">
+          <button class="btn btn-ghost btn-sm" onclick="game.reverseGame()">&#8645; Reverse direction</button>
+        </div>
       </div>
     </div>
     <div id="pathRow" class="path-row"></div>
     <div id="secLbl" class="sec-lbl">CONNECTIONS</div>
+    <div id="tabsRow" class="tabs" style="display:none">
+      <button class="tab active" id="tabAll" onclick="game.setTab('all')">All</button>
+      <button class="tab" id="tabMovies" onclick="game.setTab('movies')">Movies</button>
+      <button class="tab" id="tabTV" onclick="game.setTab('tv')">TV</button>
+    </div>
     <div id="grid" class="grid"></div>
   </div>
 </div>
@@ -224,6 +239,7 @@ function thumbEl(elId, node, url) {
 const game = window.game = {
   cur: null, start: null, end: null,
   path: [], clicks: 0, visited: new Set(), optDist: null,
+  _allItems: [], _tab: 'all',
 
   dayOfYear() {
     const n = new Date();
@@ -362,14 +378,37 @@ const game = window.game = {
       if (node.type === 'movie' || node.type === 'tv') {
         const ep = node.type === 'tv' ? 'tv/' + node.id + '/credits' : 'movie/' + node.id + '/credits';
         const d = await api(ep);
-        items = (d.cast||[]).sort((a,b)=>(a.order||999)-(b.order||999)).slice(0,40).map(p=>({
+        const castItems = (d.cast||[]).sort((a,b)=>(a.order||999)-(b.order||999)).slice(0,38).map(p=>({
           name:p.name, type:'person', id:p.id, img:p.profile_path, sub:p.character||''
         }));
+        const directors = (d.crew||[]).filter(c=>c.job==='Director').map(c=>({
+          name:c.name, type:'person', id:c.id, img:c.profile_path, sub:'Director'
+        }));
+        // Dedupe directors already in cast
+        const castIds = new Set(castItems.map(c=>c.id));
+        const newDirs = directors.filter(c=>!castIds.has(c.id));
+        items = [...newDirs, ...castItems];
       } else {
         const d = await api('person/' + node.id + '/combined_credits');
-        const allCredits = (d.cast||[]).filter(m => m.media_type === 'movie' || m.media_type === 'tv');
+        const allCredits = (d.cast||[]).filter(m => {
+          if (m.media_type === 'movie') return true;
+          if (m.media_type === 'tv') {
+            // Skip talk shows, news, reality (genre_ids), and shorts
+            const skipGenres = [10767,10763,99]; // talk show, news, documentary
+            const hasSkipGenre = (m.genre_ids||[]).some(g => skipGenres.includes(g));
+            return !hasSkipGenre;
+          }
+          return false;
+        });
         const thisYear = new Date().getFullYear();
-        items = allCredits.sort((a,b) => {
+        // Deduplicate by id+media_type
+        const seen = new Set();
+        const unique = allCredits.filter(m => {
+          const k = m.media_type + '-' + m.id;
+          if (seen.has(k)) return false;
+          seen.add(k); return true;
+        });
+        items = unique.sort((a,b) => {
           const yearA = (a.release_date||a.first_air_date||'').slice(0,4)|0;
           const yearB = (b.release_date||b.first_air_date||'').slice(0,4)|0;
           const boostA = yearA >= thisYear - 1 ? 2000 : 0;
@@ -384,6 +423,16 @@ const game = window.game = {
         }));
       }
 
+      // Store all items for tab filtering
+      this._allItems = items;
+      this._tab = 'all';
+      // Show tabs if person node (has movies+tv)
+      const hasBothTypes = items.some(i=>i.type==='movie'||i.type==='tv') &&
+                           items.some(i=>i.type==='tv');
+      const tabsRow = document.getElementById('tabsRow');
+      tabsRow.style.display = hasBothTypes ? 'flex' : 'none';
+      ['tabAll','tabMovies','tabTV'].forEach(id => document.getElementById(id)?.classList.remove('active'));
+      document.getElementById('tabAll')?.classList.add('active');
       grid.innerHTML = '';
       items.forEach(item => {
         const isGoal = item.id === this.end.id && item.type === this.end.type;
@@ -410,6 +459,9 @@ const game = window.game = {
   async navigateTo(node) {
     const key = node.type + '-' + node.id;
     if (this.visited.has(key)) return;
+    // Hide reverse button after first move
+    const rb = document.getElementById('reverseBtn');
+    if (rb) rb.style.display = 'none';
     this.visited.add(key);
     this.cur = node;
     this.clicks++;
@@ -469,6 +521,55 @@ const game = window.game = {
       document.getElementById('winScreen').appendChild(c);
       setTimeout(() => c.remove(), 3200);
     }
+  },
+
+  setTab(tab) {
+    this._tab = tab;
+    ['tabAll','tabMovies','tabTV'].forEach(id => document.getElementById(id)?.classList.remove('active'));
+    const activeId = tab === 'all' ? 'tabAll' : (tab === 'movies' ? 'tabMovies' : 'tabTV');
+    document.getElementById(activeId)?.classList.add('active');
+    const filtered = tab === 'all' ? this._allItems :
+                     tab === 'movies' ? this._allItems.filter(i => i.type === 'movie') :
+                     this._allItems.filter(i => i.type === 'tv');
+    const grid = document.getElementById('grid');
+    grid.innerHTML = '';
+    filtered.forEach(item => {
+      const isGoal = item.id === this.end.id && item.type === this.end.type;
+      const div = document.createElement('div');
+      div.className = 'card' + (isGoal ? ' goal' : '');
+      const imgClass = 'card-img' + (item.type === 'person' ? ' person' : '');
+      const imgHtml = item.img
+        ? '<img src="' + IMGBASE + item.img + '" alt="" loading="lazy">'
+        : '<div class="card-noimg">No image</div>';
+      div.innerHTML = '<div class="' + imgClass + '">' + imgHtml + '</div>' +
+        '<div class="card-info"><div class="card-name">' + item.name.replace(/</g,'&lt;') + '</div>' +
+        '<div class="card-sub">' + item.sub.replace(/</g,'&lt;') + '</div></div>';
+      div.onclick = () => this.navigateTo({name:item.name, type:item.type, id:item.id});
+      grid.appendChild(div);
+    });
+  },
+
+  reverseGame() {
+    if (this.clicks > 0) return; // only at start
+    const tmp = this.start;
+    this.start = this.end;
+    this.end = tmp;
+    this.cur = this.start;
+    this.path = [this.start];
+    this.visited = new Set([this.start.type+'-'+this.start.id]);
+    // Update header
+    document.getElementById('startNodeName').textContent = this.start.name;
+    document.getElementById('endNodeName').textContent = this.end.name;
+    this.loadHeaderImages(this.start, this.end);
+    this.renderCurrent();
+    this.renderPath();
+    this.loadCurImg(this.start);
+    this.loadConnections(this.start);
+    // Update URL
+    const sp = new URLSearchParams({s:this.start.id,st:this.start.type,sn:this.start.name,e:this.end.id,et:this.end.type,en:this.end.name});
+    history.replaceState(null,'','?'+sp.toString());
+    // Hide reverse button
+    document.getElementById('reverseBtn').style.display = 'none';
   },
 
   reset() {
