@@ -156,10 +156,15 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 @keyframes shim{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
 @media (max-width:680px){
-  .g-header{padding:10px 14px;gap:8px}
-  .hdr-name{max-width:82px}
-  .hdr-clicks{min-width:54px;padding:5px 7px}
+  /* Header: two rows on mobile */
+  .g-header{padding:10px 14px;gap:6px;flex-wrap:wrap}
+  .hdr-back{order:1}
+  .hdr-clicks{order:2;min-width:54px;padding:5px 7px;margin-left:auto}
   .clicks-n{font-size:1.25rem}
+  .hdr-mid{order:3;flex-basis:100%;justify-content:flex-start;overflow:visible;background:rgba(255,255,255,.03);border:1px solid var(--bdr);border-radius:8px;padding:7px 10px}
+  .hdr-name{max-width:none;white-space:normal;overflow:visible;text-overflow:clip;font-size:.8rem}
+  .hdr-arr{flex-shrink:0}
+  .hdr-node{min-width:0;flex:1}
   .start-inner{padding:30px 18px 24px}
   .start-actions{grid-template-columns:1fr}
   .start-route{gap:6px;font-size:.66rem}
@@ -210,6 +215,11 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .share-opt:hover{background:rgba(255,255,255,.07)}
 .share-opt-icon{font-size:1rem;width:20px;text-align:center;flex-shrink:0}
 .share-wrap{position:relative}
+
+/* Dead-end toast */
+#deadEndToast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--s2);border:1px solid rgba(232,160,0,.35);border-radius:10px;padding:12px 18px;font-size:.83rem;color:var(--txt);box-shadow:0 8px 28px rgba(0,0,0,.45);z-index:999;pointer-events:none;opacity:0;transition:opacity .2s,transform .2s;white-space:nowrap;text-align:center}
+#deadEndToast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#deadEndToast strong{color:var(--gold)}
 .confetti{position:absolute;pointer-events:none;border-radius:2px;animation:fall linear forwards}
 @keyframes fall{0%{transform:translateY(-10px) rotate(0);opacity:1}100%{transform:translateY(550px) rotate(720deg);opacity:0}}
 
@@ -358,6 +368,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     </div>
   </div>
 </div>
+
+<div id="deadEndToast"></div>
 
 <script>
 const DAILY = [
@@ -1137,9 +1149,28 @@ const game = window.game = {
           grid.appendChild(castGrid);
         }
       }
+
+      // Dead-end detection: all connections already visited → auto go-back
+      const allVisited = items.every(i => this.visited.has(i.type + '-' + i.id));
+      if (allVisited && this.path.length > 1) {
+        const nodeName = node.name;
+        await new Promise(r => setTimeout(r, 320));
+        this._showToast(`Dead end — all connections from <strong>${nodeName}</strong> already visited. Going back…`);
+        await new Promise(r => setTimeout(r, 1800));
+        this._goBack();
+      }
     } catch(_) {
       this.renderEmptyConnections(node, true);
     }
+  },
+
+  _showToast(html, duration = 2600) {
+    const t = document.getElementById('deadEndToast');
+    if (!t) return;
+    t.innerHTML = html;
+    t.classList.add('show');
+    clearTimeout(this._toastTimer);
+    this._toastTimer = setTimeout(() => t.classList.remove('show'), duration);
   },
 
   async navigateTo(node) {
@@ -1154,6 +1185,7 @@ const game = window.game = {
     body.classList.add('nav-out');
     await new Promise(r => setTimeout(r, 140));
     body.classList.remove('nav-out');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 
     this.visited.add(key);
     this.cur = node;
