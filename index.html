@@ -476,7 +476,6 @@ const game = window.game = {
       castGrid.className = 'grid';
       nonDirItems.forEach(item => { const c = this._makeCard(item); if (c) castGrid.appendChild(c); });
       grid.appendChild(castGrid);
-      });
     } catch(_) {
       grid.innerHTML = '<p style="color:#777;font-size:.85rem">Could not load connections.</p>';
     }
