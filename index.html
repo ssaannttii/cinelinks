@@ -441,9 +441,9 @@ const FALLBACK_DAILY = [
   {s:{name:"Brad Pitt",type:"person",id:287},e:{name:"Forrest Gump",type:"movie",id:13}},
   {s:{name:"Cate Blanchett",type:"person",id:112},e:{name:"The Matrix",type:"movie",id:603}},
   {s:{name:"Scarlett Johansson",type:"person",id:1245},e:{name:"Goodfellas",type:"movie",id:769}},
-  {s:{name:"The Godfather",type:"movie",id:238},e:{name:"Diane Keaton",type:"person",id:2063}},
+  {s:{name:"The Godfather",type:"movie",id:238},e:{name:"Ryan Gosling",type:"person",id:30614}},
   {s:{name:"Morgan Freeman",type:"person",id:192},e:{name:"Fight Club",type:"movie",id:550}},
-  {s:{name:"Titanic",type:"movie",id:597},e:{name:"Tom Cruise",type:"person",id:500}},
+  {s:{name:"Titanic",type:"movie",id:597},e:{name:"Zendaya",type:"person",id:505710}},
 ];
 
 const DAILY_POOL = {
@@ -747,6 +747,10 @@ function nodeKey(node) {
   return node.type + '-' + node.id;
 }
 
+function sameNode(a, b) {
+  return !!a && !!b && a.id === b.id && a.type === b.type;
+}
+
 function isCuratedKnownFor(person, title) {
   return (person.knownFor || []).includes(nodeKey(title));
 }
@@ -813,6 +817,7 @@ function gameParamsFromUrl() {
     if (!Number.isFinite(curId) || !validTypes.has(urlCT)) return null;
     current = {name:urlCN, type:urlCT, id:curId};
     if (urlCR) current.role = urlCR;
+    if (sameNode(current, {type:urlST, id:startId})) current = null;
   }
 
   return {
@@ -924,7 +929,7 @@ function buildGameSearchParams(start, end, current) {
     e:end.id, et:end.type, en:end.name
   };
 
-  if (current) {
+  if (current && !sameNode(current, start)) {
     params.c = current.id;
     params.ct = current.type;
     params.cn = current.name;
