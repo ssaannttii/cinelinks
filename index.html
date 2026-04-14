@@ -472,7 +472,16 @@ function isKnownFor(person, node) {
 }
 
 function filterPeople(results) {
-  return (results||[]).filter(p => p.profile_path && p.popularity > 8 && (p.known_for||[]).length > 0);
+  return (results||[]).filter(p => {
+    if (!p.profile_path) return false;
+    if (p.popularity < 15) return false;
+    const known = (p.known_for||[]).filter(k =>
+      (k.vote_count||0) > 200 &&
+      (k.media_type === 'movie' || k.media_type === 'tv') &&
+      (k.original_language === 'en')
+    );
+    return known.length >= 2;
+  });
 }
 
 function filterMovies(results) {
