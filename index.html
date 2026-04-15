@@ -238,7 +238,11 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .card:not(.visited)::before{content:"Choose";position:absolute;top:8px;right:8px;z-index:2;background:rgba(13,13,13,.78);border:1px solid rgba(232,160,0,.32);border-radius:8px;color:var(--gold);font-size:.58rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 6px;opacity:0;transform:translateY(-3px);transition:opacity .15s,transform .15s;pointer-events:none}
 .card:not(.visited):hover::before{opacity:1;transform:translateY(0)}
 .card:hover .card-img img{filter:brightness(.72) saturate(1.08)}
-.card.goal{border-color:rgba(232,160,0,.45);box-shadow:0 0 10px var(--golddim)}
+.card.goal{border-color:rgba(232,160,0,.55);box-shadow:0 0 12px var(--golddim),0 0 0 1px rgba(232,160,0,.15);position:relative;overflow:hidden;animation:goalCardGlow 3s ease-in-out infinite}
+/* Shine sweep — runs once every 3s (delay covers the pause between sweeps) */
+.card.goal::after{content:"";position:absolute;inset:0 auto 0 -80%;width:60%;background:linear-gradient(90deg,transparent,rgba(232,160,0,.22),rgba(255,255,255,.08),transparent);transform:skewX(-12deg);animation:goalShine 3s ease-in-out infinite;pointer-events:none;z-index:2}
+@keyframes goalCardGlow{0%,100%{box-shadow:0 0 10px var(--golddim),0 0 0 1px rgba(232,160,0,.12)}50%{box-shadow:0 0 22px rgba(232,160,0,.35),0 0 0 1px rgba(232,160,0,.28)}}
+@keyframes goalShine{0%{transform:translateX(0) skewX(-12deg);opacity:0}8%{opacity:1}28%{transform:translateX(320%) skewX(-12deg);opacity:0}100%{transform:translateX(320%) skewX(-12deg);opacity:0}}
 .card.visited{opacity:.38;cursor:not-allowed;pointer-events:none;position:relative}
 .card.visited::after{content:"Already visited";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:600;color:var(--mut);background:rgba(0,0,0,.55);text-align:center;padding:4px;pointer-events:none}
 .people-section{margin-bottom:18px}
