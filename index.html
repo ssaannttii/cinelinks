@@ -329,6 +329,32 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .share-opt-icon{font-size:1rem;width:20px;text-align:center;flex-shrink:0}
 .share-wrap{position:relative}
 
+/* Share card */
+#shareCard{position:fixed;inset:0;z-index:300;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);padding:20px}
+#shareCard.open{display:flex}
+.share-card-inner{background:#0d0d0d;border:1px solid rgba(232,160,0,.2);border-radius:16px;width:360px;max-width:100%;padding:28px 24px 24px;position:relative;box-shadow:0 0 60px rgba(232,160,0,.08)}
+.share-card-logo{font-size:.7rem;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:4px}
+.share-card-route{font-size:.62rem;color:rgba(255,255,255,.35);margin-bottom:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.share-card-path{display:flex;flex-direction:column;gap:0;margin-bottom:20px}
+.share-card-node{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)}
+.share-card-node.person{border-color:rgba(232,160,0,.18)}
+.share-card-node.goal-node{border-color:rgba(232,160,0,.4);background:rgba(232,160,0,.06)}
+.share-card-num{width:20px;height:20px;border-radius:50%;background:var(--s2);color:var(--gold);font-size:.6rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.share-card-art{width:32px;height:32px;border-radius:50%;overflow:hidden;background:var(--s2);flex-shrink:0;border:1px solid rgba(255,255,255,.08)}
+.share-card-art.title{width:26px;height:38px;border-radius:4px}
+.share-card-art img{width:100%;height:100%;object-fit:cover;display:block}
+.share-card-name{font-size:.78rem;font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.share-card-type{font-size:.58rem;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;flex-shrink:0}
+.share-card-arrow{height:16px;display:flex;align-items:center;justify-content:center;color:rgba(232,160,0,.45);font-size:.75rem}
+.share-card-footer{display:flex;align-items:center;justify-content:space-between;border-top:1px solid rgba(255,255,255,.07);padding-top:14px}
+.share-card-score{font-size:1.4rem;font-weight:800;color:var(--gold);line-height:1}
+.share-card-score-l{font-size:.58rem;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
+.share-card-url{font-size:.58rem;color:rgba(255,255,255,.25);text-align:right}
+.share-card-close{position:absolute;top:10px;right:12px;background:none;border:none;color:var(--mut);font-size:1.1rem;cursor:pointer;padding:4px 8px}
+.share-card-close:hover{color:var(--txt)}
+.share-card-actions{display:flex;gap:8px;margin-top:14px}
+.share-card-actions .btn{flex:1;margin:0;font-size:.78rem;padding:10px}
+
 /* Dead-end toast */
 #deadEndToast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--s2);border:1px solid rgba(232,160,0,.35);border-radius:10px;padding:12px 18px;font-size:.83rem;color:var(--txt);box-shadow:0 8px 28px rgba(0,0,0,.45);z-index:999;pointer-events:none;opacity:0;transition:opacity .2s,transform .2s;white-space:nowrap;text-align:center}
 #deadEndToast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -503,9 +529,30 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
           <button class="share-opt" onclick="game.shareTwitter()"><span class="share-opt-icon">𝕏</span>Post on X</button>
           <button class="share-opt" onclick="game.shareWhatsApp()"><span class="share-opt-icon">💬</span>WhatsApp</button>
           <button class="share-opt" onclick="game.copyLink()"><span class="share-opt-icon">🔗</span><span id="copyLinkLabel">Copy link</span></button>
+          <button class="share-opt" onclick="game.openShareCard()"><span class="share-opt-icon">📸</span>Save as image</button>
         </div>
       </div>
       <button class="btn btn-gold" style="margin:0" onclick="game.startRandom()">Play again</button>
+    </div>
+  </div>
+</div>
+
+<div id="shareCard">
+  <div class="share-card-inner" id="shareCardInner">
+    <button class="share-card-close" onclick="game.closeShareCard()">✕</button>
+    <div class="share-card-logo">🎬 CineLinks</div>
+    <div class="share-card-route" id="shareCardRoute"></div>
+    <div class="share-card-path" id="shareCardPath"></div>
+    <div class="share-card-footer">
+      <div>
+        <div class="share-card-score" id="shareCardScore"></div>
+        <div class="share-card-score-l" id="shareCardScoreL">clicks</div>
+      </div>
+      <div class="share-card-url">cinelinks.vercel.app</div>
+    </div>
+    <div class="share-card-actions">
+      <button class="btn btn-ghost" onclick="game.downloadShareCard()">⬇ Save image</button>
+      <button class="btn btn-share" onclick="game.nativeShareCard()" style="display:flex;align-items:center;justify-content:center;gap:6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>Share</button>
     </div>
   </div>
 </div>
@@ -2380,6 +2427,87 @@ const game = window.game = {
     return t('shareText', this.start.name, this.end.name, this.clicks);
   },
 
+  openShareCard() {
+    document.getElementById('shareMenu')?.classList.remove('open');
+    // Build card content
+    document.getElementById('shareCardRoute').textContent = this.start.name + ' → ' + this.end.name;
+    document.getElementById('shareCardScore').textContent = this.clicks;
+    document.getElementById('shareCardScoreL').textContent = t('clicksLabel');
+    // Build path nodes
+    const pathEl = document.getElementById('shareCardPath');
+    pathEl.innerHTML = '';
+    this.path.forEach((n, i) => {
+      if (i > 0) {
+        const arr = document.createElement('div');
+        arr.className = 'share-card-arrow';
+        arr.textContent = '↓';
+        pathEl.appendChild(arr);
+      }
+      const row = document.createElement('div');
+      const isGoal = i === this.path.length - 1;
+      row.className = 'share-card-node ' + n.type + (isGoal ? ' goal-node' : '');
+      const imgUrl = nodeImageUrl(n);
+      const isPerson = n.type === 'person';
+      row.innerHTML =
+        '<div class="share-card-num">' + (i + 1) + '</div>' +
+        '<div class="share-card-art ' + (isPerson ? '' : 'title') + '">' +
+          (imgUrl ? '<img src="' + imgUrl + '" alt="" crossorigin="anonymous">' : '') +
+        '</div>' +
+        '<div class="share-card-name">' + n.name + '</div>' +
+        '<div class="share-card-type">' + (n.type === 'person' ? t('typePerson') : n.type === 'tv' ? t('typeTv') : t('typeMovieFull')) + '</div>';
+      pathEl.appendChild(row);
+    });
+    document.getElementById('shareCard').classList.add('open');
+  },
+
+  closeShareCard() {
+    document.getElementById('shareCard').classList.remove('open');
+  },
+
+  async _captureCard() {
+    const el = document.getElementById('shareCardInner');
+    // Dynamically load html2canvas if needed
+    if (!window.html2canvas) {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+        s.onload = resolve; s.onerror = reject;
+        document.head.appendChild(s);
+      });
+    }
+    return window.html2canvas(el, {
+      backgroundColor: '#0d0d0d',
+      scale: 2,
+      useCORS: true,
+      allowTaint: false,
+      logging: false
+    });
+  },
+
+  async downloadShareCard() {
+    try {
+      const canvas = await this._captureCard();
+      const link = document.createElement('a');
+      link.download = 'cinelinks-' + this.start.name.replace(/\s+/g,'-') + '-to-' + this.end.name.replace(/\s+/g,'-') + '.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch(e) { alert('Could not generate image'); }
+  },
+
+  async nativeShareCard() {
+    try {
+      const canvas = await this._captureCard();
+      canvas.toBlob(async blob => {
+        const file = new File([blob], 'cinelinks.png', {type:'image/png'});
+        if (navigator.canShare && navigator.canShare({files:[file]})) {
+          await navigator.share({files:[file], title:'CineLinks', text: this._shareText()});
+        } else {
+          this.downloadShareCard();
+        }
+      }, 'image/png');
+    } catch(e) { this.downloadShareCard(); }
+  },
+
   _shareUrl() {
     return location.href;
   },
@@ -2584,6 +2712,10 @@ const creator = {
 // Close creator on backdrop click
 document.getElementById('creatorModal').addEventListener('click', function(e) {
   if (e.target === this) creator.close();
+});
+
+document.getElementById('shareCard').addEventListener('click', function(e) {
+  if (e.target === this) game.closeShareCard();
 });
 
 if (!loadGameFromUrl()) {
