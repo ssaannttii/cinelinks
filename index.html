@@ -1550,6 +1550,12 @@ const game = window.game = {
       end.img = end.img || nodeImagePath(end, ed) || '';
       start.yearLabel = start.yearLabel || nodeYearLabel(start, sd);
       end.yearLabel = end.yearLabel || nodeYearLabel(end, ed);
+      // Update names with localized version from TMDB response
+      if (start.type !== 'person') start.name = sd.title || sd.name || start.name;
+      if (end.type !== 'person')   end.name   = ed.title || ed.name || end.name;
+      // Refresh header names with (potentially translated) names
+      document.getElementById('startNodeName').textContent = start.name + nodeHeaderSuffix(start);
+      document.getElementById('endNodeName').textContent   = end.name   + nodeHeaderSuffix(end);
       const su = nodeImageUrl(start);
       const eu = nodeImageUrl(end);
       thumbEl('startThumb', start, su);
