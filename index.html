@@ -39,8 +39,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .how li::before{content:"→";position:absolute;left:0;color:var(--gold)}
 .credits{margin-top:22px;border-top:1px solid var(--bdr);padding-top:18px;text-align:left}
 .credits-title{font-size:.65rem;font-weight:600;letter-spacing:.1em;color:var(--mut);text-transform:uppercase;margin-bottom:10px}
-.lang-picker{display:flex;gap:6px;flex-wrap:wrap;margin-top:18px;padding-top:16px;border-top:1px solid var(--bdr)}
-.lang-btn{flex:1;min-width:0;padding:7px 8px;border-radius:8px;border:1px solid var(--bdr);background:transparent;color:var(--mut);font-family:inherit;font-size:.72rem;font-weight:600;cursor:pointer;transition:border-color .15s,color .15s,background .15s;white-space:nowrap}
+.lang-picker{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:18px;padding-top:16px;border-top:1px solid var(--bdr)}
+.lang-btn{padding:7px 6px;border-radius:8px;border:1px solid var(--bdr);background:transparent;color:var(--mut);font-family:inherit;font-size:.68rem;font-weight:600;cursor:pointer;transition:border-color .15s,color .15s,background .15s;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lang-btn:hover{border-color:rgba(232,160,0,.4);color:var(--txt)}
 .lang-btn.active{border-color:var(--gold);color:var(--gold);background:rgba(232,160,0,.08)}
 .tmdb-credit{display:flex;align-items:center;gap:12px;color:var(--mut);font-size:.72rem;line-height:1.45}
@@ -618,12 +618,310 @@ const LANGS = {
   'en-US': 'English', 'es-ES': 'Español (ES)', 'es-MX': 'Español (MX)',
   'fr-FR': 'Français', 'de-DE': 'Deutsch', 'pt-BR': 'Português'
 };
+
+const I18N = {
+  'en-US': {
+    tagline: 'Connect actors, movies, directors, and TV shows in the fewest clicks.',
+    nodeActor: 'Actor', nodeMovie: 'Movie', nodeTarget: 'Target',
+    btnToday: "Today's Challenge", btnRandom: 'Random Game',
+    rulesTitle: 'Rules',
+    rule1: 'Start at one actor or movie',
+    rule2: 'Choose connections through cast, crew, and filmographies',
+    rule3: 'Reach the goal in as few clicks as possible',
+    creditsTitle: 'Credits',
+    loadKicker: 'Mission briefing', loadTxt: 'Locking target chain',
+    loadSub: 'Study the endpoints. Every click counts.',
+    hdrHome: '← Home', hdrNew: '⟳ New',
+    badgeActor: 'ACTOR', badgeMovie: 'MOVIE', badgeTv: 'TV SHOW', badgeDirector: 'DIRECTOR',
+    curPromptPerson: 'Choose a film or show from this filmography.',
+    curPromptTitle: 'Choose the next person connected to this title.',
+    tabAll: 'All', tabMovies: 'Movies', tabTv: 'TV',
+    sectionConnections: 'CHOOSE YOUR NEXT CONNECTION',
+    sectionDirector: 'DIRECTOR', sectionDirectors: 'DIRECTORS',
+    sectionMainCast: 'MAIN CAST', sectionAdditionalCast: 'ADDITIONAL CAST', sectionCast: 'CAST',
+    tvBadge: 'Series',
+    emptyNoData: 'Dead end — no cast data', emptyError: 'Could not load this step',
+    emptyBodyError: 'The connection data failed to load. Try going back or start a new game.',
+    emptyBodyNoData: (t) => `TMDB doesn't have usable cast or crew for this ${t}. This is a data gap on their end — try a different path.`,
+    typeShow: 'TV show', typeFilm: 'film', typeTitle: 'title',
+    btnGoBack: '← Go back', btnCopyDebug: 'Copy debug link', btnNewGame: 'New game',
+    deadEndToast: (n) => `Dead end — all connections from ${n} already visited. Going back…`,
+    goalBanner: (n) => `The goal is in reach — <strong>${n}</strong> is here!`,
+    winTitle: 'You made it!', winSub: 'You connected the dots.',
+    winClicks: 'Clicks', winRoute: 'Winning route',
+    winStart: 'Start', winGoal: 'Goal',
+    btnShareMenu: 'Share', shareNative: 'Share…', shareX: 'Post on X',
+    shareWa: 'WhatsApp', shareCopy: 'Copy link', shareCopied: 'Copied!',
+    btnPlayAgain: 'Play again', btnHome: 'Home',
+    shareText: (s, e, n) => `🎬 CineLinks: ${s} → ${e} in ${n} click${n!==1?'s':''}! Can you beat it?`,
+    typePerson: 'Person', typeTv: 'TV', typeMovieFull: 'Movie',
+    clicksLabel: 'clicks',
+  },
+  'es-ES': {
+    tagline: 'Conecta actores, películas, directores y series en el menor número de clics.',
+    nodeActor: 'Actor', nodeMovie: 'Película', nodeTarget: 'Objetivo',
+    btnToday: 'Reto del día', btnRandom: 'Partida aleatoria',
+    rulesTitle: 'Reglas',
+    rule1: 'Empieza con un actor o una película',
+    rule2: 'Navega por el reparto, directores y filmografías',
+    rule3: 'Llega al objetivo en el menor número de clics',
+    creditsTitle: 'Créditos',
+    loadKicker: 'Preparando misión', loadTxt: 'Bloqueando cadena objetivo',
+    loadSub: 'Estudia los extremos. Cada clic cuenta.',
+    hdrHome: '← Inicio', hdrNew: '⟳ Nueva',
+    badgeActor: 'ACTOR', badgeMovie: 'PELÍCULA', badgeTv: 'SERIE', badgeDirector: 'DIRECTOR',
+    curPromptPerson: 'Elige una película o serie de su filmografía.',
+    curPromptTitle: 'Elige la siguiente persona conectada a este título.',
+    tabAll: 'Todo', tabMovies: 'Películas', tabTv: 'Series',
+    sectionConnections: 'ELIGE TU SIGUIENTE CONEXIÓN',
+    sectionDirector: 'DIRECTOR', sectionDirectors: 'DIRECTORES',
+    sectionMainCast: 'REPARTO PRINCIPAL', sectionAdditionalCast: 'REPARTO SECUNDARIO', sectionCast: 'REPARTO',
+    tvBadge: 'Serie',
+    emptyNoData: 'Callejón sin salida — sin datos de reparto', emptyError: 'No se pudo cargar este paso',
+    emptyBodyError: 'No se han podido cargar los datos. Vuelve atrás o inicia una nueva partida.',
+    emptyBodyNoData: (t) => `TMDB no tiene reparto o crew utilizable para este ${t}. Es un hueco en sus datos — prueba otro camino.`,
+    typeShow: 'serie', typeFilm: 'película', typeTitle: 'título',
+    btnGoBack: '← Volver', btnCopyDebug: 'Copiar enlace debug', btnNewGame: 'Nueva partida',
+    deadEndToast: (n) => `Callejón sin salida — todas las conexiones de ${n} ya visitadas. Volviendo…`,
+    goalBanner: (n) => `¡El objetivo está al alcance — <strong>${n}</strong> está aquí!`,
+    winTitle: '¡Lo conseguiste!', winSub: 'Has conectado los puntos.',
+    winClicks: 'Clics', winRoute: 'Ruta ganadora',
+    winStart: 'Inicio', winGoal: 'Objetivo',
+    btnShareMenu: 'Compartir', shareNative: 'Compartir…', shareX: 'Publicar en X',
+    shareWa: 'WhatsApp', shareCopy: 'Copiar enlace', shareCopied: '¡Copiado!',
+    btnPlayAgain: 'Jugar de nuevo', btnHome: 'Inicio',
+    shareText: (s, e, n) => `🎬 CineLinks: ${s} → ${e} en ${n} clic${n!==1?'s':''}. ¿Puedes superarlo?`,
+    typePerson: 'Persona', typeTv: 'Serie', typeMovieFull: 'Película',
+    clicksLabel: 'clics',
+  },
+  'es-MX': {
+    tagline: 'Conecta actores, películas, directores y series en el menor número de clics.',
+    nodeActor: 'Actor', nodeMovie: 'Película', nodeTarget: 'Meta',
+    btnToday: 'Reto del día', btnRandom: 'Partida aleatoria',
+    rulesTitle: 'Reglas',
+    rule1: 'Empieza con un actor o una película',
+    rule2: 'Navega por el reparto, directores y filmografías',
+    rule3: 'Llega a la meta en el menor número de clics',
+    creditsTitle: 'Créditos',
+    loadKicker: 'Preparando misión', loadTxt: 'Asegurando cadena objetivo',
+    loadSub: 'Estudia los extremos. Cada clic cuenta.',
+    hdrHome: '← Inicio', hdrNew: '⟳ Nueva',
+    badgeActor: 'ACTOR', badgeMovie: 'PELÍCULA', badgeTv: 'SERIE', badgeDirector: 'DIRECTOR',
+    curPromptPerson: 'Elige una película o serie de su filmografía.',
+    curPromptTitle: 'Elige a la siguiente persona conectada a este título.',
+    tabAll: 'Todo', tabMovies: 'Películas', tabTv: 'Series',
+    sectionConnections: 'ELIGE TU SIGUIENTE CONEXIÓN',
+    sectionDirector: 'DIRECTOR', sectionDirectors: 'DIRECTORES',
+    sectionMainCast: 'REPARTO PRINCIPAL', sectionAdditionalCast: 'REPARTO SECUNDARIO', sectionCast: 'REPARTO',
+    tvBadge: 'Serie',
+    emptyNoData: 'Callejón sin salida — sin datos de reparto', emptyError: 'No se pudo cargar este paso',
+    emptyBodyError: 'No se cargaron los datos. Regresa o inicia una nueva partida.',
+    emptyBodyNoData: (t) => `TMDB no tiene reparto o crew para esta ${t}. Es un hueco en sus datos — intenta otro camino.`,
+    typeShow: 'serie', typeFilm: 'película', typeTitle: 'título',
+    btnGoBack: '← Regresar', btnCopyDebug: 'Copiar enlace debug', btnNewGame: 'Nueva partida',
+    deadEndToast: (n) => `Callejón sin salida — todas las conexiones de ${n} ya visitadas. Regresando…`,
+    goalBanner: (n) => `¡La meta está cerca — <strong>${n}</strong> está aquí!`,
+    winTitle: '¡Lo lograste!', winSub: 'Conectaste los puntos.',
+    winClicks: 'Clics', winRoute: 'Ruta ganadora',
+    winStart: 'Inicio', winGoal: 'Meta',
+    btnShareMenu: 'Compartir', shareNative: 'Compartir…', shareX: 'Publicar en X',
+    shareWa: 'WhatsApp', shareCopy: 'Copiar enlace', shareCopied: '¡Copiado!',
+    btnPlayAgain: 'Jugar de nuevo', btnHome: 'Inicio',
+    shareText: (s, e, n) => `🎬 CineLinks: ${s} → ${e} en ${n} clic${n!==1?'s':''}. ¿Lo puedes superar?`,
+    typePerson: 'Persona', typeTv: 'Serie', typeMovieFull: 'Película',
+    clicksLabel: 'clics',
+  },
+  'fr-FR': {
+    tagline: 'Connectez acteurs, films, réalisateurs et séries en un minimum de clics.',
+    nodeActor: 'Acteur', nodeMovie: 'Film', nodeTarget: 'Cible',
+    btnToday: "Défi du jour", btnRandom: 'Partie aléatoire',
+    rulesTitle: 'Règles',
+    rule1: 'Commencez par un acteur ou un film',
+    rule2: 'Naviguez via les castings, réalisateurs et filmographies',
+    rule3: "Atteignez l'objectif en le moins de clics possible",
+    creditsTitle: 'Crédits',
+    loadKicker: 'Briefing mission', loadTxt: 'Verrouillage de la chaîne cible',
+    loadSub: 'Étudiez les extrémités. Chaque clic compte.',
+    hdrHome: '← Accueil', hdrNew: '⟳ Nouveau',
+    badgeActor: 'ACTEUR', badgeMovie: 'FILM', badgeTv: 'SÉRIE', badgeDirector: 'RÉALISATEUR',
+    curPromptPerson: 'Choisissez un film ou une série de sa filmographie.',
+    curPromptTitle: 'Choisissez la prochaine personne liée à ce titre.',
+    tabAll: 'Tout', tabMovies: 'Films', tabTv: 'Séries',
+    sectionConnections: 'CHOISISSEZ VOTRE PROCHAINE CONNEXION',
+    sectionDirector: 'RÉALISATEUR', sectionDirectors: 'RÉALISATEURS',
+    sectionMainCast: 'CASTING PRINCIPAL', sectionAdditionalCast: 'CASTING SECONDAIRE', sectionCast: 'CASTING',
+    tvBadge: 'Série',
+    emptyNoData: 'Impasse — aucune donnée de casting', emptyError: 'Impossible de charger cette étape',
+    emptyBodyError: 'Les données de connexion ont échoué. Revenez en arrière ou commencez une nouvelle partie.',
+    emptyBodyNoData: (t) => `TMDB n'a pas de casting utilisable pour ce ${t}. C'est un manque dans leurs données — essayez un autre chemin.`,
+    typeShow: 'série', typeFilm: 'film', typeTitle: 'titre',
+    btnGoBack: '← Retour', btnCopyDebug: 'Copier le lien debug', btnNewGame: 'Nouvelle partie',
+    deadEndToast: (n) => `Impasse — toutes les connexions de ${n} déjà visitées. Retour en arrière…`,
+    goalBanner: (n) => `L'objectif est à portée — <strong>${n}</strong> est ici !`,
+    winTitle: 'Vous avez réussi !', winSub: 'Vous avez connecté les points.',
+    winClicks: 'Clics', winRoute: 'Route gagnante',
+    winStart: 'Départ', winGoal: 'Objectif',
+    btnShareMenu: 'Partager', shareNative: 'Partager…', shareX: 'Publier sur X',
+    shareWa: 'WhatsApp', shareCopy: 'Copier le lien', shareCopied: 'Copié !',
+    btnPlayAgain: 'Rejouer', btnHome: 'Accueil',
+    shareText: (s, e, n) => `🎬 CineLinks : ${s} → ${e} en ${n} clic${n!==1?'s':''}. Pouvez-vous faire mieux ?`,
+    typePerson: 'Personne', typeTv: 'Série', typeMovieFull: 'Film',
+    clicksLabel: 'clics',
+  },
+  'de-DE': {
+    tagline: 'Verbinde Schauspieler, Filme, Regisseure und Serien in möglichst wenigen Klicks.',
+    nodeActor: 'Schauspieler', nodeMovie: 'Film', nodeTarget: 'Ziel',
+    btnToday: 'Heutige Challenge', btnRandom: 'Zufälliges Spiel',
+    rulesTitle: 'Regeln',
+    rule1: 'Starte mit einem Schauspieler oder einem Film',
+    rule2: 'Navigiere durch Besetzung, Regisseure und Filmografien',
+    rule3: 'Erreiche das Ziel in so wenigen Klicks wie möglich',
+    creditsTitle: 'Credits',
+    loadKicker: 'Missions-Briefing', loadTxt: 'Zielkette wird gesperrt',
+    loadSub: 'Studiere die Endpunkte. Jeder Klick zählt.',
+    hdrHome: '← Start', hdrNew: '⟳ Neu',
+    badgeActor: 'SCHAUSPIELER', badgeMovie: 'FILM', badgeTv: 'SERIE', badgeDirector: 'REGISSEUR',
+    curPromptPerson: 'Wähle einen Film oder eine Serie aus der Filmografie.',
+    curPromptTitle: 'Wähle die nächste Person, die mit diesem Titel verbunden ist.',
+    tabAll: 'Alle', tabMovies: 'Filme', tabTv: 'Serien',
+    sectionConnections: 'WÄHLE DEINE NÄCHSTE VERBINDUNG',
+    sectionDirector: 'REGISSEUR', sectionDirectors: 'REGISSEURE',
+    sectionMainCast: 'HAUPTBESETZUNG', sectionAdditionalCast: 'NEBENBESETZUNG', sectionCast: 'BESETZUNG',
+    tvBadge: 'Serie',
+    emptyNoData: 'Sackgasse — keine Besetzungsdaten', emptyError: 'Dieser Schritt konnte nicht geladen werden',
+    emptyBodyError: 'Die Verbindungsdaten konnten nicht geladen werden. Gehe zurück oder starte ein neues Spiel.',
+    emptyBodyNoData: (t) => `TMDB hat keine verwendbaren Daten für diesen ${t}. Das ist eine Datenlücke — versuche einen anderen Weg.`,
+    typeShow: 'Serie', typeFilm: 'Film', typeTitle: 'Titel',
+    btnGoBack: '← Zurück', btnCopyDebug: 'Debug-Link kopieren', btnNewGame: 'Neues Spiel',
+    deadEndToast: (n) => `Sackgasse — alle Verbindungen von ${n} bereits besucht. Zurück…`,
+    goalBanner: (n) => `Das Ziel ist in Reichweite — <strong>${n}</strong> ist hier!`,
+    winTitle: 'Geschafft!', winSub: 'Du hast die Punkte verbunden.',
+    winClicks: 'Klicks', winRoute: 'Siegroute',
+    winStart: 'Start', winGoal: 'Ziel',
+    btnShareMenu: 'Teilen', shareNative: 'Teilen…', shareX: 'Auf X posten',
+    shareWa: 'WhatsApp', shareCopy: 'Link kopieren', shareCopied: 'Kopiert!',
+    btnPlayAgain: 'Nochmal spielen', btnHome: 'Start',
+    shareText: (s, e, n) => `🎬 CineLinks: ${s} → ${e} in ${n} Klick${n!==1?'s':''}. Kannst du es besser?`,
+    typePerson: 'Person', typeTv: 'Serie', typeMovieFull: 'Film',
+    clicksLabel: 'Klicks',
+  },
+  'pt-BR': {
+    tagline: 'Conecte atores, filmes, diretores e séries no menor número de cliques.',
+    nodeActor: 'Ator', nodeMovie: 'Filme', nodeTarget: 'Objetivo',
+    btnToday: 'Desafio do dia', btnRandom: 'Jogo aleatório',
+    rulesTitle: 'Regras',
+    rule1: 'Comece com um ator ou um filme',
+    rule2: 'Navegue pelo elenco, diretores e filmografias',
+    rule3: 'Alcance o objetivo no menor número de cliques',
+    creditsTitle: 'Créditos',
+    loadKicker: 'Briefing da missão', loadTxt: 'Bloqueando cadeia alvo',
+    loadSub: 'Estude os extremos. Cada clique conta.',
+    hdrHome: '← Início', hdrNew: '⟳ Novo',
+    badgeActor: 'ATOR', badgeMovie: 'FILME', badgeTv: 'SÉRIE', badgeDirector: 'DIRETOR',
+    curPromptPerson: 'Escolha um filme ou série da filmografia.',
+    curPromptTitle: 'Escolha a próxima pessoa conectada a este título.',
+    tabAll: 'Tudo', tabMovies: 'Filmes', tabTv: 'Séries',
+    sectionConnections: 'ESCOLHA SUA PRÓXIMA CONEXÃO',
+    sectionDirector: 'DIRETOR', sectionDirectors: 'DIRETORES',
+    sectionMainCast: 'ELENCO PRINCIPAL', sectionAdditionalCast: 'ELENCO SECUNDÁRIO', sectionCast: 'ELENCO',
+    tvBadge: 'Série',
+    emptyNoData: 'Beco sem saída — sem dados de elenco', emptyError: 'Não foi possível carregar esta etapa',
+    emptyBodyError: 'Os dados de conexão falharam. Volte ou inicie um novo jogo.',
+    emptyBodyNoData: (t) => `TMDB não tem elenco utilizável para este ${t}. É uma lacuna nos dados deles — tente outro caminho.`,
+    typeShow: 'série', typeFilm: 'filme', typeTitle: 'título',
+    btnGoBack: '← Voltar', btnCopyDebug: 'Copiar link debug', btnNewGame: 'Novo jogo',
+    deadEndToast: (n) => `Beco sem saída — todas as conexões de ${n} já visitadas. Voltando…`,
+    goalBanner: (n) => `O objetivo está ao alcance — <strong>${n}</strong> está aqui!`,
+    winTitle: 'Você conseguiu!', winSub: 'Você conectou os pontos.',
+    winClicks: 'Cliques', winRoute: 'Rota vencedora',
+    winStart: 'Início', winGoal: 'Objetivo',
+    btnShareMenu: 'Compartilhar', shareNative: 'Compartilhar…', shareX: 'Postar no X',
+    shareWa: 'WhatsApp', shareCopy: 'Copiar link', shareCopied: 'Copiado!',
+    btnPlayAgain: 'Jogar de novo', btnHome: 'Início',
+    shareText: (s, e, n) => `🎬 CineLinks: ${s} → ${e} em ${n} clique${n!==1?'s':''}. Consegue superar?`,
+    typePerson: 'Pessoa', typeTv: 'Série', typeMovieFull: 'Filme',
+    clicksLabel: 'cliques',
+  },
+};
+
 let _lang = localStorage.getItem('clLang') || 'en-US';
+function t(key, ...args) {
+  const d = I18N[_lang] || I18N['en-US'];
+  const v = d[key] ?? I18N['en-US'][key];
+  return typeof v === 'function' ? v(...args) : (v ?? key);
+}
 
 function setLang(lang) {
   _lang = LANGS[lang] ? lang : 'en-US';
   localStorage.setItem('clLang', _lang);
   document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === _lang));
+  applyI18n();
+}
+
+function applyI18n() {
+  // Home
+  const tagEl = document.querySelector('.tagline');
+  if (tagEl) tagEl.textContent = t('tagline');
+  const nodeEls = document.querySelectorAll('.start-route .start-node');
+  if (nodeEls[0]) nodeEls[0].textContent = t('nodeActor');
+  if (nodeEls[1]) nodeEls[1].textContent = t('nodeMovie');
+  if (nodeEls[2]) nodeEls[2].textContent = t('nodeTarget');
+  const [btnDaily, btnRandom] = document.querySelectorAll('.start-actions .btn');
+  if (btnDaily) btnDaily.textContent = t('btnToday');
+  if (btnRandom) btnRandom.textContent = t('btnRandom');
+  const howTitle = document.querySelector('.how-title');
+  if (howTitle) howTitle.textContent = t('rulesTitle');
+  const rules = document.querySelectorAll('.how li');
+  if (rules[0]) rules[0].textContent = t('rule1');
+  if (rules[1]) rules[1].textContent = t('rule2');
+  if (rules[2]) rules[2].textContent = t('rule3');
+  const credTitle = document.querySelector('.credits-title');
+  if (credTitle) credTitle.textContent = t('creditsTitle');
+  // Loading
+  const lk = document.querySelector('.load-kicker');
+  if (lk) lk.textContent = t('loadKicker');
+  const lt = document.getElementById('loadTxt');
+  if (lt && lt.textContent === I18N['en-US'].loadTxt || lt && !lt._customText) lt.textContent = t('loadTxt');
+  const ls = document.querySelector('.load-sub');
+  if (ls) ls.textContent = t('loadSub');
+  // Header
+  const hdrBtns = document.querySelectorAll('.hdr-back');
+  if (hdrBtns[0]) hdrBtns[0].innerHTML = t('hdrHome');
+  if (hdrBtns[1]) hdrBtns[1].innerHTML = t('hdrNew');
+  // Tabs
+  const tabAll = document.getElementById('tabAll');
+  const tabMov = document.getElementById('tabMovies');
+  const tabTv  = document.getElementById('tabTV');
+  if (tabAll) tabAll.textContent = t('tabAll');
+  if (tabMov) tabMov.textContent = t('tabMovies');
+  if (tabTv)  tabTv.textContent  = t('tabTv');
+  // Clicks label
+  document.querySelectorAll('.clicks-l').forEach(el => el.textContent = t('clicksLabel'));
+  // Win screen static
+  const winH = document.querySelector('.win-h');
+  if (winH) winH.textContent = t('winTitle');
+  const winSub = document.querySelector('.win-sub');
+  if (winSub) winSub.textContent = t('winSub');
+  const winCl = document.querySelector('.stat-l');
+  if (winCl) winCl.textContent = t('winClicks');
+  const winRl = document.querySelector('.win-route-lbl');
+  if (winRl) winRl.textContent = t('winRoute');
+  // Win buttons
+  const winBtns = document.querySelectorAll('.win-btns button, .win-btns .share-wrap button');
+  document.querySelector('.win-btns .btn-gold')?.setAttribute('data-i18n-playagain', '1');
+  document.querySelectorAll('.win-btns .btn-ghost:not(#shareBtn)').forEach(b => { if (b.textContent.trim() === I18N['en-US'].btnHome || b.textContent.trim() === (I18N[_lang]||{}).btnHome) b.textContent = t('btnHome'); });
+  const pa = document.querySelector('.win-btns .btn-gold');
+  if (pa) pa.textContent = t('btnPlayAgain');
+  // Share menu
+  document.querySelectorAll('.share-opt').forEach((btn, i) => {
+    const icons = ['shareNative','shareX','shareWa','shareCopy'];
+    const icon = btn.querySelector('.share-opt-icon');
+    const label = btn.querySelector('span:not(.share-opt-icon)') || btn.childNodes[btn.childNodes.length-1];
+    if (label && icons[i]) {
+      if (label.id === 'copyLinkLabel') label.textContent = t('shareCopy');
+      else label.textContent = t(icons[i]);
+    }
+  });
 }
 
 function api(path) {
@@ -1008,7 +1306,7 @@ function thumbEl(elId, node, url) {
 }
 
 function nodeTypeLabel(type) {
-  return type === 'person' ? 'Person' : (type === 'tv' ? 'TV' : 'Movie');
+  return type === 'person' ? t('typePerson') : (type === 'tv' ? t('typeTv') : t('typeMovieFull'));
 }
 
 function nodeApiPrefix(node) {
@@ -1303,9 +1601,9 @@ const game = window.game = {
     const role = this.cur.role;
     const nameEl = document.getElementById('curName');
     nameEl.classList.toggle('title', this.cur.type === 'movie' || this.cur.type === 'tv');
-    document.getElementById('curType').textContent = this.cur.type === 'movie' ? 'MOVIE' :
-      this.cur.type === 'tv' ? 'TV SHOW' :
-      role === 'director' ? 'DIRECTOR' : 'ACTOR';
+    document.getElementById('curType').textContent = this.cur.type === 'movie' ? t('badgeMovie') :
+      this.cur.type === 'tv' ? t('badgeTv') :
+      role === 'director' ? t('badgeDirector') : t('badgeActor');
     nameEl.textContent = this.cur.name;
     this.renderCurrentMeta();
     this.renderCurrentPrompt();
@@ -1320,8 +1618,8 @@ const game = window.game = {
     if (this.clicks > 0) { prompt.style.display = 'none'; return; }
     prompt.style.display = '';
     prompt.textContent = this.cur.type === 'person'
-      ? 'Choose a film or show from this filmography.'
-      : 'Choose the next person connected to this title.';
+      ? t('curPromptPerson')
+      : t('curPromptTitle');
   },
 
   renderCurrentMeta() {
@@ -1436,15 +1734,15 @@ const game = window.game = {
 
     const title = document.createElement('div');
     title.className = 'empty-title';
-    title.textContent = didError ? 'Could not load this step' : 'Dead end — no cast data';
+    title.textContent = didError ? t('emptyError') : t('emptyNoData');
 
     const copy = document.createElement('p');
     copy.className = 'empty-copy';
 
-    const nodeLabel = node.type === 'tv' ? 'TV show' : node.type === 'movie' ? 'film' : 'title';
+    const nodeLabel = node.type === 'tv' ? t('typeShow') : node.type === 'movie' ? t('typeFilm') : t('typeTitle');
     copy.textContent = didError
-      ? 'The connection data failed to load. Try going back or start a new game.'
-      : `TMDB doesn't have usable cast or crew for this ${nodeLabel}. This is a data gap on their end — try a different path.`;
+      ? t('emptyBodyError')
+      : t('emptyBodyNoData', nodeLabel);
 
     const actions = document.createElement('div');
     actions.className = 'empty-actions';
@@ -1453,19 +1751,19 @@ const game = window.game = {
     if (this.path.length > 1) {
       const back = document.createElement('button');
       back.className = 'btn btn-ghost btn-sm';
-      back.textContent = '← Go back';
+      back.textContent = t('btnGoBack');
       back.onclick = () => this._goBack();
       actions.appendChild(back);
     }
 
     const debug = document.createElement('button');
     debug.className = 'btn btn-ghost btn-sm';
-    debug.textContent = 'Copy debug link';
+    debug.textContent = t('btnCopyDebug');
     debug.onclick = () => this.copyDebugLink(debug);
 
     const random = document.createElement('button');
     random.className = 'btn btn-gold btn-sm';
-    random.textContent = 'New game';
+    random.textContent = t('btnNewGame');
     random.onclick = () => this.startRandom();
 
     actions.append(debug, random);
@@ -1494,7 +1792,7 @@ const game = window.game = {
   async loadConnections(node) {
     const grid = document.getElementById('grid');
     const lbl  = document.getElementById('secLbl');
-    lbl.textContent = 'CHOOSE YOUR NEXT CONNECTION';
+    lbl.textContent = t('sectionConnections');
 
     // Skeletons
     grid.innerHTML = '';
@@ -1621,7 +1919,7 @@ const game = window.game = {
       const banner = document.getElementById('goalBanner');
       if (banner) {
         if (goalItem) {
-          document.getElementById('goalBannerName').textContent = this.end.name;
+          banner.querySelector('.goal-banner-text').innerHTML = t('goalBanner', this.end.name);
           banner.classList.remove('visible');
           void banner.offsetWidth;
           banner.classList.add('visible');
@@ -1643,9 +1941,9 @@ const game = window.game = {
       const nonDirItems = items.filter(i => i.sub !== 'Director');
 
       if (dirItems.length > 0) {
-        lbl.textContent = 'CHOOSE YOUR NEXT CONNECTION';
+        lbl.textContent = t('sectionConnections');
         grid.appendChild(peopleSection(
-          dirItems.length === 1 ? 'DIRECTOR' : 'DIRECTORS',
+          dirItems.length === 1 ? t('sectionDirector') : t('sectionDirectors'),
           dirItems,
           item => this._makeCard(item)
         ));
@@ -1653,17 +1951,17 @@ const game = window.game = {
 
       if (nonDirItems.length > 0) {
         if (node.type === 'tv') {
-          if (dirItems.length === 0) lbl.textContent = 'CHOOSE YOUR NEXT CONNECTION';
+          if (dirItems.length === 0) lbl.textContent = t('sectionConnections');
           const mainCast = nonDirItems.filter(i => i.castGroup !== 'additional');
           const additionalCast = nonDirItems.filter(i => i.castGroup === 'additional');
           if (mainCast.length > 0) {
-            grid.appendChild(peopleSection('MAIN CAST', mainCast, item => this._makeCard(item)));
+            grid.appendChild(peopleSection(t('sectionMainCast'), mainCast, item => this._makeCard(item)));
           }
           if (additionalCast.length > 0) {
-            grid.appendChild(peopleSection('ADDITIONAL CAST', additionalCast, item => this._makeCard(item)));
+            grid.appendChild(peopleSection(t('sectionAdditionalCast'), additionalCast, item => this._makeCard(item)));
           }
         } else if (dirItems.length > 0) {
-          grid.appendChild(peopleSection('CAST', nonDirItems, item => this._makeCard(item)));
+          grid.appendChild(peopleSection(t('sectionCast'), nonDirItems, item => this._makeCard(item)));
         } else {
           const castGrid = document.createElement('div');
           castGrid.className = 'grid';
@@ -1931,7 +2229,7 @@ const game = window.game = {
     const imgHtml = item.img
       ? '<img src="' + IMGBASE + item.img + '" alt="" loading="lazy">'
       : '<div class="card-noimg">No image</div>';
-    const tvBadge = item.type === 'tv' ? '<span class="card-tv-badge">Series</span>' : '';
+    const tvBadge = item.type === 'tv' ? '<span class="card-tv-badge">' + t('tvBadge') + '</span>' : '';
     const yearText = item.type === 'tv' || item.type === 'movie' ? (item.yearLabel || item.sub.slice(0,4) || '') : item.sub;
     const subHtml = item.type === 'tv' || item.type === 'movie'
       ? tvBadge + '<span>' + yearText.replace(/</g,'&lt;') + '</span>'
@@ -1999,10 +2297,7 @@ const game = window.game = {
   },
 
   _shareText() {
-    const clicks = this.clicks;
-    const start = this.start.name;
-    const end = this.end.name;
-    return `🎬 CineLinks: ${start} → ${end} in ${clicks} click${clicks !== 1 ? 's' : ''}! Can you beat it?`;
+    return t('shareText', this.start.name, this.end.name, this.clicks);
   },
 
   _shareUrl() {
@@ -2053,7 +2348,7 @@ const game = window.game = {
     const label = document.getElementById('copyLinkLabel');
     if (navigator.clipboard) {
       navigator.clipboard.writeText(this._shareUrl()).then(() => {
-        if (label) { label.textContent = 'Copied!'; setTimeout(() => { label.textContent = 'Copy link'; }, 1800); }
+        if (label) { label.textContent = t('shareCopied'); setTimeout(() => { label.textContent = t('shareCopy'); }, 1800); }
       });
     } else {
       prompt('Copy this link:', this._shareUrl());
