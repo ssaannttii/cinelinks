@@ -10,10 +10,11 @@ const ALLOWED_PATHS = [
   /^movie\/\d+\/credits$/,
   /^tv\/\d+\/credits$/,
   /^tv\/\d+\/aggregate_credits$/,
-  /^person\/\d+\/combined_credits$/
+  /^person\/\d+\/combined_credits$/,
+  /^search\/multi$/
 ];
 
-const ALLOWED_QUERY_PARAMS = new Set(['language', 'page']);
+const ALLOWED_QUERY_PARAMS = new Set(['language', 'page', 'query']);
 
 function isAllowedPath(path) {
   return typeof path === 'string' && ALLOWED_PATHS.some((rule) => rule.test(path));

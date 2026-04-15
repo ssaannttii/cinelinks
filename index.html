@@ -26,6 +26,35 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .start-link{color:var(--gold);opacity:.8}
 .start-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .start-actions .btn{margin:0}
+/* Challenge creator */
+.creator-btn{width:100%;margin-top:8px;padding:10px;border-radius:10px;border:1px dashed rgba(232,160,0,.35);background:transparent;color:var(--mut);font-family:inherit;font-size:.82rem;font-weight:600;cursor:pointer;transition:border-color .15s,color .15s,background .15s}
+.creator-btn:hover{border-color:var(--gold);color:var(--gold);background:rgba(232,160,0,.05)}
+.creator-modal{display:none;position:fixed;inset:0;z-index:200;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.7);backdrop-filter:blur(6px)}
+.creator-modal.open{display:flex;animation:briefingIn .25s ease both}
+.creator-box{background:var(--s1);border:1px solid var(--bdr);border-radius:12px;padding:24px;width:100%;max-width:480px;display:flex;flex-direction:column;gap:14px;position:relative;max-height:90vh;overflow-y:auto}
+.creator-title{font-size:1.05rem;font-weight:800;letter-spacing:-.01em}
+.creator-slot{border:1px solid var(--bdr);border-radius:10px;padding:12px;background:rgba(255,255,255,.025)}
+.creator-slot-label{font-size:.6rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+.creator-picked{min-height:36px;display:flex;align-items:center;gap:9px;font-size:.82rem;font-weight:700;color:var(--mut);margin-bottom:8px}
+.creator-picked.has-pick{color:var(--txt)}
+.creator-thumb{width:28px;height:28px;border-radius:50%;background:var(--s2);overflow:hidden;flex-shrink:0;border:1px solid var(--bdr)}
+.creator-thumb.title{width:22px;height:33px;border-radius:4px}
+.creator-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.creator-search-row{display:grid;grid-template-columns:1fr auto;gap:6px}
+.creator-input{min-width:0;border:1px solid var(--bdr);border-radius:8px;background:#101010;color:var(--txt);padding:8px 10px;font-family:inherit;font-size:.82rem}
+.creator-input:focus{outline:none;border-color:rgba(232,160,0,.4)}
+.creator-results{display:grid;gap:4px;max-height:160px;overflow:auto;margin-top:4px}
+.creator-result{display:flex;gap:8px;align-items:center;border:1px solid var(--bdr);border-radius:8px;background:rgba(255,255,255,.025);padding:7px 9px;cursor:pointer;color:var(--txt);font-size:.78rem;text-align:left;transition:border-color .12s}
+.creator-result:hover{border-color:rgba(232,160,0,.45)}
+.creator-result-thumb{width:26px;height:26px;border-radius:50%;background:var(--s2);overflow:hidden;flex-shrink:0}
+.creator-result-thumb.title{width:20px;height:30px;border-radius:3px}
+.creator-result-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.creator-result-name{font-weight:700;line-height:1.2}
+.creator-result-meta{font-size:.68rem;color:var(--mut);margin-top:1px}
+.creator-link-box{background:rgba(232,160,0,.07);border:1px solid rgba(232,160,0,.25);border-radius:8px;padding:10px 12px;font-size:.72rem;color:var(--mut);word-break:break-all;display:none}
+.creator-link-box.visible{display:block}
+.creator-close{position:absolute;top:14px;right:14px;background:none;border:none;color:var(--mut);font-size:1.2rem;cursor:pointer;line-height:1;padding:2px 6px}
+.creator-close:hover{color:var(--txt)}
 .btn{display:block;width:100%;padding:14px;border-radius:10px;font-family:inherit;font-size:0.95rem;font-weight:600;cursor:pointer;border:1px solid transparent;transition:opacity .15s,transform .1s;margin-bottom:10px}
 .btn:hover{opacity:.85;transform:translateY(-1px)}
 .btn:active{transform:translateY(0)}
@@ -353,6 +382,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
       <button class="btn btn-gold" onclick="game.startDaily()">Today&#39;s Challenge</button>
       <button class="btn btn-ghost" onclick="game.startRandom()">Random Game</button>
     </div>
+    <button class="creator-btn" onclick="creator.open()">+ Create your own challenge</button>
     <div class="how">
       <div class="how-title">Rules</div>
       <ul>
@@ -481,6 +511,40 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 </div>
 
 <div id="deadEndToast"></div>
+
+<div class="creator-modal" id="creatorModal">
+  <div class="creator-box">
+    <button class="creator-close" onclick="creator.close()">✕</button>
+    <div class="creator-title">Create a challenge</div>
+
+    <div class="creator-slot" id="creatorSlotS">
+      <div class="creator-slot-label">Start</div>
+      <div class="creator-picked" id="creatorPickedS">Search for an actor, movie or show…</div>
+      <div class="creator-search-row">
+        <input class="creator-input" id="creatorInputS" placeholder="Search…" oninput="creator.search('s')" onkeydown="if(event.key==='Enter')creator.search('s')">
+        <button class="btn btn-ghost btn-sm" onclick="creator.search('s')">Go</button>
+      </div>
+      <div class="creator-results" id="creatorResultsS"></div>
+    </div>
+
+    <div class="creator-slot" id="creatorSlotE">
+      <div class="creator-slot-label">Goal</div>
+      <div class="creator-picked" id="creatorPickedE">Search for an actor, movie or show…</div>
+      <div class="creator-search-row">
+        <input class="creator-input" id="creatorInputE" placeholder="Search…" oninput="creator.search('e')" onkeydown="if(event.key==='Enter')creator.search('e')">
+        <button class="btn btn-ghost btn-sm" onclick="creator.search('e')">Go</button>
+      </div>
+      <div class="creator-results" id="creatorResultsE"></div>
+    </div>
+
+    <div class="creator-link-box" id="creatorLinkBox"></div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <button class="btn btn-ghost" style="margin:0" id="creatorCopyBtn" onclick="creator.copyLink()" disabled>Copy link</button>
+      <button class="btn btn-gold" style="margin:0" id="creatorPlayBtn" onclick="creator.play()" disabled>Play it!</button>
+    </div>
+  </div>
+</div>
 
 <script src="daily-challenges.js"></script>
 <script>
@@ -1254,7 +1318,17 @@ function gameParamsFromUrl() {
 function loadGameFromUrl() {
   const params = gameParamsFromUrl();
   if (!params) return false;
-  game.init(params.start, params.end, {current:params.current, keepUrl:!!params.current});
+  // Mid-game link (has current node) → jump straight in
+  if (params.current) {
+    game.init(params.start, params.end, {current:params.current, keepUrl:true});
+    return true;
+  }
+  // Fresh challenge link → show briefing first
+  showOnly('loadingScreen');
+  game._showLoadPreview(params.start, params.end);
+  setTimeout(() => {
+    game.init(params.start, params.end, {keepUrl:true});
+  }, BRIEFING_DELAY_MS || 2200);
   return true;
 }
 
@@ -2372,6 +2446,145 @@ const game = window.game = {
 
 // Init language picker
 setLang(_lang);
+
+// ── Challenge Creator ────────────────────────────────────────────────────────
+const creator = {
+  picked: { s: null, e: null },
+  _searchTimer: null,
+
+  open() {
+    this.picked = { s: null, e: null };
+    document.getElementById('creatorInputS').value = '';
+    document.getElementById('creatorInputE').value = '';
+    document.getElementById('creatorResultsS').innerHTML = '';
+    document.getElementById('creatorResultsE').innerHTML = '';
+    document.getElementById('creatorLinkBox').classList.remove('visible');
+    document.getElementById('creatorCopyBtn').disabled = true;
+    document.getElementById('creatorPlayBtn').disabled = true;
+    this._renderPicked('s');
+    this._renderPicked('e');
+    document.getElementById('creatorModal').classList.add('open');
+    document.getElementById('creatorInputS').focus();
+  },
+
+  close() {
+    document.getElementById('creatorModal').classList.remove('open');
+  },
+
+  _renderPicked(slot) {
+    const el = document.getElementById(slot === 's' ? 'creatorPickedS' : 'creatorPickedE');
+    const node = this.picked[slot];
+    if (!node) {
+      el.className = 'creator-picked';
+      el.textContent = 'Search for an actor, movie or show…';
+      return;
+    }
+    el.className = 'creator-picked has-pick';
+    const isPerson = node.type === 'person';
+    const imgUrl = node.img ? 'https://image.tmdb.org/t/p/w92' + node.img : '';
+    el.innerHTML = '<span class="creator-thumb ' + (isPerson ? '' : 'title') + '">' +
+      (imgUrl ? '<img src="' + imgUrl + '" alt="">' : '') + '</span>' +
+      '<span>' + node.name + (node.yearLabel ? ' <span style="color:var(--mut);font-weight:400">(' + node.yearLabel + ')</span>' : '') + '</span>';
+    this._updateLink();
+  },
+
+  async search(slot) {
+    clearTimeout(this._searchTimer);
+    this._searchTimer = setTimeout(async () => {
+      const inputId = slot === 's' ? 'creatorInputS' : 'creatorInputE';
+      const resultsId = slot === 's' ? 'creatorResultsS' : 'creatorResultsE';
+      const q = document.getElementById(inputId).value.trim();
+      const resultsEl = document.getElementById(resultsId);
+      if (q.length < 2) { resultsEl.innerHTML = ''; return; }
+      resultsEl.innerHTML = '<div style="color:var(--mut);font-size:.75rem;padding:4px">Searching…</div>';
+      try {
+        const data = await fetch('/api/tmdb?path=search/multi&language=' + encodeURIComponent(_lang) + '&query=' + encodeURIComponent(q)).then(r => r.json());
+        const results = (data.results || [])
+          .filter(r => (r.media_type === 'person' || r.media_type === 'movie' || r.media_type === 'tv') && (r.profile_path || r.poster_path))
+          .slice(0, 8);
+        resultsEl.innerHTML = '';
+        results.forEach(r => {
+          const type = r.media_type;
+          const name = r.name || r.title || '';
+          const year = (r.release_date || r.first_air_date || '').slice(0, 4);
+          const img = r.profile_path || r.poster_path || '';
+          const imgUrl = img ? 'https://image.tmdb.org/t/p/w92' + img : '';
+          const typeLabel = type === 'person' ? 'Actor' : type === 'tv' ? 'TV Series' : 'Movie';
+          const btn = document.createElement('button');
+          btn.className = 'creator-result';
+          btn.innerHTML = '<span class="creator-result-thumb ' + (type === 'person' ? '' : 'title') + '">' +
+            (imgUrl ? '<img src="' + imgUrl + '" alt="">' : '') + '</span>' +
+            '<span><div class="creator-result-name">' + name + '</div>' +
+            '<div class="creator-result-meta">' + typeLabel + (year ? ' · ' + year : '') + '</div></span>';
+          btn.onclick = () => {
+            this.picked[slot] = { name, type, id: r.id, img, yearLabel: year };
+            document.getElementById(inputId).value = '';
+            resultsEl.innerHTML = '';
+            this._renderPicked(slot);
+          };
+          resultsEl.appendChild(btn);
+        });
+        if (!results.length) resultsEl.innerHTML = '<div style="color:var(--mut);font-size:.75rem;padding:4px">No results</div>';
+      } catch(_) {
+        resultsEl.innerHTML = '<div style="color:var(--mut);font-size:.75rem;padding:4px">Error searching</div>';
+      }
+    }, 350);
+  },
+
+  _buildUrl() {
+    const s = this.picked.s, e = this.picked.e;
+    if (!s || !e) return null;
+    const base = location.origin + location.pathname;
+    const sp = new URLSearchParams({
+      s: s.id, st: s.type, sn: s.name,
+      e: e.id, et: e.type, en: e.name
+    });
+    return base + '?' + sp.toString();
+  },
+
+  _updateLink() {
+    const url = this._buildUrl();
+    const box = document.getElementById('creatorLinkBox');
+    const copyBtn = document.getElementById('creatorCopyBtn');
+    const playBtn = document.getElementById('creatorPlayBtn');
+    if (url) {
+      box.textContent = url;
+      box.classList.add('visible');
+      copyBtn.disabled = false;
+      playBtn.disabled = false;
+    } else {
+      box.classList.remove('visible');
+      copyBtn.disabled = true;
+      playBtn.disabled = true;
+    }
+  },
+
+  copyLink() {
+    const url = this._buildUrl();
+    if (!url) return;
+    navigator.clipboard.writeText(url).then(() => {
+      const btn = document.getElementById('creatorCopyBtn');
+      btn.textContent = 'Copied!';
+      setTimeout(() => { btn.textContent = 'Copy link'; }, 1800);
+    }).catch(() => prompt('Copy this link:', url));
+  },
+
+  play() {
+    const s = this.picked.s, e = this.picked.e;
+    if (!s || !e) return;
+    this.close();
+    showOnly('loadingScreen');
+    game._showLoadPreview(s, e);
+    setTimeout(() => {
+      game.init(s, e);
+    }, BRIEFING_DELAY_MS);
+  }
+};
+
+// Close creator on backdrop click
+document.getElementById('creatorModal').addEventListener('click', function(e) {
+  if (e.target === this) creator.close();
+});
 
 if (!loadGameFromUrl()) {
   showOnly('startScreen');
