@@ -340,9 +340,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .share-card-node.person{border-color:rgba(232,160,0,.18)}
 .share-card-node.goal-node{border-color:rgba(232,160,0,.4);background:rgba(232,160,0,.06)}
 .share-card-num{width:20px;height:20px;border-radius:50%;background:var(--s2);color:var(--gold);font-size:.6rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.share-card-art{width:32px;height:32px;border-radius:50%;overflow:hidden;background:var(--s2);flex-shrink:0;border:1px solid rgba(255,255,255,.08)}
+.share-card-art{width:32px;height:32px;border-radius:50%;background:var(--s2) center/cover no-repeat;flex-shrink:0;border:1px solid rgba(255,255,255,.08)}
 .share-card-art.title{width:26px;height:38px;border-radius:4px}
-.share-card-art img{width:100%;height:100%;object-fit:cover;display:block}
 .share-card-name{font-size:.78rem;font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .share-card-type{font-size:.58rem;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;flex-shrink:0}
 .share-card-arrow{height:16px;display:flex;align-items:center;justify-content:center;color:rgba(232,160,0,.45);font-size:.75rem}
@@ -2432,6 +2431,8 @@ const game = window.game = {
     document.getElementById('shareCardRoute').textContent = this.start.name + ' → ' + this.end.name;
     document.getElementById('shareCardScore').textContent = this.clicks;
     document.getElementById('shareCardScoreL').textContent = t('clicksLabel');
+    this._cachedCardBlob = null; // reset cached image
+
     const pathEl = document.getElementById('shareCardPath');
     pathEl.innerHTML = '';
     this.path.forEach((n, i) => {
@@ -2445,19 +2446,24 @@ const game = window.game = {
       const isGoal = i === this.path.length - 1;
       row.className = 'share-card-node ' + n.type + (isGoal ? ' goal-node' : '');
       const rawUrl = nodeImageUrl(n);
-      // Route through our proxy so html2canvas doesn't get a tainted canvas
-      const imgUrl = rawUrl ? '/api/img?url=' + encodeURIComponent(rawUrl) : '';
+      const proxiedUrl = rawUrl ? '/api/img?url=' + encodeURIComponent(rawUrl) : '';
       const isPerson = n.type === 'person';
+      // Use background-image so html2canvas renders correctly (no object-fit issues)
       row.innerHTML =
         '<div class="share-card-num">' + (i + 1) + '</div>' +
-        '<div class="share-card-art ' + (isPerson ? '' : 'title') + '">' +
-          (imgUrl ? '<img src="' + imgUrl + '" alt="">' : '') +
-        '</div>' +
+        '<div class="share-card-art ' + (isPerson ? '' : 'title') + '"' +
+          (proxiedUrl ? ' style="background-image:url(\'' + proxiedUrl + '\')"' : '') + '></div>' +
         '<div class="share-card-name">' + n.name + '</div>' +
         '<div class="share-card-type">' + (n.type === 'person' ? t('typePerson') : n.type === 'tv' ? t('typeTv') : t('typeMovieFull')) + '</div>';
       pathEl.appendChild(row);
     });
+
     document.getElementById('shareCard').classList.add('open');
+
+    // Pre-generate image in background so native share is instant
+    this._captureCard().then(canvas => {
+      canvas.toBlob(blob => { this._cachedCardBlob = blob; }, 'image/png');
+    }).catch(() => {});
   },
 
   closeShareCard() {
@@ -2465,8 +2471,13 @@ const game = window.game = {
   },
 
   async _captureCard() {
+    // Hide action buttons before capture
+    const actions = document.querySelector('.share-card-actions');
+    const closeBtn = document.querySelector('.share-card-close');
+    if (actions) actions.style.visibility = 'hidden';
+    if (closeBtn) closeBtn.style.visibility = 'hidden';
+
     const el = document.getElementById('shareCardInner');
-    // Dynamically load html2canvas if needed
     if (!window.html2canvas) {
       await new Promise((resolve, reject) => {
         const s = document.createElement('script');
@@ -2475,39 +2486,52 @@ const game = window.game = {
         document.head.appendChild(s);
       });
     }
-    // Images are served via /api/img (same origin proxy), no CORS issues
-    return window.html2canvas(el, {
-      backgroundColor: '#0d0d0d',
-      scale: 2,
-      useCORS: false,
-      allowTaint: false,
-      logging: false,
-      imageTimeout: 8000
-    });
+    try {
+      const canvas = await window.html2canvas(el, {
+        backgroundColor: '#0d0d0d',
+        scale: 2,
+        useCORS: false,
+        allowTaint: false,
+        logging: false,
+        imageTimeout: 8000
+      });
+      return canvas;
+    } finally {
+      // Restore buttons
+      if (actions) actions.style.visibility = '';
+      if (closeBtn) closeBtn.style.visibility = '';
+    }
   },
 
   async downloadShareCard() {
     try {
-      const canvas = await this._captureCard();
+      const blob = this._cachedCardBlob || await this._captureCard().then(c => new Promise(r => c.toBlob(r, 'image/png')));
+      const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.download = 'cinelinks-' + this.start.name.replace(/\s+/g,'-') + '-to-' + this.end.name.replace(/\s+/g,'-') + '.png';
-      link.href = canvas.toDataURL('image/png');
+      link.href = url;
       link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
     } catch(e) { alert('Could not generate image'); }
   },
 
   async nativeShareCard() {
     try {
-      const canvas = await this._captureCard();
-      canvas.toBlob(async blob => {
-        const file = new File([blob], 'cinelinks.png', {type:'image/png'});
-        if (navigator.canShare && navigator.canShare({files:[file]})) {
-          await navigator.share({files:[file], title:'CineLinks', text: this._shareText()});
-        } else {
-          this.downloadShareCard();
-        }
-      }, 'image/png');
-    } catch(e) { this.downloadShareCard(); }
+      const blob = this._cachedCardBlob || await this._captureCard().then(c => new Promise(r => c.toBlob(r, 'image/png')));
+      const file = new File([blob], 'cinelinks.png', {type:'image/png'});
+      if (navigator.canShare && navigator.canShare({files:[file]})) {
+        await navigator.share({
+          files: [file],
+          title: 'CineLinks',
+          text: this._shareText(),
+          url: this._shareUrl()
+        });
+      } else {
+        this.downloadShareCard();
+      }
+    } catch(e) {
+      if (e.name !== 'AbortError') this.downloadShareCard();
+    }
   },
 
   _shareUrl() {
