@@ -2472,13 +2472,19 @@ const game = window.game = {
   },
 
   async _captureCard() {
-    // Hide action buttons before capture
+    const el = document.getElementById('shareCardInner');
+    const path = document.getElementById('shareCardPath');
     const actions = document.querySelector('.share-card-actions');
     const closeBtn = document.querySelector('.share-card-close');
+
+    // Expand fully for capture: remove scroll constraints
+    const prevMaxHeight = el.style.maxHeight;
+    const prevOverflow = path ? path.style.overflowY : '';
+    el.style.maxHeight = 'none';
+    if (path) path.style.overflowY = 'visible';
     if (actions) actions.style.visibility = 'hidden';
     if (closeBtn) closeBtn.style.visibility = 'hidden';
 
-    const el = document.getElementById('shareCardInner');
     if (!window.html2canvas) {
       await new Promise((resolve, reject) => {
         const s = document.createElement('script');
@@ -2487,6 +2493,10 @@ const game = window.game = {
         document.head.appendChild(s);
       });
     }
+
+    // Small delay so browser reflows before capture
+    await new Promise(r => setTimeout(r, 80));
+
     try {
       const canvas = await window.html2canvas(el, {
         backgroundColor: '#0d0d0d',
@@ -2494,11 +2504,15 @@ const game = window.game = {
         useCORS: false,
         allowTaint: false,
         logging: false,
-        imageTimeout: 8000
+        imageTimeout: 8000,
+        width: el.offsetWidth,
+        height: el.scrollHeight
       });
       return canvas;
     } finally {
-      // Restore buttons
+      // Restore scroll state
+      el.style.maxHeight = prevMaxHeight;
+      if (path) path.style.overflowY = prevOverflow;
       if (actions) actions.style.visibility = '';
       if (closeBtn) closeBtn.style.visibility = '';
     }
