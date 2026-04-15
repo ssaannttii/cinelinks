@@ -2429,11 +2429,9 @@ const game = window.game = {
 
   openShareCard() {
     document.getElementById('shareMenu')?.classList.remove('open');
-    // Build card content
     document.getElementById('shareCardRoute').textContent = this.start.name + ' → ' + this.end.name;
     document.getElementById('shareCardScore').textContent = this.clicks;
     document.getElementById('shareCardScoreL').textContent = t('clicksLabel');
-    // Build path nodes
     const pathEl = document.getElementById('shareCardPath');
     pathEl.innerHTML = '';
     this.path.forEach((n, i) => {
@@ -2446,12 +2444,14 @@ const game = window.game = {
       const row = document.createElement('div');
       const isGoal = i === this.path.length - 1;
       row.className = 'share-card-node ' + n.type + (isGoal ? ' goal-node' : '');
-      const imgUrl = nodeImageUrl(n);
+      const rawUrl = nodeImageUrl(n);
+      // Route through our proxy so html2canvas doesn't get a tainted canvas
+      const imgUrl = rawUrl ? '/api/img?url=' + encodeURIComponent(rawUrl) : '';
       const isPerson = n.type === 'person';
       row.innerHTML =
         '<div class="share-card-num">' + (i + 1) + '</div>' +
         '<div class="share-card-art ' + (isPerson ? '' : 'title') + '">' +
-          (imgUrl ? '<img src="' + imgUrl + '" alt="" crossorigin="anonymous">' : '') +
+          (imgUrl ? '<img src="' + imgUrl + '" alt="">' : '') +
         '</div>' +
         '<div class="share-card-name">' + n.name + '</div>' +
         '<div class="share-card-type">' + (n.type === 'person' ? t('typePerson') : n.type === 'tv' ? t('typeTv') : t('typeMovieFull')) + '</div>';
@@ -2475,12 +2475,14 @@ const game = window.game = {
         document.head.appendChild(s);
       });
     }
+    // Images are served via /api/img (same origin proxy), no CORS issues
     return window.html2canvas(el, {
       backgroundColor: '#0d0d0d',
       scale: 2,
-      useCORS: true,
+      useCORS: false,
       allowTaint: false,
-      logging: false
+      logging: false,
+      imageTimeout: 8000
     });
   },
 
