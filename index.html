@@ -332,10 +332,11 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 /* Share card */
 #shareCard{position:fixed;inset:0;z-index:300;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);padding:20px}
 #shareCard.open{display:flex}
-.share-card-inner{background:#0d0d0d;border:1px solid rgba(232,160,0,.2);border-radius:16px;width:360px;max-width:100%;padding:28px 24px 24px;position:relative;box-shadow:0 0 60px rgba(232,160,0,.08)}
-.share-card-logo{font-size:.7rem;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:4px}
-.share-card-route{font-size:.62rem;color:rgba(255,255,255,.35);margin-bottom:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.share-card-path{display:flex;flex-direction:column;gap:0;margin-bottom:20px}
+.share-card-inner{background:#0d0d0d;border:1px solid rgba(232,160,0,.2);border-radius:16px;width:360px;max-width:100%;padding:28px 24px 24px;position:relative;box-shadow:0 0 60px rgba(232,160,0,.08);display:flex;flex-direction:column;max-height:90vh}
+.share-card-logo{font-size:.7rem;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:4px;flex-shrink:0}
+.share-card-route{font-size:.62rem;color:rgba(255,255,255,.35);margin-bottom:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0}
+.share-card-path{display:flex;flex-direction:column;gap:0;margin-bottom:14px;overflow-y:auto;flex-shrink:1;scrollbar-width:none}
+.share-card-path::-webkit-scrollbar{display:none}
 .share-card-node{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)}
 .share-card-node.person{border-color:rgba(232,160,0,.18)}
 .share-card-node.goal-node{border-color:rgba(232,160,0,.4);background:rgba(232,160,0,.06)}
@@ -345,13 +346,13 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .share-card-name{font-size:.78rem;font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .share-card-type{font-size:.58rem;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;flex-shrink:0}
 .share-card-arrow{height:16px;display:flex;align-items:center;justify-content:center;color:rgba(232,160,0,.45);font-size:.75rem}
-.share-card-footer{display:flex;align-items:center;justify-content:space-between;border-top:1px solid rgba(255,255,255,.07);padding-top:14px}
+.share-card-footer{display:flex;align-items:center;justify-content:space-between;border-top:1px solid rgba(255,255,255,.07);padding-top:14px;flex-shrink:0}
 .share-card-score{font-size:1.4rem;font-weight:800;color:var(--gold);line-height:1}
 .share-card-score-l{font-size:.58rem;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
 .share-card-url{font-size:.58rem;color:rgba(255,255,255,.25);text-align:right}
 .share-card-close{position:absolute;top:10px;right:12px;background:none;border:none;color:var(--mut);font-size:1.1rem;cursor:pointer;padding:4px 8px}
 .share-card-close:hover{color:var(--txt)}
-.share-card-actions{display:flex;gap:8px;margin-top:14px}
+.share-card-actions{display:flex;gap:8px;margin-top:14px;flex-shrink:0}
 .share-card-actions .btn{flex:1;margin:0;font-size:.78rem;padding:10px}
 
 /* Dead-end toast */
