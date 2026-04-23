@@ -43,6 +43,16 @@ export default function Home() {
         <p className="text-xs text-zinc-600">
           10 films · Scored by accuracy · Closer = more points
         </p>
+
+        {/* CineLinks link */}
+        <a
+          href="https://cinelinks.vercel.app"
+          target="_blank"
+          rel="noopener"
+          className="mt-8 inline-block text-xs text-zinc-600 hover:text-zinc-400 transition-colors"
+        >
+          Also try CineLinks — connect movies through cast & crew →
+        </a>
       </div>
     </main>
   );
