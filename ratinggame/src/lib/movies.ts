@@ -107,12 +107,55 @@ export const MOVIE_POOL: MovieStub[] = [
   { imdbId: "tt0044081", title: "Singin' in the Rain", year: "1952" },
   { imdbId: "tt3783958", title: "La La Land", year: "2016" },
   { imdbId: "tt1843866", title: "Captain America: The Winter Soldier", year: "2014" },
-  { imdbId: "tt0133093", title: "The Matrix", year: "1999" },
   { imdbId: "tt6751668", title: "Parasite", year: "2019" },
   { imdbId: "tt0180093", title: "Requiem for a Dream", year: "2000" },
+
+  // ── Expanded pool ────────────────────────────────────────────────────────
+  { imdbId: "tt0208092", title: "Snatch", year: "2000" },
+  { imdbId: "tt0114746", title: "12 Monkeys", year: "1995" },
+  { imdbId: "tt0113277", title: "Heat", year: "1995" },
+  { imdbId: "tt0073486", title: "One Flew Over the Cuckoo's Nest", year: "1975" },
+  { imdbId: "tt0071315", title: "Chinatown", year: "1974" },
+  { imdbId: "tt0162222", title: "Cast Away", year: "2000" },
+  { imdbId: "tt0264464", title: "Catch Me If You Can", year: "2002" },
+  { imdbId: "tt0081398", title: "Raging Bull", year: "1980" },
+  { imdbId: "tt0119698", title: "Princess Mononoke", year: "1997" },
+  { imdbId: "tt0347149", title: "Howl's Moving Castle", year: "2004" },
+  { imdbId: "tt0092067", title: "Castle in the Sky", year: "1986" },
+  { imdbId: "tt0477348", title: "No Country for Old Men", year: "2007" },
+  { imdbId: "tt0066921", title: "A Clockwork Orange", year: "1971" },
+  { imdbId: "tt0209144", title: "Memento", year: "2000" },
+  { imdbId: "tt5013056", title: "Dunkirk", year: "2017" },
+  { imdbId: "tt7131622", title: "Once Upon a Time in Hollywood", year: "2019" },
+  { imdbId: "tt0443706", title: "Zodiac", year: "2007" },
+  { imdbId: "tt2267998", title: "Gone Girl", year: "2014" },
+  { imdbId: "tt0993846", title: "The Wolf of Wall Street", year: "2013" },
+  { imdbId: "tt1663202", title: "The Revenant", year: "2015" },
+  { imdbId: "tt1798709", title: "Her", year: "2013" },
+  { imdbId: "tt7286456", title: "Joker", year: "2019" },
+  { imdbId: "tt0093822", title: "Raising Arizona", year: "1987" },
+  { imdbId: "tt0112641", title: "Casino", year: "1995" },
+  { imdbId: "tt0050825", title: "Paths of Glory", year: "1957" },
+  { imdbId: "tt15398776", title: "Oppenheimer", year: "2023" },
+  { imdbId: "tt1160419", title: "Dune: Part One", year: "2021" },
+  { imdbId: "tt15239678", title: "Dune: Part Two", year: "2024" },
+  { imdbId: "tt6710474", title: "Everything Everywhere All at Once", year: "2022" },
+  { imdbId: "tt1124035", title: "The Hurt Locker", year: "2008" },
+  { imdbId: "tt0338013", title: "Eternal Sunshine of the Spotless Mind", year: "2004" },
+  { imdbId: "tt0407304", title: "Pan's Labyrinth", year: "2006" },
+  { imdbId: "tt0266543", title: "Finding Nemo", year: "2003" },
+  { imdbId: "tt0358273", title: "Walk the Line", year: "2005" },
+  { imdbId: "tt0107818", title: "Philadelphia", year: "1993" },
 ];
 
 export function pickRandomMovies(count: number): MovieStub[] {
-  const shuffled = [...MOVIE_POOL].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, count);
+  // Deduplicate by imdbId before shuffling
+  const seen = new Set<string>();
+  const unique = MOVIE_POOL.filter((m) => {
+    if (seen.has(m.imdbId)) return false;
+    seen.add(m.imdbId);
+    return true;
+  });
+  const shuffled = [...unique].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, Math.min(count, shuffled.length));
 }
