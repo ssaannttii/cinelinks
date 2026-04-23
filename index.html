@@ -29,6 +29,14 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 /* Challenge creator */
 .creator-btn{width:100%;margin-top:8px;padding:10px;border-radius:10px;border:1px dashed rgba(232,160,0,.35);background:transparent;color:var(--mut);font-family:inherit;font-size:.82rem;font-weight:600;cursor:pointer;transition:border-color .15s,color .15s,background .15s}
 .creator-btn:hover{border-color:var(--gold);color:var(--gold);background:rgba(232,160,0,.05)}
+.cinerating-link{display:flex;align-items:center;gap:12px;width:100%;margin-top:8px;padding:12px 14px;border-radius:12px;border:1px solid rgba(232,160,0,.25);background:rgba(232,160,0,.07);color:var(--txt);text-decoration:none;transition:background .15s,border-color .15s,transform .15s}
+.cinerating-link:hover{background:rgba(232,160,0,.12);border-color:rgba(232,160,0,.45);transform:translateY(-1px)}
+.cinerating-link-icon{font-size:1.4rem;flex-shrink:0;width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:rgba(232,160,0,.15);border-radius:9px}
+.cinerating-link-text{flex:1;min-width:0}
+.cinerating-link-title{display:block;font-size:.88rem;font-weight:700;color:var(--txt)}
+.cinerating-link-sub{display:block;font-size:.7rem;color:var(--mut);margin-top:1px}
+.cinerating-link-arrow{color:var(--gold);font-size:.95rem;font-weight:700;flex-shrink:0;transition:transform .15s}
+.cinerating-link:hover .cinerating-link-arrow{transform:translateX(3px)}
 .creator-modal{display:none;position:fixed;inset:0;z-index:200;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.7);backdrop-filter:blur(6px)}
 .creator-modal.open{display:flex;animation:briefingIn .25s ease both}
 .creator-box{background:var(--s1);border:1px solid var(--bdr);border-radius:12px;padding:24px;width:100%;max-width:480px;display:flex;flex-direction:column;gap:14px;position:relative;max-height:90vh;overflow-y:auto}
@@ -413,6 +421,14 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
       <button class="btn btn-ghost" onclick="game.startRandom()">Random Game</button>
     </div>
     <button class="creator-btn" onclick="creator.open()">+ Create your own challenge</button>
+    <a href="https://cinerating.vercel.app" target="_blank" rel="noopener" class="cinerating-link">
+      <span class="cinerating-link-icon">⭐</span>
+      <span class="cinerating-link-text">
+        <span class="cinerating-link-title">Try CineRating</span>
+        <span class="cinerating-link-sub">Guess IMDB &amp; Rotten Tomatoes scores</span>
+      </span>
+      <span class="cinerating-link-arrow">→</span>
+    </a>
     <div class="how">
       <div class="how-title">Rules</div>
       <ul>

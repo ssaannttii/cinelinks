@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
   title: "CineRating — Guess the Score",
@@ -17,8 +20,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full antialiased">
-      <body className="min-h-full flex flex-col bg-[#0a0a0f] text-[#f0f0f5]">
+    <html lang="en" className={`h-full antialiased ${inter.variable}`}>
+      <body className="min-h-full flex flex-col" style={{ background: "#0d0d0d", color: "#f0f0f0", fontFamily: "var(--font-inter), -apple-system, sans-serif" }}>
         {children}
       </body>
     </html>
