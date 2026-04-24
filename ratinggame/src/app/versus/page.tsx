@@ -83,12 +83,12 @@ export default function VersusPage() {
   }, [fetchMovie]);
 
   const initGame = useCallback(() => {
-    fetch("/api/session?count=20")
+    fetch("/api/session?count=10")
       .then((r) => r.json())
       .then((d) => {
-        const ids: string[] = d.movies.map((m: { imdbId: string }) => m.imdbId);
-        const pairs: [string, string][] = [];
-        for (let i = 0; i + 1 < ids.length && pairs.length < ROUNDS; i += 2) pairs.push([ids[i], ids[i + 1]]);
+        const pairs: [string, string][] = (d.pairs as [{ imdbId: string }, { imdbId: string }][])
+          .slice(0, ROUNDS)
+          .map((p) => [p[0].imdbId, p[1].imdbId]);
         pairsRef.current = pairs;
         loadRound(0);
       });

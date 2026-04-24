@@ -152,14 +152,83 @@ export const FILMOGRAPHY_POOL: FilmographyPerson[] = [
     wikipediaSlug: "Daniel_Day-Lewis",
     movies: ["tt0469754", "tt1091478", "tt5776858", "tt0217505", "tt0097937", "tt0107308"],
   },
+  // ── Additional Directors ──────────────────────────────────────────────────
+  {
+    name: "Sofia Coppola",
+    type: "director",
+    wikipediaSlug: "Sofia_Coppola",
+    movies: ["tt0335266", "tt0159097", "tt0420704", "tt2073619", "tt1325004"],
+  },
+  {
+    name: "Park Chan-wook",
+    type: "director",
+    wikipediaSlug: "Park_Chan-wook",
+    movies: ["tt0364569", "tt4955566", "tt0260364", "tt1682180", "tt20215234"],
+  },
+  {
+    name: "Akira Kurosawa",
+    type: "director",
+    wikipediaSlug: "Akira_Kurosawa",
+    movies: ["tt0047478", "tt0042876", "tt0089881", "tt0044741", "tt0055630"],
+  },
+  {
+    name: "Edgar Wright",
+    type: "director",
+    wikipediaSlug: "Edgar_Wright",
+    movies: ["tt0365748", "tt0425112", "tt0446029", "tt3890160", "tt1213663"],
+  },
+  {
+    name: "Kathryn Bigelow",
+    type: "director",
+    wikipediaSlug: "Kathryn_Bigelow",
+    movies: ["tt1124035", "tt1790885", "tt0102685", "tt0114070", "tt0093605"],
+  },
+  // ── Additional Actors ─────────────────────────────────────────────────────
+  {
+    name: "Morgan Freeman",
+    type: "actor",
+    wikipediaSlug: "Morgan_Freeman",
+    movies: ["tt0111161", "tt0114369", "tt0372784", "tt0097441", "tt0405159"],
+  },
+  {
+    name: "Cillian Murphy",
+    type: "actor",
+    wikipediaSlug: "Cillian_Murphy",
+    movies: ["tt15398776", "tt0372784", "tt0289043", "tt0460989", "tt5013056"],
+  },
+  {
+    name: "Ryan Gosling",
+    type: "actor",
+    wikipediaSlug: "Ryan_Gosling",
+    movies: ["tt3783958", "tt0780504", "tt1856101", "tt0332280", "tt0468489"],
+  },
+  {
+    name: "Natalie Portman",
+    type: "actor",
+    wikipediaSlug: "Natalie_Portman",
+    movies: ["tt0110413", "tt0434409", "tt0376541", "tt0800369", "tt1619029"],
+  },
+  {
+    name: "Jake Gyllenhaal",
+    type: "actor",
+    wikipediaSlug: "Jake_Gyllenhaal",
+    movies: ["tt0246578", "tt0388795", "tt0443706", "tt1570728", "tt2872718"],
+  },
 ];
 
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 export function samplePeople(count: number): FilmographyPerson[] {
-  const shuffled = [...FILMOGRAPHY_POOL].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, Math.min(count, shuffled.length));
+  return shuffle(FILMOGRAPHY_POOL).slice(0, Math.min(count, FILMOGRAPHY_POOL.length));
 }
 
 export function sampleMovies(person: FilmographyPerson, count: number): string[] {
-  const shuffled = [...person.movies].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, Math.min(count, shuffled.length));
+  return shuffle(person.movies).slice(0, Math.min(count, person.movies.length));
 }
