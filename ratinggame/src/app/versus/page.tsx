@@ -134,15 +134,14 @@ export default function VersusPage() {
   // Keyboard shortcuts
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft" || e.key === "a" || e.key === "1") handlePick("left");
-      if (e.key === "ArrowRight" || e.key === "d" || e.key === "2") handlePick("right");
-      if ((e.key === " " || e.key === "Enter") && (document.activeElement === document.body || document.activeElement?.tagName === "BUTTON")) {
-        e.preventDefault();
+      if (phase === "choosing") {
+        if (e.key === "ArrowLeft"  || e.key === "a" || e.key === "1") { e.preventDefault(); handlePick("left");  }
+        if (e.key === "ArrowRight" || e.key === "d" || e.key === "2") { e.preventDefault(); handlePick("right"); }
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [handlePick]);
+  }, [phase, handlePick]);
 
   const handleRestart = () => {
     cacheRef.current = {}; fetchingRef.current = new Set(); pairsRef.current = [];
