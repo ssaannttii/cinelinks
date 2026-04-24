@@ -360,7 +360,7 @@ export default function FilmographyPage() {
 
       {/* Person card — key={round} triggers slide-in animation each round */}
       <div key={`person-${round}`}
-        className="rounded-2xl px-5 py-4 mb-3 flex items-center gap-4 flex-shrink-0 animate-slide-up"
+        className="rounded-2xl px-5 py-4 mb-3 flex items-center gap-4 flex-shrink-0 animate-slide-left"
         style={{ background: "rgba(255,255,255,0.045)", border: "1px solid rgba(255,255,255,0.09)", backdropFilter: "blur(18px)" }}>
         <PersonAvatar photo={personPhoto} name={challenge.name} size={64} />
         <div className="flex-1 min-w-0">
@@ -379,7 +379,7 @@ export default function FilmographyPage() {
           <div className="text-sm animate-pulse" style={{ color: "#555" }}>Loading films…</div>
         </div>
       ) : (
-        <div key={`grid-${round}`} className="grid grid-cols-2 grid-rows-2 gap-3 flex-1 min-h-0 animate-slide-up-delay">
+        <div key={`grid-${round}`} className="grid grid-cols-2 grid-rows-2 gap-3 flex-1 min-h-0">
           {movies.map((movie, idx) => {
             // Tie-safe: all movies matching max rating are winners
             const isWinner  = phase === "revealing" && ratings[idx] === maxRating;
@@ -394,17 +394,20 @@ export default function FilmographyPage() {
             else if (isWrong)                             borderColor = "rgba(239,68,68,0.6)";
             else if (isWinner && phase === "revealing")   borderColor = "rgba(34,197,94,0.4)";
 
+            // Staggered spring entrance per card
+            const staggerDelay = `${idx * 70}ms`;
+
             return (
               <button
                 key={movie.imdbId}
                 onClick={() => handlePick(idx)}
                 disabled={phase !== "choosing"}
                 className={[
-                  "relative overflow-hidden rounded-2xl border transition-all duration-200 text-left",
+                  "relative overflow-hidden rounded-2xl border transition-all duration-200 text-left animate-card-in",
                   phase === "choosing" ? "hover:scale-[1.02] hover:brightness-110 cursor-pointer active:scale-[0.98]" : "cursor-default",
                   dimmed ? "opacity-35" : "",
                 ].filter(Boolean).join(" ")}
-                style={{ borderColor, borderWidth: "1px" }}
+                style={{ borderColor, borderWidth: "1px", animationDelay: staggerDelay }}
               >
                 {/* Full-bleed poster */}
                 <div className="absolute inset-0 bg-[#181818]">
@@ -462,8 +465,9 @@ export default function FilmographyPage() {
         </div>
       )}
 
-      {phase === "revealing" && (
-        <div className="flex-shrink-0">
+      {/* Fixed-height slot — always present to prevent layout jump on reveal */}
+      <div className="flex-shrink-0" style={{ minHeight: 64 }}>
+        {phase === "revealing" && (
           <AutoNextButton
             onNext={handleNext}
             delay={3500}
@@ -471,8 +475,8 @@ export default function FilmographyPage() {
             endLabel="See Results 🏆"
             isLast={round + 1 >= ROUNDS}
           />
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
