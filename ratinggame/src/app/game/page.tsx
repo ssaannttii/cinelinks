@@ -3,37 +3,27 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense } from "react";
+import AutoNextButton from "@/components/AutoNextButton";
+import ShareButton from "@/components/ShareButton";
 
-// ─── Types ──────────────────────────────────────────────────────────────────
+// ─── Types ───────────────────────────────────────────────────────────────────
 
 interface MovieData {
-  imdbId: string;
-  title: string;
-  year: string;
-  rated: string;
-  runtime: string;
-  genre: string;
-  director: string;
-  plot: string;
-  poster: string;
-  imdbRating: string;
-  rtRating: string;
-  metacritic: string;
+  imdbId: string; title: string; year: string; rated: string; runtime: string;
+  genre: string; director: string; plot: string; poster: string;
+  imdbRating: string; rtRating: string; metacritic: string;
 }
 
 interface Round {
   movie: MovieData;
-  imdbGuess?: number;
-  rtGuess?: number;
-  imdbPoints?: number;
-  rtPoints?: number;
-  totalPoints?: number;
+  imdbGuess?: number; rtGuess?: number;
+  imdbPoints?: number; rtPoints?: number; totalPoints?: number;
   revealed: boolean;
 }
 
 type GameMode = "imdb" | "rt" | "both";
 
-// ─── Scoring ────────────────────────────────────────────────────────────────
+// ─── Scoring ─────────────────────────────────────────────────────────────────
 
 function scoreImdb(guess: number, actual: string): number {
   const a = parseFloat(actual);
@@ -62,23 +52,33 @@ function scoreRt(guess: number, actual: string): number {
 }
 
 function scoreLabel(pts: number) {
-  if (pts >= 95) return { label: "Perfect! 🎯", color: "text-green-400" };
-  if (pts >= 80) return { label: "Very close! 🔥", color: "text-yellow-400" };
-  if (pts >= 55) return { label: "Not bad 👍", color: "text-blue-400" };
-  if (pts >= 30) return { label: "Getting warmer 🤔", color: "text-orange-400" };
-  return { label: "Way off 💀", color: "text-red-400" };
+  if (pts >= 95) return { label: "Perfect! 🎯", color: "#4ade80" };
+  if (pts >= 80) return { label: "Very close! 🔥", color: "#e8a000" };
+  if (pts >= 55) return { label: "Not bad 👍", color: "#60a5fa" };
+  if (pts >= 30) return { label: "Getting warmer 🤔", color: "#fb923c" };
+  return { label: "Way off 💀", color: "#f87171" };
 }
 
-// ─── Sub-components ──────────────────────────────────────────────────────────
+function buildShareText(mode: GameMode, score: number, max: number, rounds: Round[]) {
+  const modeLabel = mode === "imdb" ? "⭐ IMDB Score" : mode === "rt" ? "🍅 Rotten Tomatoes" : "🎯 Double Down";
+  const pct = Math.round((score / max) * 100);
+  const bars = rounds.map((r) => {
+    const p = r.totalPoints ?? 0;
+    return p >= 80 ? "🟩" : p >= 50 ? "🟨" : "🟥";
+  }).join("");
+  return `CineRating: ${modeLabel}\n${score}/${max} pts (${pct}%)\n${bars}\nhttps://cinerating.vercel.app/game?mode=${mode}`;
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
 function PosterImage({ src, title }: { src: string; title: string }) {
   const [loaded, setLoaded] = useState(false);
   return (
-    <div className="relative w-full aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900">
+    <div className="relative w-full aspect-[2/3] rounded-xl overflow-hidden" style={{ background: "#181818" }}>
       {!loaded && <div className="absolute inset-0 skeleton" />}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={src !== "N/A" ? src : "/placeholder.png"}
+        src={src !== "N/A" ? src : ""}
         alt={title}
         className={`w-full h-full object-cover transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
         onLoad={() => setLoaded(true)}
@@ -90,98 +90,63 @@ function PosterImage({ src, title }: { src: string; title: string }) {
 function RatingBar({ label, guess, actual, color }: { label: string; guess: number; actual: string; color: string }) {
   const actualNum = parseFloat(actual.replace("%", ""));
   const max = label === "IMDB" ? 10 : 100;
-  const guessWidth = Math.min((guess / max) * 100, 100);
-  const actualWidth = Math.min((actualNum / max) * 100, 100);
-
+  const guessW = Math.min((guess / max) * 100, 100);
+  const actualW = Math.min((actualNum / max) * 100, 100);
   return (
     <div className="mb-4">
-      <div className="flex justify-between text-xs text-zinc-400 mb-1">
+      <div className="flex justify-between text-xs mb-1" style={{ color: "#777" }}>
         <span>{label}</span>
-        <span>Actual: <span className={`font-bold ${color}`}>{actual}</span></span>
+        <span>Actual: <span className="font-bold" style={{ color }}>{actual}</span></span>
       </div>
-      <div className="relative h-3 bg-zinc-800 rounded-full overflow-hidden">
-        <div
-          className="absolute top-0 left-0 h-full bg-zinc-600 rounded-full transition-all duration-700"
-          style={{ width: `${guessWidth}%` }}
-        />
-        <div
-          className="absolute top-0 left-0 h-full rounded-full transition-all duration-700"
-          style={{ width: `${actualWidth}%`, background: color.includes("yellow") ? "#eab308" : "#ef4444" }}
-        />
+      <div className="relative h-2.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.07)" }}>
+        <div className="absolute top-0 left-0 h-full rounded-full transition-all duration-700" style={{ width: `${guessW}%`, background: "rgba(255,255,255,0.15)" }} />
+        <div className="absolute top-0 left-0 h-full rounded-full transition-all duration-700" style={{ width: `${actualW}%`, background: color }} />
       </div>
-      <div className="flex justify-between text-xs text-zinc-500 mt-1">
-        <span>Your guess: <span className="text-zinc-300 font-medium">{label === "IMDB" ? guess.toFixed(1) : `${guess}%`}</span></span>
+      <div className="flex justify-between text-xs mt-1" style={{ color: "#555" }}>
+        <span>Your guess: <span style={{ color: "#999" }}>{label === "IMDB" ? guess.toFixed(1) : `${guess}%`}</span></span>
       </div>
     </div>
   );
 }
 
-function SliderInput({
-  mode,
-  imdbValue,
-  rtValue,
-  onImdbChange,
-  onRtChange,
-}: {
-  mode: GameMode;
-  imdbValue: number;
-  rtValue: number;
-  onImdbChange: (v: number) => void;
-  onRtChange: (v: number) => void;
+function SliderInput({ mode, imdbValue, rtValue, onImdbChange, onRtChange }: {
+  mode: GameMode; imdbValue: number; rtValue: number;
+  onImdbChange: (v: number) => void; onRtChange: (v: number) => void;
 }) {
   return (
     <div className="space-y-6">
       {(mode === "imdb" || mode === "both") && (
         <div>
           <div className="flex justify-between items-center mb-2">
-            <label className="text-sm font-semibold text-zinc-300 flex items-center gap-1.5">
-              <span className="text-yellow-400">⭐</span> IMDB Score
+            <label className="text-sm font-semibold flex items-center gap-1.5" style={{ color: "#999" }}>
+              <span style={{ color: "#e8a000" }}>⭐</span> IMDB Score
             </label>
-            <span className="text-2xl font-black text-yellow-400 tabular-nums">
-              {imdbValue.toFixed(1)}
-            </span>
+            <span className="text-2xl font-black tabular-nums" style={{ color: "#e8a000" }}>{imdbValue.toFixed(1)}</span>
           </div>
-          <input
-            type="range"
-            min={0}
-            max={10}
-            step={0.1}
-            value={imdbValue}
+          <input type="range" min={0} max={10} step={0.1} value={imdbValue}
             onChange={(e) => onImdbChange(parseFloat(e.target.value))}
             className="w-full"
-            style={{
-              background: `linear-gradient(to right, #eab308 ${imdbValue * 10}%, #3f3f46 ${imdbValue * 10}%)`,
-            }}
+            style={{ background: `linear-gradient(to right, #e8a000 ${imdbValue * 10}%, rgba(255,255,255,0.1) ${imdbValue * 10}%)` }}
           />
-          <div className="flex justify-between text-xs text-zinc-600 mt-1">
+          <div className="flex justify-between text-xs mt-1" style={{ color: "#444" }}>
             <span>0.0</span><span>5.0</span><span>10.0</span>
           </div>
         </div>
       )}
-
       {(mode === "rt" || mode === "both") && (
         <div>
           <div className="flex justify-between items-center mb-2">
-            <label className="text-sm font-semibold text-zinc-300 flex items-center gap-1.5">
+            <label className="text-sm font-semibold flex items-center gap-1.5" style={{ color: "#999" }}>
               <span className="text-red-400">🍅</span> Tomatometer
             </label>
-            <span className="text-2xl font-black text-red-400 tabular-nums">
-              {rtValue}%
-            </span>
+            <span className="text-2xl font-black tabular-nums text-red-400">{rtValue}%</span>
           </div>
-          <input
-            type="range"
-            min={0}
-            max={100}
-            step={1}
-            value={rtValue}
+          <input type="range" min={0} max={100} step={1} value={rtValue}
             onChange={(e) => onRtChange(parseInt(e.target.value))}
             className="w-full"
-            style={{
-              background: `linear-gradient(to right, #ef4444 ${rtValue}%, #3f3f46 ${rtValue}%)`,
-            }}
+            style={{ background: `linear-gradient(to right, #ef4444 ${rtValue}%, rgba(255,255,255,0.1) ${rtValue}%)` }}
           />
-          <div className="flex justify-between text-xs text-zinc-600 mt-1">
+          <div className="flex justify-between text-xs mt-1" style={{ color: "#444" }}>
             <span>0%</span><span>50%</span><span>100%</span>
           </div>
         </div>
@@ -190,7 +155,7 @@ function SliderInput({
   );
 }
 
-// ─── Main Game Component ─────────────────────────────────────────────────────
+// ─── Main Game Component ──────────────────────────────────────────────────────
 
 function GameContent() {
   const searchParams = useSearchParams();
@@ -208,17 +173,10 @@ function GameContent() {
   const [totalScore, setTotalScore] = useState(0);
   const fetchedIds = useRef<Set<string>>(new Set());
 
-  // Fetch session (list of movies)
   useEffect(() => {
-    fetch("/api/session?count=10")
-      .then((r) => r.json())
-      .then((d) => {
-        setMovieIds(d.movies);
-        setLoading(false);
-      });
+    fetch("/api/session?count=10").then((r) => r.json()).then((d) => { setMovieIds(d.movies); setLoading(false); });
   }, []);
 
-  // Fetch a movie by IMDB ID
   const fetchMovie = useCallback(async (imdbId: string) => {
     if (fetchedIds.current.has(imdbId)) return;
     fetchedIds.current.add(imdbId);
@@ -227,22 +185,15 @@ function GameContent() {
     const data: MovieData = await res.json();
     setMovieLoading(false);
     setRounds((prev) => {
-      const idx = prev.findIndex((r) => r.movie.imdbId === imdbId);
-      if (idx >= 0) return prev; // already there
+      if (prev.find((r) => r.movie.imdbId === imdbId)) return prev;
       return [...prev, { movie: data, revealed: false }];
     });
   }, []);
 
-  // When movieIds load, start fetching rounds
-  useEffect(() => {
-    if (!movieIds.length) return;
-    // Fetch first two proactively
-    movieIds.slice(0, 2).forEach((m) => fetchMovie(m.imdbId));
-  }, [movieIds, fetchMovie]);
+  useEffect(() => { if (movieIds.length) movieIds.slice(0, 2).forEach((m) => fetchMovie(m.imdbId)); }, [movieIds, fetchMovie]);
 
   const currentRound = rounds[currentIdx];
 
-  // Pre-fetch next
   useEffect(() => {
     if (!movieIds.length || currentIdx >= movieIds.length - 1) return;
     fetchMovie(movieIds[currentIdx + 1].imdbId);
@@ -255,247 +206,219 @@ function GameContent() {
     if (mode === "imdb" || mode === "both") ip = scoreImdb(imdbGuess, movie.imdbRating);
     if (mode === "rt" || mode === "both") rp = scoreRt(rtGuess, movie.rtRating);
     const total = mode === "both" ? Math.round((ip + rp) / 2) : (mode === "imdb" ? ip : rp);
-
-    setRounds((prev) =>
-      prev.map((r, i) =>
-        i === currentIdx
-          ? { ...r, imdbGuess, rtGuess, imdbPoints: ip, rtPoints: rp, totalPoints: total, revealed: true }
-          : r
-      )
-    );
+    setRounds((prev) => prev.map((r, i) => i === currentIdx ? { ...r, imdbGuess, rtGuess, imdbPoints: ip, rtPoints: rp, totalPoints: total, revealed: true } : r));
     setTotalScore((s) => s + total);
     setPhase("reveal");
   }
 
-  function nextRound() {
-    if (currentIdx + 1 >= movieIds.length) {
-      setPhase("done");
-      return;
-    }
+  const nextRound = useCallback(() => {
+    if (currentIdx + 1 >= movieIds.length) { setPhase("done"); return; }
     const nextIdx = currentIdx + 1;
     setCurrentIdx(nextIdx);
     setImdbGuess(5.0);
     setRtGuess(50);
     setPhase("guess");
+    if (!rounds[nextIdx]) fetchMovie(movieIds[nextIdx].imdbId);
+  }, [currentIdx, movieIds, rounds, fetchMovie]);
 
-    // If next movie not yet fetched
-    if (!rounds[nextIdx]) {
-      fetchMovie(movieIds[nextIdx].imdbId);
-    }
-  }
+  // Keyboard: Space/Enter = submit or next
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === " " || e.key === "Enter") {
+        const active = document.activeElement;
+        if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA")) return;
+        e.preventDefault();
+        if (phase === "guess") submitGuess();
+        if (phase === "reveal") nextRound();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, nextRound]);
+
+  const restartGame = () => {
+    setRounds([]); setCurrentIdx(0); setTotalScore(0); setPhase("guess");
+    fetchedIds.current = new Set(); setLoading(true);
+    fetch("/api/session?count=10").then((r) => r.json()).then((d) => { setMovieIds(d.movies); setLoading(false); });
+  };
 
   // ── Loading ──────────────────────────────────────────────────────────────
 
-  if (loading || (movieIds.length > 0 && !currentRound)) {
+  if (loading || (movieIds.length > 0 && !currentRound && phase !== "done")) {
     return (
-      <div className="flex flex-1 items-center justify-center min-h-screen">
-        <div className="text-center space-y-3">
-          <div className="text-4xl animate-pulse">🎬</div>
-          <p className="text-zinc-400">Loading films…</p>
+      <div className="flex flex-1 items-center justify-center min-h-screen" style={{ background: "#0d0d0d" }}>
+        <div className="text-center space-y-4">
+          <div className="relative w-14 h-14 mx-auto">
+            <div className="absolute inset-0 rounded-lg border-2 border-t-[#e8a000] border-r-[rgba(232,160,0,0.4)] border-b-transparent border-l-transparent animate-spin" />
+            <div className="absolute inset-3 rounded-full animate-pulse" style={{ background: "rgba(232,160,0,0.1)" }} />
+          </div>
+          <p className="text-sm font-medium" style={{ color: "#777" }}>Loading films…</p>
         </div>
       </div>
     );
   }
 
-  // ── Done screen ──────────────────────────────────────────────────────────
+  // ── Done ─────────────────────────────────────────────────────────────────
 
   if (phase === "done") {
     const maxScore = rounds.length * 100;
     const pct = Math.round((totalScore / maxScore) * 100);
     const grade =
-      pct >= 90 ? { label: "Film Critic 🎖", color: "text-green-400" } :
-      pct >= 75 ? { label: "Cinephile 🎬", color: "text-yellow-400" } :
-      pct >= 55 ? { label: "Movie Buff 🍿", color: "text-blue-400" } :
-      pct >= 35 ? { label: "Casual Viewer 👀", color: "text-orange-400" } :
-                  { label: "Couch Potato 🥔", color: "text-red-400" };
+      pct >= 90 ? { label: "Film Critic", sub: "Uncanny precision", color: "#4ade80" } :
+      pct >= 75 ? { label: "Cinephile", sub: "Sharp instincts", color: "#e8a000" } :
+      pct >= 55 ? { label: "Movie Buff", sub: "Solid effort", color: "#60a5fa" } :
+      pct >= 35 ? { label: "Casual Viewer", sub: "Keep watching", color: "#fb923c" } :
+                  { label: "Couch Potato", sub: "Those were rough", color: "#f87171" };
 
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 animate-slide-up">
-        <div className="max-w-lg w-full">
-          <div className="text-center mb-8">
-            <div className="text-5xl mb-3">🎬</div>
-            <h2 className="text-3xl font-black mb-1">Game Over</h2>
-            <p className={`text-xl font-bold ${grade.color}`}>{grade.label}</p>
-            <p className="text-4xl font-black mt-4">
-              {totalScore} <span className="text-zinc-500 text-xl font-normal">/ {maxScore}</span>
+      <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 animate-slide-up" style={{ background: "#0d0d0d" }}>
+        <div className="max-w-lg w-full rounded-2xl p-6" style={{ background: "rgba(255,255,255,0.045)", backdropFilter: "blur(18px)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 30px 80px rgba(0,0,0,0.38)" }}>
+          <div className="text-center mb-6">
+            <p className="text-[0.6rem] font-bold tracking-[0.18em] uppercase mb-3" style={{ color: "#e8a000" }}>
+              {mode === "imdb" ? "IMDB Score" : mode === "rt" ? "Rotten Tomatoes" : "Double Down"}
             </p>
-            <div className="mt-3 h-2 bg-zinc-800 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-yellow-400 rounded-full transition-all duration-1000"
-                style={{ width: `${pct}%` }}
-              />
+            <p className="text-2xl font-black mb-0.5" style={{ color: grade.color }}>{grade.label}</p>
+            <p className="text-sm" style={{ color: "#777" }}>{grade.sub}</p>
+            <p className="text-5xl font-black mt-4 text-[#f0f0f0]">
+              {totalScore} <span className="text-xl font-normal" style={{ color: "#777" }}>/ {maxScore}</span>
+            </p>
+            <div className="mt-3 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.07)" }}>
+              <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${pct}%`, background: "#e8a000" }} />
             </div>
           </div>
 
-          {/* Per-round summary */}
-          <div className="space-y-2 mb-8">
+          <div className="space-y-2 mb-6 max-h-60 overflow-y-auto">
             {rounds.map((r, i) => (
-              <div key={i} className="flex items-center gap-3 bg-zinc-900 rounded-xl px-4 py-3">
+              <div key={i} className="flex items-center gap-3 rounded-xl px-3 py-2.5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={r.movie.poster !== "N/A" ? r.movie.poster : ""}
-                  alt={r.movie.title}
-                  className="w-8 h-12 object-cover rounded"
-                />
+                <img src={r.movie.poster !== "N/A" ? r.movie.poster : ""} alt={r.movie.title} className="w-8 h-12 object-cover rounded" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{r.movie.title}</p>
-                  <p className="text-xs text-zinc-500">{r.movie.year}</p>
+                  <p className="text-sm font-medium truncate text-[#f0f0f0]">{r.movie.title}</p>
+                  <p className="text-xs" style={{ color: "#555" }}>{r.movie.year}</p>
                 </div>
                 <div className="text-right">
                   {(mode === "imdb" || mode === "both") && (
-                    <p className="text-xs text-zinc-400">
-                      IMDB: <span className="text-yellow-400 font-bold">{r.movie.imdbRating}</span>
-                      {" "}(you: {r.imdbGuess?.toFixed(1)})
+                    <p className="text-xs" style={{ color: "#777" }}>
+                      IMDB: <span style={{ color: "#e8a000" }} className="font-bold">{r.movie.imdbRating}</span>
+                      <span style={{ color: "#555" }}> (you: {r.imdbGuess?.toFixed(1)})</span>
                     </p>
                   )}
                   {(mode === "rt" || mode === "both") && (
-                    <p className="text-xs text-zinc-400">
+                    <p className="text-xs" style={{ color: "#777" }}>
                       RT: <span className="text-red-400 font-bold">{r.movie.rtRating}</span>
-                      {" "}(you: {r.rtGuess}%)
+                      <span style={{ color: "#555" }}> (you: {r.rtGuess}%)</span>
                     </p>
                   )}
                 </div>
-                <span className="text-sm font-bold text-zinc-300 ml-2 w-8 text-right">
+                <span className="text-sm font-bold ml-2 w-10 text-right" style={{ color: (r.totalPoints ?? 0) >= 80 ? "#4ade80" : (r.totalPoints ?? 0) >= 50 ? "#e8a000" : "#f87171" }}>
                   {r.totalPoints}
                 </span>
               </div>
             ))}
           </div>
 
-          <div className="flex gap-3">
-            <button
-              onClick={() => { setRounds([]); setCurrentIdx(0); setTotalScore(0); setPhase("guess"); fetchedIds.current = new Set(); setLoading(true); fetch("/api/session?count=10").then(r => r.json()).then(d => { setMovieIds(d.movies); setLoading(false); }); }}
-              className="flex-1 bg-yellow-400 text-black font-bold py-3 rounded-xl hover:bg-yellow-300 transition-colors"
-            >
-              Play Again
-            </button>
-            <button
-              onClick={() => router.push("/")}
-              className="flex-1 bg-zinc-800 text-white font-bold py-3 rounded-xl hover:bg-zinc-700 transition-colors"
-            >
-              Change Mode
-            </button>
+          <div className="flex gap-3 mb-3">
+            <button onClick={restartGame} className="flex-1 font-bold py-3 rounded-xl hover:opacity-85 transition-all" style={{ background: "#e8a000", color: "#111" }}>Play Again</button>
+            <button onClick={() => router.push("/")} className="flex-1 font-bold py-3 rounded-xl hover:opacity-85 transition-all" style={{ background: "transparent", color: "#f0f0f0", border: "1px solid rgba(255,255,255,0.09)" }}>Change Mode</button>
           </div>
+          <ShareButton text={buildShareText(mode, totalScore, maxScore, rounds)} className="w-full" />
         </div>
       </div>
     );
   }
 
-  // ── Active round ─────────────────────────────────────────────────────────
+  // ── Active round ──────────────────────────────────────────────────────────
 
   if (!currentRound) return null;
   const movie = currentRound.movie;
   const progress = ((currentIdx + 1) / movieIds.length) * 100;
 
   return (
-    <div className="min-h-screen flex flex-col items-center px-4 py-6 max-w-2xl mx-auto w-full">
+    <div className="min-h-screen flex flex-col items-center px-4 py-6 max-w-2xl mx-auto w-full" style={{ background: "#0d0d0d" }}>
       {/* Header */}
       <div className="w-full mb-5">
         <div className="flex justify-between items-center mb-2">
-          <button onClick={() => router.push("/")} className="text-zinc-500 hover:text-zinc-300 text-sm transition-colors">
-            ← Back
-          </button>
+          <button onClick={() => router.push("/")} className="text-sm font-medium hover:opacity-80 transition-opacity" style={{ color: "#777" }}>← Back</button>
           <div className="flex items-center gap-3">
-            <span className="text-sm text-zinc-400">Film {currentIdx + 1} / {movieIds.length}</span>
-            <span className="text-sm font-bold text-yellow-400">{totalScore} pts</span>
+            <span className="text-sm" style={{ color: "#777" }}>Film {currentIdx + 1} / {movieIds.length}</span>
+            <span className="text-sm font-bold" style={{ color: "#e8a000" }}>{totalScore} pts</span>
           </div>
         </div>
-        <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-yellow-400 rounded-full transition-all duration-500"
-            style={{ width: `${progress}%` }}
-          />
+        <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.07)" }}>
+          <div className="h-full rounded-full transition-all duration-500" style={{ width: `${progress}%`, background: "#e8a000" }} />
         </div>
       </div>
 
       {movieLoading ? (
         <div className="flex flex-1 items-center justify-center">
-          <div className="text-zinc-500 animate-pulse">Loading…</div>
+          <div className="animate-pulse text-sm" style={{ color: "#555" }}>Loading…</div>
         </div>
       ) : (
         <div className="w-full flex flex-col md:flex-row gap-6 animate-slide-up">
           {/* Poster */}
-          <div className="w-full md:w-56 flex-shrink-0">
+          <div className="w-full md:w-52 flex-shrink-0">
             <PosterImage src={movie.poster} title={movie.title} />
           </div>
 
           {/* Info + controls */}
           <div className="flex-1 flex flex-col">
             <div className="mb-4">
-              <h2 className="text-2xl font-black leading-tight mb-1">{movie.title}</h2>
-              <div className="flex flex-wrap gap-2 text-xs text-zinc-400">
-                <span className="bg-zinc-800 rounded-full px-2.5 py-0.5">{movie.year}</span>
-                {movie.runtime !== "N/A" && <span className="bg-zinc-800 rounded-full px-2.5 py-0.5">{movie.runtime}</span>}
-                {movie.genre !== "N/A" && movie.genre.split(", ").slice(0, 2).map((g) => (
-                  <span key={g} className="bg-zinc-800 rounded-full px-2.5 py-0.5">{g}</span>
+              <h2 className="text-2xl font-black leading-tight mb-2 text-[#f0f0f0]">{movie.title}</h2>
+              <div className="flex flex-wrap gap-1.5 text-xs">
+                {[movie.year, movie.runtime !== "N/A" ? movie.runtime : null, ...movie.genre.split(", ").slice(0, 2)].filter(Boolean).map((tag) => (
+                  <span key={tag} className="rounded-full px-2.5 py-0.5" style={{ background: "rgba(255,255,255,0.06)", color: "#777" }}>{tag}</span>
                 ))}
               </div>
               {movie.director !== "N/A" && (
-                <p className="text-xs text-zinc-500 mt-2">Dir. {movie.director}</p>
+                <p className="text-xs mt-2" style={{ color: "#555" }}>Dir. {movie.director}</p>
               )}
             </div>
 
             {phase === "guess" ? (
               <>
-                <SliderInput
-                  mode={mode}
-                  imdbValue={imdbGuess}
-                  rtValue={rtGuess}
-                  onImdbChange={setImdbGuess}
-                  onRtChange={setRtGuess}
-                />
+                <SliderInput mode={mode} imdbValue={imdbGuess} rtValue={rtGuess} onImdbChange={setImdbGuess} onRtChange={setRtGuess} />
                 <button
                   onClick={submitGuess}
-                  className="mt-6 w-full bg-yellow-400 hover:bg-yellow-300 text-black font-bold py-3 rounded-xl transition-colors text-base"
+                  className="mt-6 w-full font-bold py-3 rounded-xl transition-all hover:opacity-85 active:scale-[0.99]"
+                  style={{ background: "#e8a000", color: "#111" }}
                 >
                   Lock In My Guess 🎯
                 </button>
+                <p className="text-center text-xs mt-2 hidden sm:block" style={{ color: "#444" }}>Space / Enter to submit</p>
               </>
             ) : (
               <div className="animate-pop">
                 {/* Points */}
-                <div className="text-center mb-4">
-                  {(() => {
-                    const { label, color } = scoreLabel(currentRound.totalPoints ?? 0);
-                    return (
-                      <>
-                        <span className={`text-3xl font-black ${color}`}>+{currentRound.totalPoints}</span>
-                        <span className="text-zinc-400 text-lg"> pts</span>
-                        <p className={`text-sm mt-0.5 ${color}`}>{label}</p>
-                      </>
-                    );
-                  })()}
-                </div>
+                {(() => {
+                  const { label, color } = scoreLabel(currentRound.totalPoints ?? 0);
+                  return (
+                    <div className="text-center mb-4">
+                      <span className="text-3xl font-black" style={{ color }}>+{currentRound.totalPoints}</span>
+                      <span className="text-lg" style={{ color: "#777" }}> pts</span>
+                      <p className="text-sm mt-0.5" style={{ color }}>{label}</p>
+                    </div>
+                  );
+                })()}
 
                 {/* Rating bars */}
                 {(mode === "imdb" || mode === "both") && movie.imdbRating !== "N/A" && (
-                  <RatingBar
-                    label="IMDB"
-                    guess={currentRound.imdbGuess ?? 5}
-                    actual={movie.imdbRating}
-                    color="text-yellow-400"
-                  />
+                  <RatingBar label="IMDB" guess={currentRound.imdbGuess ?? 5} actual={movie.imdbRating} color="#e8a000" />
                 )}
                 {(mode === "rt" || mode === "both") && movie.rtRating !== "N/A" && (
-                  <RatingBar
-                    label="RT"
-                    guess={currentRound.rtGuess ?? 50}
-                    actual={movie.rtRating}
-                    color="text-red-400"
-                  />
+                  <RatingBar label="RT" guess={currentRound.rtGuess ?? 50} actual={movie.rtRating} color="#ef4444" />
                 )}
 
-                {/* Plot reveal */}
                 {movie.plot !== "N/A" && (
-                  <p className="text-xs text-zinc-500 mt-3 leading-relaxed italic">"{movie.plot}"</p>
+                  <p className="text-xs leading-relaxed italic mt-3" style={{ color: "#555" }}>"{movie.plot}"</p>
                 )}
 
-                <button
-                  onClick={nextRound}
-                  className="mt-5 w-full bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-3 rounded-xl transition-colors"
-                >
-                  {currentIdx + 1 >= movieIds.length ? "See Final Score 🏆" : "Next Film →"}
-                </button>
+                <AutoNextButton
+                  onNext={nextRound}
+                  delay={4500}
+                  label={currentIdx + 1 >= movieIds.length ? "See Final Score 🏆" : "Next Film →"}
+                  isLast={false}
+                />
               </div>
             )}
           </div>
@@ -507,7 +430,9 @@ function GameContent() {
 
 export default function GamePage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center min-h-screen text-zinc-400">Loading…</div>}>
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen" style={{ background: "#0d0d0d", color: "#777" }}>Loading…</div>
+    }>
       <GameContent />
     </Suspense>
   );

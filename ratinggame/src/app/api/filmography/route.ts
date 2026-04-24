@@ -3,13 +3,13 @@ import { samplePeople, sampleMovies } from "@/lib/filmography";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const count = Math.min(parseInt(searchParams.get("count") ?? "1"), 18);
+  const count = Math.min(parseInt(searchParams.get("count") ?? "1"), 24);
 
   const people = samplePeople(count);
   const challenges = people.map((person) => ({
     name: person.name,
     type: person.type,
-    emoji: person.emoji,
+    wikipediaSlug: person.wikipediaSlug,
     movieIds: sampleMovies(person, 4),
   }));
 
