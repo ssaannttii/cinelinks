@@ -251,8 +251,8 @@ export default function VersusPage() {
         <span className="hidden sm:inline text-xs ml-2" style={{ color: "#444" }}>(← → keys)</span>
       </p>
 
-      {/* Cards */}
-      <div className="relative flex gap-2 items-stretch flex-1">
+      {/* Cards — fill all remaining vertical space */}
+      <div className="relative flex gap-2 flex-1 min-h-0">
         {(["left", "right"] as const).map((side) => {
           const movie = side === "left" ? leftMovie : rightMovie;
           const movieRating = side === "left" ? lr : rr;
@@ -273,43 +273,66 @@ export default function VersusPage() {
               onClick={() => handlePick(side)}
               disabled={phase !== "choosing"}
               className={[
-                "flex-1 flex flex-col rounded-2xl overflow-hidden border transition-all duration-200 text-left",
+                "flex-1 flex flex-col rounded-2xl overflow-hidden border transition-all duration-200 text-left min-h-0",
                 phase === "choosing" ? "hover:scale-[1.01] cursor-pointer" : "cursor-default",
                 !isPicked && isLoser ? "opacity-35" : "",
               ].filter(Boolean).join(" ")}
               style={{ borderColor, borderWidth: "1px", background: "rgba(255,255,255,0.03)" }}
             >
-              <div className="relative overflow-hidden" style={{ height: 280, background: "#181818" }}>
+              {/* Poster — grows to fill all card height */}
+              <div className="relative flex-1 min-h-0" style={{ background: "#181818" }}>
                 {movie.poster && movie.poster !== "N/A" ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={movie.poster} alt={movie.title} className="w-full h-full object-cover" />
+                  <img
+                    src={movie.poster}
+                    alt={movie.title}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center"><span className="text-5xl opacity-20">🎬</span></div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-5xl opacity-20">🎬</span>
+                  </div>
                 )}
+
                 {phase === "revealing" && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center animate-pop" style={{ background: isWinner ? "rgba(5,46,22,0.92)" : "rgba(13,13,13,0.88)" }}>
-                    <p className="text-4xl font-black" style={{ color: isWinner ? "#e8a000" : "#555" }}>⭐ {movieRating.toFixed(1)}</p>
+                  <div
+                    className="absolute inset-0 flex flex-col items-center justify-center animate-pop"
+                    style={{ background: isWinner ? "rgba(5,46,22,0.92)" : "rgba(13,13,13,0.88)" }}
+                  >
+                    <p className="text-4xl font-black" style={{ color: isWinner ? "#e8a000" : "#555" }}>
+                      ⭐ {movieRating.toFixed(1)}
+                    </p>
                     {isCorrect && <p className="text-green-400 font-bold text-sm mt-2">✓ Correct!</p>}
                     {isWrong && <p className="text-red-400 font-bold text-sm mt-2">✗ Wrong</p>}
-                    {!isPicked && isWinner && <p className="text-xs mt-1" style={{ color: "rgba(232,160,0,0.6)" }}>Higher rated</p>}
+                    {!isPicked && isWinner && (
+                      <p className="text-xs mt-1" style={{ color: "rgba(232,160,0,0.6)" }}>Higher rated</p>
+                    )}
                   </div>
                 )}
               </div>
-              <div className="p-3 flex-1" style={{ background: "rgba(255,255,255,0.02)" }}>
-                <p className="font-bold text-sm leading-tight line-clamp-2 text-[#f0f0f0]">{movie.title}</p>
-                <p className="text-xs mt-0.5" style={{ color: "#555" }}>{movie.year}</p>
-                {movie.genre && movie.genre !== "N/A" && (
-                  <p className="text-[10px] mt-1 truncate" style={{ color: "#444" }}>{movie.genre.split(", ")[0]}</p>
-                )}
+
+              {/* Info strip — fixed at bottom, never grows */}
+              <div className="flex-shrink-0 p-3" style={{ background: "rgba(0,0,0,0.5)" }}>
+                <p className="font-bold text-sm leading-tight line-clamp-1 text-[#f0f0f0]">{movie.title}</p>
+                <p className="text-xs mt-0.5" style={{ color: "#666" }}>
+                  {movie.year}
+                  {movie.genre && movie.genre !== "N/A" && (
+                    <span style={{ color: "#444" }}> · {movie.genre.split(", ")[0]}</span>
+                  )}
+                </p>
               </div>
             </button>
           );
         })}
 
-        {/* VS badge */}
+        {/* VS badge — sits in the poster area at centre */}
         {phase === "choosing" && (
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none">
-            <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: "#0d0d0d", border: "2px solid rgba(255,255,255,0.12)" }}>
+          <div className="absolute left-1/2 -translate-x-1/2 z-10 pointer-events-none"
+            style={{ bottom: "52px" }}>
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center shadow-lg"
+              style={{ background: "#0d0d0d", border: "2px solid rgba(255,255,255,0.15)" }}
+            >
               <span className="text-[10px] font-black" style={{ color: "#666" }}>VS</span>
             </div>
           </div>
