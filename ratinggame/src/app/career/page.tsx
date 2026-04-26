@@ -80,9 +80,9 @@ export default function CareerPage() {
     const p: Person = data.challenges[0];
     setPerson(p);
 
-    fetch(`/api/person-photo?slug=${p.wikipediaSlug}`)
+    fetch(`/api/person-photo?slug=${encodeURIComponent(p.wikipediaSlug)}`)
       .then((r) => r.json())
-      .then((d) => setPersonPhoto(d.photoUrl ?? null))
+      .then((d) => setPersonPhoto(d.photo ?? null))
       .catch(() => {});
 
     const fetched = await Promise.all(p.movieIds.slice(0, MOVIE_COUNT).map(fetchMovie));
@@ -251,14 +251,17 @@ export default function CareerPage() {
         className="flex items-center gap-4 rounded-2xl p-4 mb-5 animate-slide-left"
         style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
       >
-        <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0" style={{ background: "#1a1a1a" }}>
-          {personPhoto ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={personPhoto} alt={person.name} className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-2xl opacity-30">🎬</div>
-          )}
-        </div>
+        {personPhoto ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={personPhoto} alt={person.name}
+            className="w-16 h-16 rounded-full object-cover border-2 shadow-lg flex-shrink-0"
+            style={{ borderColor: "rgba(232,160,0,0.4)" }} />
+        ) : (
+          <div className="w-16 h-16 rounded-full flex items-center justify-center font-black text-xl flex-shrink-0 border-2"
+            style={{ background: "#1a1a1a", borderColor: "rgba(232,160,0,0.3)", color: "#e8a000" }}>
+            {person.name.split(" ").slice(0, 2).map((w: string) => w[0]).join("")}
+          </div>
+        )}
         <div className="flex-1 min-w-0">
           <p className="font-black text-lg text-[#f0f0f0] leading-tight">{person.name}</p>
           <p className="text-xs mt-0.5 capitalize" style={{ color: "#555" }}>{person.type}</p>
