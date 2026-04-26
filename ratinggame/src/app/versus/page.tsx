@@ -211,7 +211,7 @@ export default function VersusPage() {
 
           <div className="flex gap-3 mb-3">
             <button onClick={handleRestart} className="flex-1 font-bold py-3 rounded-xl transition-all hover:opacity-85" style={{ background: "#e8a000", color: "#111" }}>Play Again</button>
-            <button onClick={() => router.push("/")} className="flex-1 font-bold py-3 rounded-xl transition-all hover:opacity-85" style={{ background: "transparent", color: "#f0f0f0", border: "1px solid rgba(255,255,255,0.09)" }}>Home</button>
+            <button onClick={() => router.push("/")} className="flex-1 font-bold py-3 rounded-xl transition-all hover:opacity-85" style={{ background: "transparent", color: "#f0f0f0", border: "1px solid rgba(255,255,255,0.09)" }}>🏠 Home</button>
           </div>
           <ShareButton text={buildShareText(score, results)} className="w-full" />
         </div>

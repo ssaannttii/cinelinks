@@ -40,18 +40,27 @@ export default function CareerPage() {
   const [person, setPerson] = useState<Person | null>(null);
   const [personPhoto, setPersonPhoto] = useState<string | null>(null);
   const [movies, setMovies] = useState<Movie[]>([]);
-  const [order, setOrder] = useState<Movie[]>([]);       // user's live ordering
-  const [correctOrder, setCorrectOrder] = useState<Movie[]>([]); // sorted highest → lowest
+  const [order, setOrder] = useState<Movie[]>([]);
+  const [correctOrder, setCorrectOrder] = useState<Movie[]>([]);
   const [score, setScore] = useState(0);
 
-  // Drag state
-  const dragSrcIdx = useRef<number | null>(null);
-  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+  // Drag state (unified pointer events — works on mouse + touch)
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const dragIdxRef = useRef<number | null>(null);
+  const pointerStartY = useRef(0);
+  const hasDragged = useRef(false);
+  const [activeDragIdx, setActiveDragIdx] = useState<number | null>(null);
 
-  // Tap-to-swap state (mobile)
+  // Tap-to-swap state (fallback for deliberate taps without drag movement)
+  const selectedIdxRef = useRef<number | null>(null);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
 
-  // ── Data fetching ─────────────────────────────────────────────────────────
+  const selectCard = useCallback((idx: number | null) => {
+    selectedIdxRef.current = idx;
+    setSelectedIdx(idx);
+  }, []);
+
+  // ── Fetching ──────────────────────────────────────────────────────────────
 
   const fetchMovie = useCallback(async (id: string): Promise<Movie> => {
     const res = await fetch(`/api/movie?id=${id}`);
@@ -61,86 +70,117 @@ export default function CareerPage() {
   const initGame = useCallback(async () => {
     setPhase("loading");
     setPersonPhoto(null);
-    setSelectedIdx(null);
-    setDragOverIdx(null);
-    dragSrcIdx.current = null;
+    selectCard(null);
+    setActiveDragIdx(null);
+    dragIdxRef.current = null;
 
     const res = await fetch(`/api/filmography?count=1&movies=${MOVIE_COUNT}`);
     const data = await res.json();
     const p: Person = data.challenges[0];
     setPerson(p);
 
-    // Fetch photo in background (non-blocking)
     fetch(`/api/person-photo?slug=${p.wikipediaSlug}`)
       .then((r) => r.json())
       .then((d) => setPersonPhoto(d.photoUrl ?? null))
       .catch(() => {});
 
-    // Fetch all movies concurrently
-    const fetched = await Promise.all(
-      p.movieIds.slice(0, MOVIE_COUNT).map(fetchMovie)
-    );
-    const valid = fetched.filter(
-      (m) => m?.title && m?.imdbRating && m.imdbRating !== "N/A"
-    );
+    const fetched = await Promise.all(p.movieIds.slice(0, MOVIE_COUNT).map(fetchMovie));
+    const valid = fetched.filter((m) => m?.title && m?.imdbRating && m.imdbRating !== "N/A");
 
-    // Fisher-Yates shuffle for initial display
     const shuffled = [...valid];
     for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
 
+    cardRefs.current = new Array(valid.length).fill(null);
     setMovies(valid);
     setOrder(shuffled);
     setPhase("playing");
-  }, [fetchMovie]);
+  }, [fetchMovie, selectCard]);
 
   useEffect(() => { initGame(); }, [initGame]);
 
-  // ── Drag handlers ─────────────────────────────────────────────────────────
+  // ── Pointer drag ──────────────────────────────────────────────────────────
+  // Unified for mouse and touch. On desktop: smooth live reorder while dragging.
+  // On mobile: same, because touch-action:none on the list prevents scroll.
+  // Taps (< 8px movement) fall through to tap-to-swap.
 
-  const handleDragStart = (idx: number) => {
-    dragSrcIdx.current = idx;
-    setSelectedIdx(null);
-  };
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>, idx: number) => {
+      if (phase !== "playing") return;
+      e.preventDefault();
+      dragIdxRef.current = idx;
+      pointerStartY.current = e.clientY;
+      hasDragged.current = false;
+      setActiveDragIdx(idx);
 
-  const handleDragOver = (e: React.DragEvent, targetIdx: number) => {
-    e.preventDefault();
-    setDragOverIdx(targetIdx);
-    const src = dragSrcIdx.current;
-    if (src === null || src === targetIdx) return;
-    setOrder((prev) => {
-      const next = [...prev];
-      const [item] = next.splice(src, 1);
-      next.splice(targetIdx, 0, item);
-      return next;
-    });
-    dragSrcIdx.current = targetIdx;
-  };
+      const onMove = (ev: PointerEvent) => {
+        const src = dragIdxRef.current;
+        if (src === null) return;
 
-  const handleDragEnd = () => {
-    dragSrcIdx.current = null;
-    setDragOverIdx(null);
-  };
+        // Commit to drag mode once pointer moves more than threshold
+        if (!hasDragged.current) {
+          if (Math.abs(ev.clientY - pointerStartY.current) > 8) {
+            hasDragged.current = true;
+          } else return;
+        }
 
-  // ── Tap-to-swap (mobile) ──────────────────────────────────────────────────
+        // Find which card the pointer is currently over
+        let targetIdx = src;
+        cardRefs.current.forEach((ref, i) => {
+          if (!ref) return;
+          const rect = ref.getBoundingClientRect();
+          if (ev.clientY >= rect.top && ev.clientY <= rect.bottom) {
+            targetIdx = i;
+          }
+        });
 
-  const handleTap = (idx: number) => {
-    if (selectedIdx === null) {
-      setSelectedIdx(idx);
-    } else if (selectedIdx === idx) {
-      setSelectedIdx(null);
-    } else {
-      const from = selectedIdx;
-      setOrder((prev) => {
-        const next = [...prev];
-        [next[from], next[idx]] = [next[idx], next[from]];
-        return next;
-      });
-      setSelectedIdx(null);
-    }
-  };
+        if (targetIdx !== src) {
+          setOrder((prev) => {
+            const next = [...prev];
+            const [item] = next.splice(src, 1);
+            next.splice(targetIdx, 0, item);
+            return next;
+          });
+          dragIdxRef.current = targetIdx;
+          setActiveDragIdx(targetIdx);
+        }
+      };
+
+      const onUp = () => {
+        const wasDrag = hasDragged.current;
+        const srcIdx = dragIdxRef.current;
+        dragIdxRef.current = null;
+        hasDragged.current = false;
+        setActiveDragIdx(null);
+
+        // Pure tap (no meaningful movement) → tap-to-swap
+        if (!wasDrag && srcIdx !== null) {
+          const prev = selectedIdxRef.current;
+          if (prev === null) {
+            selectCard(srcIdx);
+          } else if (prev === srcIdx) {
+            selectCard(null);
+          } else {
+            setOrder((o) => {
+              const next = [...o];
+              [next[prev], next[srcIdx]] = [next[srcIdx], next[prev]];
+              return next;
+            });
+            selectCard(null);
+          }
+        }
+
+        document.removeEventListener("pointermove", onMove);
+        document.removeEventListener("pointerup", onUp);
+      };
+
+      document.addEventListener("pointermove", onMove);
+      document.addEventListener("pointerup", onUp);
+    },
+    [phase, selectCard]
+  );
 
   // ── Confirm ───────────────────────────────────────────────────────────────
 
@@ -176,11 +216,11 @@ export default function CareerPage() {
 
   const total = order.length;
   const grade =
-    score === total     ? { label: "Cinephile Oracle",     sub: "Perfect order — are you sure you didn't cheat?", color: "text-purple-400" } :
-    score >= total - 1  ? { label: "Ranking Shark",        sub: "One swap away from perfect",                     color: "text-[#e8a000]"  } :
-    score >= total - 2  ? { label: "Pretty Dialed In",     sub: "More right than wrong",                          color: "text-green-400"  } :
-    score >= total - 3  ? { label: "Mixed Signals",        sub: "Gut feeling needs recalibrating",                color: "text-blue-400"   } :
-                          { label: "Random Order Energy",  sub: "The films had other opinions",                   color: "text-[#777]"     };
+    score === total     ? { label: "Cinephile Oracle",     sub: "Perfect. Are you sure you didn't cheat?",  color: "text-purple-400" } :
+    score >= total - 1  ? { label: "Ranking Shark",        sub: "One swap away from perfect",               color: "text-[#e8a000]"  } :
+    score >= total - 2  ? { label: "Pretty Dialed In",     sub: "More right than wrong",                    color: "text-green-400"  } :
+    score >= total - 3  ? { label: "Mixed Signals",        sub: "Gut feeling needs recalibrating",          color: "text-blue-400"   } :
+                          { label: "Random Order Energy",  sub: "The films had other opinions",             color: "text-[#777]"     };
 
   const displayOrder = phase === "revealed" ? correctOrder : order;
 
@@ -223,7 +263,7 @@ export default function CareerPage() {
           <p className="text-xs mt-0.5 capitalize" style={{ color: "#555" }}>{person.type}</p>
           {phase === "playing" && (
             <p className="text-xs mt-2" style={{ color: "#777" }}>
-              Rank from <span style={{ color: "#e8a000" }}>highest rated</span> to lowest
+              Drag to rank · <span style={{ color: "#e8a000" }}>highest</span> at top
             </p>
           )}
           {phase === "revealed" && (
@@ -234,65 +274,66 @@ export default function CareerPage() {
         </div>
       </div>
 
-      {/* Movie list */}
-      <div className="flex flex-col gap-2 mb-5">
+      {/* Card list — touch-action:none prevents scroll during drag on mobile */}
+      <div
+        className="flex flex-col gap-2 mb-5"
+        style={{ touchAction: phase === "playing" ? "none" : "auto" }}
+      >
         {displayOrder.map((movie, idx) => {
-          const wasCorrect =
-            phase === "revealed" && order[idx]?.imdbId === movie.imdbId;
-          const isDragging =
-            phase === "playing" && dragSrcIdx.current === idx;
-          const isDragTarget =
-            phase === "playing" && dragOverIdx === idx && dragSrcIdx.current !== idx;
+          const wasCorrect = phase === "revealed" && order[idx]?.imdbId === movie.imdbId;
+          const isDragging = activeDragIdx === idx;
           const isTapped = phase === "playing" && selectedIdx === idx;
 
           let borderColor = "rgba(255,255,255,0.07)";
-          if (isTapped)      borderColor = "rgba(232,160,0,0.7)";
-          else if (isDragTarget) borderColor = "rgba(232,160,0,0.45)";
+          if (isDragging) borderColor = "#e8a000";
+          else if (isTapped) borderColor = "rgba(232,160,0,0.6)";
           else if (phase === "revealed")
             borderColor = wasCorrect ? "rgba(34,197,94,0.55)" : "rgba(255,255,255,0.05)";
 
           return (
             <div
               key={movie.imdbId}
-              draggable={phase === "playing"}
-              onDragStart={() => handleDragStart(idx)}
-              onDragOver={(e) => phase === "playing" && handleDragOver(e, idx)}
-              onDragEnd={handleDragEnd}
-              onClick={() => phase === "playing" && handleTap(idx)}
+              ref={(el) => { cardRefs.current[idx] = el; }}
+              onPointerDown={phase === "playing" ? (e) => handlePointerDown(e, idx) : undefined}
               className={[
-                "flex items-center gap-3 rounded-xl overflow-hidden border transition-all duration-200 animate-card-in select-none",
+                "flex items-center gap-3 rounded-xl overflow-hidden border transition-all duration-150 animate-card-in",
                 phase === "playing" ? "cursor-grab active:cursor-grabbing" : "",
-                isDragging ? "opacity-30 scale-[0.97]" : "",
+                isDragging
+                  ? "opacity-55 scale-[0.97] shadow-[0_12px_40px_rgba(232,160,0,0.22)]"
+                  : "",
                 wasCorrect ? "shadow-[0_0_18px_rgba(34,197,94,0.12)]" : "",
               ].filter(Boolean).join(" ")}
               style={{
-                background: isTapped
-                  ? "rgba(232,160,0,0.06)"
-                  : "rgba(255,255,255,0.03)",
+                background: isTapped ? "rgba(232,160,0,0.06)" : "rgba(255,255,255,0.03)",
                 borderColor,
-                borderWidth: "1px",
+                borderWidth: isDragging ? "2px" : "1px",
                 animationDelay: `${idx * 60}ms`,
+                userSelect: "none",
+                WebkitUserSelect: "none",
               }}
             >
               {/* Rank number */}
               <div
-                className="flex-shrink-0 w-9 flex items-center justify-center self-stretch"
+                className="flex-shrink-0 w-9 self-stretch flex items-center justify-center"
                 style={{ background: "rgba(0,0,0,0.2)" }}
               >
-                <span className="text-sm font-black" style={{ color: "#444" }}>{idx + 1}</span>
+                <span
+                  className="text-sm font-black"
+                  style={{ color: isDragging ? "#e8a000" : "#444" }}
+                >
+                  {idx + 1}
+                </span>
               </div>
 
               {/* Poster */}
-              <div
-                className="flex-shrink-0 w-10 h-14 rounded-lg overflow-hidden"
-                style={{ background: "#1a1a1a" }}
-              >
+              <div className="flex-shrink-0 w-10 h-14 rounded-lg overflow-hidden" style={{ background: "#1a1a1a" }}>
                 {movie.poster && movie.poster !== "N/A" ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={movie.poster}
                     alt={movie.title}
                     className="w-full h-full object-cover"
+                    draggable={false}
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-lg opacity-20">🎬</div>
@@ -301,28 +342,28 @@ export default function CareerPage() {
 
               {/* Info */}
               <div className="flex-1 min-w-0 py-3">
-                <p className="font-bold text-sm leading-tight text-[#f0f0f0] line-clamp-2">
-                  {movie.title}
-                </p>
+                <p className="font-bold text-sm leading-tight text-[#f0f0f0] line-clamp-2">{movie.title}</p>
                 <p className="text-xs mt-0.5" style={{ color: "#555" }}>{movie.year}</p>
                 {phase === "revealed" && (
-                  <p
-                    className="text-sm font-black mt-1.5"
-                    style={{ color: wasCorrect ? "#4ade80" : "#e8a000" }}
-                  >
+                  <p className="text-sm font-black mt-1.5" style={{ color: wasCorrect ? "#4ade80" : "#e8a000" }}>
                     ⭐ {parseFloat(movie.imdbRating).toFixed(1)}
-                    {wasCorrect && (
-                      <span className="text-xs font-normal ml-1.5 text-green-400">✓ correct</span>
-                    )}
+                    {wasCorrect && <span className="text-xs font-normal ml-1.5 text-green-400">✓</span>}
                   </p>
                 )}
               </div>
 
-              {/* Drag handle */}
+              {/* Drag grip */}
               {phase === "playing" && (
-                <div className="flex-shrink-0 pr-3 flex flex-col gap-1 opacity-30">
-                  {[0, 1, 2].map((i) => (
-                    <div key={i} className="w-4 h-px rounded-full" style={{ background: "#aaa" }} />
+                <div
+                  className="flex-shrink-0 pr-3.5 flex flex-col gap-[5px]"
+                  style={{ opacity: isDragging ? 1 : 0.22 }}
+                >
+                  {[0, 1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="w-5 h-[2px] rounded-full"
+                      style={{ background: isDragging ? "#e8a000" : "#ccc" }}
+                    />
                   ))}
                 </div>
               )}
@@ -331,14 +372,14 @@ export default function CareerPage() {
         })}
       </div>
 
-      {/* Tap hint */}
+      {/* Tap-swap hint */}
       {phase === "playing" && selectedIdx !== null && (
         <p className="text-center text-xs mb-2 animate-pulse" style={{ color: "#e8a000" }}>
-          Tap another card to swap it
+          Tap another card to swap
         </p>
       )}
 
-      {/* Action slot — fixed height to prevent jump */}
+      {/* Action slot */}
       <div style={{ minHeight: 64 }}>
         {phase === "playing" && (
           <button
@@ -364,13 +405,9 @@ export default function CareerPage() {
               <button
                 onClick={() => router.push("/")}
                 className="flex-1 font-bold py-3 rounded-xl hover:opacity-85 transition-all"
-                style={{
-                  background: "transparent",
-                  color: "#f0f0f0",
-                  border: "1px solid rgba(255,255,255,0.09)",
-                }}
+                style={{ background: "transparent", color: "#f0f0f0", border: "1px solid rgba(255,255,255,0.09)" }}
               >
-                Home
+                🏠 Home
               </button>
             </div>
             <ShareButton
