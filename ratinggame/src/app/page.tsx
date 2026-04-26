@@ -1,4 +1,6 @@
+"use client";
 import Link from "next/link";
+import { getDayNumber } from "@/lib/movies";
 
 const NEW_MODES = [
   {
@@ -48,6 +50,46 @@ const CLASSIC_MODES = [
   },
 ];
 
+function DailyBanner() {
+  const dayNum = getDayNumber();
+  const today = new Date();
+  const dateStr = today.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+
+  return (
+    <Link
+      href="/versus?mode=daily"
+      className="group w-full max-w-2xl mb-6 flex items-center gap-4 rounded-2xl px-6 py-5 transition-all duration-200 hover:-translate-y-0.5"
+      style={{
+        background: "linear-gradient(135deg, rgba(232,160,0,0.13) 0%, rgba(232,160,0,0.06) 100%)",
+        border: "1px solid rgba(232,160,0,0.4)",
+        boxShadow: "0 4px 32px rgba(232,160,0,0.08)",
+        textDecoration: "none",
+      }}
+    >
+      <div
+        className="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
+        style={{ background: "rgba(232,160,0,0.15)" }}
+      >
+        📅
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-0.5">
+          <span className="text-[0.6rem] font-black tracking-[0.16em] uppercase" style={{ color: "#e8a000" }}>Daily Challenge</span>
+          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "#e8a000", color: "#111" }}>#{dayNum}</span>
+        </div>
+        <p className="font-bold text-base text-[#f0f0f0] leading-tight">Higher or Lower — Today's Edition</p>
+        <p className="text-xs mt-0.5" style={{ color: "#888" }}>{dateStr} · Same puzzle for everyone</p>
+      </div>
+      <span
+        className="text-base font-bold flex-shrink-0 group-hover:translate-x-0.5 transition-transform"
+        style={{ color: "#e8a000" }}
+      >
+        →
+      </span>
+    </Link>
+  );
+}
+
 export default function Home() {
   return (
     <main
@@ -69,6 +111,9 @@ export default function Home() {
           Think you know movies? Put your instincts to the test.
         </p>
       </div>
+
+      {/* Daily Challenge */}
+      <DailyBanner />
 
       {/* Featured modes */}
       <div className="w-full max-w-2xl mb-4">

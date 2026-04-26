@@ -273,6 +273,29 @@ function getTier(id: string): 1 | 2 | 3 {
   return 2;
 }
 
+// ── Seeded RNG (LCG) — deterministic per date ────────────────────────────────
+function seededRng(seed: number): () => number {
+  let s = seed;
+  return () => {
+    s = (Math.imul(1664525, s) + 1013904223) & 0xffffffff;
+    return (s >>> 0) / 4294967296;
+  };
+}
+
+// UTC date → integer seed so all timezones share the same daily challenge
+export function getDailySeed(): number {
+  const d = new Date();
+  return d.getUTCFullYear() * 10000 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate();
+}
+
+// Day number since launch (2025-04-01 = day 1)
+export function getDayNumber(): number {
+  const epoch = Date.UTC(2025, 3, 1); // April 1 2025
+  const today = new Date();
+  const todayUTC = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
+  return Math.floor((todayUTC - epoch) / 86400000) + 1;
+}
+
 // ── Fisher-Yates shuffle ───────────────────────────────────────────────────────
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -318,6 +341,37 @@ export function pickBalancedPairs(count: number): [MovieStub, MovieStub][] {
     ...makePairs(t2, n2),
     ...makePairs(t3, n3),
   ]);
+}
+
+// ── Daily challenge: seeded balanced pairs — same for everyone on same UTC day ─
+export function getDailyPairs(count: number): [MovieStub, MovieStub][] {
+  const rng = seededRng(getDailySeed());
+  const seededShuffle = <T>(arr: T[]): T[] => {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  };
+
+  const pool = uniquePool();
+  const t1 = seededShuffle(pool.filter((m) => getTier(m.imdbId) === 1));
+  const t2 = seededShuffle(pool.filter((m) => getTier(m.imdbId) === 2));
+  const t3 = seededShuffle(pool.filter((m) => getTier(m.imdbId) === 3));
+
+  const n1 = Math.max(1, Math.round(count * 0.35));
+  const n3 = Math.max(1, Math.round(count * 0.20));
+  const n2 = Math.max(1, count - n1 - n3);
+
+  const makePairs = (movies: MovieStub[], n: number): [MovieStub, MovieStub][] => {
+    const pairs: [MovieStub, MovieStub][] = [];
+    for (let i = 0; i + 1 < movies.length && pairs.length < n; i += 2)
+      pairs.push([movies[i], movies[i + 1]]);
+    return pairs;
+  };
+
+  return seededShuffle([...makePairs(t1, n1), ...makePairs(t2, n2), ...makePairs(t3, n3)]);
 }
 
 // ── Legacy: flat random list (used by classic/game mode) ─────────────────────

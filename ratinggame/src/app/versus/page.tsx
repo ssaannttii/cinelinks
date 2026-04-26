@@ -1,10 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import AutoNextButton from "@/components/AutoNextButton";
 import ShareButton from "@/components/ShareButton";
 import HomeIcon from "@/components/HomeIcon";
+import { getDailyPairs, getDayNumber } from "@/lib/movies";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -28,15 +30,35 @@ interface RoundResult {
 
 const ROUNDS = 10;
 
-function buildShareText(score: number, results: RoundResult[]) {
+const DAILY_KEY = "cinerating_daily";
+
+function getTodayString() {
+  const d = new Date();
+  return `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, "0")}${String(d.getUTCDate()).padStart(2, "0")}`;
+}
+
+interface DailySave {
+  date: string;
+  score: number;
+  results: RoundResult[];
+  maxStreak: number;
+}
+
+function buildShareText(score: number, results: RoundResult[], isDaily: boolean) {
   const squares = results.map((r) => (r.correct ? "🟩" : "🟥")).join("");
+  if (isDaily) {
+    const day = getDayNumber();
+    return `CineRating Daily #${day}\n${score}/${ROUNDS} ${squares}\nhttps://cinerating.vercel.app/versus?mode=daily`;
+  }
   return `CineRating: Higher or Lower\n${score}/${ROUNDS}\n${squares}\nhttps://cinerating.vercel.app/versus`;
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export default function VersusPage() {
+function VersusGame() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isDaily = searchParams.get("mode") === "daily";
 
   const cacheRef = useRef<Record<string, Movie>>({});
   const fetchingRef = useRef<Set<string>>(new Set());
@@ -51,6 +73,7 @@ export default function VersusPage() {
   const [streak, setStreak] = useState(0);
   const [maxStreak, setMaxStreak] = useState(0);
   const [results, setResults] = useState<RoundResult[]>([]);
+  const [alreadyPlayed, setAlreadyPlayed] = useState(false);
 
   // ── Movie fetching ─────────────────────────────────────────────────────────
 
@@ -84,6 +107,12 @@ export default function VersusPage() {
   }, [fetchMovie]);
 
   const initGame = useCallback(() => {
+    if (isDaily) {
+      const dailyPairs = getDailyPairs(ROUNDS);
+      pairsRef.current = dailyPairs.map((p) => [p[0].imdbId, p[1].imdbId] as [string, string]);
+      loadRound(0);
+      return;
+    }
     fetch("/api/session?count=10")
       .then((r) => r.json())
       .then((d) => {
@@ -93,9 +122,41 @@ export default function VersusPage() {
         pairsRef.current = pairs;
         loadRound(0);
       });
-  }, [loadRound]);
+  }, [loadRound, isDaily]);
 
-  useEffect(() => { initGame(); }, [initGame]);
+  // Single mount effect: check localStorage for daily, then init
+  const hasInitRef = useRef(false);
+  useEffect(() => {
+    if (hasInitRef.current) return;
+    hasInitRef.current = true;
+    if (isDaily) {
+      try {
+        const saved = localStorage.getItem(DAILY_KEY);
+        if (saved) {
+          const data: DailySave = JSON.parse(saved);
+          if (data.date === getTodayString()) {
+            setScore(data.score);
+            setResults(data.results);
+            setMaxStreak(data.maxStreak);
+            setAlreadyPlayed(true);
+            setPhase("done");
+            return;
+          }
+        }
+      } catch { /* ignore */ }
+    }
+    initGame();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Save daily result when game finishes
+  useEffect(() => {
+    if (phase !== "done" || !isDaily || alreadyPlayed) return;
+    try {
+      const save: DailySave = { date: getTodayString(), score, results, maxStreak };
+      localStorage.setItem(DAILY_KEY, JSON.stringify(save));
+    } catch { /* ignore */ }
+  }, [phase, isDaily, alreadyPlayed, score, results, maxStreak]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
@@ -175,12 +236,25 @@ export default function VersusPage() {
       score >= 7 ? { label: "Sharp Eye", sub: "You read ratings well", color: "text-[#e8a000]" } :
       score >= 5 ? { label: "Decent Pick", sub: "More right than wrong", color: "text-green-400" } :
                    { label: "Coin Flipper", sub: "Unlucky guesses", color: "text-[#777]" };
+    const dayNum = getDayNumber();
 
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12" style={{ background: "#0d0d0d" }}>
         <div className="max-w-md w-full rounded-2xl p-6" style={{ background: "rgba(255,255,255,0.045)", backdropFilter: "blur(18px)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 30px 80px rgba(0,0,0,0.38)" }}>
           <div className="text-center mb-6">
-            <p className="text-[0.6rem] font-bold tracking-[0.18em] uppercase mb-3" style={{ color: "#e8a000" }}>Higher or Lower</p>
+            {isDaily ? (
+              <>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full mb-3" style={{ background: "rgba(232,160,0,0.12)", border: "1px solid rgba(232,160,0,0.3)" }}>
+                  <span className="text-[0.6rem] font-bold tracking-[0.18em] uppercase" style={{ color: "#e8a000" }}>Daily Challenge</span>
+                  <span className="text-[0.6rem] font-bold" style={{ color: "rgba(232,160,0,0.6)" }}>#{dayNum}</span>
+                </div>
+                {alreadyPlayed && (
+                  <p className="text-xs mb-2 font-medium" style={{ color: "#555" }}>You already played today — come back tomorrow!</p>
+                )}
+              </>
+            ) : (
+              <p className="text-[0.6rem] font-bold tracking-[0.18em] uppercase mb-3" style={{ color: "#e8a000" }}>Higher or Lower</p>
+            )}
             <p className={`text-2xl font-black mb-0.5 ${grade.color}`}>{grade.label}</p>
             <p className="text-sm" style={{ color: "#777" }}>{grade.sub}</p>
             <p className="text-6xl font-black mt-4 text-[#f0f0f0]">
@@ -211,10 +285,22 @@ export default function VersusPage() {
           </div>
 
           <div className="flex gap-3 mb-3">
-            <button onClick={handleRestart} className="flex-1 font-bold py-3 rounded-xl transition-all hover:opacity-85" style={{ background: "#e8a000", color: "#111" }}>Play Again</button>
-            <button onClick={() => router.push("/")} className="flex-1 font-bold py-3 rounded-xl transition-all hover:opacity-85 flex items-center justify-center gap-2" style={{ background: "transparent", color: "#f0f0f0", border: "1px solid rgba(255,255,255,0.09)" }}><HomeIcon /> Home</button>
+            {isDaily ? (
+              <button
+                onClick={() => router.push("/")}
+                className="flex-1 font-bold py-3 rounded-xl transition-all hover:opacity-85 flex items-center justify-center gap-2"
+                style={{ background: "#e8a000", color: "#111" }}
+              >
+                <HomeIcon size={15} /> Home
+              </button>
+            ) : (
+              <>
+                <button onClick={handleRestart} className="flex-1 font-bold py-3 rounded-xl transition-all hover:opacity-85" style={{ background: "#e8a000", color: "#111" }}>Play Again</button>
+                <button onClick={() => router.push("/")} className="flex-1 font-bold py-3 rounded-xl transition-all hover:opacity-85 flex items-center justify-center gap-2" style={{ background: "transparent", color: "#f0f0f0", border: "1px solid rgba(255,255,255,0.09)" }}><HomeIcon /> Home</button>
+              </>
+            )}
           </div>
-          <ShareButton text={buildShareText(score, results)} className="w-full" />
+          <ShareButton text={buildShareText(score, results, isDaily)} className="w-full" />
         </div>
       </div>
     );
@@ -246,6 +332,11 @@ export default function VersusPage() {
         </div>
       </div>
 
+      {isDaily && (
+        <p className="text-center text-[0.6rem] font-bold tracking-[0.18em] uppercase mb-1" style={{ color: "rgba(232,160,0,0.7)" }}>
+          Daily #{getDayNumber()}
+        </p>
+      )}
       <p className="text-center text-sm mb-3" style={{ color: "#777" }}>
         Which has the higher <span style={{ color: "#e8a000" }} className="font-semibold">IMDB rating</span>?
         <span className="hidden sm:inline text-xs ml-2" style={{ color: "#444" }}>(← → keys)</span>
@@ -349,5 +440,23 @@ export default function VersusPage() {
         />
       )}
     </div>
+  );
+}
+
+// ── Suspense wrapper (needed for useSearchParams) ─────────────────────────────
+
+export default function VersusPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center" style={{ background: "#0d0d0d" }}>
+          <div className="relative w-14 h-14">
+            <div className="absolute inset-0 rounded-lg border-2 border-t-[#e8a000] border-r-[rgba(232,160,0,0.4)] border-b-transparent border-l-transparent animate-spin" />
+          </div>
+        </div>
+      }
+    >
+      <VersusGame />
+    </Suspense>
   );
 }
