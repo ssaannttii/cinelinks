@@ -17,6 +17,14 @@ const NEW_MODES = [
     gold: false,
     badge: "NEW",
   },
+  {
+    href: "/career",
+    icon: "🏆",
+    title: "Career Mode",
+    subtitle: "Rank 5 films by the same person from highest to lowest rated.",
+    gold: false,
+    badge: "NEW",
+  },
 ];
 
 const CLASSIC_MODES = [

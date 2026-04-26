@@ -214,6 +214,37 @@ export const FILMOGRAPHY_POOL: FilmographyPerson[] = [
     wikipediaSlug: "Jake_Gyllenhaal",
     movies: ["tt0246578", "tt0388795", "tt0443706", "tt1570728", "tt2872718"],
   },
+  // ── Popular / Mainstream ──────────────────────────────────────────────────
+  {
+    name: "Tom Cruise",
+    type: "actor",
+    wikipediaSlug: "Tom_Cruise",
+    movies: ["tt0092099", "tt0117060", "tt0116695", "tt0104257", "tt0175880"],
+  },
+  {
+    name: "Will Smith",
+    type: "actor",
+    wikipediaSlug: "Will_Smith",
+    movies: ["tt0248667", "tt0454921", "tt0119654", "tt0120616", "tt9620288"],
+  },
+  {
+    name: "Robert Downey Jr.",
+    type: "actor",
+    wikipediaSlug: "Robert_Downey_Jr.",
+    movies: ["tt0371746", "tt0988045", "tt0103923", "tt0427944", "tt0848228"],
+  },
+  {
+    name: "Keanu Reeves",
+    type: "actor",
+    wikipediaSlug: "Keanu_Reeves",
+    movies: ["tt0133093", "tt2911666", "tt0111257", "tt4425200", "tt6823368"],
+  },
+  {
+    name: "Tim Burton",
+    type: "director",
+    wikipediaSlug: "Tim_Burton",
+    movies: ["tt0099487", "tt0094721", "tt0096895", "tt0319061", "tt0109592"],
+  },
 ];
 
 function shuffle<T>(arr: T[]): T[] {
