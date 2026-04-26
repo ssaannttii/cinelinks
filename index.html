@@ -474,7 +474,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 <div id="gameScreen" class="screen">
   <header class="g-header">
     <div style="display:flex;gap:10px;align-items:center;flex-shrink:0">
-      <button class="hdr-back" onclick="game.reset()">🏠 Home</button>
+      <button class="hdr-back" onclick="game.reset()"><svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;margin-right:5px"><path d="M1.5 7L7 1.5L12.5 7V13H9V9.5H5V13H1.5Z"/></svg>Home</button>
       <button class="hdr-back" onclick="game.startRandom()" style="color:var(--gold)">&#8635; New</button>
       <span id="hdrDateBadge" style="display:none;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);border:1px solid var(--bdr);border-radius:6px;padding:3px 7px;white-space:nowrap"></span>
     </div>
@@ -541,7 +541,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     <div class="win-route-lbl">Winning route</div>
     <div id="winPath" class="win-path"></div>
     <div class="win-btns">
-      <button class="btn btn-ghost" style="margin:0" onclick="game.reset()">🏠 Home</button>
+      <button class="btn btn-ghost" id="winHomeBtn" style="margin:0" onclick="game.reset()"><svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;margin-right:5px"><path d="M1.5 7L7 1.5L12.5 7V13H9V9.5H5V13H1.5Z"/></svg>Home</button>
       <div class="share-wrap">
         <button class="btn btn-share" style="margin:0;display:flex;align-items:center;justify-content:center;gap:7px" id="shareBtn" onclick="game.toggleShareMenu()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>Share</button>
         <div class="share-menu" id="shareMenu">
@@ -762,7 +762,7 @@ const I18N = {
     creditsTitle: 'Credits',
     loadKicker: 'Mission briefing', loadTxt: 'Locking target chain',
     loadSub: 'Study the endpoints. Every click counts.',
-    hdrHome: '🏠 Home', hdrNew: '⟳ New',
+    hdrHome: '<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;margin-right:5px"><path d="M1.5 7L7 1.5L12.5 7V13H9V9.5H5V13H1.5Z"/></svg>Home', hdrNew: '⟳ New',
     badgeActor: 'ACTOR', badgeMovie: 'MOVIE', badgeTv: 'TV SHOW', badgeDirector: 'DIRECTOR',
     curPromptPerson: 'Choose a film or show from this filmography.',
     curPromptTitle: 'Choose the next person connected to this title.',
@@ -783,7 +783,7 @@ const I18N = {
     winStart: 'Start', winGoal: 'Goal',
     btnShareMenu: 'Share', shareNative: 'Share…', shareX: 'Post on X',
     shareWa: 'WhatsApp', shareCopy: 'Copy link', shareCopied: 'Copied!',
-    btnPlayAgain: 'Play again', btnHome: '🏠 Home',
+    btnPlayAgain: 'Play again', btnHome: '<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;margin-right:5px"><path d="M1.5 7L7 1.5L12.5 7V13H9V9.5H5V13H1.5Z"/></svg>Home',
     shareText: (s, e, n) => `🎬 CineLinks: ${s} → ${e} in ${n} click${n!==1?'s':''}! Can you beat it?`,
     typePerson: 'Person', typeTv: 'TV', typeMovieFull: 'Movie',
     clicksLabel: 'clicks',
@@ -799,7 +799,7 @@ const I18N = {
     creditsTitle: 'Créditos',
     loadKicker: 'Preparando misión', loadTxt: 'Bloqueando cadena objetivo',
     loadSub: 'Estudia los extremos. Cada clic cuenta.',
-    hdrHome: '🏠 Inicio', hdrNew: '⟳ Nueva',
+    hdrHome: '<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;margin-right:5px"><path d="M1.5 7L7 1.5L12.5 7V13H9V9.5H5V13H1.5Z"/></svg>Inicio', hdrNew: '⟳ Nueva',
     badgeActor: 'ACTOR', badgeMovie: 'PELÍCULA', badgeTv: 'SERIE', badgeDirector: 'DIRECTOR',
     curPromptPerson: 'Elige una película o serie de su filmografía.',
     curPromptTitle: 'Elige la siguiente persona conectada a este título.',
@@ -820,7 +820,7 @@ const I18N = {
     winStart: 'Inicio', winGoal: 'Objetivo',
     btnShareMenu: 'Compartir', shareNative: 'Compartir…', shareX: 'Publicar en X',
     shareWa: 'WhatsApp', shareCopy: 'Copiar enlace', shareCopied: '¡Copiado!',
-    btnPlayAgain: 'Jugar de nuevo', btnHome: '🏠 Inicio',
+    btnPlayAgain: 'Jugar de nuevo', btnHome: '<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;margin-right:5px"><path d="M1.5 7L7 1.5L12.5 7V13H9V9.5H5V13H1.5Z"/></svg>Inicio',
     shareText: (s, e, n) => `🎬 CineLinks: ${s} → ${e} en ${n} clic${n!==1?'s':''}. ¿Puedes superarlo?`,
     typePerson: 'Persona', typeTv: 'Serie', typeMovieFull: 'Película',
     clicksLabel: 'clics',
@@ -836,7 +836,7 @@ const I18N = {
     creditsTitle: 'Créditos',
     loadKicker: 'Preparando misión', loadTxt: 'Asegurando cadena objetivo',
     loadSub: 'Estudia los extremos. Cada clic cuenta.',
-    hdrHome: '🏠 Inicio', hdrNew: '⟳ Nueva',
+    hdrHome: '<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;margin-right:5px"><path d="M1.5 7L7 1.5L12.5 7V13H9V9.5H5V13H1.5Z"/></svg>Inicio', hdrNew: '⟳ Nueva',
     badgeActor: 'ACTOR', badgeMovie: 'PELÍCULA', badgeTv: 'SERIE', badgeDirector: 'DIRECTOR',
     curPromptPerson: 'Elige una película o serie de su filmografía.',
     curPromptTitle: 'Elige a la siguiente persona conectada a este título.',
@@ -857,7 +857,7 @@ const I18N = {
     winStart: 'Inicio', winGoal: 'Meta',
     btnShareMenu: 'Compartir', shareNative: 'Compartir…', shareX: 'Publicar en X',
     shareWa: 'WhatsApp', shareCopy: 'Copiar enlace', shareCopied: '¡Copiado!',
-    btnPlayAgain: 'Jugar de nuevo', btnHome: '🏠 Inicio',
+    btnPlayAgain: 'Jugar de nuevo', btnHome: '<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;margin-right:5px"><path d="M1.5 7L7 1.5L12.5 7V13H9V9.5H5V13H1.5Z"/></svg>Inicio',
     shareText: (s, e, n) => `🎬 CineLinks: ${s} → ${e} en ${n} clic${n!==1?'s':''}. ¿Lo puedes superar?`,
     typePerson: 'Persona', typeTv: 'Serie', typeMovieFull: 'Película',
     clicksLabel: 'clics',
@@ -873,7 +873,7 @@ const I18N = {
     creditsTitle: 'Crédits',
     loadKicker: 'Briefing mission', loadTxt: 'Verrouillage de la chaîne cible',
     loadSub: 'Étudiez les extrémités. Chaque clic compte.',
-    hdrHome: '🏠 Accueil', hdrNew: '⟳ Nouveau',
+    hdrHome: '<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;margin-right:5px"><path d="M1.5 7L7 1.5L12.5 7V13H9V9.5H5V13H1.5Z"/></svg>Accueil', hdrNew: '⟳ Nouveau',
     badgeActor: 'ACTEUR', badgeMovie: 'FILM', badgeTv: 'SÉRIE', badgeDirector: 'RÉALISATEUR',
     curPromptPerson: 'Choisissez un film ou une série de sa filmographie.',
     curPromptTitle: 'Choisissez la prochaine personne liée à ce titre.',
@@ -894,7 +894,7 @@ const I18N = {
     winStart: 'Départ', winGoal: 'Objectif',
     btnShareMenu: 'Partager', shareNative: 'Partager…', shareX: 'Publier sur X',
     shareWa: 'WhatsApp', shareCopy: 'Copier le lien', shareCopied: 'Copié !',
-    btnPlayAgain: 'Rejouer', btnHome: '🏠 Accueil',
+    btnPlayAgain: 'Rejouer', btnHome: '<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;margin-right:5px"><path d="M1.5 7L7 1.5L12.5 7V13H9V9.5H5V13H1.5Z"/></svg>Accueil',
     shareText: (s, e, n) => `🎬 CineLinks : ${s} → ${e} en ${n} clic${n!==1?'s':''}. Pouvez-vous faire mieux ?`,
     typePerson: 'Personne', typeTv: 'Série', typeMovieFull: 'Film',
     clicksLabel: 'clics',
@@ -910,7 +910,7 @@ const I18N = {
     creditsTitle: 'Credits',
     loadKicker: 'Missions-Briefing', loadTxt: 'Zielkette wird gesperrt',
     loadSub: 'Studiere die Endpunkte. Jeder Klick zählt.',
-    hdrHome: '🏠 Start', hdrNew: '⟳ Neu',
+    hdrHome: '<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;margin-right:5px"><path d="M1.5 7L7 1.5L12.5 7V13H9V9.5H5V13H1.5Z"/></svg>Start', hdrNew: '⟳ Neu',
     badgeActor: 'SCHAUSPIELER', badgeMovie: 'FILM', badgeTv: 'SERIE', badgeDirector: 'REGISSEUR',
     curPromptPerson: 'Wähle einen Film oder eine Serie aus der Filmografie.',
     curPromptTitle: 'Wähle die nächste Person, die mit diesem Titel verbunden ist.',
@@ -931,7 +931,7 @@ const I18N = {
     winStart: 'Start', winGoal: 'Ziel',
     btnShareMenu: 'Teilen', shareNative: 'Teilen…', shareX: 'Auf X posten',
     shareWa: 'WhatsApp', shareCopy: 'Link kopieren', shareCopied: 'Kopiert!',
-    btnPlayAgain: 'Nochmal spielen', btnHome: '🏠 Start',
+    btnPlayAgain: 'Nochmal spielen', btnHome: '<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;margin-right:5px"><path d="M1.5 7L7 1.5L12.5 7V13H9V9.5H5V13H1.5Z"/></svg>Start',
     shareText: (s, e, n) => `🎬 CineLinks: ${s} → ${e} in ${n} Klick${n!==1?'s':''}. Kannst du es besser?`,
     typePerson: 'Person', typeTv: 'Serie', typeMovieFull: 'Film',
     clicksLabel: 'Klicks',
@@ -947,7 +947,7 @@ const I18N = {
     creditsTitle: 'Créditos',
     loadKicker: 'Briefing da missão', loadTxt: 'Bloqueando cadeia alvo',
     loadSub: 'Estude os extremos. Cada clique conta.',
-    hdrHome: '🏠 Início', hdrNew: '⟳ Novo',
+    hdrHome: '<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;margin-right:5px"><path d="M1.5 7L7 1.5L12.5 7V13H9V9.5H5V13H1.5Z"/></svg>Início', hdrNew: '⟳ Novo',
     badgeActor: 'ATOR', badgeMovie: 'FILME', badgeTv: 'SÉRIE', badgeDirector: 'DIRETOR',
     curPromptPerson: 'Escolha um filme ou série da filmografia.',
     curPromptTitle: 'Escolha a próxima pessoa conectada a este título.',
@@ -968,7 +968,7 @@ const I18N = {
     winStart: 'Início', winGoal: 'Objetivo',
     btnShareMenu: 'Compartilhar', shareNative: 'Compartilhar…', shareX: 'Postar no X',
     shareWa: 'WhatsApp', shareCopy: 'Copiar link', shareCopied: 'Copiado!',
-    btnPlayAgain: 'Jogar de novo', btnHome: '🏠 Início',
+    btnPlayAgain: 'Jogar de novo', btnHome: '<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;margin-right:5px"><path d="M1.5 7L7 1.5L12.5 7V13H9V9.5H5V13H1.5Z"/></svg>Início',
     shareText: (s, e, n) => `🎬 CineLinks: ${s} → ${e} em ${n} clique${n!==1?'s':''}. Consegue superar?`,
     typePerson: 'Pessoa', typeTv: 'Série', typeMovieFull: 'Filme',
     clicksLabel: 'cliques',
@@ -1040,7 +1040,8 @@ function applyI18n() {
   // Win buttons
   const winBtns = document.querySelectorAll('.win-btns button, .win-btns .share-wrap button');
   document.querySelector('.win-btns .btn-gold')?.setAttribute('data-i18n-playagain', '1');
-  document.querySelectorAll('.win-btns .btn-ghost:not(#shareBtn)').forEach(b => { if (b.textContent.trim() === I18N['en-US'].btnHome || b.textContent.trim() === (I18N[_lang]||{}).btnHome) b.textContent = t('btnHome'); });
+  const winHomeBtn = document.getElementById('winHomeBtn');
+  if (winHomeBtn) winHomeBtn.innerHTML = t('btnHome');
   const pa = document.querySelector('.win-btns .btn-gold');
   if (pa) pa.textContent = t('btnPlayAgain');
   // Share menu

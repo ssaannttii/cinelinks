@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import ShareButton from "@/components/ShareButton";
+import HomeIcon from "@/components/HomeIcon";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -233,10 +234,10 @@ export default function CareerPage() {
       <div className="flex items-center justify-between mb-5">
         <button
           onClick={() => router.push("/")}
-          className="text-sm font-medium hover:opacity-80 transition-opacity"
+          className="text-sm font-medium hover:opacity-80 transition-opacity flex items-center gap-1.5"
           style={{ color: "#777" }}
         >
-          ← Back
+          <HomeIcon /> Home
         </button>
         <p className="text-[0.6rem] font-bold tracking-[0.18em] uppercase" style={{ color: "#e8a000" }}>
           Career Mode
@@ -397,17 +398,17 @@ export default function CareerPage() {
             <div className="flex gap-3">
               <button
                 onClick={initGame}
-                className="flex-1 font-bold py-3 rounded-xl hover:opacity-85 transition-all"
+                className="flex-1 font-bold py-3 rounded-xl hover:opacity-85 transition-all flex items-center justify-center gap-2"
                 style={{ background: "#e8a000", color: "#111" }}
               >
                 Next Person
               </button>
               <button
                 onClick={() => router.push("/")}
-                className="flex-1 font-bold py-3 rounded-xl hover:opacity-85 transition-all"
+                className="flex-1 font-bold py-3 rounded-xl hover:opacity-85 transition-all flex items-center justify-center gap-2"
                 style={{ background: "transparent", color: "#f0f0f0", border: "1px solid rgba(255,255,255,0.09)" }}
               >
-                🏠 Home
+                <HomeIcon /> Home
               </button>
             </div>
             <ShareButton
