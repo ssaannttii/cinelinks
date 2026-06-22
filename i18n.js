@@ -9,6 +9,8 @@ const LANGS = {
 
 const I18N = {
   'en-US': {
+    // click singular + goal tag
+    clickSingular: 'click', goalTag: 'GOAL',
     // difficulty labels (from par)
     diffEasy: 'Easy', diffMedium: 'Medium', diffHard: 'Hard', diffExpert: 'Expert', difficultyLabel: 'Difficulty',
     // CineLinks additions: streak / archive / par
@@ -50,6 +52,8 @@ const I18N = {
     clicksLabel: 'clicks',
   },
   'es-ES': {
+    // click singular + goal tag
+    clickSingular: 'clic', goalTag: 'OBJETIVO',
     // difficulty labels (from par)
     diffEasy: 'Fácil', diffMedium: 'Media', diffHard: 'Difícil', diffExpert: 'Experto', difficultyLabel: 'Dificultad',
     // CineLinks additions: streak / archive / par
@@ -91,6 +95,8 @@ const I18N = {
     clicksLabel: 'clics',
   },
   'es-MX': {
+    // click singular + goal tag
+    clickSingular: 'clic', goalTag: 'OBJETIVO',
     // difficulty labels (from par)
     diffEasy: 'Fácil', diffMedium: 'Media', diffHard: 'Difícil', diffExpert: 'Experto', difficultyLabel: 'Dificultad',
     // CineLinks additions: streak / archive / par
@@ -132,6 +138,8 @@ const I18N = {
     clicksLabel: 'clics',
   },
   'fr-FR': {
+    // click singular + goal tag
+    clickSingular: 'clic', goalTag: 'OBJECTIF',
     // difficulty labels (from par)
     diffEasy: 'Facile', diffMedium: 'Moyen', diffHard: 'Difficile', diffExpert: 'Expert', difficultyLabel: 'Difficulté',
     // CineLinks additions: streak / archive / par
@@ -173,6 +181,8 @@ const I18N = {
     clicksLabel: 'clics',
   },
   'de-DE': {
+    // click singular + goal tag
+    clickSingular: 'Klick', goalTag: 'ZIEL',
     // difficulty labels (from par)
     diffEasy: 'Leicht', diffMedium: 'Mittel', diffHard: 'Schwer', diffExpert: 'Experte', difficultyLabel: 'Schwierigkeit',
     // CineLinks additions: streak / archive / par
@@ -214,6 +224,8 @@ const I18N = {
     clicksLabel: 'Klicks',
   },
   'pt-BR': {
+    // click singular + goal tag
+    clickSingular: 'clique', goalTag: 'ALVO',
     // difficulty labels (from par)
     diffEasy: 'Fácil', diffMedium: 'Média', diffHard: 'Difícil', diffExpert: 'Especialista', difficultyLabel: 'Dificuldade',
     // CineLinks additions: streak / archive / par

@@ -27,7 +27,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#0d0d0d;--s1:#181818;--s2:#222;--bdr:rgba(255,255,255,0.09);--txt:#f0f0f0;--mut:#777;--gold:#e8a000;--golddim:rgba(232,160,0,0.15)}
+:root{--bg:#0d0d0d;--s1:#181818;--s2:#222;--bdr:rgba(255,255,255,0.09);--txt:#f0f0f0;--mut:#8d8d8d;--gold:#e8a000;--golddim:rgba(232,160,0,0.15)}
 @property --click-ring{syntax:'<angle>';inherits:false;initial-value:0deg}
 body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(circle at 50% -10%,rgba(232,160,0,.08),transparent 34%),linear-gradient(180deg,#101010 0%,var(--bg) 330px);color:var(--txt);min-height:100vh}
 .screen{display:none}
@@ -35,8 +35,9 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 
 /* START */
 #startScreen{min-height:100vh;align-items:center;justify-content:center;padding:40px 20px;position:relative;overflow:hidden}
-#startScreen::before{content:"";position:absolute;inset:-20%;background:radial-gradient(circle at 25% 20%,rgba(232,160,0,.16),transparent 28%),radial-gradient(circle at 75% 12%,rgba(80,106,135,.18),transparent 30%),linear-gradient(180deg,transparent,#0d0d0d 70%);pointer-events:none}
-.start-inner{width:100%;max-width:520px;text-align:center;position:relative;background:rgba(255,255,255,.045);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:34px 28px 28px;box-shadow:0 30px 80px rgba(0,0,0,.38)}
+#startScreen::before{content:"";position:absolute;inset:-20%;background:radial-gradient(circle at 22% 22%,rgba(232,160,0,.20),transparent 30%),radial-gradient(circle at 78% 14%,rgba(80,106,135,.20),transparent 32%),radial-gradient(circle at 84% 82%,rgba(232,160,0,.10),transparent 34%),linear-gradient(180deg,transparent,#0d0d0d 72%);pointer-events:none}
+.start-inner{width:100%;max-width:560px;text-align:center;position:relative;background:rgba(255,255,255,.045);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:34px 28px 28px;box-shadow:0 30px 80px rgba(0,0,0,.38)}
+@media (min-width:1000px){.start-inner{max-width:620px;padding:42px 44px 34px}.start-logo{max-width:300px}}
 .start-kicker{font-size:.62rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:12px}
 .start-logo{width:100%;max-width:280px;height:auto;display:block;margin:0 auto 20px}
 .tagline{color:var(--mut);font-size:0.95rem;line-height:1.5;margin:0 auto 24px;max-width:360px}
@@ -107,8 +108,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .btn-sm{padding:6px 12px;font-size:.75rem;border-radius:8px;margin:0}
 .how{margin-top:26px;border-top:1px solid var(--bdr);padding-top:20px;text-align:left}
 .how-title{font-size:.65rem;font-weight:600;letter-spacing:.1em;color:var(--mut);text-transform:uppercase;margin-bottom:10px}
-.how li{list-style:none;color:var(--mut);font-size:.83rem;line-height:1.8;padding-left:14px;position:relative}
-.how li::before{content:"→";position:absolute;left:0;color:var(--gold)}
+.how li{list-style:none;color:var(--mut);font-size:.83rem;line-height:1.8;padding-left:22px;position:relative}
+.how li::before{content:"→";position:absolute;left:0;color:var(--gold);font-weight:600}
 .credits{margin-top:22px;border-top:1px solid var(--bdr);padding-top:18px;text-align:left}
 .credits-title{font-size:.65rem;font-weight:600;letter-spacing:.1em;color:var(--mut);text-transform:uppercase;margin-bottom:10px}
 .lang-picker{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:18px;padding-top:16px;border-top:1px solid var(--bdr)}
@@ -201,6 +202,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .cur-card::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(24,24,24,.98) 0%,rgba(24,24,24,.9) 32%,rgba(24,24,24,.62) 70%,rgba(24,24,24,.5)),linear-gradient(135deg,rgba(232,160,0,.13),transparent 52%);opacity:0;transition:opacity .2s}
 .cur-card.has-bg{border-color:rgba(232,160,0,.18);box-shadow:0 16px 34px rgba(0,0,0,.22)}
 .cur-card.has-bg::before{opacity:.82}
+.cur-card.has-bg.is-person-bg::before{opacity:.55}
 .cur-card.has-bg::after{opacity:1}
 .cur-card>*{position:relative;z-index:1}
 .cur-img{flex-shrink:0;width:80px;height:120px;border-radius:8px;overflow:hidden;background:var(--s2);box-shadow:0 12px 26px rgba(0,0,0,.28)}
@@ -281,10 +283,13 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .card:not(.visited)::before{content:"Choose";position:absolute;top:8px;right:8px;z-index:2;background:rgba(13,13,13,.78);border:1px solid rgba(232,160,0,.32);border-radius:8px;color:var(--gold);font-size:.58rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 6px;opacity:0;transform:translateY(-3px);transition:opacity .15s,transform .15s;pointer-events:none}
 .card:not(.visited):hover::before{opacity:1;transform:translateY(0)}
 .card:hover .card-img img{filter:brightness(.72) saturate(1.08)}
-.card.goal{border-color:rgba(232,160,0,.55);box-shadow:0 0 12px var(--golddim),0 0 0 1px rgba(232,160,0,.15);position:relative;overflow:hidden;animation:goalCardGlow 3s ease-in-out infinite}
-/* Shine sweep — runs once every 3s (delay covers the pause between sweeps) */
-.card.goal::after{content:"";position:absolute;inset:0 auto 0 -80%;width:60%;background:linear-gradient(90deg,transparent,rgba(232,160,0,.22),rgba(255,255,255,.08),transparent);transform:skewX(-12deg);animation:goalShine 3s ease-in-out infinite;pointer-events:none;z-index:2}
-@keyframes goalCardGlow{0%,100%{box-shadow:0 0 10px var(--golddim),0 0 0 1px rgba(232,160,0,.12)}50%{box-shadow:0 0 22px rgba(232,160,0,.35),0 0 0 1px rgba(232,160,0,.28)}}
+.card.goal{border-color:rgba(232,160,0,.85);box-shadow:0 0 16px rgba(232,160,0,.3),0 0 0 2px rgba(232,160,0,.4);position:relative;overflow:hidden;animation:goalCardGlow 2.1s ease-in-out infinite}
+/* Shine sweep — runs once every 2.4s (delay covers the pause between sweeps) */
+.card.goal::after{content:"";position:absolute;inset:0 auto 0 -80%;width:60%;background:linear-gradient(90deg,transparent,rgba(232,160,0,.3),rgba(255,255,255,.12),transparent);transform:skewX(-12deg);animation:goalShine 2.4s ease-in-out infinite;pointer-events:none;z-index:2}
+@keyframes goalCardGlow{0%,100%{box-shadow:0 0 14px rgba(232,160,0,.28),0 0 0 2px rgba(232,160,0,.34)}50%{box-shadow:0 0 36px rgba(232,160,0,.6),0 0 0 2px rgba(232,160,0,.62)}}
+/* GOAL badge on the target card */
+.card-goal-tag{position:absolute;top:8px;left:8px;z-index:3;display:flex;align-items:center;gap:4px;background:var(--gold);color:#1a1200;font-size:.56rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:4px 7px;border-radius:7px;box-shadow:0 2px 12px rgba(232,160,0,.55);animation:goalTagPop .42s cubic-bezier(.22,1,.36,1) both;pointer-events:none}
+@keyframes goalTagPop{0%{transform:scale(0) translateY(-4px);opacity:0}70%{transform:scale(1.14)}100%{transform:scale(1);opacity:1}}
 @keyframes goalShine{0%{transform:translateX(0) skewX(-12deg);opacity:0}8%{opacity:1}28%{transform:translateX(320%) skewX(-12deg);opacity:0}100%{transform:translateX(320%) skewX(-12deg);opacity:0}}
 .card.visited{opacity:.38;cursor:not-allowed;pointer-events:none;position:relative}
 .card.visited::after{content:"Already visited";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:600;color:var(--mut);background:rgba(0,0,0,.55);text-align:center;padding:4px;pointer-events:none}
@@ -465,7 +470,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
       <button class="btn btn-ghost" onclick="game.startRandom()">Random Game</button>
     </div>
     <button class="creator-btn" onclick="creator.open()">+ Create your own challenge</button>
-    <button class="archive-btn" id="archiveBtn" onclick="game.openArchive()">&#128197; Past challenges</button>
+    <button class="archive-btn" id="archiveBtn" onclick="game.openArchive()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-2px;margin-right:7px"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Past challenges</button>
     <a href="https://cinerating.vercel.app" target="_blank" rel="noopener" class="cinerating-link">
       <span class="cinerating-link-icon">⭐</span>
       <span class="cinerating-link-text">
@@ -831,7 +836,7 @@ function applyI18n() {
   if (btnDaily) btnDaily.textContent = t('btnToday');
   if (btnRandom) btnRandom.textContent = t('btnRandom');
   const archBtn = document.getElementById('archiveBtn');
-  if (archBtn) archBtn.innerHTML = '📅 ' + t('archiveBtn');
+  if (archBtn) archBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-2px;margin-right:7px"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>' + t('archiveBtn');
   const archTitle = document.getElementById('archiveTitle');
   if (archTitle) archTitle.textContent = t('archiveTitle');
   const howTitle = document.querySelector('.how-title');
@@ -860,8 +865,9 @@ function applyI18n() {
   if (tabAll) tabAll.textContent = t('tabAll');
   if (tabMov) tabMov.textContent = t('tabMovies');
   if (tabTv)  tabTv.textContent  = t('tabTv');
-  // Clicks label
-  document.querySelectorAll('.clicks-l').forEach(el => el.textContent = t('clicksLabel'));
+  // Clicks label (singular/plural aware)
+  const _cn = (window.game && game.clicks) || 0;
+  document.querySelectorAll('.clicks-l').forEach(el => el.textContent = t(_cn === 1 ? 'clickSingular' : 'clicksLabel'));
   // Win screen static
   const winH = document.querySelector('.win-h');
   if (winH) winH.textContent = t('winTitle');
@@ -1681,6 +1687,7 @@ const game = window.game = {
     document.getElementById('startNodeName').textContent = start.name + nodeHeaderSuffix(start);
     document.getElementById('endNodeName').textContent   = end.name + nodeHeaderSuffix(end);
     document.getElementById('clickCounter').textContent  = this.clicks;
+    this._updateClicksLabel();
     document.querySelector('.hdr-clicks')?.style.setProperty('--click-ring', this.clickRing());
     this.renderDebugStats();
 
@@ -1748,7 +1755,10 @@ const game = window.game = {
 
   setCurCardBg(url) {
     const card = document.querySelector('.cur-card');
-    const canUseBg = url && this.cur && this.cur.type !== 'person';
+    // Ambient backdrop for every node type (including people) so the card never
+    // looks half-empty. The blur + side gradient keep it subtle.
+    const canUseBg = !!(url && this.cur);
+    card.classList.toggle('is-person-bg', !!(canUseBg && this.cur.type === 'person'));
     card.classList.toggle('has-bg', !!canUseBg);
     if (canUseBg) {
       card.style.setProperty('--cur-bg', 'url("' + url.replace(/"/g, '%22') + '")');
@@ -1966,6 +1976,14 @@ const game = window.game = {
     grid.appendChild(empty);
   },
 
+  // Keep the small-caps label grammatically correct ("1 click" vs "5 clicks").
+  _updateClicksLabel() {
+    const singular = this.clicks === 1;
+    document.querySelectorAll('.clicks-l').forEach(el => {
+      el.textContent = t(singular ? 'clickSingular' : 'clicksLabel');
+    });
+  },
+
   _goBack() {
     if (this.path.length <= 1) return;
     // Remove last node from path and visited
@@ -1976,6 +1994,7 @@ const game = window.game = {
 
     const ctr = document.getElementById('clickCounter');
     ctr.textContent = this.clicks;
+    this._updateClicksLabel();
     document.querySelector('.hdr-clicks')?.style.setProperty('--click-ring', this.clickRing());
 
     this.renderCurrent();
@@ -2123,6 +2142,17 @@ const game = window.game = {
         }
       }
 
+      // When the goal is on screen, scroll it into view so it's never missed.
+      if (goalItem) {
+        const goalCard = grid.querySelector('.card.goal');
+        if (goalCard) {
+          const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          setTimeout(() => {
+            try { goalCard.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' }); } catch(_) {}
+          }, 440);
+        }
+      }
+
       // Dead-end detection: all connections already visited → auto go-back
       const allVisited = items.every(i => this.visited.has(i.type + '-' + i.id));
       if (allVisited && this.path.length > 1) {
@@ -2178,6 +2208,7 @@ const game = window.game = {
 
     const ctr = document.getElementById('clickCounter');
     ctr.textContent = this.clicks;
+    this._updateClicksLabel();
     document.querySelector('.hdr-clicks')?.style.setProperty('--click-ring', this.clickRing());
     ctr.classList.remove('popping');
     void ctr.offsetWidth;
@@ -2395,6 +2426,12 @@ const game = window.game = {
     div.innerHTML = '<div class="' + imgClass + '">' + imgHtml + '</div>' +
       '<div class="card-info"><div class="card-name">' + item.name.replace(/</g,'&lt;') + '</div>' +
       '<div class="card-sub">' + subHtml + '</div></div>';
+    if (isGoal && !isVisited) {
+      const tag = document.createElement('span');
+      tag.className = 'card-goal-tag';
+      tag.innerHTML = '🎯 ' + t('goalTag');
+      div.appendChild(tag);
+    }
     if (!isVisited) {
       div.onclick = () => {
         div.classList.add('tapping');
