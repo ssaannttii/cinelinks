@@ -1,6 +1,14 @@
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
+const crypto = require('crypto');
+const { redisCommand } = require('./_redis');
+
+function safeEqual(a, b) {
+  const ab = Buffer.from(String(a));
+  const bb = Buffer.from(String(b));
+  return ab.length === bb.length && crypto.timingSafeEqual(ab, bb);
+}
 
 function requireAdmin(req, res) {
   const expected = process.env.ADMIN_PASSWORD;
@@ -9,27 +17,14 @@ function requireAdmin(req, res) {
     return false;
   }
 
-  const provided = req.headers['x-admin-password'] || (req.body && req.body.password) || req.query.password;
-  if (provided !== expected) {
+  // Header or POST body only — never the query string (it leaks into logs).
+  const provided = req.headers['x-admin-password'] || (req.body && req.body.password) || '';
+  if (!safeEqual(provided, expected)) {
     res.status(401).json({ error: 'Unauthorized' });
     return false;
   }
 
   return true;
-}
-
-async function redisCommand(commands) {
-  const url = process.env.KV_REST_API_URL;
-  const token = process.env.KV_REST_API_TOKEN;
-  if (!url || !token) throw new Error('Redis not configured');
-
-  const res = await fetch(url + '/pipeline', {
-    method: 'POST',
-    headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
-    body: JSON.stringify(commands)
-  });
-  if (!res.ok) throw new Error('Redis error: ' + res.status);
-  return res.json();
 }
 
 function requestJson(tmdbPath) {

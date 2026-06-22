@@ -3,7 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CineLinks</title>
+<title>CineLinks — Connect actors, movies & TV in the fewest clicks</title>
+<meta name="description" content="A daily film-trivia game: connect actors, movies, directors and TV shows in as few clicks as possible. New challenge every day. Data from TMDB.">
+<meta name="theme-color" content="#0d0d0d">
+<link rel="canonical" href="https://cinelinks.vercel.app/">
+<link rel="icon" type="image/png" href="/logo.png">
+<link rel="apple-touch-icon" href="/logo.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="CineLinks">
+<meta property="og:title" content="CineLinks — Connect the film world in the fewest clicks">
+<meta property="og:description" content="A daily film-trivia game: connect actors, movies, directors and TV shows in as few clicks as possible. New challenge every day.">
+<meta property="og:url" content="https://cinelinks.vercel.app/">
+<meta property="og:image" content="https://cinelinks.vercel.app/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="CineLinks — Connect the film world in the fewest clicks">
+<meta name="twitter:description" content="A daily film-trivia game: connect actors, movies, directors and TV shows in as few clicks as possible.">
+<meta name="twitter:image" content="https://cinelinks.vercel.app/og-image.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -29,6 +49,21 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 /* Challenge creator */
 .creator-btn{width:100%;margin-top:8px;padding:10px;border-radius:10px;border:1px dashed rgba(232,160,0,.35);background:transparent;color:var(--mut);font-family:inherit;font-size:.82rem;font-weight:600;cursor:pointer;transition:border-color .15s,color .15s,background .15s}
 .creator-btn:hover{border-color:var(--gold);color:var(--gold);background:rgba(232,160,0,.05)}
+.archive-btn{width:100%;margin-top:8px;padding:9px;border-radius:10px;border:1px solid var(--bdr);background:transparent;color:var(--mut);font-family:inherit;font-size:.8rem;font-weight:600;cursor:pointer;transition:border-color .15s,color .15s,background .15s}
+.archive-btn:hover{border-color:rgba(232,160,0,.5);color:var(--gold);background:rgba(232,160,0,.04)}
+.arch-modal{display:none;position:fixed;inset:0;z-index:210;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.72);backdrop-filter:blur(6px)}
+.arch-modal.open{display:flex;animation:briefingIn .22s ease both}
+.arch-box{background:var(--s1);border:1px solid rgba(232,160,0,.18);border-radius:14px;padding:18px;max-width:460px;width:100%;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 24px 70px rgba(0,0,0,.4)}
+.arch-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.arch-head h2{font-size:1.05rem;font-weight:800}
+.arch-close{background:transparent;border:none;color:var(--mut);font-size:1.2rem;cursor:pointer;line-height:1;padding:4px}
+.arch-close:hover{color:var(--txt)}
+.arch-list{display:flex;flex-direction:column;gap:6px;overflow-y:auto}
+.arch-item{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:11px 13px;border-radius:9px;border:1px solid var(--bdr);background:rgba(255,255,255,.025);color:var(--txt);font-family:inherit;font-size:.86rem;font-weight:600;cursor:pointer;text-align:left;transition:background .12s,border-color .12s}
+.arch-item:hover{background:rgba(232,160,0,.08);border-color:rgba(232,160,0,.4)}
+.arch-date{display:flex;align-items:center;gap:8px}
+.arch-today{font-size:.62rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);background:rgba(232,160,0,.14);padding:2px 7px;border-radius:999px}
+.arch-done{font-size:.74rem;font-weight:700;color:#5bbd7a}
 .cinerating-link{display:flex;align-items:center;gap:12px;width:100%;margin-top:8px;padding:12px 14px;border-radius:12px;border:1px solid rgba(232,160,0,.25);background:rgba(232,160,0,.07);color:var(--txt);text-decoration:none;transition:background .15s,border-color .15s,transform .15s}
 .cinerating-link:hover{background:rgba(232,160,0,.12);border-color:rgba(232,160,0,.45);transform:translateY(-1px)}
 .cinerating-link-icon{font-size:1.4rem;flex-shrink:0;width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:rgba(232,160,0,.15);border-radius:9px}
@@ -305,6 +340,14 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .stat-n{font-size:1.8rem;font-weight:700;color:var(--gold)}
 .stat-l{font-size:.68rem;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
 .win-cmp{font-size:.83rem;color:var(--txt);margin-bottom:20px;padding:11px 12px;background:rgba(232,160,0,.08);border:1px solid rgba(232,160,0,.16);border-radius:8px}
+.win-streak{display:inline-flex;align-items:center;gap:7px;margin:0 auto 14px;padding:7px 14px;border-radius:999px;background:rgba(232,160,0,.1);border:1px solid rgba(232,160,0,.28);color:var(--txt);font-size:.82rem;font-weight:700}
+.win-streak .ws-flame{font-size:1rem;line-height:1}
+.win-streak .ws-n{color:var(--gold);font-weight:800}
+.win-streak .ws-best{color:var(--mut);font-weight:600;font-size:.74rem}
+.win-streak.ws-pop{animation:winBoxIn .4s cubic-bezier(.22,1,.36,1) both}
+.win-par{font-size:.8rem;color:var(--mut);margin:-6px 0 12px}
+.win-par .wp-par-n{color:var(--txt);font-weight:700}
+.win-par .wp-par-you{color:var(--gold);font-weight:800}
 .win-avg{font-size:.78rem;color:var(--mut);margin-top:8px;min-height:1.2em;text-align:center}
 .win-avg strong{color:var(--txt)}
 .win-record-callout{display:inline-block;margin-bottom:7px;color:var(--gold);font-size:.8rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
@@ -421,6 +464,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
       <button class="btn btn-ghost" onclick="game.startRandom()">Random Game</button>
     </div>
     <button class="creator-btn" onclick="creator.open()">+ Create your own challenge</button>
+    <button class="archive-btn" id="archiveBtn" onclick="game.openArchive()">&#128197; Past challenges</button>
     <a href="https://cinerating.vercel.app" target="_blank" rel="noopener" class="cinerating-link">
       <span class="cinerating-link-icon">⭐</span>
       <span class="cinerating-link-text">
@@ -454,6 +498,16 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
         <button class="lang-btn" data-lang="pt-BR" onclick="setLang('pt-BR')">Português</button>
       </div>
     </div>
+  </div>
+</div>
+
+<div id="archiveModal" class="arch-modal" onclick="if(event.target===this)game.closeArchive()">
+  <div class="arch-box">
+    <div class="arch-head">
+      <h2 id="archiveTitle">Past challenges</h2>
+      <button class="arch-close" id="archiveCloseBtn" onclick="game.closeArchive()" aria-label="Close">&#10005;</button>
+    </div>
+    <div class="arch-list" id="archiveList"></div>
   </div>
 </div>
 
@@ -537,6 +591,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     <div class="stats">
       <div class="stat"><div id="playerClicks" class="stat-n">0</div><div class="stat-l">Clicks</div></div>
     </div>
+    <div id="winStreak" class="win-streak" style="display:none"></div>
+    <div id="winPar" class="win-par" style="display:none"></div>
     <div id="winAvg" class="win-avg"></div>
     <div class="win-route-lbl">Winning route</div>
     <div id="winPath" class="win-path"></div>
@@ -613,7 +669,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   </div>
 </div>
 
-<script src="daily-challenges.js"></script>
+<script src="i18n.js"></script>
+<script src="lib/credits.js"></script>
 <script>
 const DAILY_TIME_ZONE = 'Europe/Madrid';
 const DAILY_ALGO_VERSION = 2;
@@ -745,235 +802,6 @@ const DAILY_POOL = {
 
 const IMGBASE = 'https://image.tmdb.org/t/p/w342';
 
-const LANGS = {
-  'en-US': 'English', 'es-ES': 'Español (ES)', 'es-MX': 'Español (MX)',
-  'fr-FR': 'Français', 'de-DE': 'Deutsch', 'pt-BR': 'Português'
-};
-
-const I18N = {
-  'en-US': {
-    tagline: 'Connect actors, movies, directors, and TV shows in the fewest clicks.',
-    nodeActor: 'Actor', nodeMovie: 'Movie', nodeTarget: 'Target',
-    btnToday: "Today's Challenge", btnRandom: 'Random Game',
-    rulesTitle: 'Rules',
-    rule1: 'Start at one actor or movie',
-    rule2: 'Choose connections through cast, crew, and filmographies',
-    rule3: 'Reach the goal in as few clicks as possible',
-    creditsTitle: 'Credits',
-    loadKicker: 'Mission briefing', loadTxt: 'Locking target chain',
-    loadSub: 'Study the endpoints. Every click counts.',
-    hdrHome: '<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;margin-right:5px"><path d="M1.5 7L7 1.5L12.5 7V13H9V9.5H5V13H1.5Z"/></svg>Home', hdrNew: '⟳ New',
-    badgeActor: 'ACTOR', badgeMovie: 'MOVIE', badgeTv: 'TV SHOW', badgeDirector: 'DIRECTOR',
-    curPromptPerson: 'Choose a film or show from this filmography.',
-    curPromptTitle: 'Choose the next person connected to this title.',
-    tabAll: 'All', tabMovies: 'Movies', tabTv: 'TV',
-    sectionConnections: 'CHOOSE YOUR NEXT CONNECTION',
-    sectionDirector: 'DIRECTOR', sectionDirectors: 'DIRECTORS',
-    sectionMainCast: 'MAIN CAST', sectionAdditionalCast: 'ADDITIONAL CAST', sectionCast: 'CAST',
-    tvBadge: 'Series',
-    emptyNoData: 'Dead end — no cast data', emptyError: 'Could not load this step',
-    emptyBodyError: 'The connection data failed to load. Try going back or start a new game.',
-    emptyBodyNoData: (t) => `TMDB doesn't have usable cast or crew for this ${t}. This is a data gap on their end — try a different path.`,
-    typeShow: 'TV show', typeFilm: 'film', typeTitle: 'title',
-    btnGoBack: '← Go back', btnCopyDebug: 'Copy debug link', btnNewGame: 'New game',
-    deadEndToast: (n) => `Dead end — all connections from ${n} already visited. Going back…`,
-    goalBanner: (n) => `The goal is in reach — <strong>${n}</strong> is here!`,
-    winTitle: 'You made it!', winSub: 'You connected the dots.',
-    winClicks: 'Clicks', winRoute: 'Winning route',
-    winStart: 'Start', winGoal: 'Goal',
-    btnShareMenu: 'Share', shareNative: 'Share…', shareX: 'Post on X',
-    shareWa: 'WhatsApp', shareCopy: 'Copy link', shareCopied: 'Copied!',
-    btnPlayAgain: 'Play again', btnHome: '<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;margin-right:5px"><path d="M1.5 7L7 1.5L12.5 7V13H9V9.5H5V13H1.5Z"/></svg>Home',
-    shareText: (s, e, n) => `🎬 CineLinks: ${s} → ${e} in ${n} click${n!==1?'s':''}! Can you beat it?`,
-    typePerson: 'Person', typeTv: 'TV', typeMovieFull: 'Movie',
-    clicksLabel: 'clicks',
-  },
-  'es-ES': {
-    tagline: 'Conecta actores, películas, directores y series en el menor número de clics.',
-    nodeActor: 'Actor', nodeMovie: 'Película', nodeTarget: 'Objetivo',
-    btnToday: 'Reto del día', btnRandom: 'Partida aleatoria',
-    rulesTitle: 'Reglas',
-    rule1: 'Empieza con un actor o una película',
-    rule2: 'Navega por el reparto, directores y filmografías',
-    rule3: 'Llega al objetivo en el menor número de clics',
-    creditsTitle: 'Créditos',
-    loadKicker: 'Preparando misión', loadTxt: 'Bloqueando cadena objetivo',
-    loadSub: 'Estudia los extremos. Cada clic cuenta.',
-    hdrHome: '<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;margin-right:5px"><path d="M1.5 7L7 1.5L12.5 7V13H9V9.5H5V13H1.5Z"/></svg>Inicio', hdrNew: '⟳ Nueva',
-    badgeActor: 'ACTOR', badgeMovie: 'PELÍCULA', badgeTv: 'SERIE', badgeDirector: 'DIRECTOR',
-    curPromptPerson: 'Elige una película o serie de su filmografía.',
-    curPromptTitle: 'Elige la siguiente persona conectada a este título.',
-    tabAll: 'Todo', tabMovies: 'Películas', tabTv: 'Series',
-    sectionConnections: 'ELIGE TU SIGUIENTE CONEXIÓN',
-    sectionDirector: 'DIRECTOR', sectionDirectors: 'DIRECTORES',
-    sectionMainCast: 'REPARTO PRINCIPAL', sectionAdditionalCast: 'REPARTO SECUNDARIO', sectionCast: 'REPARTO',
-    tvBadge: 'Serie',
-    emptyNoData: 'Callejón sin salida — sin datos de reparto', emptyError: 'No se pudo cargar este paso',
-    emptyBodyError: 'No se han podido cargar los datos. Vuelve atrás o inicia una nueva partida.',
-    emptyBodyNoData: (t) => `TMDB no tiene reparto o crew utilizable para este ${t}. Es un hueco en sus datos — prueba otro camino.`,
-    typeShow: 'serie', typeFilm: 'película', typeTitle: 'título',
-    btnGoBack: '← Volver', btnCopyDebug: 'Copiar enlace debug', btnNewGame: 'Nueva partida',
-    deadEndToast: (n) => `Callejón sin salida — todas las conexiones de ${n} ya visitadas. Volviendo…`,
-    goalBanner: (n) => `¡El objetivo está al alcance — <strong>${n}</strong> está aquí!`,
-    winTitle: '¡Lo conseguiste!', winSub: 'Has conectado los puntos.',
-    winClicks: 'Clics', winRoute: 'Ruta ganadora',
-    winStart: 'Inicio', winGoal: 'Objetivo',
-    btnShareMenu: 'Compartir', shareNative: 'Compartir…', shareX: 'Publicar en X',
-    shareWa: 'WhatsApp', shareCopy: 'Copiar enlace', shareCopied: '¡Copiado!',
-    btnPlayAgain: 'Jugar de nuevo', btnHome: '<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;margin-right:5px"><path d="M1.5 7L7 1.5L12.5 7V13H9V9.5H5V13H1.5Z"/></svg>Inicio',
-    shareText: (s, e, n) => `🎬 CineLinks: ${s} → ${e} en ${n} clic${n!==1?'s':''}. ¿Puedes superarlo?`,
-    typePerson: 'Persona', typeTv: 'Serie', typeMovieFull: 'Película',
-    clicksLabel: 'clics',
-  },
-  'es-MX': {
-    tagline: 'Conecta actores, películas, directores y series en el menor número de clics.',
-    nodeActor: 'Actor', nodeMovie: 'Película', nodeTarget: 'Meta',
-    btnToday: 'Reto del día', btnRandom: 'Partida aleatoria',
-    rulesTitle: 'Reglas',
-    rule1: 'Empieza con un actor o una película',
-    rule2: 'Navega por el reparto, directores y filmografías',
-    rule3: 'Llega a la meta en el menor número de clics',
-    creditsTitle: 'Créditos',
-    loadKicker: 'Preparando misión', loadTxt: 'Asegurando cadena objetivo',
-    loadSub: 'Estudia los extremos. Cada clic cuenta.',
-    hdrHome: '<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;margin-right:5px"><path d="M1.5 7L7 1.5L12.5 7V13H9V9.5H5V13H1.5Z"/></svg>Inicio', hdrNew: '⟳ Nueva',
-    badgeActor: 'ACTOR', badgeMovie: 'PELÍCULA', badgeTv: 'SERIE', badgeDirector: 'DIRECTOR',
-    curPromptPerson: 'Elige una película o serie de su filmografía.',
-    curPromptTitle: 'Elige a la siguiente persona conectada a este título.',
-    tabAll: 'Todo', tabMovies: 'Películas', tabTv: 'Series',
-    sectionConnections: 'ELIGE TU SIGUIENTE CONEXIÓN',
-    sectionDirector: 'DIRECTOR', sectionDirectors: 'DIRECTORES',
-    sectionMainCast: 'REPARTO PRINCIPAL', sectionAdditionalCast: 'REPARTO SECUNDARIO', sectionCast: 'REPARTO',
-    tvBadge: 'Serie',
-    emptyNoData: 'Callejón sin salida — sin datos de reparto', emptyError: 'No se pudo cargar este paso',
-    emptyBodyError: 'No se cargaron los datos. Regresa o inicia una nueva partida.',
-    emptyBodyNoData: (t) => `TMDB no tiene reparto o crew para esta ${t}. Es un hueco en sus datos — intenta otro camino.`,
-    typeShow: 'serie', typeFilm: 'película', typeTitle: 'título',
-    btnGoBack: '← Regresar', btnCopyDebug: 'Copiar enlace debug', btnNewGame: 'Nueva partida',
-    deadEndToast: (n) => `Callejón sin salida — todas las conexiones de ${n} ya visitadas. Regresando…`,
-    goalBanner: (n) => `¡La meta está cerca — <strong>${n}</strong> está aquí!`,
-    winTitle: '¡Lo lograste!', winSub: 'Conectaste los puntos.',
-    winClicks: 'Clics', winRoute: 'Ruta ganadora',
-    winStart: 'Inicio', winGoal: 'Meta',
-    btnShareMenu: 'Compartir', shareNative: 'Compartir…', shareX: 'Publicar en X',
-    shareWa: 'WhatsApp', shareCopy: 'Copiar enlace', shareCopied: '¡Copiado!',
-    btnPlayAgain: 'Jugar de nuevo', btnHome: '<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;margin-right:5px"><path d="M1.5 7L7 1.5L12.5 7V13H9V9.5H5V13H1.5Z"/></svg>Inicio',
-    shareText: (s, e, n) => `🎬 CineLinks: ${s} → ${e} en ${n} clic${n!==1?'s':''}. ¿Lo puedes superar?`,
-    typePerson: 'Persona', typeTv: 'Serie', typeMovieFull: 'Película',
-    clicksLabel: 'clics',
-  },
-  'fr-FR': {
-    tagline: 'Connectez acteurs, films, réalisateurs et séries en un minimum de clics.',
-    nodeActor: 'Acteur', nodeMovie: 'Film', nodeTarget: 'Cible',
-    btnToday: "Défi du jour", btnRandom: 'Partie aléatoire',
-    rulesTitle: 'Règles',
-    rule1: 'Commencez par un acteur ou un film',
-    rule2: 'Naviguez via les castings, réalisateurs et filmographies',
-    rule3: "Atteignez l'objectif en le moins de clics possible",
-    creditsTitle: 'Crédits',
-    loadKicker: 'Briefing mission', loadTxt: 'Verrouillage de la chaîne cible',
-    loadSub: 'Étudiez les extrémités. Chaque clic compte.',
-    hdrHome: '<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;margin-right:5px"><path d="M1.5 7L7 1.5L12.5 7V13H9V9.5H5V13H1.5Z"/></svg>Accueil', hdrNew: '⟳ Nouveau',
-    badgeActor: 'ACTEUR', badgeMovie: 'FILM', badgeTv: 'SÉRIE', badgeDirector: 'RÉALISATEUR',
-    curPromptPerson: 'Choisissez un film ou une série de sa filmographie.',
-    curPromptTitle: 'Choisissez la prochaine personne liée à ce titre.',
-    tabAll: 'Tout', tabMovies: 'Films', tabTv: 'Séries',
-    sectionConnections: 'CHOISISSEZ VOTRE PROCHAINE CONNEXION',
-    sectionDirector: 'RÉALISATEUR', sectionDirectors: 'RÉALISATEURS',
-    sectionMainCast: 'CASTING PRINCIPAL', sectionAdditionalCast: 'CASTING SECONDAIRE', sectionCast: 'CASTING',
-    tvBadge: 'Série',
-    emptyNoData: 'Impasse — aucune donnée de casting', emptyError: 'Impossible de charger cette étape',
-    emptyBodyError: 'Les données de connexion ont échoué. Revenez en arrière ou commencez une nouvelle partie.',
-    emptyBodyNoData: (t) => `TMDB n'a pas de casting utilisable pour ce ${t}. C'est un manque dans leurs données — essayez un autre chemin.`,
-    typeShow: 'série', typeFilm: 'film', typeTitle: 'titre',
-    btnGoBack: '← Retour', btnCopyDebug: 'Copier le lien debug', btnNewGame: 'Nouvelle partie',
-    deadEndToast: (n) => `Impasse — toutes les connexions de ${n} déjà visitées. Retour en arrière…`,
-    goalBanner: (n) => `L'objectif est à portée — <strong>${n}</strong> est ici !`,
-    winTitle: 'Vous avez réussi !', winSub: 'Vous avez connecté les points.',
-    winClicks: 'Clics', winRoute: 'Route gagnante',
-    winStart: 'Départ', winGoal: 'Objectif',
-    btnShareMenu: 'Partager', shareNative: 'Partager…', shareX: 'Publier sur X',
-    shareWa: 'WhatsApp', shareCopy: 'Copier le lien', shareCopied: 'Copié !',
-    btnPlayAgain: 'Rejouer', btnHome: '<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;margin-right:5px"><path d="M1.5 7L7 1.5L12.5 7V13H9V9.5H5V13H1.5Z"/></svg>Accueil',
-    shareText: (s, e, n) => `🎬 CineLinks : ${s} → ${e} en ${n} clic${n!==1?'s':''}. Pouvez-vous faire mieux ?`,
-    typePerson: 'Personne', typeTv: 'Série', typeMovieFull: 'Film',
-    clicksLabel: 'clics',
-  },
-  'de-DE': {
-    tagline: 'Verbinde Schauspieler, Filme, Regisseure und Serien in möglichst wenigen Klicks.',
-    nodeActor: 'Schauspieler', nodeMovie: 'Film', nodeTarget: 'Ziel',
-    btnToday: 'Heutige Challenge', btnRandom: 'Zufälliges Spiel',
-    rulesTitle: 'Regeln',
-    rule1: 'Starte mit einem Schauspieler oder einem Film',
-    rule2: 'Navigiere durch Besetzung, Regisseure und Filmografien',
-    rule3: 'Erreiche das Ziel in so wenigen Klicks wie möglich',
-    creditsTitle: 'Credits',
-    loadKicker: 'Missions-Briefing', loadTxt: 'Zielkette wird gesperrt',
-    loadSub: 'Studiere die Endpunkte. Jeder Klick zählt.',
-    hdrHome: '<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;margin-right:5px"><path d="M1.5 7L7 1.5L12.5 7V13H9V9.5H5V13H1.5Z"/></svg>Start', hdrNew: '⟳ Neu',
-    badgeActor: 'SCHAUSPIELER', badgeMovie: 'FILM', badgeTv: 'SERIE', badgeDirector: 'REGISSEUR',
-    curPromptPerson: 'Wähle einen Film oder eine Serie aus der Filmografie.',
-    curPromptTitle: 'Wähle die nächste Person, die mit diesem Titel verbunden ist.',
-    tabAll: 'Alle', tabMovies: 'Filme', tabTv: 'Serien',
-    sectionConnections: 'WÄHLE DEINE NÄCHSTE VERBINDUNG',
-    sectionDirector: 'REGISSEUR', sectionDirectors: 'REGISSEURE',
-    sectionMainCast: 'HAUPTBESETZUNG', sectionAdditionalCast: 'NEBENBESETZUNG', sectionCast: 'BESETZUNG',
-    tvBadge: 'Serie',
-    emptyNoData: 'Sackgasse — keine Besetzungsdaten', emptyError: 'Dieser Schritt konnte nicht geladen werden',
-    emptyBodyError: 'Die Verbindungsdaten konnten nicht geladen werden. Gehe zurück oder starte ein neues Spiel.',
-    emptyBodyNoData: (t) => `TMDB hat keine verwendbaren Daten für diesen ${t}. Das ist eine Datenlücke — versuche einen anderen Weg.`,
-    typeShow: 'Serie', typeFilm: 'Film', typeTitle: 'Titel',
-    btnGoBack: '← Zurück', btnCopyDebug: 'Debug-Link kopieren', btnNewGame: 'Neues Spiel',
-    deadEndToast: (n) => `Sackgasse — alle Verbindungen von ${n} bereits besucht. Zurück…`,
-    goalBanner: (n) => `Das Ziel ist in Reichweite — <strong>${n}</strong> ist hier!`,
-    winTitle: 'Geschafft!', winSub: 'Du hast die Punkte verbunden.',
-    winClicks: 'Klicks', winRoute: 'Siegroute',
-    winStart: 'Start', winGoal: 'Ziel',
-    btnShareMenu: 'Teilen', shareNative: 'Teilen…', shareX: 'Auf X posten',
-    shareWa: 'WhatsApp', shareCopy: 'Link kopieren', shareCopied: 'Kopiert!',
-    btnPlayAgain: 'Nochmal spielen', btnHome: '<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;margin-right:5px"><path d="M1.5 7L7 1.5L12.5 7V13H9V9.5H5V13H1.5Z"/></svg>Start',
-    shareText: (s, e, n) => `🎬 CineLinks: ${s} → ${e} in ${n} Klick${n!==1?'s':''}. Kannst du es besser?`,
-    typePerson: 'Person', typeTv: 'Serie', typeMovieFull: 'Film',
-    clicksLabel: 'Klicks',
-  },
-  'pt-BR': {
-    tagline: 'Conecte atores, filmes, diretores e séries no menor número de cliques.',
-    nodeActor: 'Ator', nodeMovie: 'Filme', nodeTarget: 'Objetivo',
-    btnToday: 'Desafio do dia', btnRandom: 'Jogo aleatório',
-    rulesTitle: 'Regras',
-    rule1: 'Comece com um ator ou um filme',
-    rule2: 'Navegue pelo elenco, diretores e filmografias',
-    rule3: 'Alcance o objetivo no menor número de cliques',
-    creditsTitle: 'Créditos',
-    loadKicker: 'Briefing da missão', loadTxt: 'Bloqueando cadeia alvo',
-    loadSub: 'Estude os extremos. Cada clique conta.',
-    hdrHome: '<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;margin-right:5px"><path d="M1.5 7L7 1.5L12.5 7V13H9V9.5H5V13H1.5Z"/></svg>Início', hdrNew: '⟳ Novo',
-    badgeActor: 'ATOR', badgeMovie: 'FILME', badgeTv: 'SÉRIE', badgeDirector: 'DIRETOR',
-    curPromptPerson: 'Escolha um filme ou série da filmografia.',
-    curPromptTitle: 'Escolha a próxima pessoa conectada a este título.',
-    tabAll: 'Tudo', tabMovies: 'Filmes', tabTv: 'Séries',
-    sectionConnections: 'ESCOLHA SUA PRÓXIMA CONEXÃO',
-    sectionDirector: 'DIRETOR', sectionDirectors: 'DIRETORES',
-    sectionMainCast: 'ELENCO PRINCIPAL', sectionAdditionalCast: 'ELENCO SECUNDÁRIO', sectionCast: 'ELENCO',
-    tvBadge: 'Série',
-    emptyNoData: 'Beco sem saída — sem dados de elenco', emptyError: 'Não foi possível carregar esta etapa',
-    emptyBodyError: 'Os dados de conexão falharam. Volte ou inicie um novo jogo.',
-    emptyBodyNoData: (t) => `TMDB não tem elenco utilizável para este ${t}. É uma lacuna nos dados deles — tente outro caminho.`,
-    typeShow: 'série', typeFilm: 'filme', typeTitle: 'título',
-    btnGoBack: '← Voltar', btnCopyDebug: 'Copiar link debug', btnNewGame: 'Novo jogo',
-    deadEndToast: (n) => `Beco sem saída — todas as conexões de ${n} já visitadas. Voltando…`,
-    goalBanner: (n) => `O objetivo está ao alcance — <strong>${n}</strong> está aqui!`,
-    winTitle: 'Você conseguiu!', winSub: 'Você conectou os pontos.',
-    winClicks: 'Cliques', winRoute: 'Rota vencedora',
-    winStart: 'Início', winGoal: 'Objetivo',
-    btnShareMenu: 'Compartilhar', shareNative: 'Compartilhar…', shareX: 'Postar no X',
-    shareWa: 'WhatsApp', shareCopy: 'Copiar link', shareCopied: 'Copiado!',
-    btnPlayAgain: 'Jogar de novo', btnHome: '<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;margin-right:5px"><path d="M1.5 7L7 1.5L12.5 7V13H9V9.5H5V13H1.5Z"/></svg>Início',
-    shareText: (s, e, n) => `🎬 CineLinks: ${s} → ${e} em ${n} clique${n!==1?'s':''}. Consegue superar?`,
-    typePerson: 'Pessoa', typeTv: 'Série', typeMovieFull: 'Filme',
-    clicksLabel: 'cliques',
-  },
-};
 
 let _lang = localStorage.getItem('clLang') || 'en-US';
 function t(key, ...args) {
@@ -1000,6 +828,10 @@ function applyI18n() {
   const [btnDaily, btnRandom] = document.querySelectorAll('.start-actions .btn');
   if (btnDaily) btnDaily.textContent = t('btnToday');
   if (btnRandom) btnRandom.textContent = t('btnRandom');
+  const archBtn = document.getElementById('archiveBtn');
+  if (archBtn) archBtn.innerHTML = '📅 ' + t('archiveBtn');
+  const archTitle = document.getElementById('archiveTitle');
+  if (archTitle) archTitle.textContent = t('archiveTitle');
   const howTitle = document.querySelector('.how-title');
   if (howTitle) howTitle.textContent = t('rulesTitle');
   const rules = document.querySelectorAll('.how li');
@@ -1056,9 +888,25 @@ function applyI18n() {
   });
 }
 
+// In-memory cache of TMDB responses for the current session: avoids re-fetching
+// credits when the player navigates back through the graph. Keyed by lang+path.
+const _apiCache = new Map();
 function api(path) {
+  const cacheKey = _lang + '|' + path;
+  const hit = _apiCache.get(cacheKey);
+  if (hit) return hit;
+  if (_apiCache.size > 400) _apiCache.clear(); // soft cap for very long sessions
   const url = '/api/tmdb?path=' + path + (_lang !== 'en-US' ? '&language=' + encodeURIComponent(_lang) : '');
-  return fetch(url).then(r => r.json());
+  const p = fetch(url)
+    .then(r => r.json())
+    .then(data => {
+      // Don't cache TMDB-level errors so they can be retried.
+      if (data && (data.success === false || data.status_code)) _apiCache.delete(cacheKey);
+      return data;
+    })
+    .catch(err => { _apiCache.delete(cacheKey); throw err; });
+  _apiCache.set(cacheKey, p);
+  return p;
 }
 
 function creditOrder(credit) {
@@ -1336,6 +1184,90 @@ async function fetchDailyScore(key) {
   }
 }
 
+// Anti-cheat: request a signed play token at game start; it's sent back with
+// the score on win. Returns null when the server has no SCORE_SECRET set.
+async function fetchScoreToken(key) {
+  try {
+    const res = await fetch('/api/score?action=token&date=' + encodeURIComponent(key));
+    if (!res.ok) return null;
+    const data = await res.json();
+    return (data && data.token) || null;
+  } catch(_) {
+    return null;
+  }
+}
+
+// Par data (precomputed minimum clicks per challenge) — loaded once, optional.
+let _parData = null;
+async function loadParData() {
+  if (_parData) return _parData;
+  try {
+    const res = await fetch('/par-data.json', { cache: 'no-cache' });
+    _parData = res.ok ? await res.json() : {};
+  } catch(_) { _parData = {}; }
+  return _parData;
+}
+
+// Lazy-load the 365-entry curated daily-challenges list only when a daily/archive
+// game is started (random games and the home screen don't need it).
+let _dailyChallengesPromise = null;
+function loadDailyChallenges() {
+  if (window.DAILY_CHALLENGE_KEYS) return Promise.resolve();
+  if (_dailyChallengesPromise) return _dailyChallengesPromise;
+  _dailyChallengesPromise = new Promise((resolve) => {
+    const s = document.createElement('script');
+    s.src = 'daily-challenges.js';
+    s.onload = () => resolve();
+    s.onerror = () => resolve(); // fall back to generated challenge if it fails
+    document.head.appendChild(s);
+  });
+  return _dailyChallengesPromise;
+}
+
+// --- Daily streak (Wordle-style, stored locally) ---
+const STREAK_KEY = 'clStreak';
+function loadStreak() {
+  try {
+    const s = JSON.parse(localStorage.getItem(STREAK_KEY));
+    if (s && typeof s === 'object') return { current: s.current | 0, best: s.best | 0, last: s.last || null };
+  } catch(_) {}
+  return { current: 0, best: 0, last: null };
+}
+function prevDateStr(key) {
+  const [y, m, d] = key.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() - 1);
+  return dt.getUTCFullYear() + '-' + String(dt.getUTCMonth() + 1).padStart(2, '0') + '-' + String(dt.getUTCDate()).padStart(2, '0');
+}
+function recordStreak(todayKey) {
+  const s = loadStreak();
+  if (s.last === todayKey) return s; // already counted today — don't double-count on refresh
+  s.current = (s.last === prevDateStr(todayKey)) ? s.current + 1 : 1;
+  s.best = Math.max(s.best, s.current);
+  s.last = todayKey;
+  try { localStorage.setItem(STREAK_KEY, JSON.stringify(s)); } catch(_) {}
+  return s;
+}
+
+// Build a Date at noon UTC for a YYYY-MM-DD key (noon avoids timezone day-shift
+// when formatting via the configured DAILY_TIME_ZONE).
+function dateFromKey(key) {
+  const [y, m, d] = key.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d, 12));
+}
+
+// Locally-stored map of completed daily/archive dates -> best (lowest) clicks.
+const PLAYED_KEY = 'clPlayed';
+function loadPlayed() {
+  try { return JSON.parse(localStorage.getItem(PLAYED_KEY)) || {}; } catch(_) { return {}; }
+}
+function recordPlayed(key, clicks) {
+  if (!key || !Number.isFinite(clicks)) return;
+  const p = loadPlayed();
+  if (p[key] == null || clicks < p[key]) p[key] = clicks;
+  try { localStorage.setItem(PLAYED_KEY, JSON.stringify(p)); } catch(_) {}
+}
+
 async function fetchDailyOverride(key) {
   try {
     const res = await fetch('/api/daily?date=' + encodeURIComponent(key));
@@ -1552,20 +1484,24 @@ async function hydrateNodeImage(node) {
 const game = window.game = {
   cur: null, start: null, end: null,
   path: [], clicks: 0, visited: new Set(), optDist: null,
-  scoreDate: null, dailyRecord: null, _scoreStats: null,
+  scoreDate: null, dailyRecord: null, _scoreStats: null, scoreToken: null,
   _allItems: [], _tab: 'all', _debug: false,
 
-  async startDaily() {
-    const key = dateKey();
+  async startDaily(dateOverride) {
+    const key = dateOverride || dateKey();
+    const isToday = key === dateKey();
     const badge = document.getElementById('hdrDateBadge');
     if (badge) {
-      badge.textContent = formatDailyDate(new Date(), {month:'short', day:'numeric'});
+      badge.textContent = formatDailyDate(dateFromKey(key), {month:'short', day:'numeric'});
       badge.style.display = '';
     }
     showOnly('loadingScreen');
-    const [override, score] = await Promise.all([
+    // Past challenges don't submit scores, so only fetch a play token for today.
+    const [override, score, scoreToken] = await Promise.all([
       fetchDailyOverride(key),
-      fetchDailyScore(key)
+      fetchDailyScore(key),
+      isToday ? fetchScoreToken(key) : Promise.resolve(null),
+      loadDailyChallenges()
     ]);
     const challenge = override || listedDailyChallenge(key) || buildDailyChallenge(key);
     this.optDist = null;
@@ -1574,8 +1510,44 @@ const game = window.game = {
     this.init(challenge.s, challenge.e, {
       scoreDate: key,
       dailyRecord: scoreNumber(score && score.record),
-      scoreStats: score
+      scoreStats: score,
+      scoreToken: scoreToken
     });
+  },
+
+  openArchive() {
+    loadDailyChallenges().then(() => this.renderArchive());
+    const m = document.getElementById('archiveModal');
+    if (m) m.classList.add('open');
+  },
+
+  closeArchive() {
+    const m = document.getElementById('archiveModal');
+    if (m) m.classList.remove('open');
+  },
+
+  renderArchive() {
+    const list = document.getElementById('archiveList');
+    if (!list) return;
+    const played = loadPlayed();
+    const today = dateKey();
+    let k = today;
+    let html = '';
+    for (let i = 0; i < 30; i++) {
+      const label = formatDailyDate(dateFromKey(k), {weekday:'short', month:'short', day:'numeric'});
+      const todayTag = k === today ? ' <span class="arch-today">' + t('archiveTodayTag') + '</span>' : '';
+      const done = played[k] != null
+        ? '<span class="arch-done">✓ ' + played[k] + ' ' + t('clicksLabel') + '</span>' : '';
+      html += '<button class="arch-item" onclick="game.playArchive(\'' + k + '\')">' +
+        '<span class="arch-date">' + label + todayTag + '</span>' + done + '</button>';
+      k = prevDateStr(k);
+    }
+    list.innerHTML = html;
+  },
+
+  playArchive(key) {
+    this.closeArchive();
+    this.startDaily(key);
   },
 
   async startRandom() {
@@ -1652,6 +1624,7 @@ const game = window.game = {
     this.scoreDate = opts.scoreDate || null;
     this.dailyRecord = scoreNumber(opts.dailyRecord);
     this._scoreStats = opts.scoreStats || null;
+    this.scoreToken = opts.scoreToken || null;
     const current = opts.current || start;
     const isAtStart = current.id === start.id && current.type === start.type;
     this.cur = current;
@@ -1862,6 +1835,35 @@ const game = window.game = {
     }
   },
 
+  renderStreak() {
+    const el = document.getElementById('winStreak');
+    if (!el) return;
+    // Only the official daily for today counts toward the streak.
+    if (!this.scoreDate || this.scoreDate !== dateKey()) { el.style.display = 'none'; return; }
+    const s = recordStreak(this.scoreDate);
+    this._streak = s;
+    const bestPart = s.best > s.current
+      ? ' <span class="ws-best">' + t('streakBest') + ' ' + s.best + '</span>' : '';
+    el.innerHTML = '<span class="ws-flame">🔥</span><span>' + t('streakLabel') +
+      ' <span class="ws-n">' + s.current + '</span></span>' + bestPart;
+    el.style.display = '';
+    el.classList.remove('ws-pop'); void el.offsetWidth; el.classList.add('ws-pop');
+  },
+
+  async renderPar() {
+    const el = document.getElementById('winPar');
+    if (!el) return;
+    el.style.display = 'none';
+    const data = await loadParData();
+    const key = this.start.type + ':' + this.start.id + '>' + this.end.type + ':' + this.end.id;
+    const par = data && data[key];
+    if (!Number.isFinite(par) || par <= 0) return;
+    const matched = this.clicks <= par;
+    el.innerHTML = '<span class="wp-par-n">' + t('parLabel') + ': ' + par + '</span>' +
+      (matched ? ' · <span class="wp-par-you">' + t('parYou') + '</span>' : '');
+    el.style.display = '';
+  },
+
   renderEmptyConnections(node, didError = false) {
     const grid = document.getElementById('grid');
     const lbl = document.getElementById('secLbl');
@@ -2006,52 +2008,9 @@ const game = window.game = {
         items = [...newDirs, ...castItems];
       } else {
         const d = await api('person/' + node.id + '/combined_credits');
-        // Check if this person came in as director — show their directed works
-        const isDirector = node.role === 'director';
-        const directedWorks = isDirector ? (d.crew||[]).filter(c => c.job === 'Director') : [];
-        const actingCredits = (d.cast||[]);
-
-        const allCredits = (isDirector ? directedWorks : actingCredits).filter(m => {
-          if (m.media_type === 'movie') return true;
-          if (m.media_type === 'tv') {
-            // Skip talk shows, news, reality (genre_ids), and shorts
-            const skipGenres = [10767,10763]; // talk show, news (keep documentaries)
-            const hasSkipGenre = (m.genre_ids||[]).some(g => skipGenres.includes(g));
-            if (hasSkipGenre) return false;
-            const ttl = (m.name||m.title||"").toLowerCase();
-            return !(ttl.includes("oscar")||ttl.includes("emmy")||ttl.includes("golden globe")||ttl.includes(" awards"));
-          }
-          return false;
-        });
-        const thisYear = new Date().getFullYear();
-        // Deduplicate by id+media_type
-        const seen = new Set();
-        const unique = allCredits.filter(m => {
-          const k = m.media_type + '-' + m.id;
-          if (seen.has(k)) return false;
-          seen.add(k); return true;
-        });
-        // Filter out entries with very few votes (likely incomplete TMDB entries like duplicate IDs)
-        const thisYearVal = new Date().getFullYear();
-        const filtered = unique.filter(m => {
-          const yr = (m.release_date||m.first_air_date||'').slice(0,4)|0;
-          const isRecent = yr >= thisYearVal - 1;
-          return (m.vote_count||0) > 20 || isRecent;
-        });
-        items = filtered.sort((a,b) => {
-          const yearA = (a.release_date||a.first_air_date||'').slice(0,4)|0;
-          const yearB = (b.release_date||b.first_air_date||'').slice(0,4)|0;
-          const boostA = yearA >= thisYear - 1 ? 2000 : 0;
-          const boostB = yearB >= thisYear - 1 ? 2000 : 0;
-          return ((b.vote_count||0) + boostB) - ((a.vote_count||0) + boostA);
-        }).slice(0,30).map(m=>({
-          name: m.title || m.name,
-          type: m.media_type === 'tv' ? 'tv' : 'movie',
-          id: m.id,
-          img: m.poster_path,
-          yearLabel: (m.release_date||m.first_air_date||'').slice(0,4),
-          sub: (m.release_date||m.first_air_date||'').slice(0,4) + (m.media_type==='tv' ? ' · TV' : '')
-        }));
+        // Person came in as director -> show directed works; else acting credits.
+        // Filtering/sorting/mapping lives in lib/credits.js (unit-tested).
+        items = CineCredits.filterPersonCredits(d, { isDirector: node.role === 'director' });
       }
 
       // Store all items for tab filtering
@@ -2199,6 +2158,8 @@ const game = window.game = {
   async showWin() {
     await Promise.all(this.path.map(n => hydrateNodeImage(n)));
     showOnly('winScreen');
+    this.renderStreak();
+    this.renderPar();
 
     // Animate win box entrance
     const winBox = document.querySelector('.win-box');
@@ -2229,14 +2190,18 @@ const game = window.game = {
 
     // share btn innerHTML is static in HTML, no reset needed
 
-    // Submit daily score and show today's average + record
+    // Record locally that this date was completed (for the archive list).
+    if (this.scoreDate) recordPlayed(this.scoreDate, this.clicks);
+
+    // Submit daily score and show today's average + record — only for today's
+    // official daily. Past (archive) challenges are not submitted.
     const avgEl = document.getElementById('winAvg');
-    if (avgEl && this.scoreDate) {
+    if (avgEl && this.scoreDate === dateKey()) {
       avgEl.textContent = '';
       fetch('/api/score', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date: this.scoreDate, clicks: this.clicks })
+        body: JSON.stringify({ date: this.scoreDate, clicks: this.clicks, token: this.scoreToken })
       })
       .then(r => r.json())
       .then(data => {
@@ -2445,7 +2410,12 @@ const game = window.game = {
   },
 
   _shareText() {
-    return t('shareText', this.start.name, this.end.name, this.clicks);
+    let txt = t('shareText', this.start.name, this.end.name, this.clicks);
+    // Append streak only for the official daily, when on a run of 2+.
+    if (this.scoreDate && this.scoreDate === dateKey() && this._streak && this._streak.current > 1) {
+      txt += ' 🔥' + this._streak.current;
+    }
+    return txt;
   },
 
   openShareCard() {
@@ -2782,6 +2752,14 @@ document.getElementById('shareCard').addEventListener('click', function(e) {
 
 if (!loadGameFromUrl()) {
   showOnly('startScreen');
+}
+</script>
+<script>
+// Register the service worker (PWA / offline). Non-blocking; ignored on unsupported browsers.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
 }
 </script>
 <script defer src="/_vercel/insights/script.js"></script>
