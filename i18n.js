@@ -9,6 +9,8 @@ const LANGS = {
 
 const I18N = {
   'en-US': {
+    // difficulty labels (from par)
+    diffEasy: 'Easy', diffMedium: 'Medium', diffHard: 'Hard', diffExpert: 'Expert', difficultyLabel: 'Difficulty',
     // CineLinks additions: streak / archive / par
     streakLabel: 'Streak', streakBest: 'best', streakKept: 'Streak kept!', parLabel: 'Best possible', parYou: 'You matched the best route!', archiveTitle: 'Past challenges', archiveBtn: 'Past challenges', archiveClose: 'Close', archivePlayedTag: 'done', archiveTodayTag: 'today',
     tagline: 'Connect actors, movies, directors, and TV shows in the fewest clicks.',
@@ -48,6 +50,8 @@ const I18N = {
     clicksLabel: 'clicks',
   },
   'es-ES': {
+    // difficulty labels (from par)
+    diffEasy: 'Fácil', diffMedium: 'Media', diffHard: 'Difícil', diffExpert: 'Experto', difficultyLabel: 'Dificultad',
     // CineLinks additions: streak / archive / par
     streakLabel: 'Racha', streakBest: 'mejor', streakKept: '¡Racha mantenida!', parLabel: 'Mínimo posible', parYou: '¡Igualaste la ruta óptima!', archiveTitle: 'Retos anteriores', archiveBtn: 'Retos anteriores', archiveClose: 'Cerrar', archivePlayedTag: 'hecho', archiveTodayTag: 'hoy',
     tagline: 'Conecta actores, películas, directores y series en el menor número de clics.',
@@ -87,6 +91,8 @@ const I18N = {
     clicksLabel: 'clics',
   },
   'es-MX': {
+    // difficulty labels (from par)
+    diffEasy: 'Fácil', diffMedium: 'Media', diffHard: 'Difícil', diffExpert: 'Experto', difficultyLabel: 'Dificultad',
     // CineLinks additions: streak / archive / par
     streakLabel: 'Racha', streakBest: 'mejor', streakKept: '¡Racha mantenida!', parLabel: 'Mínimo posible', parYou: '¡Igualaste la ruta óptima!', archiveTitle: 'Retos anteriores', archiveBtn: 'Retos anteriores', archiveClose: 'Cerrar', archivePlayedTag: 'hecho', archiveTodayTag: 'hoy',
     tagline: 'Conecta actores, películas, directores y series en el menor número de clics.',
@@ -126,6 +132,8 @@ const I18N = {
     clicksLabel: 'clics',
   },
   'fr-FR': {
+    // difficulty labels (from par)
+    diffEasy: 'Facile', diffMedium: 'Moyen', diffHard: 'Difficile', diffExpert: 'Expert', difficultyLabel: 'Difficulté',
     // CineLinks additions: streak / archive / par
     streakLabel: 'Série', streakBest: 'record', streakKept: 'Série conservée\u00a0!', parLabel: 'Minimum possible', parYou: 'Vous avez égalé la meilleure route\u00a0!', archiveTitle: 'Défis passés', archiveBtn: 'Défis passés', archiveClose: 'Fermer', archivePlayedTag: 'fait', archiveTodayTag: "aujourd'hui",
     tagline: 'Connectez acteurs, films, réalisateurs et séries en un minimum de clics.',
@@ -165,6 +173,8 @@ const I18N = {
     clicksLabel: 'clics',
   },
   'de-DE': {
+    // difficulty labels (from par)
+    diffEasy: 'Leicht', diffMedium: 'Mittel', diffHard: 'Schwer', diffExpert: 'Experte', difficultyLabel: 'Schwierigkeit',
     // CineLinks additions: streak / archive / par
     streakLabel: 'Serie', streakBest: 'Beste', streakKept: 'Serie gehalten!', parLabel: 'Bestmöglich', parYou: 'Du hast die beste Route erreicht!', archiveTitle: 'Frühere Rätsel', archiveBtn: 'Frühere Rätsel', archiveClose: 'Schließen', archivePlayedTag: 'fertig', archiveTodayTag: 'heute',
     tagline: 'Verbinde Schauspieler, Filme, Regisseure und Serien in möglichst wenigen Klicks.',
@@ -204,6 +214,8 @@ const I18N = {
     clicksLabel: 'Klicks',
   },
   'pt-BR': {
+    // difficulty labels (from par)
+    diffEasy: 'Fácil', diffMedium: 'Média', diffHard: 'Difícil', diffExpert: 'Especialista', difficultyLabel: 'Dificuldade',
     // CineLinks additions: streak / archive / par
     streakLabel: 'Sequência', streakBest: 'melhor', streakKept: 'Sequência mantida!', parLabel: 'Mínimo possível', parYou: 'Você igualou a melhor rota!', archiveTitle: 'Desafios anteriores', archiveBtn: 'Desafios anteriores', archiveClose: 'Fechar', archivePlayedTag: 'feito', archiveTodayTag: 'hoje',
     tagline: 'Conecte atores, filmes, diretores e séries no menor número de cliques.',

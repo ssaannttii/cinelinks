@@ -3,6 +3,7 @@ const path = require('path');
 const https = require('https');
 const crypto = require('crypto');
 const { redisCommand } = require('./_redis');
+const { dailyListIndex } = require('../lib/daily');
 
 function safeEqual(a, b) {
   const ab = Buffer.from(String(a));
@@ -78,12 +79,6 @@ function dateKey(date) {
   const m = String(date.getUTCMonth() + 1).padStart(2, '0');
   const d = String(date.getUTCDate()).padStart(2, '0');
   return y + '-' + m + '-' + d;
-}
-
-function dailyListIndex(key, length) {
-  const [year, month, day] = key.split('-').map(Number);
-  const days = Math.floor(Date.UTC(year, month - 1, day) / 86400000);
-  return ((days % length) + length) % length;
 }
 
 function monthDates(month) {

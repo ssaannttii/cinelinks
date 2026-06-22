@@ -347,6 +347,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .win-streak.ws-pop{animation:winBoxIn .4s cubic-bezier(.22,1,.36,1) both}
 .win-par{font-size:.8rem;color:var(--mut);margin:-6px 0 12px}
 .win-par .wp-par-n{color:var(--txt);font-weight:700}
+.win-par .wp-par-diff{color:var(--gold);font-weight:700}
 .win-par .wp-par-you{color:var(--gold);font-weight:800}
 .win-avg{font-size:.78rem;color:var(--mut);margin-top:8px;min-height:1.2em;text-align:center}
 .win-avg strong{color:var(--txt)}
@@ -671,9 +672,10 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 
 <script src="i18n.js"></script>
 <script src="lib/credits.js"></script>
+<script src="lib/daily.js"></script>
 <script>
 const DAILY_TIME_ZONE = 'Europe/Madrid';
-const DAILY_ALGO_VERSION = 2;
+const DAILY_ALGO_VERSION = 3;
 const BRIEFING_DELAY_MS = 1050;
 
 const CANONICAL_NODE_FIXES = {
@@ -1113,14 +1115,48 @@ function isCuratedKnownFor(person, title) {
   return (person.knownFor || []).includes(nodeKey(title));
 }
 
+// Two people are "too close" if they're both known for the same title (iconic
+// co-stars) — that makes for a trivial 2-click puzzle, so we avoid it.
+function peopleShareKnownFor(a, b) {
+  const setA = new Set(a.knownFor || []);
+  return (b.knownFor || []).some(k => setA.has(k));
+}
+
+// Fallback generator (used only when the curated list can't supply a challenge).
+// Mixes three puzzle shapes for variety and avoids the obvious trivial pairings.
 function buildDailyChallenge(key) {
   const rand = seededRandom(hashString('daily-v' + DAILY_ALGO_VERSION + '-' + key));
+  const people = shuffleWith(rand, DAILY_POOL.people);
+  const movies = DAILY_POOL.titles.filter(t => t.type === 'movie');
+  const tv = DAILY_POOL.titles.filter(t => t.type === 'tv');
+  const roll = rand();
+
+  // 25%: person <-> person (avoid iconic co-stars)
+  if (roll < 0.25 && people.length >= 2) {
+    for (let i = 0; i < people.length; i++) {
+      for (let j = i + 1; j < people.length; j++) {
+        if (!peopleShareKnownFor(people[i], people[j])) {
+          return rand() < 0.5
+            ? {s:curatedNode(people[i]), e:curatedNode(people[j])}
+            : {s:curatedNode(people[j]), e:curatedNode(people[i])};
+        }
+      }
+    }
+  } else if (roll < 0.45) {
+    // 20%: title <-> title (two distinct titles)
+    const pool = shuffleWith(rand, DAILY_POOL.titles);
+    if (pool.length >= 2) {
+      const a = pool[0];
+      const b = pool.find(t => !sameNode(t, a)) || pool[1];
+      return {s:curatedNode(a), e:curatedNode(b)};
+    }
+  }
+
+  // 55% (and fallback): person <-> title, skipping their signature roles
   const personFirst = rand() < 0.58;
   const useTv = rand() < 0.28;
-  const titlesForDay = DAILY_POOL.titles.filter(t => useTv ? t.type === 'tv' : t.type === 'movie');
-  const people = shuffleWith(rand, DAILY_POOL.people);
+  const titlesForDay = (useTv && tv.length) ? tv : movies;
   const titles = shuffleWith(rand, titlesForDay.length ? titlesForDay : DAILY_POOL.titles);
-
   for (const person of people) {
     for (const title of titles) {
       if (isCuratedKnownFor(person, title)) continue;
@@ -1138,10 +1174,9 @@ function fallbackDailyChallenge(key) {
   return {s:{...c.s}, e:{...c.e}};
 }
 
+// Non-repeating per-cycle ordering — see lib/daily.js (shared with api/admin.js).
 function dailyListIndex(key, length) {
-  const [year, month, day] = key.split('-').map(Number);
-  const days = Math.floor(Date.UTC(year, month - 1, day) / 86400000);
-  return ((days % length) + length) % length;
+  return CineDaily.dailyListIndex(key, length);
 }
 
 function dailyPoolNode(type, id) {
@@ -1195,6 +1230,14 @@ async function fetchScoreToken(key) {
   } catch(_) {
     return null;
   }
+}
+
+// Map a par (minimum clicks) to a difficulty i18n key.
+function parDifficulty(par) {
+  if (par <= 2) return 'diffEasy';
+  if (par === 3) return 'diffMedium';
+  if (par === 4) return 'diffHard';
+  return 'diffExpert';
 }
 
 // Par data (precomputed minimum clicks per challenge) — loaded once, optional.
@@ -1859,7 +1902,9 @@ const game = window.game = {
     const par = data && data[key];
     if (!Number.isFinite(par) || par <= 0) return;
     const matched = this.clicks <= par;
+    const diff = parDifficulty(par);
     el.innerHTML = '<span class="wp-par-n">' + t('parLabel') + ': ' + par + '</span>' +
+      ' · <span class="wp-par-diff">' + t(diff) + '</span>' +
       (matched ? ' · <span class="wp-par-you">' + t('parYou') + '</span>' : '');
     el.style.display = '';
   },

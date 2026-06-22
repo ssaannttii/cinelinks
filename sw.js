@@ -12,6 +12,7 @@ const SHELL = [
   '/daily-challenges.js',
   '/i18n.js',
   '/lib/credits.js',
+  '/lib/daily.js',
   '/logo.png',
   '/icon-192.png',
   '/icon-512.png',
