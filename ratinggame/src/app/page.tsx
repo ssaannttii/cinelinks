@@ -232,6 +232,39 @@ export default function Home() {
             →
           </span>
         </a>
+        <a
+          href="https://cinelinks.vercel.app/cineframe.html"
+          target="_blank"
+          rel="noopener"
+          className="flex items-center gap-4 rounded-2xl px-6 py-4 mt-3 transition-all duration-200 hover:-translate-y-0.5 group"
+          style={{
+            background: "rgba(232,160,0,0.07)",
+            border: "1px solid rgba(232,160,0,0.25)",
+            boxShadow: "0 4px 24px rgba(232,160,0,0.05)",
+            textDecoration: "none",
+          }}
+        >
+          <div
+            className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-lg"
+            style={{ background: "rgba(232,160,0,0.15)" }}
+          >
+            🎞️
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-sm text-[#f0f0f0] leading-tight">
+              Play CineFrame <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full align-middle" style={{ background: "#e8a000", color: "#111" }}>NEW</span>
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: "#777" }}>
+              Guess the daily film from a blurred frame
+            </p>
+          </div>
+          <span
+            className="text-xs font-bold flex-shrink-0 group-hover:translate-x-0.5 transition-transform"
+            style={{ color: "#e8a000" }}
+          >
+            →
+          </span>
+        </a>
       </div>
 
       <p className="text-xs" style={{ color: "#444" }}>

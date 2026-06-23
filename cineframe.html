@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CineFrame — Guess the daily film from a frame</title>
+<meta name="description" content="A daily film-guessing game: name the movie from a blurred frame that sharpens with each wrong guess. A new film every day. Images from TMDB.">
+<meta name="theme-color" content="#0d0d0d">
+<link rel="icon" type="image/png" href="/logo.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="CineFrame — Guess the daily film">
+<meta property="og:description" content="Name the movie from a blurred frame that sharpens with each guess. A new film every day.">
+<meta property="og:image" content="https://cinelinks.vercel.app/og-image.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0d0d0d;--s1:#181818;--s2:#222;--bdr:rgba(255,255,255,0.09);--txt:#f0f0f0;--mut:#8d8d8d;--gold:#e8a000;--golddim:rgba(232,160,0,0.15)}
+body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(circle at 50% -10%,rgba(232,160,0,.08),transparent 34%),linear-gradient(180deg,#101010 0%,var(--bg) 330px);color:var(--txt);min-height:100vh}
+.wrap{max-width:540px;margin:0 auto;padding:18px 16px 60px}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.home-link{display:inline-flex;align-items:center;gap:6px;color:var(--mut);text-decoration:none;font-size:.8rem;font-weight:600}
+.home-link:hover{color:var(--gold)}
+.date-badge{font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);background:var(--golddim);padding:4px 9px;border-radius:999px}
+.head{text-align:center;margin-bottom:18px}
+.title{font-size:2rem;font-weight:800;letter-spacing:-.02em}
+.title span{color:var(--gold)}
+.subtitle{color:var(--mut);font-size:.85rem;margin-top:4px}
+.pips{display:flex;gap:6px;justify-content:center;margin:16px 0 14px}
+.pip{width:26px;height:8px;border-radius:4px;background:rgba(255,255,255,.08);transition:background .2s}
+.pip.win{background:#5bbd7a}.pip.wrong{background:#d8503a}.pip.skip{background:#caa23a}.pip.current{background:var(--gold);box-shadow:0 0 8px rgba(232,160,0,.5)}
+.frame-cap{text-align:center;font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+.frame-wrap{margin-bottom:18px;border-radius:12px;overflow:hidden;border:1px solid var(--bdr);background:#000;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center}
+.frame-img{width:100%;height:100%;object-fit:cover;display:block;transition:filter .45s ease}
+.guessbox{position:relative;margin-bottom:10px}
+.guess-input{width:100%;background:var(--s1);border:1px solid var(--bdr);border-radius:12px;padding:13px 14px;color:var(--txt);font-family:inherit;font-size:.95rem;outline:none}
+.guess-input:focus{border-color:rgba(232,160,0,.5)}
+.suggest{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--s1);border:1px solid var(--bdr);border-radius:12px;overflow:hidden;z-index:10;max-height:280px;overflow-y:auto;display:none;box-shadow:0 18px 50px rgba(0,0,0,.5)}
+.suggest.open{display:block}
+.suggest-item{display:flex;align-items:center;gap:10px;padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--bdr)}
+.suggest-item:last-child{border-bottom:none}
+.suggest-item:hover,.suggest-item.active{background:rgba(232,160,0,.1)}
+.suggest-thumb{width:30px;height:45px;border-radius:4px;object-fit:cover;background:var(--s2);flex-shrink:0}
+.suggest-name{font-size:.86rem;font-weight:600}
+.suggest-year{font-size:.72rem;color:var(--mut)}
+.actions{display:flex;gap:10px}
+.btn{flex:1;padding:12px;border-radius:12px;border:1px solid var(--bdr);background:transparent;color:var(--txt);font-family:inherit;font-size:.9rem;font-weight:700;cursor:pointer;transition:background .15s,border-color .15s,opacity .15s}
+.btn:hover{border-color:rgba(232,160,0,.5)}
+.btn-gold{background:var(--gold);color:#111;border-color:var(--gold)}
+.btn-gold:hover{opacity:.9}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.guesses{margin-top:14px;display:flex;flex-direction:column;gap:6px}
+.grow{display:flex;align-items:center;gap:8px;font-size:.85rem;padding:8px 12px;border-radius:9px;background:rgba(255,255,255,.03);border:1px solid var(--bdr);color:var(--mut)}
+.grow .gico{flex-shrink:0}
+.result{text-align:center;margin-top:8px;background:linear-gradient(180deg,rgba(232,160,0,.08),transparent 140px),var(--s1);border:1px solid rgba(232,160,0,.18);border-radius:14px;padding:24px 18px;box-shadow:0 24px 60px rgba(0,0,0,.35);animation:fadeIn .35s ease both}
+.result.hidden{display:none}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.result-poster{width:130px;border-radius:10px;margin:0 auto 14px;display:block;box-shadow:0 16px 36px rgba(0,0,0,.45)}
+.result-verdict{font-size:1.3rem;font-weight:800;margin-bottom:2px}
+.result-verdict.win{color:#5bbd7a}.result-verdict.lose{color:#d8503a}
+.result-film{font-size:1rem;color:var(--txt);font-weight:700}
+.result-year{color:var(--mut);font-size:.85rem;margin-bottom:12px}
+.result-grid{font-size:1.3rem;letter-spacing:3px;margin:10px 0 4px}
+.result-streak{color:var(--mut);font-size:.82rem;margin-bottom:14px}
+.result-streak strong{color:var(--gold)}
+.result-actions{display:flex;gap:10px}
+.loading,.errbox{text-align:center;color:var(--mut);padding:40px 0;font-size:.9rem}
+.footer{text-align:center;margin-top:26px;color:var(--mut);font-size:.68rem;opacity:.7}
+.footer a{color:var(--mut);text-decoration:none}.footer a:hover{color:var(--gold)}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--s2);border:1px solid var(--bdr);color:var(--txt);padding:10px 16px;border-radius:10px;font-size:.85rem;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <a class="home-link" href="/">&#8592; CineLinks</a>
+    <span style="display:flex;align-items:center;gap:8px">
+      <a class="home-link" id="modeSwitch" href="?practice=1"></a>
+      <span class="date-badge" id="dateBadge"></span>
+    </span>
+  </div>
+  <div class="head">
+    <div class="title">Cine<span>Frame</span></div>
+    <div class="subtitle">Guess the film from the frame. It sharpens with each guess.</div>
+  </div>
+
+  <div id="loading" class="loading">Loading today's frame…</div>
+  <div id="error" class="errbox" style="display:none">Couldn't load today's puzzle. Please try again later.</div>
+
+  <div id="game" style="display:none">
+    <div class="pips" id="pips"></div>
+    <div id="frame"></div>
+
+    <div id="play">
+      <div class="guessbox">
+        <input class="guess-input" id="guessInput" type="text" autocomplete="off" placeholder="Name the film…">
+        <div class="suggest" id="suggest"></div>
+      </div>
+      <div class="actions">
+        <button class="btn" id="skipBtn">Skip frame</button>
+        <button class="btn btn-gold" id="guessBtn" disabled>Guess</button>
+      </div>
+      <div class="guesses" id="guesses"></div>
+    </div>
+
+    <div class="result hidden" id="result"></div>
+  </div>
+
+  <div class="footer">
+    Data &amp; images by <a href="https://www.themoviedb.org/" target="_blank" rel="noopener">TMDB</a>. Not endorsed by TMDB.
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="cineclue-pool.js"></script>
+<script>
+const IMGBASE = 'https://image.tmdb.org/t/p/';
+const EPOCH = Math.floor(Date.UTC(2026, 5, 23) / 86400000); // #1 = 2026-06-23
+const MAX_GUESSES = 6;
+const BLURS = [22, 15, 10, 6, 3, 0]; // blur px per stage (sharper each guess)
+
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function api(path){ return fetch('/api/tmdb?path=' + path).then(r => r.json()); }
+function dayNumber(){ const n = new Date(); return Math.floor(Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate()) / 86400000); }
+function poster(p, size){ return p ? IMGBASE + (size || 'w342') + p : ''; }
+function toast(msg){ const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('show'), 1800); }
+
+// ── State ──────────────────────────────────────────────────────────────────
+const DAY = dayNumber();
+const PUZZLE = DAY - EPOCH + 1;
+const PRACTICE = new URLSearchParams(location.search).get('practice') === '1';
+const RAND_START = Math.floor(Math.random() * 100003);
+let target = null;
+let frames = [];          // [{url, blur}]
+let stage = 0;
+let results = [];
+let finished = false;
+let solved = false;
+
+const STATE_KEY = 'cineframeState';
+const STREAK_KEY = 'cineframeStreak';
+
+// ── Daily target (needs backdrops; resilient + deterministic) ───────────────
+async function loadTarget(){
+  const pool = window.CINECLUE_POOL || [];
+  if(!pool.length) throw new Error('empty pool');
+  const base = PRACTICE ? RAND_START : DAY;
+  for(let attempt = 0; attempt < 12; attempt++){
+    const idx = (((base + attempt) % pool.length) + pool.length) % pool.length;
+    const id = pool[idx];
+    try{
+      const [d, img] = await Promise.all([ api('movie/' + id), api('movie/' + id + '/images') ]);
+      const backs = pickBackdrops(img);
+      if(d && d.id && d.title && backs.length){ return { d, backs, id }; }
+    }catch(_){}
+  }
+  throw new Error('could not load any target');
+}
+
+function pickBackdrops(img){
+  const all = (img && img.backdrops) || [];
+  // Prefer textless backdrops (no title overlay) for a fair guess.
+  let backs = all.filter(b => b.iso_639_1 === null);
+  if(backs.length < 2) backs = all.slice();
+  return backs.slice(0, MAX_GUESSES).map(b => b.file_path);
+}
+
+function buildFrames(t){
+  const out = [];
+  for(let i = 0; i < MAX_GUESSES; i++){
+    const fp = t.backs[Math.min(i, t.backs.length - 1)];
+    out.push({ url: IMGBASE + 'w780' + fp, blur: BLURS[i] });
+  }
+  return out;
+}
+
+// ── Rendering ──────────────────────────────────────────────────────────────
+function renderPips(){
+  const el = document.getElementById('pips');
+  let h = '';
+  for(let i = 0; i < MAX_GUESSES; i++){
+    let cls = 'pip';
+    if(i < results.length) cls += ' ' + results[i];
+    else if(solved && i === results.length) cls += ' win';
+    else if(i === results.length && !finished) cls += ' current';
+    h += '<div class="' + cls + '"></div>';
+  }
+  el.innerHTML = h;
+}
+function renderFrame(){
+  const f = frames[stage];
+  document.getElementById('frame').innerHTML =
+    '<div class="frame-cap">Frame · ' + (stage + 1) + ' / ' + MAX_GUESSES + '</div>' +
+    '<div class="frame-wrap"><img class="frame-img" src="' + f.url + '" style="filter:blur(' + f.blur + 'px)' + (f.blur ? ';transform:scale(1.05)' : '') + '" alt=""></div>';
+}
+function renderGuesses(){
+  document.getElementById('guesses').innerHTML = results.map(r =>
+    '<div class="grow"><span class="gico">' + (r === 'skip' ? '⏭️' : '❌') + '</span>' +
+    (r === 'skip' ? 'Skipped' : 'Wrong guess') + '</div>'
+  ).join('');
+}
+
+// ── Game flow ──────────────────────────────────────────────────────────────
+function advance(kind){
+  results.push(kind);
+  if(results.length >= MAX_GUESSES){ finish(false); return; }
+  stage = Math.min(stage + 1, frames.length - 1);
+  renderPips(); renderFrame(); renderGuesses(); save();
+}
+function makeGuess(movie){
+  if(finished) return;
+  if(movie.id === target.id){ finish(true); return; }
+  toast('Not it — frame sharpened');
+  advance('wrong');
+}
+function skip(){ if(!finished) advance('skip'); }
+
+function finish(win){
+  finished = true; solved = win;
+  document.getElementById('play').style.display = 'none';
+  stage = frames.length - 1; renderFrame(); // reveal the clearest frame
+  if(win){ results = results.concat(['win']); }
+  const streak = updateStreak(win);
+  renderPips();
+  renderResult(streak);
+  save();
+}
+
+function emojiGrid(){
+  let g = '', used = 0;
+  for(const r of results){ g += (r === 'win' ? '🟩' : r === 'skip' ? '🟨' : '🟥'); used++; }
+  for(let i = used; i < MAX_GUESSES; i++) g += '⬛';
+  return g;
+}
+
+function renderResult(streak){
+  const el = document.getElementById('result');
+  el.classList.remove('hidden');
+  const verdict = solved
+    ? '<div class="result-verdict win">Solved in ' + (results.indexOf('win') + 1) + '!</div>'
+    : '<div class="result-verdict lose">Out of guesses</div>';
+  const bestPart = streak.best > streak.current ? ' · best <strong>' + streak.best + '</strong>' : '';
+  const streakLine = PRACTICE ? '' : '<div class="result-streak">🔥 Streak <strong>' + streak.current + '</strong>' + bestPart + '</div>';
+  const actions = PRACTICE
+    ? '<button class="btn btn-gold" id="againBtn">New film</button><button class="btn" id="shareBtn">Share</button>'
+    : '<button class="btn btn-gold" id="shareBtn">Share</button><a class="btn" href="/" style="display:flex;align-items:center;justify-content:center;text-decoration:none">CineLinks</a>';
+  el.innerHTML =
+    (target.posterPath ? '<img class="result-poster" src="' + poster(target.posterPath, 'w342') + '" alt="">' : '') +
+    verdict +
+    '<div class="result-film">' + esc(target.title) + '</div>' +
+    '<div class="result-year">' + esc(target.year || '') + '</div>' +
+    '<div class="result-grid">' + emojiGrid() + '</div>' +
+    streakLine +
+    '<div class="result-actions">' + actions + '</div>';
+  document.getElementById('shareBtn').onclick = share;
+  const again = document.getElementById('againBtn');
+  if(again) again.onclick = () => { location.href = 'cineframe.html?practice=1&n=' + Date.now(); };
+}
+
+function shareText(){
+  const n = solved ? (results.indexOf('win') + 1) : 'X';
+  const head = PRACTICE ? 'CineFrame Practice' : ('CineFrame #' + PUZZLE);
+  return head + ' — ' + n + '/' + MAX_GUESSES + '\n' + emojiGrid() + '\nhttps://cinelinks.vercel.app/cineframe.html';
+}
+function share(){
+  const text = shareText();
+  if(navigator.share){ navigator.share({ text }).catch(()=>{}); return; }
+  if(navigator.clipboard){ navigator.clipboard.writeText(text).then(()=>toast('Copied to clipboard')).catch(()=>toast(text)); }
+  else toast('Copy: ' + text);
+}
+
+// ── Streak + persistence ───────────────────────────────────────────────────
+function loadStreak(){ try{ const s = JSON.parse(localStorage.getItem(STREAK_KEY)); if(s) return { current:s.current|0, best:s.best|0, last:s.last|0 }; }catch(_){} return { current:0, best:0, last:0 }; }
+function updateStreak(win){
+  if(PRACTICE) return loadStreak();
+  const s = loadStreak();
+  if(s.last === DAY) return s;
+  if(win){ s.current = (s.last === DAY - 1) ? s.current + 1 : 1; s.best = Math.max(s.best, s.current); }
+  else { s.current = 0; }
+  s.last = DAY;
+  try{ localStorage.setItem(STREAK_KEY, JSON.stringify(s)); }catch(_){}
+  return s;
+}
+function save(){ if(PRACTICE) return; try{ localStorage.setItem(STATE_KEY, JSON.stringify({ day:DAY, results, stage, finished, solved })); }catch(_){} }
+function restore(){
+  if(PRACTICE) return false;
+  try{
+    const s = JSON.parse(localStorage.getItem(STATE_KEY));
+    if(s && s.day === DAY){ results = s.results || []; stage = s.stage || 0; finished = !!s.finished; solved = !!s.solved; return true; }
+  }catch(_){}
+  return false;
+}
+
+// ── Search autocomplete ────────────────────────────────────────────────────
+let suggestItems = [];
+let activeIdx = -1;
+let searchTimer = null;
+function onInput(){
+  const q = document.getElementById('guessInput').value.trim();
+  document.getElementById('guessBtn').disabled = !q;
+  clearTimeout(searchTimer);
+  if(q.length < 2){ closeSuggest(); return; }
+  searchTimer = setTimeout(() => doSearch(q), 240);
+}
+async function doSearch(q){
+  try{
+    const data = await api('search/multi&query=' + encodeURIComponent(q));
+    const items = (data.results || []).filter(r => r.media_type === 'movie' && r.title).slice(0, 6);
+    suggestItems = items.map(m => ({ id:m.id, title:m.title, year:(m.release_date||'').slice(0,4), poster:m.poster_path }));
+    renderSuggest();
+  }catch(_){ closeSuggest(); }
+}
+function renderSuggest(){
+  const el = document.getElementById('suggest');
+  if(!suggestItems.length){ closeSuggest(); return; }
+  activeIdx = -1;
+  el.innerHTML = suggestItems.map((m, i) =>
+    '<div class="suggest-item" data-i="' + i + '">' +
+      (m.poster ? '<img class="suggest-thumb" src="' + poster(m.poster, 'w92') + '" alt="">' : '<div class="suggest-thumb"></div>') +
+      '<div><div class="suggest-name">' + esc(m.title) + '</div><div class="suggest-year">' + esc(m.year || '') + '</div></div>' +
+    '</div>'
+  ).join('');
+  el.classList.add('open');
+  el.querySelectorAll('.suggest-item').forEach(node => { node.onclick = () => pick(suggestItems[+node.dataset.i]); });
+}
+function closeSuggest(){ suggestItems = []; activeIdx = -1; document.getElementById('suggest').classList.remove('open'); }
+function pick(m){ closeSuggest(); const inp = document.getElementById('guessInput'); inp.value = ''; document.getElementById('guessBtn').disabled = true; makeGuess(m); }
+function submitTyped(){
+  if(activeIdx >= 0 && suggestItems[activeIdx]){ pick(suggestItems[activeIdx]); return; }
+  if(suggestItems.length){ pick(suggestItems[0]); return; }
+  toast('Pick a film from the list');
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+function showError(){ document.getElementById('loading').style.display = 'none'; document.getElementById('error').style.display = 'block'; }
+
+async function init(){
+  document.getElementById('dateBadge').textContent = PRACTICE ? 'Practice' : ('Daily #' + PUZZLE);
+  const sw = document.getElementById('modeSwitch');
+  if(sw){ sw.textContent = PRACTICE ? 'Daily →' : 'Practice →'; sw.href = PRACTICE ? 'cineframe.html' : 'cineframe.html?practice=1'; }
+  let t;
+  try{ t = await loadTarget(); }catch(e){ showError(); return; }
+  target = { id: t.d.id, title: t.d.title, year: (t.d.release_date || '').slice(0, 4), posterPath: t.d.poster_path };
+  frames = buildFrames(t);
+
+  const had = restore();
+  if(!had){ stage = 0; results = []; finished = false; solved = false; }
+  if(finished && solved && results.indexOf('win') === -1) results.push('win');
+
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('game').style.display = 'block';
+  if(finished) stage = frames.length - 1;
+  renderPips(); renderFrame(); renderGuesses();
+
+  if(finished){ document.getElementById('play').style.display = 'none'; renderResult(loadStreak()); }
+
+  const inp = document.getElementById('guessInput');
+  inp.addEventListener('input', onInput);
+  inp.addEventListener('keydown', e => {
+    if(e.key === 'ArrowDown'){ e.preventDefault(); if(suggestItems.length){ activeIdx = (activeIdx + 1) % suggestItems.length; highlight(); } }
+    else if(e.key === 'ArrowUp'){ e.preventDefault(); if(suggestItems.length){ activeIdx = (activeIdx - 1 + suggestItems.length) % suggestItems.length; highlight(); } }
+    else if(e.key === 'Enter'){ e.preventDefault(); submitTyped(); }
+    else if(e.key === 'Escape'){ closeSuggest(); }
+  });
+  document.getElementById('guessBtn').onclick = submitTyped;
+  document.getElementById('skipBtn').onclick = skip;
+  document.addEventListener('click', e => { if(!e.target.closest('.guessbox')) closeSuggest(); });
+}
+function highlight(){ document.querySelectorAll('.suggest-item').forEach((n, i) => n.classList.toggle('active', i === activeIdx)); }
+
+init();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

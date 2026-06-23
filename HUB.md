@@ -10,8 +10,8 @@ emoji-grid sharing, and TMDB data.
 |------|----------|-------|----------|-------|
 | **CineLinks** | Connect actors/films/TV in fewest clicks | ✅ Today's Challenge | ✅ Practice (was "Random Game") | root (`/`) |
 | **CineClue** | Guess the film from progressive clues | ✅ `/cineclue.html` | ✅ `/cineclue.html?practice=1` | root |
+| **CineFrame** | Guess the film from a progressively-unblurred frame | ✅ `/cineframe.html` | ✅ `?practice=1` | root (shares CineClue's engine + pool) |
 | **CineRating** | Guess / compare ratings | ✅ Higher-or-Lower daily | the other modes | `cinerating.vercel.app` (Next.js) |
-| **CineFrame** *(planned)* | Guess the film from a progressively-unblurred frame | ✅ | ✅ | root (reuses CineClue engine) |
 
 ### Naming decisions
 - **Vocabulary:** every game uses **Daily** (the shared puzzle of the day) and
