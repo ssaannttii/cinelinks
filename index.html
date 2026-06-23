@@ -222,6 +222,10 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .debug-btn:hover{opacity:.9}
 .debug-stats{display:none;margin-top:8px;color:var(--mut);font-size:.68rem;opacity:.62}
 .debug-stats strong{color:var(--txt);font-weight:700}
+.debug-solution{margin-top:10px;font-size:.72rem;color:var(--mut);line-height:1.95;max-width:560px;margin-left:auto;margin-right:auto}
+.debug-solution .dbg-sol-label{color:var(--gold);font-weight:700;margin-bottom:5px;font-size:.62rem;text-transform:uppercase;letter-spacing:.1em}
+.debug-solution .dbg-node{color:var(--txt);background:rgba(255,255,255,.05);border:1px solid var(--bdr);padding:2px 7px;border-radius:6px;white-space:nowrap}
+.debug-solution .dbg-arrow{color:var(--gold);margin:0 2px}
 .game-credit{margin-top:12px;color:var(--mut);font-size:.68rem;opacity:.62}
 .game-credit a{color:var(--mut);text-decoration:none}
 .game-credit a:hover{color:var(--gold)}
@@ -583,7 +587,10 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     <div id="grid" class="grid"></div>
     <div class="debug-footer">
       <button id="debugBtn" class="btn btn-ghost btn-sm debug-btn" onclick="game.copyDebugLink()" style="display:none">Debug link</button>
+      <button id="debugParBtn" class="btn btn-ghost btn-sm debug-btn" onclick="game.revealPar()" style="display:none">Reveal par</button>
+      <button id="debugSolBtn" class="btn btn-ghost btn-sm debug-btn" onclick="game.revealSolution()" style="display:none">Best solution</button>
       <div id="debugStats" class="debug-stats"></div>
+      <div id="debugSolution" class="debug-solution" style="display:none"></div>
       <div class="game-credit">Data and images by <a href="https://www.themoviedb.org/" target="_blank" rel="noopener">TMDB</a>.</div>
     </div>
   </div>
@@ -1253,6 +1260,17 @@ async function loadParData() {
     _parData = res.ok ? await res.json() : {};
   } catch(_) { _parData = {}; }
   return _parData;
+}
+
+// Optimal paths per challenge (debug-only "best solution"). Loaded on demand.
+let _parPaths = null;
+async function loadParPaths() {
+  if (_parPaths) return _parPaths;
+  try {
+    const res = await fetch('/par-paths.json', { cache: 'no-cache' });
+    _parPaths = res.ok ? await res.json() : {};
+  } catch(_) { _parPaths = {}; }
+  return _parPaths;
 }
 
 // Lazy-load the 365-entry curated daily-challenges list only when a daily/archive
@@ -2166,13 +2184,42 @@ const game = window.game = {
   },
 
   toggleDebug() {
-    const btn = document.getElementById('debugBtn');
-    if (!btn) return;
-    const visible = btn.style.display !== 'none';
-    btn.style.display = visible ? 'none' : '';
-    this._debug = !visible;
+    this._debug = !this._debug;
+    document.querySelectorAll('.debug-footer .debug-btn').forEach(b => { b.style.display = this._debug ? '' : 'none'; });
+    if (!this._debug) {
+      const sol = document.getElementById('debugSolution');
+      if (sol) { sol.style.display = 'none'; sol.innerHTML = ''; }
+    }
     this.renderDebugStats();
-    if (!visible) this._showToast('Debug mode on', 1200);
+    this._showToast(this._debug ? 'Debug mode on' : 'Debug mode off', 1200);
+  },
+
+  _challengeKey() {
+    return this.start.type + ':' + this.start.id + '>' + this.end.type + ':' + this.end.id;
+  },
+
+  async revealPar() {
+    const par = (await loadParData())[this._challengeKey()];
+    if (Number.isFinite(par) && par > 0) {
+      this._showToast('Best possible: <strong>' + par + '</strong> ' + t(par === 1 ? 'clickSingular' : 'clicksLabel') + ' · ' + t(parDifficulty(par)), 3000);
+    } else {
+      this._showToast('No par data for this challenge (run npm run par)', 2400);
+    }
+  },
+
+  async revealSolution() {
+    const el = document.getElementById('debugSolution');
+    if (!el) return;
+    const pathArr = (await loadParPaths())[this._challengeKey()];
+    if (!Array.isArray(pathArr) || !pathArr.length) {
+      el.innerHTML = '<div class="dbg-sol-label">Best solution</div>No path data — run <strong>npm run par</strong> to generate par-paths.json.';
+      el.style.display = 'block';
+      return;
+    }
+    const chain = pathArr.map(n => '<span class="dbg-node">' + String(n.name || (n.type + ':' + n.id)).replace(/</g, '&lt;') + '</span>')
+      .join(' <span class="dbg-arrow">→</span> ');
+    el.innerHTML = '<div class="dbg-sol-label">Optimal path · ' + (pathArr.length - 1) + ' clicks</div>' + chain;
+    el.style.display = 'block';
   },
 
   _showToast(html, duration = 2600) {

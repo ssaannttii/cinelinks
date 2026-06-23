@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert');
-const { shortestPath } = require('../lib/graph-bfs');
+const { shortestPath, shortestPathTrace } = require('../lib/graph-bfs');
 
 // Undirected adjacency -> neighbors function.
 function graph(adj) {
@@ -54,6 +54,47 @@ test('works with async neighbors and object keys', async () => {
   const adj = { a: ['b'], b: ['a', 'c'], c: ['b'] };
   const neighbors = async (k) => (adj[k] || []).map((id) => ({ key: id }));
   assert.strictEqual(await shortestPath('a', 'c', neighbors), 2);
+});
+
+test('trace: reconstructs the path on a chain', async () => {
+  const n = graph([['a', 'b'], ['b', 'c'], ['c', 'd']]);
+  const r = await shortestPathTrace('a', 'd', n);
+  assert.strictEqual(r.dist, 3);
+  assert.deepStrictEqual(r.path, ['a', 'b', 'c', 'd']);
+});
+
+test('trace: same node', async () => {
+  const r = await shortestPathTrace('a', 'a', graph([]));
+  assert.deepStrictEqual(r, { dist: 0, path: ['a'] });
+});
+
+test('trace: picks a shortest path and endpoints are correct', async () => {
+  const n = graph([['a', 'b'], ['b', 'c'], ['c', 'd'], ['a', 'x'], ['x', 'd']]);
+  const r = await shortestPathTrace('a', 'd', n);
+  assert.strictEqual(r.dist, 2);
+  assert.strictEqual(r.path[0], 'a');
+  assert.strictEqual(r.path[r.path.length - 1], 'd');
+  assert.strictEqual(r.path.length, 3);
+  // every consecutive pair must be an edge
+  for (let i = 0; i < r.path.length - 1; i++) {
+    assert.ok(n(r.path[i]).includes(r.path[i + 1]), 'edge ' + r.path[i] + '->' + r.path[i + 1]);
+  }
+});
+
+test('trace: unreachable', async () => {
+  const r = await shortestPathTrace('a', 'd', graph([['a', 'b'], ['c', 'd']]));
+  assert.deepStrictEqual(r, { dist: null, path: null });
+});
+
+test('trace: path length matches dist+1 on bigger graph', async () => {
+  const adj = [['hub1', 'bridge'], ['bridge', 'hub2']];
+  for (let i = 0; i < 50; i++) { adj.push(['hub1', 'l1_' + i]); adj.push(['hub2', 'l2_' + i]); }
+  const n = graph(adj);
+  const r = await shortestPathTrace('l1_3', 'l2_9', n);
+  assert.strictEqual(r.dist, 4);
+  assert.strictEqual(r.path.length, 5);
+  assert.strictEqual(r.path[0], 'l1_3');
+  assert.strictEqual(r.path[4], 'l2_9');
 });
 
 test('large balanced graph stays cheap via bidirectional search', async () => {
