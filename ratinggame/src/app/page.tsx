@@ -12,14 +12,6 @@ const NEW_MODES = [
     badge: "NEW",
   },
   {
-    href: "/filmography",
-    icon: "🎬",
-    title: "Filmography Battle",
-    subtitle: "4 films by the same director or actor — which is rated highest?",
-    gold: false,
-    badge: "NEW",
-  },
-  {
     href: "/career",
     icon: "🏆",
     title: "Career Mode",
@@ -31,22 +23,10 @@ const NEW_MODES = [
 
 const CLASSIC_MODES = [
   {
-    href: "/game?mode=imdb",
-    icon: "⭐",
-    title: "IMDB Score",
-    subtitle: "Guess the score from 0.0 to 10.0",
-  },
-  {
-    href: "/game?mode=rt",
-    icon: "🍅",
-    title: "Rotten Tomatoes",
-    subtitle: "Guess the Tomatometer %",
-  },
-  {
-    href: "/game?mode=both",
+    href: "/game",
     icon: "🎯",
-    title: "Double Down",
-    subtitle: "Guess both — max points, max pain",
+    title: "Guess the Score",
+    subtitle: "IMDB, Rotten Tomatoes, or both — switch mode in-game.",
   },
 ];
 
@@ -77,7 +57,7 @@ function DailyBanner() {
           <span className="text-[0.6rem] font-black tracking-[0.16em] uppercase" style={{ color: "#e8a000" }}>Daily Challenge</span>
           <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "#e8a000", color: "#111" }}>#{dayNum}</span>
         </div>
-        <p className="font-bold text-base text-[#f0f0f0] leading-tight">Higher or Lower — Today's Edition</p>
+        <p className="font-bold text-base text-[#f0f0f0] leading-tight">Higher or Lower — Today&rsquo;s Edition</p>
         <p className="text-xs mt-0.5" style={{ color: "#888" }}>{dateStr} · Same puzzle for everyone</p>
       </div>
       <span
@@ -167,7 +147,7 @@ export default function Home() {
         >
           Classic
         </p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-3">
           {CLASSIC_MODES.map((mode) => (
             <Link
               key={mode.href}
@@ -210,6 +190,39 @@ export default function Home() {
             <p className="font-bold text-sm text-[#f0f0f0] leading-tight">Also try CineLinks</p>
             <p className="text-xs mt-0.5" style={{ color: "#777" }}>
               Six degrees of separation — connect any two films
+            </p>
+          </div>
+          <span
+            className="text-xs font-bold flex-shrink-0 group-hover:translate-x-0.5 transition-transform"
+            style={{ color: "#e8a000" }}
+          >
+            →
+          </span>
+        </a>
+        <a
+          href="https://cinelinks.vercel.app/cineclue.html"
+          target="_blank"
+          rel="noopener"
+          className="flex items-center gap-4 rounded-2xl px-6 py-4 mt-3 transition-all duration-200 hover:-translate-y-0.5 group"
+          style={{
+            background: "rgba(232,160,0,0.07)",
+            border: "1px solid rgba(232,160,0,0.25)",
+            boxShadow: "0 4px 24px rgba(232,160,0,0.05)",
+            textDecoration: "none",
+          }}
+        >
+          <div
+            className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-lg"
+            style={{ background: "rgba(232,160,0,0.15)" }}
+          >
+            🔍
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-sm text-[#f0f0f0] leading-tight">
+              Play CineClue <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full align-middle" style={{ background: "#e8a000", color: "#111" }}>NEW</span>
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: "#777" }}>
+              Guess the daily film from progressive clues
             </p>
           </div>
           <span

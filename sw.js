@@ -10,6 +10,8 @@ const SHELL = [
   '/',
   '/index.html',
   '/daily-challenges.js',
+  '/cineclue.html',
+  '/cineclue-pool.js',
   '/i18n.js',
   '/lib/credits.js',
   '/lib/daily.js',

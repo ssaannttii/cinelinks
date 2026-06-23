@@ -161,7 +161,7 @@ function SliderInput({ mode, imdbValue, rtValue, onImdbChange, onRtChange }: {
 function GameContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const mode = (searchParams.get("mode") ?? "imdb") as GameMode;
+  const [mode, setMode] = useState<GameMode>((searchParams.get("mode") ?? "imdb") as GameMode);
 
   const [movieIds, setMovieIds] = useState<{ imdbId: string; title: string; year: string }[]>([]);
   const [rounds, setRounds] = useState<Round[]>([]);
@@ -174,16 +174,19 @@ function GameContent() {
   const [totalScore, setTotalScore] = useState(0);
   const fetchedIds = useRef<Set<string>>(new Set());
 
-  useEffect(() => {
-    fetch("/api/session?count=10")
+  // API returns { pairs: [MovieStub, MovieStub][] } — flatten to individual movies.
+  // (Doesn't set loading=true itself, so it's safe to call directly from an effect.)
+  const loadSession = useCallback(() => {
+    return fetch("/api/session?count=10")
       .then((r) => r.json())
       .then((d) => {
-        // API returns { pairs: [MovieStub, MovieStub][] } — flatten to individual movies
-        const flat = (d.pairs as Array<{ imdbId: string; title: string; year: string }[]>).flat();
+        const flat = ((d.pairs ?? []) as Array<{ imdbId: string; title: string; year: string }[]>).flat();
         setMovieIds(flat.slice(0, 10));
         setLoading(false);
       });
   }, []);
+
+  useEffect(() => { loadSession(); }, [loadSession]);
 
   const fetchMovie = useCallback(async (imdbId: string) => {
     if (fetchedIds.current.has(imdbId)) return;
@@ -247,8 +250,19 @@ function GameContent() {
 
   const restartGame = () => {
     setRounds([]); setCurrentIdx(0); setTotalScore(0); setPhase("guess");
-    fetchedIds.current = new Set(); setLoading(true);
-    fetch("/api/session?count=10").then((r) => r.json()).then((d) => { setMovieIds(d.movies); setLoading(false); });
+    setImdbGuess(5.0); setRtGuess(50);
+    fetchedIds.current = new Set();
+    setLoading(true);
+    loadSession();
+  };
+
+  // Switching scoring mode restarts the run (mixing modes mid-run would make
+  // scoring inconsistent). Only offered before the first guess.
+  const changeMode = (m: GameMode) => {
+    if (m === mode) return;
+    setMode(m);
+    router.replace(`/game?mode=${m}`);
+    restartGame();
   };
 
   // ── Loading ──────────────────────────────────────────────────────────────
@@ -356,6 +370,20 @@ function GameContent() {
         <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.07)" }}>
           <div className="h-full rounded-full transition-all duration-500" style={{ width: `${progress}%`, background: "#e8a000" }} />
         </div>
+        {currentIdx === 0 && phase === "guess" && (
+          <div className="flex gap-1 mt-3 p-1 rounded-xl" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
+            {(([["imdb", "⭐ IMDB"], ["rt", "🍅 RT"], ["both", "🎯 Both"]]) as [GameMode, string][]).map(([m, label]) => (
+              <button
+                key={m}
+                onClick={() => changeMode(m)}
+                className="flex-1 text-xs font-bold py-1.5 rounded-lg transition-all"
+                style={m === mode ? { background: "#e8a000", color: "#111" } : { background: "transparent", color: "#777" }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {movieLoading ? (
@@ -418,7 +446,7 @@ function GameContent() {
                 )}
 
                 {movie.plot !== "N/A" && (
-                  <p className="text-xs leading-relaxed italic mt-3" style={{ color: "#555" }}>"{movie.plot}"</p>
+                  <p className="text-xs leading-relaxed italic mt-3" style={{ color: "#555" }}>&ldquo;{movie.plot}&rdquo;</p>
                 )}
 
                 <AutoNextButton

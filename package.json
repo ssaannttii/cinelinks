@@ -9,7 +9,8 @@
     "env:pull": "npx vercel env pull .env.local",
     "par": "node scripts/compute-par.js",
     "gen": "node scripts/generate-challenges.js",
-    "difficulty": "node scripts/difficulty.js"
+    "difficulty": "node scripts/difficulty.js",
+    "clue-pool": "node scripts/build-clue-pool.js"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
