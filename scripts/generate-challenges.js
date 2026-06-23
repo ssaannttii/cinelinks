@@ -23,6 +23,7 @@ const fs = require('fs');
 const path = require('path');
 const { shortestPath } = require('../lib/graph-bfs');
 const { createGraph } = require('./tmdb-neighbors');
+require('./load-env').loadEnv(); // picks up TMDB_API_KEY from .env.local if present
 
 const ROOT = path.join(__dirname, '..');
 const API_KEY = process.env.TMDB_API_KEY;

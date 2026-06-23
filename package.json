@@ -6,7 +6,9 @@
   "scripts": {
     "test": "node --test",
     "lint": "eslint . || echo 'eslint not installed — run: npm i -D eslint'",
-    "par": "node scripts/compute-par.js"
+    "env:pull": "vercel env pull .env.local",
+    "par": "node scripts/compute-par.js",
+    "gen": "node scripts/generate-challenges.js"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
