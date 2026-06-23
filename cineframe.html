@@ -417,19 +417,27 @@ init();
 </script>
 <script>
 window.HOWTO = {
-  key: 'cineframe', title: 'How to play CineFrame',
-  html: '<p style="color:#8d8d8d;font-size:.92rem;line-height:1.6;margin:0">Guess the day’s film from a single, heavily-blurred frame. Each wrong guess sharpens the image a little more.</p>' +
-    '<ul style="color:#8d8d8d;font-size:.88rem;line-height:1.7;margin:12px 0 0;padding-left:18px">' +
-      '<li>Type to search and pick a title — you have <b style="color:#f0f0f0">6 tries</b>.</li>' +
-      '<li>The frame gets clearer with every miss or skip.</li>' +
-      '<li>Fewer guesses = a better score. Solve the <b style="color:#f0f0f0">Daily</b> to keep your streak.</li>' +
-      '<li><b style="color:#f0f0f0">Practice</b> gives unlimited random films, no streak.</li>' +
-    '</ul>'
+  key: 'cineframe', title: 'How to play CineFrame', icon: '🎞️',
+  steps: [
+    'Guess the day’s film from a single, heavily-blurred frame.',
+    'Type to search and pick a title — you have <b>6 tries</b>.',
+    'Every wrong guess or skip sharpens the image a little more.',
+    'Fewer guesses = better. <b>Daily</b> keeps your streak; <b>Practice</b> is unlimited.'
+  ],
+  example: '<div class="ht-row" style="gap:8px">' +
+      '<span style="display:inline-block;width:48px;height:32px;border-radius:6px;background:linear-gradient(135deg,#e8a000,#506a87);filter:blur(4px)"></span>' +
+      '<span class="ht-arrow">→</span>' +
+      '<span style="display:inline-block;width:48px;height:32px;border-radius:6px;background:linear-gradient(135deg,#e8a000,#506a87);filter:blur(2px)"></span>' +
+      '<span class="ht-arrow">→</span>' +
+      '<span style="display:inline-block;width:48px;height:32px;border-radius:6px;background:linear-gradient(135deg,#e8a000,#506a87)"></span>' +
+    '</div><p>The frame goes from blurry to sharp as your guesses run out.</p>'
 };
 </script>
 <script defer src="/ads.js"></script>
 <script defer src="/support.js"></script>
 <script defer src="/howto.js"></script>
+<script defer src="/lib/merge-stats.js"></script>
+<script defer src="/auth.js"></script>
 <script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>

@@ -63,33 +63,42 @@ A heavier alternative (single deploy: host the static games inside the Next app 
 `public/`) is possible but a bigger restructure; the rewrite approach gets ~all the
 benefit (one origin, shared stats) with far less risk.
 
-## Accounts / cross-device sync (Google login) — recommended approach
+## Accounts / cross-device sync (Google login) — BUILT, dormant until you add a client ID
 
-**Can it be done?** Yes. **Should it be done now?** Not blindly — it needs your own
-Google Cloud OAuth credentials, a per-user store, and a security pass. Design it as
-an *optional, local-first sync layer* so it never breaks the current localStorage
-flow and stays compatible with ongoing changes:
+The optional, local-first sync layer is **implemented and shipped disabled**. The
+games keep working exactly as before with no login; signing in only *syncs* the
+same `localStorage` stats across devices.
 
-1. **Local-first stays the source of truth.** All games already persist to
-   `localStorage` (`clStreak`, `clPlayed`, `cineclue*`, `cineframe*`). Login only
-   *syncs* that blob — logged-out play keeps working exactly as today.
-2. **Auth:** Google Identity Services (GIS) one-tap / "Sign in with Google" button
-   → you get an ID token (JWT). Easiest managed option: **Supabase Auth** or
-   **Firebase Auth** (handles Google OAuth, sessions, security for you). Pure GIS +
-   your own verify endpoint also works but you maintain more.
-3. **Storage:** a tiny serverless endpoint (`/api/sync`) that, given a verified user
-   id, GETs/PUTs a JSON stats blob in the existing Upstash KV (`sync:<uid>` →
-   `{clStreak, clPlayed, cineclue*, cineframe*}`). Merge strategy: take the max of
-   each streak/best and union played-dates, so multiple devices reconcile cleanly.
-4. **Schema-tolerant:** store an opaque versioned blob and merge field-by-field, so
-   adding new games/keys later never breaks old synced data.
-5. **Privacy:** only store game stats + the Google `sub` (no profile data needed);
-   add a short privacy note and a "sign out / delete my data" action.
+**Pieces (already in the repo):**
+- `auth.js` — client. Loads Google Identity Services, shows a "Sign in with Google"
+  pill (top-right), and on sign-in pulls + merges + pushes the stats blob. Returning
+  users are re-authed silently. Gated by a `CLIENT_ID` constant (empty = nothing
+  renders, no GIS loaded).
+- `api/sync.js` — serverless. Verifies the Google ID token (checks `aud`/`iss`/`exp`
+  via Google's tokeninfo) and GETs/PUTs a per-account JSON blob in Upstash KV at
+  `sync:<google-sub>`. Returns `501 sync_disabled` until `GOOGLE_CLIENT_ID` is set.
+- `lib/merge-stats.js` — shared, order-independent merge (max streaks, union played
+  dates keeping fewest clicks, newer/more-complete daily state). Runs both in the
+  browser (local+remote) and on the server (stored+pushed). Unit-tested
+  (`test/merge-stats.test.js`). Schema-tolerant: unknown keys ignored, so new games
+  won't break old synced data.
+- Only game stats + the Google `sub` are stored — no profile data. Sign-out clears
+  the local session and disables auto-select.
 
-**Why deferred here:** it requires your Google Cloud project + OAuth consent screen,
-choosing the auth provider, and a security review of token verification — decisions
-and credentials only you can set up. The local-first design above means it can be
-added later as a clean opt-in without reworking the games.
+**To activate (one-time, only you can do this):**
+1. In Google Cloud → APIs & Services → Credentials, create an **OAuth 2.0 Client ID**
+   of type **Web application**. Add your origins to "Authorized JavaScript origins"
+   (`https://cinelinks.vercel.app`, and `http://localhost:3000` for local). The
+   client ID is **public** (not a secret).
+2. Paste that client ID into `auth.js` (`var CLIENT_ID = '...'`).
+3. Set the **same** value as the `GOOGLE_CLIENT_ID` env var on the Vercel project
+   (used server-side to verify the token's `aud`). Redeploy.
+4. Done — the sign-in pill appears and sync turns on. (Optional later: a "delete my
+   synced data" action that does `DEL sync:<sub>`.)
+
+**Not done for you:** creating the OAuth client + consent screen needs your Google
+account, and the client ID/redirect origins are yours to own — so those two steps
+stay manual. Everything else is wired and tested.
 
 ## Monetisation
 Two options, both config-gated and already wired on every game page (set the value

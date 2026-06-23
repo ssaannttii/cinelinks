@@ -450,19 +450,26 @@ init();
 </script>
 <script>
 window.HOWTO = {
-  key: 'cineclue', title: 'How to play CineClue',
-  html: '<p style="color:#8d8d8d;font-size:.92rem;line-height:1.6;margin:0">Guess the day’s film. You start with one cryptic clue and get a new, easier one with every wrong guess or skip.</p>' +
-    '<ul style="color:#8d8d8d;font-size:.88rem;line-height:1.7;margin:12px 0 0;padding-left:18px">' +
-      '<li>Type to search and pick a title — you have <b style="color:#f0f0f0">6 tries</b>.</li>' +
-      '<li>Clues reveal in order: keywords → genre &amp; year → tagline → cast → poster.</li>' +
-      '<li>Fewer guesses = a better score. Solve the <b style="color:#f0f0f0">Daily</b> to keep your streak.</li>' +
-      '<li><b style="color:#f0f0f0">Practice</b> gives unlimited random films, no streak.</li>' +
-    '</ul>'
+  key: 'cineclue', title: 'How to play CineClue', icon: '🔍',
+  steps: [
+    'Guess the day’s film. You start with one cryptic clue.',
+    'Type to search and pick a title — you have <b>6 tries</b>.',
+    'Every wrong guess or skip reveals a new, easier clue.',
+    'Order: keywords → genre &amp; year → tagline → cast → poster.',
+    'Fewer guesses = better. <b>Daily</b> keeps your streak; <b>Practice</b> is unlimited.'
+  ],
+  example: '<div style="display:flex;flex-direction:column;gap:6px">' +
+      '<span class="ht-chip">🔑 dream · heist · subconscious</span>' +
+      '<span class="ht-chip">🎭 Action · Sci-Fi · 2010</span>' +
+      '<span class="ht-chip">🎬 dir. Christopher Nolan</span>' +
+    '</div><p>Clues stack up until you guess: <b style="color:#f0f0f0">Inception</b> 🎉</p>'
 };
 </script>
 <script defer src="/ads.js"></script>
 <script defer src="/support.js"></script>
 <script defer src="/howto.js"></script>
+<script defer src="/lib/merge-stats.js"></script>
+<script defer src="/auth.js"></script>
 <script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>

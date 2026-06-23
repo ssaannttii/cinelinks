@@ -1390,17 +1390,22 @@ function markDoneBadges() {
   const today = dateKey();
   const now = new Date();
   const utcDay = Math.floor(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) / 86400000);
-  function isDone(k, clueLike) {
+  function clueDone(k) {
+    try { const s = JSON.parse(localStorage.getItem(k)); return !!(s && s.day === utcDay && s.finished); } catch(_) { return false; }
+  }
+  // CineLinks counts as done if today is in clPlayed (the canonical signal, same
+  // one stats uses) OR a stored daily result exists — so the badge is resilient
+  // even when the rich result blob wasn't captured (e.g. an older win).
+  function linksDone() {
     try {
-      const s = JSON.parse(localStorage.getItem(k));
-      if (!s) return false;
-      return clueLike ? (s.day === utcDay && s.finished) : (s.date === today);
+      if ((JSON.parse(localStorage.getItem('clPlayed')) || {})[today] != null) return true;
+      const r = JSON.parse(localStorage.getItem('clDailyResult'));
+      return !!(r && r.date === today);
     } catch(_) { return false; }
   }
-  const map = { cl: ['clDailyResult', false], clue: ['cineclueState', true], frame: ['cineframeState', true] };
+  const state = { cl: linksDone(), clue: clueDone('cineclueState'), frame: clueDone('cineframeState') };
   document.querySelectorAll('.game-done[data-done]').forEach(el => {
-    const cfg = map[el.dataset.done];
-    const done = cfg && isDone(cfg[0], cfg[1]);
+    const done = !!state[el.dataset.done];
     el.textContent = done ? '✓' : '';
     el.title = done ? 'Solved today' : '';
   });
@@ -3021,19 +3026,27 @@ if ('serviceWorker' in navigator) {
 </script>
 <script>
 window.HOWTO = {
-  key: 'cinelinks', noAuto: true, title: 'How to play CineLinks',
-  html: '<p style="color:#8d8d8d;font-size:.92rem;line-height:1.6;margin:0">Get from the <b style="color:#f0f0f0">start</b> to the <b style="color:#f0f0f0">target</b> in as few clicks as possible.</p>' +
-    '<ul style="color:#8d8d8d;font-size:.88rem;line-height:1.7;margin:12px 0 0;padding-left:18px">' +
-      '<li>From a <b style="color:#f0f0f0">person</b>, pick one of their movies or shows.</li>' +
-      '<li>From a <b style="color:#f0f0f0">movie/show</b>, pick someone in its cast or crew.</li>' +
-      '<li>The target card glows gold when it’s one step away.</li>' +
-      '<li><b style="color:#f0f0f0">Daily</b> is one shared puzzle a day (keep your streak). <b style="color:#f0f0f0">Practice</b> is unlimited.</li>' +
-    '</ul>'
+  key: 'cinelinks', noAuto: true, title: 'How to play CineLinks', icon: '🔗',
+  steps: [
+    'Get from the <b>start</b> to the <b>target</b> in as few clicks as possible.',
+    'From a <b>person</b>, pick one of their movies or shows.',
+    'From a <b>movie or show</b>, pick someone in its cast or crew.',
+    'The target card glows gold when it’s one step away.',
+    '<b>Daily</b> is one shared puzzle a day (keeps your streak); <b>Practice</b> is unlimited.'
+  ],
+  example: '<div class="ht-row">' +
+      '<span class="ht-chip">🧑 Zendaya</span><span class="ht-arrow">→</span>' +
+      '<span class="ht-chip">🎬 Dune</span><span class="ht-arrow">→</span>' +
+      '<span class="ht-chip">🧑 Timothée Chalamet</span>' +
+    '</div><p>Start → one shared movie → target. Solved in <b style="color:#f0f0f0">2 clicks</b>.</p>'
 };
 </script>
+<script>window.onStatsSync = function () { try { markDoneBadges(); } catch (_) {} };</script>
 <script defer src="/ads.js"></script>
 <script defer src="/support.js"></script>
 <script defer src="/howto.js"></script>
+<script defer src="/lib/merge-stats.js"></script>
+<script defer src="/auth.js"></script>
 <script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>
