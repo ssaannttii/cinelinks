@@ -30,7 +30,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .pip.win{background:#5bbd7a}.pip.wrong{background:#d8503a}.pip.skip{background:#caa23a}.pip.current{background:var(--gold);box-shadow:0 0 8px rgba(232,160,0,.5)}
 .frame-cap{text-align:center;font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
 .frame-wrap{margin-bottom:18px;border-radius:12px;overflow:hidden;border:1px solid var(--bdr);background:#000;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center}
-.frame-img{width:100%;height:100%;object-fit:cover;display:block;transition:filter .45s ease}
+/* canvas, not <img>: keeps the clean image URL out of the DOM (no long-press / open-in-tab cheat) */
+.frame-img{width:100%;height:100%;display:block;pointer-events:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .guessbox{position:relative;margin-bottom:10px}
 .guess-input{width:100%;background:var(--s1);border:1px solid var(--bdr);border-radius:12px;padding:13px 14px;color:var(--txt);font-family:inherit;font-size:.95rem;outline:none}
 .guess-input:focus{border-color:rgba(232,160,0,.5)}
@@ -130,6 +131,7 @@ const DAY = dayNumber();
 const PUZZLE = DAY - EPOCH + 1;
 const PRACTICE = new URLSearchParams(location.search).get('practice') === '1';
 const RAND_START = Math.floor(Math.random() * 100003);
+const GAME_SALT = 101; // offset so CineFrame's daily film differs from CineClue's
 let target = null;
 let frames = [];          // [{url, blur}]
 let stage = 0;
@@ -144,7 +146,7 @@ const STREAK_KEY = 'cineframeStreak';
 async function loadTarget(){
   const pool = window.CINECLUE_POOL || [];
   if(!pool.length) throw new Error('empty pool');
-  const base = PRACTICE ? RAND_START : DAY;
+  const base = PRACTICE ? RAND_START : (DAY + GAME_SALT);
   for(let attempt = 0; attempt < 12; attempt++){
     const idx = (((base + attempt) % pool.length) + pool.length) % pool.length;
     const id = pool[idx];
@@ -187,11 +189,49 @@ function renderPips(){
   }
   el.innerHTML = h;
 }
+// Draw an image onto the canvas with a baked-in blur (cover-fit + overscan so the
+// blur doesn't leave transparent edges). The canvas never exposes the clean URL.
+function coverFit(iw, ih, w, h, over){
+  const ir = iw / ih, cr = w / h; let dw, dh;
+  if(ir > cr){ dh = h * over; dw = dh * ir; } else { dw = w * over; dh = dw / ir; }
+  return { dw, dh, dx: (w - dw) / 2, dy: (h - dh) / 2 };
+}
+function drawBlurred(canvas, url, blurPx){
+  const ctx = canvas.getContext('2d');
+  if(!ctx) return;
+  const img = new Image();
+  img.onload = () => {
+    const w = canvas.width, h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+    if(blurPx > 0 && typeof ctx.filter !== 'undefined'){
+      ctx.filter = 'blur(' + blurPx + 'px)';
+      const f = coverFit(img.width, img.height, w, h, 1 + blurPx / 22);
+      ctx.drawImage(img, f.dx, f.dy, f.dw, f.dh);
+      ctx.filter = 'none';
+    } else if(blurPx > 0){
+      // Fallback for browsers without canvas filter (older Safari/iOS): downscale then upscale.
+      const scale = Math.max(0.015, 1 / (blurPx * 1.3));
+      const tw = Math.max(2, Math.round(w * scale)), th = Math.max(2, Math.round(h * scale));
+      const off = document.createElement('canvas'); off.width = tw; off.height = th;
+      const octx = off.getContext('2d');
+      const fo = coverFit(img.width, img.height, tw, th, 1);
+      octx.drawImage(img, fo.dx, fo.dy, fo.dw, fo.dh);
+      ctx.imageSmoothingEnabled = true;
+      ctx.drawImage(off, 0, 0, tw, th, 0, 0, w, h);
+    } else {
+      const f = coverFit(img.width, img.height, w, h, 1);
+      ctx.drawImage(img, f.dx, f.dy, f.dw, f.dh);
+    }
+  };
+  img.onerror = () => {};
+  img.src = url;
+}
 function renderFrame(){
   const f = frames[stage];
   document.getElementById('frame').innerHTML =
     '<div class="frame-cap">Frame · ' + (stage + 1) + ' / ' + MAX_GUESSES + '</div>' +
-    '<div class="frame-wrap"><img class="frame-img" src="' + f.url + '" style="filter:blur(' + f.blur + 'px)' + (f.blur ? ';transform:scale(1.05)' : '') + '" alt=""></div>';
+    '<div class="frame-wrap"><canvas class="frame-img" id="frameCanvas" width="780" height="439"></canvas></div>';
+  drawBlurred(document.getElementById('frameCanvas'), f.url, f.blur);
 }
 function renderGuesses(){
   document.getElementById('guesses').innerHTML = results.map(r =>
