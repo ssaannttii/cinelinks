@@ -52,6 +52,23 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .creator-btn:hover{border-color:var(--gold);color:var(--gold);background:rgba(232,160,0,.05)}
 .archive-btn{width:100%;margin-top:8px;padding:9px;border-radius:10px;border:1px solid var(--bdr);background:transparent;color:var(--mut);font-family:inherit;font-size:.8rem;font-weight:600;cursor:pointer;transition:border-color .15s,color .15s,background .15s}
 .archive-btn:hover{border-color:rgba(232,160,0,.5);color:var(--gold);background:rgba(232,160,0,.04)}
+.games{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+.game-card{background:rgba(255,255,255,.045);border:1px solid var(--bdr);border-radius:14px;padding:14px;text-align:left;display:flex;flex-direction:column;gap:12px;transition:border-color .15s}
+.game-card:hover{border-color:rgba(232,160,0,.3)}
+.game-head{display:flex;align-items:center;gap:10px}
+.game-ic{font-size:1.35rem;width:38px;height:38px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--golddim);border-radius:10px}
+.game-meta{display:flex;flex-direction:column;min-width:0}
+.game-name{font-weight:800;font-size:.95rem;display:flex;align-items:center;gap:6px}
+.game-desc{font-size:.68rem;color:var(--mut);margin-top:1px}
+.new-tag{font-size:.52rem;font-weight:800;letter-spacing:.06em;color:#111;background:var(--gold);padding:1px 5px;border-radius:999px}
+.game-modes{display:flex;gap:8px;margin-top:auto}
+.mode{flex:1;text-align:center;padding:9px;border-radius:9px;border:1px solid var(--bdr);background:transparent;color:var(--txt);font-family:inherit;font-size:.8rem;font-weight:700;cursor:pointer;text-decoration:none;transition:background .15s,border-color .15s,opacity .15s}
+.mode:hover{border-color:rgba(232,160,0,.5);background:rgba(232,160,0,.05)}
+.mode-daily{background:var(--gold);color:#111;border-color:var(--gold)}
+.mode-daily:hover{opacity:.9;background:var(--gold)}
+.secondary-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}
+.secondary-actions .archive-btn{margin-top:0}
+@media (max-width:560px){.games{grid-template-columns:1fr}.secondary-actions{grid-template-columns:1fr}}
 .arch-modal{display:none;position:fixed;inset:0;z-index:210;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.72);backdrop-filter:blur(6px)}
 .arch-modal.open{display:flex;animation:briefingIn .22s ease both}
 .arch-box{background:var(--s1);border:1px solid rgba(232,160,0,.18);border-radius:14px;padding:18px;max-width:460px;width:100%;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 24px 70px rgba(0,0,0,.4)}
@@ -469,37 +486,41 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
       <span class="start-node">Target</span>
     </div>
     <div id="dailyDateLbl" class="start-kicker" style="margin-bottom:6px;opacity:.7"></div>
-    <div class="start-actions">
-      <button class="btn btn-gold" onclick="game.startDaily()">Today&#39;s Challenge</button>
-      <button class="btn btn-ghost" onclick="game.startRandom()">Random Game</button>
+    <div class="games">
+      <div class="game-card">
+        <div class="game-head"><span class="game-ic">🔗</span><span class="game-meta"><span class="game-name">CineLinks</span><span class="game-desc">Connect the film world</span></span></div>
+        <div class="game-modes">
+          <button class="mode mode-daily" onclick="game.startDaily()">Daily</button>
+          <button class="mode mode-practice" onclick="game.startRandom()">Practice</button>
+        </div>
+      </div>
+      <div class="game-card">
+        <div class="game-head"><span class="game-ic">🔍</span><span class="game-meta"><span class="game-name">CineClue <span class="new-tag">NEW</span></span><span class="game-desc">Guess the film from clues</span></span></div>
+        <div class="game-modes">
+          <a class="mode mode-daily" href="/cineclue.html">Daily</a>
+          <a class="mode mode-practice" href="/cineclue.html?practice=1">Practice</a>
+        </div>
+      </div>
+      <div class="game-card">
+        <div class="game-head"><span class="game-ic">🎞️</span><span class="game-meta"><span class="game-name">CineFrame <span class="new-tag">NEW</span></span><span class="game-desc">Guess the film from a frame</span></span></div>
+        <div class="game-modes">
+          <a class="mode mode-daily" href="/cineframe.html">Daily</a>
+          <a class="mode mode-practice" href="/cineframe.html?practice=1">Practice</a>
+        </div>
+      </div>
+      <div class="game-card">
+        <div class="game-head"><span class="game-ic">⭐</span><span class="game-meta"><span class="game-name">CineRating</span><span class="game-desc">Guess IMDB &amp; RT scores</span></span></div>
+        <div class="game-modes">
+          <a class="mode mode-daily" href="https://cinerating.vercel.app/versus?mode=daily" target="_blank" rel="noopener">Daily</a>
+          <a class="mode mode-practice" href="https://cinerating.vercel.app" target="_blank" rel="noopener">Practice</a>
+        </div>
+      </div>
     </div>
-    <button class="creator-btn" onclick="creator.open()">+ Create your own challenge</button>
-    <button class="archive-btn" id="archiveBtn" onclick="game.openArchive()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-2px;margin-right:7px"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Past challenges</button>
-    <a href="/cineclue.html" class="cinerating-link">
-      <span class="cinerating-link-icon">&#128269;</span>
-      <span class="cinerating-link-text">
-        <span class="cinerating-link-title">Play CineClue <span style="font-size:.6rem;font-weight:800;letter-spacing:.06em;color:#111;background:var(--gold);padding:1px 6px;border-radius:999px;vertical-align:1px">NEW</span></span>
-        <span class="cinerating-link-sub">Guess the daily film from clues</span>
-      </span>
-      <span class="cinerating-link-arrow">→</span>
-    </a>
-    <a href="/cineframe.html" class="cinerating-link">
-      <span class="cinerating-link-icon">&#127902;</span>
-      <span class="cinerating-link-text">
-        <span class="cinerating-link-title">Play CineFrame <span style="font-size:.6rem;font-weight:800;letter-spacing:.06em;color:#111;background:var(--gold);padding:1px 6px;border-radius:999px;vertical-align:1px">NEW</span></span>
-        <span class="cinerating-link-sub">Guess the daily film from a blurred frame</span>
-      </span>
-      <span class="cinerating-link-arrow">→</span>
-    </a>
-    <a href="https://cinerating.vercel.app" target="_blank" rel="noopener" class="cinerating-link">
-      <span class="cinerating-link-icon">⭐</span>
-      <span class="cinerating-link-text">
-        <span class="cinerating-link-title">Try CineRating</span>
-        <span class="cinerating-link-sub">Guess IMDB &amp; Rotten Tomatoes scores</span>
-      </span>
-      <span class="cinerating-link-arrow">→</span>
-    </a>
-    <a href="/stats.html" class="archive-btn" style="text-decoration:none;display:block;text-align:center">&#128202; Your stats</a>
+    <div class="secondary-actions">
+      <button class="archive-btn" id="archiveBtn" onclick="game.openArchive()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-2px;margin-right:6px"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Past challenges</button>
+      <button class="archive-btn" onclick="creator.open()">+ Create your own</button>
+      <a href="/stats.html" class="archive-btn" style="text-decoration:none;text-align:center">📊 Your stats</a>
+    </div>
     <div class="how">
       <div class="how-title">Rules</div>
       <ul>
@@ -857,9 +878,8 @@ function applyI18n() {
   if (nodeEls[0]) nodeEls[0].textContent = t('nodeActor');
   if (nodeEls[1]) nodeEls[1].textContent = t('nodeMovie');
   if (nodeEls[2]) nodeEls[2].textContent = t('nodeTarget');
-  const [btnDaily, btnRandom] = document.querySelectorAll('.start-actions .btn');
-  if (btnDaily) btnDaily.textContent = t('btnToday');
-  if (btnRandom) btnRandom.textContent = t('btnRandom');
+  document.querySelectorAll('.mode-daily').forEach(b => b.textContent = t('modeDaily'));
+  document.querySelectorAll('.mode-practice').forEach(b => b.textContent = t('modePractice'));
   const archBtn = document.getElementById('archiveBtn');
   if (archBtn) archBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-2px;margin-right:7px"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>' + t('archiveBtn');
   const archTitle = document.getElementById('archiveTitle');
@@ -2895,7 +2915,11 @@ document.getElementById('shareCard').addEventListener('click', function(e) {
 });
 
 if (!loadGameFromUrl()) {
-  showOnly('startScreen');
+  // Deep-links: /?daily=1 jumps straight into today's challenge, /?practice=1 a random one.
+  const _entry = new URLSearchParams(location.search);
+  if (_entry.get('daily') === '1') game.startDaily();
+  else if (_entry.get('practice') === '1') game.startRandom();
+  else showOnly('startScreen');
 }
 </script>
 <script>
@@ -2906,6 +2930,8 @@ if ('serviceWorker' in navigator) {
   });
 }
 </script>
+<script defer src="/ads.js"></script>
+<script defer src="/support.js"></script>
 <script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>

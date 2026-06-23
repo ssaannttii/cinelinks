@@ -9,6 +9,8 @@ const LANGS = {
 
 const I18N = {
   'en-US': {
+    // hub mode labels
+    modeDaily: 'Daily', modePractice: 'Practice',
     // click singular + goal tag
     clickSingular: 'click', goalTag: 'GOAL',
     // difficulty labels (from par)
@@ -52,6 +54,8 @@ const I18N = {
     clicksLabel: 'clicks',
   },
   'es-ES': {
+    // hub mode labels
+    modeDaily: 'Diario', modePractice: 'Práctica',
     // click singular + goal tag
     clickSingular: 'clic', goalTag: 'OBJETIVO',
     // difficulty labels (from par)
@@ -95,6 +99,8 @@ const I18N = {
     clicksLabel: 'clics',
   },
   'es-MX': {
+    // hub mode labels
+    modeDaily: 'Diario', modePractice: 'Práctica',
     // click singular + goal tag
     clickSingular: 'clic', goalTag: 'OBJETIVO',
     // difficulty labels (from par)
@@ -138,6 +144,8 @@ const I18N = {
     clicksLabel: 'clics',
   },
   'fr-FR': {
+    // hub mode labels
+    modeDaily: 'Quotidien', modePractice: 'Entraînement',
     // click singular + goal tag
     clickSingular: 'clic', goalTag: 'OBJECTIF',
     // difficulty labels (from par)
@@ -181,6 +189,8 @@ const I18N = {
     clicksLabel: 'clics',
   },
   'de-DE': {
+    // hub mode labels
+    modeDaily: 'Täglich', modePractice: 'Üben',
     // click singular + goal tag
     clickSingular: 'Klick', goalTag: 'ZIEL',
     // difficulty labels (from par)
@@ -224,6 +234,8 @@ const I18N = {
     clicksLabel: 'Klicks',
   },
   'pt-BR': {
+    // hub mode labels
+    modeDaily: 'Diário', modePractice: 'Treino',
     // click singular + goal tag
     clickSingular: 'clique', goalTag: 'ALVO',
     // difficulty labels (from par)

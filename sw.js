@@ -14,6 +14,8 @@ const SHELL = [
   '/cineframe.html',
   '/cineclue-pool.js',
   '/stats.html',
+  '/ads.js',
+  '/support.js',
   '/i18n.js',
   '/lib/credits.js',
   '/lib/daily.js',

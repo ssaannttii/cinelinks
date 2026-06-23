@@ -74,7 +74,7 @@ function cineLinks(){
       {n: best==null?'—':best, l:'Fewest clicks'}
     ],
     extra: dates.length ? (dates.length + ' day' + (dates.length===1?'':'s') + ' played') : '',
-    daily:'/?', practice:'/?'  // home (daily + practice live there)
+    daily:'/?daily=1', practice:'/?practice=1'  // jump straight into play
   };
 }
 function cineClue(){
@@ -119,13 +119,22 @@ function cineFrame(){
   };
 }
 
-document.getElementById('cards').innerHTML =
-  cardHTML(cineLinks()) +
-  cardHTML(cineClue()) +
-  cardHTML(cineFrame()) +
-  '<a class="ext" href="https://cinerating.vercel.app" target="_blank" rel="noopener">' +
-    '<div class="ext-i">⭐</div><div class="ext-t"><b>CineRating</b><span>Rating games — stats live on its own site</span></div><div class="ext-arrow">→</div>' +
-  '</a>';
+function render(){
+  document.getElementById('cards').innerHTML =
+    cardHTML(cineLinks()) +
+    cardHTML(cineClue()) +
+    cardHTML(cineFrame()) +
+    '<a class="ext" href="https://cinerating.vercel.app" target="_blank" rel="noopener">' +
+      '<div class="ext-i">⭐</div><div class="ext-t"><b>CineRating</b><span>Rating games — stats live on its own site</span></div><div class="ext-arrow">→</div>' +
+    '</a>';
+}
+render();
+// Re-read localStorage whenever the user returns (e.g. after playing a game in
+// another tab) so freshly-won dailies show up without a manual reload.
+window.addEventListener('focus', render);
+window.addEventListener('pageshow', render);
+document.addEventListener('visibilitychange', () => { if(!document.hidden) render(); });
+window.addEventListener('storage', render);
 
 document.getElementById('resetBtn').onclick = () => {
   if(!confirm('Reset all CineLinks & CineClue stats on this device?')) return;
@@ -133,5 +142,7 @@ document.getElementById('resetBtn').onclick = () => {
   location.reload();
 };
 </script>
+<script defer src="/ads.js"></script>
+<script defer src="/support.js"></script>
 </body>
 </html>
