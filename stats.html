@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your stats — CineLinks suite</title>
+<meta name="description" content="Your streaks and history across the CineLinks film games.">
+<meta name="theme-color" content="#0d0d0d">
+<link rel="icon" type="image/png" href="/logo.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0d0d0d;--s1:#181818;--s2:#222;--bdr:rgba(255,255,255,0.09);--txt:#f0f0f0;--mut:#8d8d8d;--gold:#e8a000;--golddim:rgba(232,160,0,0.15)}
+body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(circle at 50% -10%,rgba(232,160,0,.08),transparent 34%),linear-gradient(180deg,#101010 0%,var(--bg) 330px);color:var(--txt);min-height:100vh}
+.wrap{max-width:540px;margin:0 auto;padding:18px 16px 60px}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.home-link{display:inline-flex;align-items:center;gap:6px;color:var(--mut);text-decoration:none;font-size:.8rem;font-weight:600}
+.home-link:hover{color:var(--gold)}
+.head{text-align:center;margin-bottom:22px}
+.title{font-size:1.8rem;font-weight:800;letter-spacing:-.02em}
+.subtitle{color:var(--mut);font-size:.85rem;margin-top:4px}
+.card{background:rgba(255,255,255,.04);border:1px solid var(--bdr);border-radius:14px;padding:18px;margin-bottom:14px}
+.card-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.card-icon{width:38px;height:38px;border-radius:10px;background:var(--golddim);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
+.card-title{font-size:1.05rem;font-weight:800}
+.card-sub{font-size:.74rem;color:var(--mut);margin-top:1px}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.stat{background:rgba(255,255,255,.03);border:1px solid var(--bdr);border-radius:10px;padding:12px 8px;text-align:center}
+.stat-n{font-size:1.5rem;font-weight:800;color:var(--gold);line-height:1}
+.stat-l{font-size:.62rem;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;margin-top:5px}
+.card-actions{display:flex;gap:8px}
+.btn{flex:1;padding:10px;border-radius:10px;border:1px solid var(--bdr);background:transparent;color:var(--txt);font-family:inherit;font-size:.82rem;font-weight:700;text-decoration:none;text-align:center;transition:border-color .15s,background .15s}
+.btn:hover{border-color:rgba(232,160,0,.5);background:rgba(232,160,0,.05)}
+.btn-gold{background:var(--gold);color:#111;border-color:var(--gold)}
+.empty{color:var(--mut);font-size:.82rem;text-align:center;padding:6px 0 12px}
+.ext{display:flex;align-items:center;gap:12px;background:rgba(232,160,0,.07);border:1px solid rgba(232,160,0,.25);border-radius:14px;padding:14px;text-decoration:none;color:var(--txt)}
+.ext:hover{background:rgba(232,160,0,.12)}
+.ext-i{width:38px;height:38px;border-radius:10px;background:rgba(232,160,0,.15);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
+.ext-t{flex:1}.ext-t b{font-size:.9rem}.ext-t span{display:block;font-size:.72rem;color:var(--mut);margin-top:1px}
+.ext-arrow{color:var(--gold);font-weight:700}
+.footer{text-align:center;margin-top:22px;color:var(--mut);font-size:.68rem;opacity:.7}
+.reset{display:block;margin:18px auto 0;background:none;border:none;color:var(--mut);font-size:.72rem;cursor:pointer;text-decoration:underline;opacity:.6}
+.reset:hover{opacity:1;color:#d8503a}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <a class="home-link" href="/">&#8592; Home</a>
+    <span class="home-link" style="cursor:default">Your stats</span>
+  </div>
+  <div class="head">
+    <div class="title">Your stats</div>
+    <div class="subtitle">Streaks &amp; history across the film games on this site.</div>
+  </div>
+  <div id="cards"></div>
+  <div class="footer">Stats are stored on this device. Clearing your browser data resets them.</div>
+  <button class="reset" id="resetBtn">Reset all stats on this device</button>
+</div>
+<script>
+function getLS(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(_){ return null; } }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function cineLinks(){
+  const streak = getLS('clStreak') || {current:0,best:0};
+  const played = getLS('clPlayed') || {};
+  const dates = Object.keys(played);
+  const best = dates.length ? Math.min.apply(null, dates.map(d=>played[d])) : null;
+  return {
+    icon:'🔗', title:'CineLinks', sub:'Connect the film world',
+    stats:[
+      {n: streak.current|0, l:'Streak'},
+      {n: streak.best|0, l:'Best streak'},
+      {n: best==null?'—':best, l:'Fewest clicks'}
+    ],
+    extra: dates.length ? (dates.length + ' day' + (dates.length===1?'':'s') + ' played') : '',
+    daily:'/?', practice:'/?'  // home (daily + practice live there)
+  };
+}
+function cineClue(){
+  const streak = getLS('cineclueStreak') || {current:0,best:0};
+  const state = getLS('cineclueState');
+  const todayDone = state && state.finished ? (state.solved ? 'Solved today ✓' : 'Played today') : 'Not played today';
+  return {
+    icon:'🔍', title:'CineClue', sub:'Guess the film from clues',
+    stats:[
+      {n: streak.current|0, l:'Streak'},
+      {n: streak.best|0, l:'Best streak'},
+      {n: state? '✓':'—', l:'Today'}
+    ],
+    extra: todayDone,
+    daily:'/cineclue.html', practice:'/cineclue.html?practice=1'
+  };
+}
+
+function cardHTML(g){
+  return '<div class="card">' +
+    '<div class="card-head"><div class="card-icon">'+g.icon+'</div>' +
+      '<div><div class="card-title">'+esc(g.title)+'</div><div class="card-sub">'+esc(g.sub)+'</div></div></div>' +
+    '<div class="stat-grid">' + g.stats.map(s=>'<div class="stat"><div class="stat-n">'+esc(s.n)+'</div><div class="stat-l">'+esc(s.l)+'</div></div>').join('') + '</div>' +
+    (g.extra ? '<div class="empty">'+esc(g.extra)+'</div>' : '') +
+    '<div class="card-actions"><a class="btn btn-gold" href="'+g.daily+'">Daily</a><a class="btn" href="'+g.practice+'">Practice</a></div>' +
+  '</div>';
+}
+
+document.getElementById('cards').innerHTML =
+  cardHTML(cineLinks()) +
+  cardHTML(cineClue()) +
+  '<a class="ext" href="https://cinerating.vercel.app" target="_blank" rel="noopener">' +
+    '<div class="ext-i">⭐</div><div class="ext-t"><b>CineRating</b><span>Rating games — stats live on its own site</span></div><div class="ext-arrow">→</div>' +
+  '</a>';
+
+document.getElementById('resetBtn').onclick = () => {
+  if(!confirm('Reset all CineLinks & CineClue stats on this device?')) return;
+  ['clStreak','clPlayed','cineclueStreak','cineclueState'].forEach(k=>{ try{ localStorage.removeItem(k); }catch(_){} });
+  location.reload();
+};
+</script>
+</body>
+</html>

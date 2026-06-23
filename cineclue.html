@@ -81,7 +81,10 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 <div class="wrap">
   <div class="topbar">
     <a class="home-link" href="/">&#8592; CineLinks</a>
-    <span class="date-badge" id="dateBadge"></span>
+    <span style="display:flex;align-items:center;gap:8px">
+      <a class="home-link" id="modeSwitch" href="?practice=1"></a>
+      <span class="date-badge" id="dateBadge"></span>
+    </span>
   </div>
   <div class="head">
     <div class="title">Cine<span>Clue</span></div>
@@ -138,6 +141,8 @@ function toast(msg){ const t = document.getElementById('toast'); t.textContent =
 // ── State ──────────────────────────────────────────────────────────────────
 const DAY = dayNumber();
 const PUZZLE = DAY - EPOCH + 1;
+const PRACTICE = new URLSearchParams(location.search).get('practice') === '1';
+const RAND_START = Math.floor(Math.random() * 100003); // practice: random film
 let target = null;        // { id, title, year, posterPath }
 let clues = [];           // [{label, html}]
 let stage = 0;            // index of highest revealed clue (0-based)
@@ -152,8 +157,9 @@ const STREAK_KEY = 'cineclueStreak';
 async function loadTarget(){
   const pool = window.CINECLUE_POOL || [];
   if(!pool.length) throw new Error('empty pool');
+  const base = PRACTICE ? RAND_START : DAY;
   for(let attempt = 0; attempt < 8; attempt++){
-    const idx = (((DAY + attempt) % pool.length) + pool.length) % pool.length;
+    const idx = (((base + attempt) % pool.length) + pool.length) % pool.length;
     const id = pool[idx];
     try{
       const [d, kw, cr] = await Promise.all([
@@ -263,23 +269,27 @@ function renderResult(streak){
     ? '<div class="result-verdict win">Solved in ' + (solved ? results.indexOf('win') + 1 : MAX_GUESSES) + '!</div>'
     : '<div class="result-verdict lose">Out of guesses</div>';
   const bestPart = streak.best > streak.current ? ' · best <strong>' + streak.best + '</strong>' : '';
+  const streakLine = PRACTICE ? '' : '<div class="result-streak">🔥 Streak <strong>' + streak.current + '</strong>' + bestPart + '</div>';
+  const actions = PRACTICE
+    ? '<button class="btn btn-gold" id="againBtn">New film</button><button class="btn" id="shareBtn">Share</button>'
+    : '<button class="btn btn-gold" id="shareBtn">Share</button><a class="btn" href="/" style="display:flex;align-items:center;justify-content:center;text-decoration:none">CineLinks</a>';
   el.innerHTML =
     (target.posterPath ? '<img class="result-poster" src="' + poster(target.posterPath, 'w342') + '" alt="">' : '') +
     verdict +
     '<div class="result-film">' + esc(target.title) + '</div>' +
     '<div class="result-year">' + esc(target.year || '') + '</div>' +
     '<div class="result-grid">' + emojiGrid() + '</div>' +
-    '<div class="result-streak">🔥 Streak <strong>' + streak.current + '</strong>' + bestPart + '</div>' +
-    '<div class="result-actions">' +
-      '<button class="btn btn-gold" id="shareBtn">Share</button>' +
-      '<a class="btn" href="/" style="display:flex;align-items:center;justify-content:center;text-decoration:none">CineLinks</a>' +
-    '</div>';
+    streakLine +
+    '<div class="result-actions">' + actions + '</div>';
   document.getElementById('shareBtn').onclick = share;
+  const again = document.getElementById('againBtn');
+  if(again) again.onclick = () => { location.href = 'cineclue.html?practice=1&n=' + Date.now(); };
 }
 
 function shareText(){
   const n = solved ? (results.indexOf('win') + 1) : 'X';
-  return 'CineClue #' + PUZZLE + ' — ' + n + '/' + MAX_GUESSES + '\n' + emojiGrid() + '\nhttps://cinelinks.vercel.app/cineclue.html';
+  const head = PRACTICE ? 'CineClue Practice' : ('CineClue #' + PUZZLE);
+  return head + ' — ' + n + '/' + MAX_GUESSES + '\n' + emojiGrid() + '\nhttps://cinelinks.vercel.app/cineclue.html';
 }
 function share(){
   const text = shareText();
@@ -291,6 +301,7 @@ function share(){
 // ── Streak + persistence ───────────────────────────────────────────────────
 function loadStreak(){ try{ const s = JSON.parse(localStorage.getItem(STREAK_KEY)); if(s) return { current:s.current|0, best:s.best|0, last:s.last|0 }; }catch(_){} return { current:0, best:0, last:0 }; }
 function updateStreak(win){
+  if(PRACTICE) return loadStreak(); // practice never touches the streak
   const s = loadStreak();
   if(s.last === DAY) return s; // already counted today
   if(win){ s.current = (s.last === DAY - 1) ? s.current + 1 : 1; s.best = Math.max(s.best, s.current); }
@@ -299,8 +310,9 @@ function updateStreak(win){
   try{ localStorage.setItem(STREAK_KEY, JSON.stringify(s)); }catch(_){}
   return s;
 }
-function save(){ try{ localStorage.setItem(STATE_KEY, JSON.stringify({ day:DAY, results, stage, finished, solved })); }catch(_){} }
+function save(){ if(PRACTICE) return; try{ localStorage.setItem(STATE_KEY, JSON.stringify({ day:DAY, results, stage, finished, solved })); }catch(_){} }
 function restore(){
+  if(PRACTICE) return false; // practice is always a fresh game
   try{
     const s = JSON.parse(localStorage.getItem(STATE_KEY));
     if(s && s.day === DAY){ results = s.results || []; stage = s.stage || 0; finished = !!s.finished; solved = !!s.solved; return true; }
@@ -355,7 +367,9 @@ function submitTyped(){
 function showError(){ document.getElementById('loading').style.display = 'none'; document.getElementById('error').style.display = 'block'; }
 
 async function init(){
-  document.getElementById('dateBadge').textContent = 'Daily #' + PUZZLE;
+  document.getElementById('dateBadge').textContent = PRACTICE ? 'Practice' : ('Daily #' + PUZZLE);
+  const sw = document.getElementById('modeSwitch');
+  if(sw){ sw.textContent = PRACTICE ? 'Daily →' : 'Practice →'; sw.href = PRACTICE ? 'cineclue.html' : 'cineclue.html?practice=1'; }
   let t;
   try{ t = await loadTarget(); }catch(e){ showError(); return; }
   target = { id: t.d.id, title: t.d.title, year: (t.d.release_date || '').slice(0, 4), posterPath: t.d.poster_path };
