@@ -5,7 +5,7 @@
  *   - other same-origin GETs (logo, icons, daily-challenges.js, i18n.js): stale-while-revalidate.
  * Bump CACHE_VERSION to invalidate old caches on deploy.
  */
-const CACHE_VERSION = 'cinelinks-v1';
+const CACHE_VERSION = 'cinelinks-v2';
 const SHELL = [
   '/',
   '/index.html',
@@ -16,6 +16,7 @@ const SHELL = [
   '/stats.html',
   '/ads.js',
   '/support.js',
+  '/howto.js',
   '/i18n.js',
   '/lib/credits.js',
   '/lib/daily.js',

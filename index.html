@@ -21,6 +21,8 @@
 <meta property="og:image:height" content="630">
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@cinelinksgame">
+<meta name="twitter:creator" content="@cinelinksgame">
 <meta name="twitter:title" content="CineLinks — Connect the film world in the fewest clicks">
 <meta name="twitter:description" content="A daily film-trivia game: connect actors, movies, directors and TV shows in as few clicks as possible.">
 <meta name="twitter:image" content="https://cinelinks.vercel.app/og-image.png">
@@ -64,6 +66,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .game-name{font-weight:800;font-size:.95rem;display:flex;align-items:center;gap:6px}
 .game-desc{font-size:.68rem;color:var(--mut);margin-top:1px}
 .new-tag{font-size:.52rem;font-weight:800;letter-spacing:.06em;color:#111;background:var(--gold);padding:1px 5px;border-radius:999px}
+.game-done{color:#5bbd7a;font-weight:800;font-size:.85rem;margin-left:5px}
 .game-modes{display:flex;gap:8px;margin-top:auto}
 .mode{flex:1;text-align:center;padding:9px;border-radius:9px;border:1px solid var(--bdr);background:transparent;color:var(--txt);font-family:inherit;font-size:.8rem;font-weight:700;cursor:pointer;text-decoration:none;transition:background .15s,border-color .15s,opacity .15s}
 .mode:hover{border-color:rgba(232,160,0,.5);background:rgba(232,160,0,.05)}
@@ -131,6 +134,10 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .how li{list-style:none;color:var(--mut);font-size:.83rem;line-height:1.8;padding-left:22px;position:relative}
 .how li::before{content:"→";position:absolute;left:0;color:var(--gold);font-weight:600}
 .credits{margin-top:22px;border-top:1px solid var(--bdr);padding-top:18px;text-align:left}
+.site-foot{margin-top:18px;text-align:center;font-size:.78rem;color:var(--mut)}
+.site-foot a{color:var(--mut);text-decoration:none;font-weight:600}
+.site-foot a:hover{color:var(--gold)}
+.site-foot .dot{margin:0 8px;opacity:.5}
 .credits-title{font-size:.65rem;font-weight:600;letter-spacing:.1em;color:var(--mut);text-transform:uppercase;margin-bottom:10px}
 .lang-picker{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:18px;padding-top:16px;border-top:1px solid var(--bdr)}
 .lang-btn{padding:7px 6px;border-radius:8px;border:1px solid var(--bdr);background:transparent;color:var(--mut);font-family:inherit;font-size:.68rem;font-weight:600;cursor:pointer;transition:border-color .15s,color .15s,background .15s;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -486,21 +493,21 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     <div class="games-section">Daily puzzles</div>
     <div class="games">
       <div class="game-card">
-        <div class="game-head"><span class="game-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"/></svg></span><span class="game-meta"><span class="game-name">CineLinks</span><span class="game-desc">Connect actors → movies → TV</span></span></div>
+        <div class="game-head"><span class="game-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"/></svg></span><span class="game-meta"><span class="game-name">CineLinks<span class="game-done" data-done="cl"></span></span><span class="game-desc">Connect actors → movies → TV</span></span></div>
         <div class="game-modes">
           <button class="mode mode-daily" onclick="game.startDaily()">Daily</button>
           <button class="mode mode-practice" onclick="game.startRandom()">Practice</button>
         </div>
       </div>
       <div class="game-card">
-        <div class="game-head"><span class="game-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span><span class="game-meta"><span class="game-name">CineClue <span class="new-tag">NEW</span></span><span class="game-desc">Guess the film from clues</span></span></div>
+        <div class="game-head"><span class="game-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span><span class="game-meta"><span class="game-name">CineClue <span class="new-tag">NEW</span><span class="game-done" data-done="clue"></span></span><span class="game-desc">Guess the film from clues</span></span></div>
         <div class="game-modes">
           <a class="mode mode-daily" href="/cineclue.html">Daily</a>
           <a class="mode mode-practice" href="/cineclue.html?practice=1">Practice</a>
         </div>
       </div>
       <div class="game-card">
-        <div class="game-head"><span class="game-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="1.6"/><path d="m21 15-5-5L5 21"/></svg></span><span class="game-meta"><span class="game-name">CineFrame <span class="new-tag">NEW</span></span><span class="game-desc">Guess the film from a frame</span></span></div>
+        <div class="game-head"><span class="game-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="1.6"/><path d="m21 15-5-5L5 21"/></svg></span><span class="game-meta"><span class="game-name">CineFrame <span class="new-tag">NEW</span><span class="game-done" data-done="frame"></span></span><span class="game-desc">Guess the film from a frame</span></span></div>
         <div class="game-modes">
           <a class="mode mode-daily" href="/cineframe.html">Daily</a>
           <a class="mode mode-practice" href="/cineframe.html?practice=1">Practice</a>
@@ -559,6 +566,11 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
         <button class="lang-btn" data-lang="de-DE" onclick="setLang('de-DE')">Deutsch</button>
         <button class="lang-btn" data-lang="pt-BR" onclick="setLang('pt-BR')">Português</button>
       </div>
+    </div>
+    <div class="site-foot">
+      <a href="https://x.com/cinelinksgame" target="_blank" rel="noopener">Follow on X</a>
+      <span class="dot">·</span>
+      <a href="mailto:cinelinksgame@gmail.com">Contact</a>
     </div>
   </div>
 </div>
@@ -1373,6 +1385,27 @@ function dateFromKey(key) {
   return new Date(Date.UTC(y, m - 1, d, 12));
 }
 
+// Mark the home game cards with a ✓ when today's daily is already done.
+function markDoneBadges() {
+  const today = dateKey();
+  const now = new Date();
+  const utcDay = Math.floor(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) / 86400000);
+  function isDone(k, clueLike) {
+    try {
+      const s = JSON.parse(localStorage.getItem(k));
+      if (!s) return false;
+      return clueLike ? (s.day === utcDay && s.finished) : (s.date === today);
+    } catch(_) { return false; }
+  }
+  const map = { cl: ['clDailyResult', false], clue: ['cineclueState', true], frame: ['cineframeState', true] };
+  document.querySelectorAll('.game-done[data-done]').forEach(el => {
+    const cfg = map[el.dataset.done];
+    const done = cfg && isDone(cfg[0], cfg[1]);
+    el.textContent = done ? '✓' : '';
+    el.title = done ? 'Solved today' : '';
+  });
+}
+
 // Locally-stored map of completed daily/archive dates -> best (lowest) clicks.
 const PLAYED_KEY = 'clPlayed';
 function loadPlayed() {
@@ -1463,6 +1496,7 @@ function showOnly(id) {
       void inner.offsetWidth;
       inner.classList.add('anim-in');
     }
+    markDoneBadges();
     _clearParticles();
   }
   if (id === 'loadingScreen') _spawnParticles();
@@ -1607,6 +1641,26 @@ const game = window.game = {
   async startDaily(dateOverride) {
     const key = dateOverride || dateKey();
     const isToday = key === dateKey();
+
+    // Already solved today? Show the result instead of letting it be replayed.
+    if (isToday) {
+      let done = null;
+      try { const r = JSON.parse(localStorage.getItem('clDailyResult')); if (r && r.date === key && Array.isArray(r.path) && r.path.length) done = r; } catch(_) {}
+      if (done) {
+        this.start = normalizeNode(done.start);
+        this.end = normalizeNode(done.end);
+        this.path = done.path;
+        this.clicks = done.clicks;
+        this.cur = done.path[done.path.length - 1];
+        this.scoreDate = key;
+        this.visited = new Set(done.path.map(n => n.type + '-' + n.id));
+        const badgeEl = document.getElementById('hdrDateBadge');
+        if (badgeEl) { badgeEl.textContent = formatDailyDate(dateFromKey(key), {month:'short', day:'numeric'}); badgeEl.style.display = ''; }
+        await this.showWin(true);
+        return;
+      }
+    }
+
     const badge = document.getElementById('hdrDateBadge');
     if (badge) {
       badge.textContent = formatDailyDate(dateFromKey(key), {month:'short', day:'numeric'});
@@ -2328,11 +2382,13 @@ const game = window.game = {
     await this.loadConnections(node);
   },
 
-  async showWin() {
+  async showWin(replay) {
     await Promise.all(this.path.map(n => hydrateNodeImage(n)));
     showOnly('winScreen');
     this.renderStreak();
     this.renderPar();
+    const winSub = document.querySelector('.win-sub');
+    if (winSub) winSub.textContent = replay ? '✓ You already solved today’s challenge' : t('winSub');
 
     // Animate win box entrance
     const winBox = document.querySelector('.win-box');
@@ -2363,13 +2419,31 @@ const game = window.game = {
 
     // share btn innerHTML is static in HTML, no reset needed
 
-    // Record locally that this date was completed (for the archive list).
-    if (this.scoreDate) recordPlayed(this.scoreDate, this.clicks);
+    // Record locally that this date was completed (for the archive list) and
+    // persist today's daily result so it can be shown instead of replayed.
+    if (!replay && this.scoreDate) recordPlayed(this.scoreDate, this.clicks);
+    if (!replay && this.scoreDate === dateKey()) {
+      try {
+        const lite = n => ({ name: n.name, type: n.type, id: n.id, img: n.img, yearLabel: n.yearLabel, role: n.role });
+        localStorage.setItem('clDailyResult', JSON.stringify({
+          date: this.scoreDate, clicks: this.clicks,
+          start: lite(this.start), end: lite(this.end), path: this.path.map(lite)
+        }));
+      } catch(_) {}
+    }
 
     // Submit daily score and show today's average + record — only for today's
-    // official daily. Past (archive) challenges are not submitted.
+    // official daily, and only on a fresh win (replays just read the stats).
     const avgEl = document.getElementById('winAvg');
-    if (avgEl && this.scoreDate === dateKey()) {
+    if (avgEl && this.scoreDate === dateKey() && replay) {
+      avgEl.textContent = '';
+      fetchDailyScore(this.scoreDate).then(data => {
+        if (!data) return;
+        const avg = scoreNumber(data.avg), record = scoreNumber(data.record);
+        const recordText = record ? " · Daily record: <strong>" + record + " clicks</strong>" : "";
+        avgEl.innerHTML = (avg ? "Today's average: <strong>" + avg + " clicks</strong>" : "") + recordText;
+      }).catch(() => {});
+    } else if (avgEl && this.scoreDate === dateKey()) {
       avgEl.textContent = '';
       fetch('/api/score', {
         method: 'POST',
@@ -2945,8 +3019,21 @@ if ('serviceWorker' in navigator) {
   });
 }
 </script>
+<script>
+window.HOWTO = {
+  key: 'cinelinks', noAuto: true, title: 'How to play CineLinks',
+  html: '<p style="color:#8d8d8d;font-size:.92rem;line-height:1.6;margin:0">Get from the <b style="color:#f0f0f0">start</b> to the <b style="color:#f0f0f0">target</b> in as few clicks as possible.</p>' +
+    '<ul style="color:#8d8d8d;font-size:.88rem;line-height:1.7;margin:12px 0 0;padding-left:18px">' +
+      '<li>From a <b style="color:#f0f0f0">person</b>, pick one of their movies or shows.</li>' +
+      '<li>From a <b style="color:#f0f0f0">movie/show</b>, pick someone in its cast or crew.</li>' +
+      '<li>The target card glows gold when it’s one step away.</li>' +
+      '<li><b style="color:#f0f0f0">Daily</b> is one shared puzzle a day (keep your streak). <b style="color:#f0f0f0">Practice</b> is unlimited.</li>' +
+    '</ul>'
+};
+</script>
 <script defer src="/ads.js"></script>
 <script defer src="/support.js"></script>
+<script defer src="/howto.js"></script>
 <script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>

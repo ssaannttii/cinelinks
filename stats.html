@@ -39,6 +39,10 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .ext-t{flex:1}.ext-t b{font-size:.9rem}.ext-t span{display:block;font-size:.72rem;color:var(--mut);margin-top:1px}
 .ext-arrow{color:var(--gold);font-weight:700}
 .footer{text-align:center;margin-top:22px;color:var(--mut);font-size:.68rem;opacity:.7}
+.site-foot{text-align:center;margin-top:14px;font-size:.78rem;color:var(--mut)}
+.site-foot a{color:var(--mut);text-decoration:none;font-weight:600}
+.site-foot a:hover{color:var(--gold)}
+.site-foot .dot{margin:0 8px;opacity:.5}
 .reset{display:block;margin:18px auto 0;background:none;border:none;color:var(--mut);font-size:.72rem;cursor:pointer;text-decoration:underline;opacity:.6}
 .reset:hover{opacity:1;color:#d8503a}
 </style>
@@ -55,10 +59,16 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   </div>
   <div id="cards"></div>
   <div class="footer">Stats are stored on this device. Clearing your browser data resets them.</div>
+  <div class="site-foot">
+    <a href="https://x.com/cinelinksgame" target="_blank" rel="noopener">Follow on X</a>
+    <span class="dot">·</span>
+    <a href="mailto:cinelinksgame@gmail.com">Contact</a>
+  </div>
   <button class="reset" id="resetBtn">Reset all stats on this device</button>
 </div>
 <script>
 function getLS(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(_){ return null; } }
+function todayKey(){ try{ return new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Madrid'}).format(new Date()); }catch(_){ return new Date().toISOString().slice(0,10); } }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
 function cineLinks(){
@@ -66,14 +76,15 @@ function cineLinks(){
   const played = getLS('clPlayed') || {};
   const dates = Object.keys(played);
   const best = dates.length ? Math.min.apply(null, dates.map(d=>played[d])) : null;
+  const doneToday = played[todayKey()] != null || (getLS('clDailyResult')||{}).date === todayKey();
   return {
     icon:'🔗', title:'CineLinks', sub:'Connect the film world',
     stats:[
       {n: streak.current|0, l:'Streak'},
       {n: streak.best|0, l:'Best streak'},
-      {n: best==null?'—':best, l:'Fewest clicks'}
+      {n: doneToday ? '✓' : '—', l:'Today'}
     ],
-    extra: dates.length ? (dates.length + ' day' + (dates.length===1?'':'s') + ' played') : '',
+    extra: doneToday ? 'Solved today ✓' : (dates.length ? (dates.length + ' day' + (dates.length===1?'':'s') + ' played') : 'Not played today'),
     daily:'/?daily=1', practice:'/?practice=1'  // jump straight into play
   };
 }
