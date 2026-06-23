@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import AutoNextButton from "@/components/AutoNextButton";
 import ShareButton from "@/components/ShareButton";
@@ -56,7 +56,6 @@ function buildShareText(score: number, results: RoundResult[], isDaily: boolean)
 // ── Component ────────────────────────────────────────────────────────────────
 
 function VersusGame() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const isDaily = searchParams.get("mode") === "daily";
 
@@ -287,7 +286,7 @@ function VersusGame() {
           <div className="flex gap-3 mb-3">
             {isDaily ? (
               <button
-                onClick={() => router.push("/")}
+                onClick={() => window.location.href = "https://cinelinks.vercel.app"}
                 className="flex-1 font-bold py-3 rounded-xl transition-all hover:opacity-85 flex items-center justify-center gap-2"
                 style={{ background: "#e8a000", color: "#111" }}
               >
@@ -296,7 +295,7 @@ function VersusGame() {
             ) : (
               <>
                 <button onClick={handleRestart} className="flex-1 font-bold py-3 rounded-xl transition-all hover:opacity-85" style={{ background: "#e8a000", color: "#111" }}>Play Again</button>
-                <button onClick={() => router.push("/")} className="flex-1 font-bold py-3 rounded-xl transition-all hover:opacity-85 flex items-center justify-center gap-2" style={{ background: "transparent", color: "#f0f0f0", border: "1px solid rgba(255,255,255,0.09)" }}><HomeIcon /> Home</button>
+                <button onClick={() => window.location.href = "https://cinelinks.vercel.app"} className="flex-1 font-bold py-3 rounded-xl transition-all hover:opacity-85 flex items-center justify-center gap-2" style={{ background: "transparent", color: "#f0f0f0", border: "1px solid rgba(255,255,255,0.09)" }}><HomeIcon /> Home</button>
               </>
             )}
           </div>
@@ -320,7 +319,7 @@ function VersusGame() {
       {/* Header */}
       <div className="mb-4">
         <div className="flex justify-between items-center mb-2">
-          <button onClick={() => router.push("/")} className="text-sm font-medium hover:opacity-80 transition-opacity flex items-center gap-1.5" style={{ color: "#777" }}><HomeIcon /> Home</button>
+          <button onClick={() => window.location.href = "https://cinelinks.vercel.app"} className="text-sm font-medium hover:opacity-80 transition-opacity flex items-center gap-1.5" style={{ color: "#777" }}><HomeIcon /> Home</button>
           <div className="flex items-center gap-3">
             {streak >= 2 && <span className="text-sm font-bold" style={{ color: "#e8a000" }}>{streak} 🔥</span>}
             <span className="text-sm" style={{ color: "#777" }}>{round + 1} / {ROUNDS}</span>

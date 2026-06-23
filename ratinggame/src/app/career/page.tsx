@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import ShareButton from "@/components/ShareButton";
 import HomeIcon from "@/components/HomeIcon";
 
@@ -35,7 +34,6 @@ function buildShareText(name: string, score: number, total: number, correctOrder
 // ── Component ────────────────────────────────────────────────────────────────
 
 export default function CareerPage() {
-  const router = useRouter();
 
   const [phase, setPhase] = useState<Phase>("loading");
   const [person, setPerson] = useState<Person | null>(null);
@@ -233,7 +231,7 @@ export default function CareerPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <button
-          onClick={() => router.push("/")}
+          onClick={() => window.location.href = "https://cinelinks.vercel.app"}
           className="text-sm font-medium hover:opacity-80 transition-opacity flex items-center gap-1.5"
           style={{ color: "#777" }}
         >
@@ -407,7 +405,7 @@ export default function CareerPage() {
                 Next Person
               </button>
               <button
-                onClick={() => router.push("/")}
+                onClick={() => window.location.href = "https://cinelinks.vercel.app"}
                 className="flex-1 font-bold py-3 rounded-xl hover:opacity-85 transition-all flex items-center justify-center gap-2"
                 style={{ background: "transparent", color: "#f0f0f0", border: "1px solid rgba(255,255,255,0.09)" }}
               >

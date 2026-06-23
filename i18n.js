@@ -10,17 +10,17 @@ const LANGS = {
 const I18N = {
   'en-US': {
     // hub mode labels
-    modeDaily: 'Daily', modePractice: 'Practice',
+    modeDaily: 'Daily', modePractice: 'Practice', modePlay: 'Play',
     // click singular + goal tag
     clickSingular: 'click', goalTag: 'GOAL',
     // difficulty labels (from par)
     diffEasy: 'Easy', diffMedium: 'Medium', diffHard: 'Hard', diffExpert: 'Expert', difficultyLabel: 'Difficulty',
     // CineLinks additions: streak / archive / par
     streakLabel: 'Streak', streakBest: 'best', streakKept: 'Streak kept!', parLabel: 'Best possible', parYou: 'You matched the best route!', archiveTitle: 'Past challenges', archiveBtn: 'Past challenges', archiveClose: 'Close', archivePlayedTag: 'done', archiveTodayTag: 'today',
-    tagline: 'Connect actors, movies, directors, and TV shows in the fewest clicks.',
+    tagline: 'A new film puzzle every day — pick your game.',
     nodeActor: 'Actor', nodeMovie: 'Movie', nodeTarget: 'Target',
     btnToday: "Today's Challenge", btnRandom: 'Practice',
-    rulesTitle: 'Rules',
+    rulesTitle: 'How CineLinks works',
     rule1: 'Start at one actor or movie',
     rule2: 'Choose connections through cast, crew, and filmographies',
     rule3: 'Reach the goal in as few clicks as possible',
@@ -55,17 +55,17 @@ const I18N = {
   },
   'es-ES': {
     // hub mode labels
-    modeDaily: 'Diario', modePractice: 'Práctica',
+    modeDaily: 'Diario', modePractice: 'Práctica', modePlay: 'Jugar',
     // click singular + goal tag
     clickSingular: 'clic', goalTag: 'OBJETIVO',
     // difficulty labels (from par)
     diffEasy: 'Fácil', diffMedium: 'Media', diffHard: 'Difícil', diffExpert: 'Experto', difficultyLabel: 'Dificultad',
     // CineLinks additions: streak / archive / par
     streakLabel: 'Racha', streakBest: 'mejor', streakKept: '¡Racha mantenida!', parLabel: 'Mínimo posible', parYou: '¡Igualaste la ruta óptima!', archiveTitle: 'Retos anteriores', archiveBtn: 'Retos anteriores', archiveClose: 'Cerrar', archivePlayedTag: 'hecho', archiveTodayTag: 'hoy',
-    tagline: 'Conecta actores, películas, directores y series en el menor número de clics.',
+    tagline: 'Un puzle de cine nuevo cada día — elige tu juego.',
     nodeActor: 'Actor', nodeMovie: 'Película', nodeTarget: 'Objetivo',
     btnToday: 'Reto del día', btnRandom: 'Práctica',
-    rulesTitle: 'Reglas',
+    rulesTitle: 'Cómo funciona CineLinks',
     rule1: 'Empieza con un actor o una película',
     rule2: 'Navega por el reparto, directores y filmografías',
     rule3: 'Llega al objetivo en el menor número de clics',
@@ -100,17 +100,17 @@ const I18N = {
   },
   'es-MX': {
     // hub mode labels
-    modeDaily: 'Diario', modePractice: 'Práctica',
+    modeDaily: 'Diario', modePractice: 'Práctica', modePlay: 'Jugar',
     // click singular + goal tag
     clickSingular: 'clic', goalTag: 'OBJETIVO',
     // difficulty labels (from par)
     diffEasy: 'Fácil', diffMedium: 'Media', diffHard: 'Difícil', diffExpert: 'Experto', difficultyLabel: 'Dificultad',
     // CineLinks additions: streak / archive / par
     streakLabel: 'Racha', streakBest: 'mejor', streakKept: '¡Racha mantenida!', parLabel: 'Mínimo posible', parYou: '¡Igualaste la ruta óptima!', archiveTitle: 'Retos anteriores', archiveBtn: 'Retos anteriores', archiveClose: 'Cerrar', archivePlayedTag: 'hecho', archiveTodayTag: 'hoy',
-    tagline: 'Conecta actores, películas, directores y series en el menor número de clics.',
+    tagline: 'Un puzle de cine nuevo cada día — elige tu juego.',
     nodeActor: 'Actor', nodeMovie: 'Película', nodeTarget: 'Meta',
     btnToday: 'Reto del día', btnRandom: 'Práctica',
-    rulesTitle: 'Reglas',
+    rulesTitle: 'Cómo funciona CineLinks',
     rule1: 'Empieza con un actor o una película',
     rule2: 'Navega por el reparto, directores y filmografías',
     rule3: 'Llega a la meta en el menor número de clics',
@@ -145,17 +145,17 @@ const I18N = {
   },
   'fr-FR': {
     // hub mode labels
-    modeDaily: 'Quotidien', modePractice: 'Entraînement',
+    modeDaily: 'Quotidien', modePractice: 'Entraînement', modePlay: 'Jouer',
     // click singular + goal tag
     clickSingular: 'clic', goalTag: 'OBJECTIF',
     // difficulty labels (from par)
     diffEasy: 'Facile', diffMedium: 'Moyen', diffHard: 'Difficile', diffExpert: 'Expert', difficultyLabel: 'Difficulté',
     // CineLinks additions: streak / archive / par
     streakLabel: 'Série', streakBest: 'record', streakKept: 'Série conservée\u00a0!', parLabel: 'Minimum possible', parYou: 'Vous avez égalé la meilleure route\u00a0!', archiveTitle: 'Défis passés', archiveBtn: 'Défis passés', archiveClose: 'Fermer', archivePlayedTag: 'fait', archiveTodayTag: "aujourd'hui",
-    tagline: 'Connectez acteurs, films, réalisateurs et séries en un minimum de clics.',
+    tagline: 'Un puzzle de cinéma chaque jour — choisis ton jeu.',
     nodeActor: 'Acteur', nodeMovie: 'Film', nodeTarget: 'Cible',
     btnToday: "Défi du jour", btnRandom: 'Entraînement',
-    rulesTitle: 'Règles',
+    rulesTitle: 'Comment jouer à CineLinks',
     rule1: 'Commencez par un acteur ou un film',
     rule2: 'Naviguez via les castings, réalisateurs et filmographies',
     rule3: "Atteignez l'objectif en le moins de clics possible",
@@ -190,17 +190,17 @@ const I18N = {
   },
   'de-DE': {
     // hub mode labels
-    modeDaily: 'Täglich', modePractice: 'Üben',
+    modeDaily: 'Täglich', modePractice: 'Üben', modePlay: 'Spielen',
     // click singular + goal tag
     clickSingular: 'Klick', goalTag: 'ZIEL',
     // difficulty labels (from par)
     diffEasy: 'Leicht', diffMedium: 'Mittel', diffHard: 'Schwer', diffExpert: 'Experte', difficultyLabel: 'Schwierigkeit',
     // CineLinks additions: streak / archive / par
     streakLabel: 'Serie', streakBest: 'Beste', streakKept: 'Serie gehalten!', parLabel: 'Bestmöglich', parYou: 'Du hast die beste Route erreicht!', archiveTitle: 'Frühere Rätsel', archiveBtn: 'Frühere Rätsel', archiveClose: 'Schließen', archivePlayedTag: 'fertig', archiveTodayTag: 'heute',
-    tagline: 'Verbinde Schauspieler, Filme, Regisseure und Serien in möglichst wenigen Klicks.',
+    tagline: 'Jeden Tag ein neues Filmrätsel — wähl dein Spiel.',
     nodeActor: 'Schauspieler', nodeMovie: 'Film', nodeTarget: 'Ziel',
     btnToday: 'Heutige Challenge', btnRandom: 'Üben',
-    rulesTitle: 'Regeln',
+    rulesTitle: 'So funktioniert CineLinks',
     rule1: 'Starte mit einem Schauspieler oder einem Film',
     rule2: 'Navigiere durch Besetzung, Regisseure und Filmografien',
     rule3: 'Erreiche das Ziel in so wenigen Klicks wie möglich',
@@ -235,17 +235,17 @@ const I18N = {
   },
   'pt-BR': {
     // hub mode labels
-    modeDaily: 'Diário', modePractice: 'Treino',
+    modeDaily: 'Diário', modePractice: 'Treino', modePlay: 'Jogar',
     // click singular + goal tag
     clickSingular: 'clique', goalTag: 'ALVO',
     // difficulty labels (from par)
     diffEasy: 'Fácil', diffMedium: 'Média', diffHard: 'Difícil', diffExpert: 'Especialista', difficultyLabel: 'Dificuldade',
     // CineLinks additions: streak / archive / par
     streakLabel: 'Sequência', streakBest: 'melhor', streakKept: 'Sequência mantida!', parLabel: 'Mínimo possível', parYou: 'Você igualou a melhor rota!', archiveTitle: 'Desafios anteriores', archiveBtn: 'Desafios anteriores', archiveClose: 'Fechar', archivePlayedTag: 'feito', archiveTodayTag: 'hoje',
-    tagline: 'Conecte atores, filmes, diretores e séries no menor número de cliques.',
+    tagline: 'Um quebra-cabeça de cinema por dia — escolhe o teu jogo.',
     nodeActor: 'Ator', nodeMovie: 'Filme', nodeTarget: 'Objetivo',
     btnToday: 'Desafio do dia', btnRandom: 'Treino',
-    rulesTitle: 'Regras',
+    rulesTitle: 'Como funciona o CineLinks',
     rule1: 'Comece com um ator ou um filme',
     rule2: 'Navegue pelo elenco, diretores e filmografias',
     rule3: 'Alcance o objetivo no menor número de cliques',

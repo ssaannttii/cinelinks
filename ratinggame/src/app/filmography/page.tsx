@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import AutoNextButton from "@/components/AutoNextButton";
 import HomeIcon from "@/components/HomeIcon";
 
@@ -152,7 +151,6 @@ function ShareImageButton({ score, results }: { score: number; results: RoundRes
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function FilmographyPage() {
-  const router = useRouter();
 
   const cacheRef       = useRef<Record<string, Movie>>({});
   const fetchingRef    = useRef<Set<string>>(new Set());
@@ -322,7 +320,7 @@ export default function FilmographyPage() {
           </div>
           <div className="flex gap-3 mb-3">
             <button onClick={handleRestart} className="flex-1 font-bold py-3 rounded-xl hover:opacity-85 transition-all" style={{ background: "#e8a000", color: "#111" }}>Play Again</button>
-            <button onClick={() => router.push("/")} className="flex-1 font-bold py-3 rounded-xl hover:opacity-85 transition-all flex items-center justify-center gap-2" style={{ background: "transparent", color: "#f0f0f0", border: "1px solid rgba(255,255,255,0.09)" }}><HomeIcon /> Home</button>
+            <button onClick={() => window.location.href = "https://cinelinks.vercel.app"} className="flex-1 font-bold py-3 rounded-xl hover:opacity-85 transition-all flex items-center justify-center gap-2" style={{ background: "transparent", color: "#f0f0f0", border: "1px solid rgba(255,255,255,0.09)" }}><HomeIcon /> Home</button>
           </div>
           <ShareImageButton score={score} results={results} />
         </div>
@@ -348,7 +346,7 @@ export default function FilmographyPage() {
       {/* Progress header */}
       <div className="mb-3 flex-shrink-0">
         <div className="flex justify-between items-center mb-2">
-          <button onClick={() => router.push("/")} className="text-sm font-medium hover:opacity-80 transition-opacity flex items-center gap-1.5" style={{ color: "#777" }}><HomeIcon /> Home</button>
+          <button onClick={() => window.location.href = "https://cinelinks.vercel.app"} className="text-sm font-medium hover:opacity-80 transition-opacity flex items-center gap-1.5" style={{ color: "#777" }}><HomeIcon /> Home</button>
           <div className="flex items-center gap-3">
             <span className="text-sm" style={{ color: "#777" }}>{round + 1} / {ROUNDS}</span>
             <span className="text-sm font-bold" style={{ color: "#e8a000" }}>{score} ✓</span>

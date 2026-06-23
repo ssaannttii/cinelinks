@@ -11,7 +11,12 @@ emoji-grid sharing, and TMDB data.
 | **CineLinks** | Connect actors/films/TV in fewest clicks | ✅ Today's Challenge | ✅ Practice (was "Random Game") | root (`/`) |
 | **CineClue** | Guess the film from progressive clues | ✅ `/cineclue.html` | ✅ `/cineclue.html?practice=1` | root |
 | **CineFrame** | Guess the film from a progressively-unblurred frame | ✅ `/cineframe.html` | ✅ `?practice=1` | root (shares CineClue's engine + pool) |
-| **CineRating** | Guess / compare ratings | ✅ Higher-or-Lower daily | the other modes | `cinerating.vercel.app` (Next.js) |
+| **Rating games** (Higher or Lower · Career · Guess the Score) | Guess / compare ratings | ✅ Higher-or-Lower daily | Career, Guess the Score | mode pages on `cinerating.vercel.app/*`, **entered from the hub** |
+
+> The CineRating standalone home (`cinerating.vercel.app/`) now **redirects to the
+> hub** — the rating modes are surfaced as cards in the CineLinks hub and their
+> in-game "Home" buttons return to the hub. There's no separate rating home anymore.
+> (A full same-origin merge is still the deferred step below, for shared stats.)
 
 ### Naming decisions
 - **Vocabulary:** every game uses **Daily** (the shared puzzle of the day) and
