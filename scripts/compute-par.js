@@ -76,6 +76,8 @@ async function main() {
     fs.writeFileSync(OUT, JSON.stringify(result, null, 0)); // checkpoint each step
   }
   console.log(`Done. Wrote ${OUT}`);
+  // Show the difficulty distribution right after computing.
+  try { require('./difficulty').audit(false); } catch (_) {}
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

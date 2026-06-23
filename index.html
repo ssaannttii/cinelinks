@@ -678,6 +678,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 <script src="i18n.js"></script>
 <script src="lib/credits.js"></script>
 <script src="lib/daily.js"></script>
+<script src="lib/difficulty.js"></script>
 <script>
 const DAILY_TIME_ZONE = 'Europe/Madrid';
 const DAILY_ALGO_VERSION = 3;
@@ -1238,12 +1239,9 @@ async function fetchScoreToken(key) {
   }
 }
 
-// Map a par (minimum clicks) to a difficulty i18n key.
+// Map a par (minimum clicks) to a difficulty i18n key (shared logic in lib/difficulty.js).
 function parDifficulty(par) {
-  if (par <= 2) return 'diffEasy';
-  if (par === 3) return 'diffMedium';
-  if (par === 4) return 'diffHard';
-  return 'diffExpert';
+  return CineDifficulty.difficultyI18nKey(par) || 'diffExpert';
 }
 
 // Par data (precomputed minimum clicks per challenge) — loaded once, optional.
