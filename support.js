@@ -6,7 +6,7 @@
 //                 'https://paypal.me/you', or a GitHub Sponsors page.
 (function () {
   'use strict';
-  var SUPPORT_URL = '';
+  var SUPPORT_URL = 'https://ko-fi.com/cines';
   var SUPPORT_LABEL = '☕ Support';
   if (!SUPPORT_URL) return;
 
