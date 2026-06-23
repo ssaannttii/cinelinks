@@ -12,6 +12,7 @@
 
   var SYNC_KEYS = (window.MergeStats && window.MergeStats.SYNC_KEYS) ||
     ['clStreak', 'cineclueStreak', 'cineframeStreak', 'cineclueState', 'cineframeState', 'clPlayed'];
+  var lastToken = '';
 
   function readLocal() {
     var o = {};
@@ -40,15 +41,41 @@
 
   function renderSignedIn(p) {
     slot.innerHTML = '';
+    var box = document.createElement('div');
+    box.style.cssText = 'position:relative;display:flex;flex-direction:column;align-items:flex-end';
     var pill = document.createElement('button');
-    pill.title = 'Synced as ' + (p.email || p.name || 'you') + ' — click to sign out';
+    pill.title = 'Synced as ' + (p.email || p.name || 'you');
     pill.style.cssText = 'display:flex;align-items:center;gap:7px;padding:4px 10px 4px 4px;border-radius:20px;border:1px solid rgba(232,160,0,.3);background:rgba(22,22,22,.92);color:#f0f0f0;font-family:inherit;font-size:.78rem;font-weight:700;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.3)';
     var img = p.picture
       ? '<img src="' + p.picture + '" alt="" referrerpolicy="no-referrer" style="width:24px;height:24px;border-radius:50%;object-fit:cover">'
       : '<span style="width:24px;height:24px;border-radius:50%;background:#e8a000;color:#111;display:flex;align-items:center;justify-content:center;font-weight:800">' + ((p.name || '?')[0] || '?').toUpperCase() + '</span>';
     pill.innerHTML = img + '<span style="color:#5bbd7a">✓ Synced</span>';
-    pill.onclick = signOut;
-    slot.appendChild(pill);
+
+    var menu = document.createElement('div');
+    menu.style.cssText = 'display:none;margin-top:6px;width:230px;background:#181818;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:10px;box-shadow:0 12px 34px rgba(0,0,0,.5);color:#f0f0f0;font-size:.78rem';
+    menu.innerHTML =
+      '<p style="margin:0 0 9px;color:#8d8d8d;font-size:.72rem;line-height:1.5">Your streaks &amp; history sync across devices. We only store game stats and your Google ID — nothing else.</p>';
+    var out = document.createElement('button');
+    out.textContent = 'Sign out';
+    out.style.cssText = 'width:100%;padding:8px;margin-bottom:6px;border:1px solid rgba(255,255,255,.14);border-radius:8px;background:transparent;color:#f0f0f0;font-family:inherit;font-weight:700;font-size:.78rem;cursor:pointer';
+    out.onclick = signOut;
+    var del = document.createElement('button');
+    del.textContent = 'Delete my synced data';
+    del.style.cssText = 'width:100%;padding:8px;border:1px solid rgba(216,80,58,.4);border-radius:8px;background:transparent;color:#d8503a;font-family:inherit;font-weight:700;font-size:.78rem;cursor:pointer';
+    del.onclick = deleteData;
+    menu.appendChild(out); menu.appendChild(del);
+
+    pill.onclick = function () { menu.style.display = menu.style.display === 'none' ? 'block' : 'none'; };
+    box.appendChild(pill); box.appendChild(menu);
+    slot.appendChild(box);
+  }
+
+  async function deleteData() {
+    if (!window.confirm('Delete your synced stats from the server? Your stats on this device stay untouched.')) return;
+    if (lastToken) {
+      try { await fetch('/api/sync', { method: 'DELETE', headers: { Authorization: 'Bearer ' + lastToken } }); } catch (_) {}
+    }
+    signOut();
   }
 
   function renderSignedOut() {
@@ -85,6 +112,7 @@
 
   function onCredential(resp) {
     if (!resp || !resp.credential) return;
+    lastToken = resp.credential;
     try { localStorage.setItem('gauth_in', '1'); } catch (_) {}
     renderSignedIn(decodeJwt(resp.credential));
     sync(resp.credential);

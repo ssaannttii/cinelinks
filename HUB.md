@@ -9,8 +9,14 @@ emoji-grid sharing, and TMDB data.
 | Game | Mechanic | Daily | Practice | Where |
 |------|----------|-------|----------|-------|
 | **CineLinks** | Connect actors/films/TV in fewest clicks | ✅ Today's Challenge | ✅ Practice (was "Random Game") | root (`/`) |
-| **CineClue** | Guess the film from progressive clues | ✅ `/cineclue.html` | ✅ `/cineclue.html?practice=1` | root |
-| **CineFrame** | Guess the film from a progressively-unblurred frame | ✅ `/cineframe.html` | ✅ `?practice=1` | root (shares CineClue's engine + pool) |
+| **CineClue** | Guess the film (or TV series) from progressive clues | ✅ `/cineclue.html` | ✅ `/cineclue.html?practice=1` | root |
+| **CineFrame** | Guess the film/series from a progressively-unblurred frame | ✅ `/cineframe.html` | ✅ `?practice=1` | root (shares CineClue's engine + pool) |
+
+> **Movies + TV:** CineClue & CineFrame now handle both. Pool entries are movie ids
+> (numbers) or TV ids tagged `"tv:<id>"`; `lib/media.js` normalises the TMDB
+> movie/tv differences (title vs name, release vs first-air date, Director vs
+> Creator, credits vs aggregate_credits) and is unit-tested. Add/curate shows in
+> `scripts/build-clue-pool.js` (the `TV` array) so regenerating keeps them.
 | **Rating games** (Higher or Lower · Career · Guess the Score) | Guess / compare ratings | ✅ Higher-or-Lower daily | Career, Guess the Score | mode pages on `cinerating.vercel.app/*`, **entered from the hub** |
 
 > The CineRating standalone home (`cinerating.vercel.app/`) now **redirects to the

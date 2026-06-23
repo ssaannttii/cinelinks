@@ -12,6 +12,8 @@ const ALLOWED_PATHS = [
   /^movie\/\d+\/images$/,
   /^tv\/\d+\/credits$/,
   /^tv\/\d+\/aggregate_credits$/,
+  /^tv\/\d+\/keywords$/,
+  /^tv\/\d+\/images$/,
   /^person\/\d+\/combined_credits$/,
   /^movie\/top_rated$/,
   /^search\/multi$/

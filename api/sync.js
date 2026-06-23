@@ -13,7 +13,7 @@ const MergeStats = require('../lib/merge-stats');
 function applyCors(req, res) {
   const origin = req.headers.origin;
   res.setHeader('Vary', 'Origin');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (!origin) return;
   let host;
@@ -70,6 +70,10 @@ module.exports = async function handler(req, res) {
       const merged = MergeStats.merge(await readBlob(key), incoming);
       await redisCommand([['SET', key, JSON.stringify(merged)]]);
       return res.status(200).json({ stats: merged });
+    }
+    if (req.method === 'DELETE') {
+      await redisCommand([['DEL', key]]);
+      return res.status(200).json({ ok: true });
     }
     return res.status(405).json({ error: 'method_not_allowed' });
   } catch (e) {

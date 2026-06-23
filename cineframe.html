@@ -119,6 +119,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 <div class="toast" id="toast"></div>
 
 <script src="cineclue-pool.js"></script>
+<script src="/lib/media.js"></script>
 <script>
 const IMGBASE = 'https://image.tmdb.org/t/p/';
 const EPOCH = Math.floor(Date.UTC(2026, 5, 23) / 86400000); // #1 = 2026-06-23
@@ -154,11 +155,11 @@ async function loadTarget(){
   const base = PRACTICE ? RAND_START : (DAY + GAME_SALT);
   for(let attempt = 0; attempt < 12; attempt++){
     const idx = (((base + attempt) % pool.length) + pool.length) % pool.length;
-    const id = pool[idx];
+    const { type, id } = Media.parseEntry(pool[idx]);
     try{
-      const [d, img] = await Promise.all([ api('movie/' + id), api('movie/' + id + '/images') ]);
+      const [d, img] = await Promise.all([ api(Media.detailPath(type, id)), api(Media.imagesPath(type, id)) ]);
       const backs = pickBackdrops(img);
-      if(d && d.id && d.title && backs.length){ return { d, backs, id }; }
+      if(d && d.id && Media.title(d, type) && backs.length){ return { d, backs, id, type }; }
     }catch(_){}
   }
   throw new Error('could not load any target');
@@ -254,7 +255,7 @@ function advance(kind){
 }
 function makeGuess(movie){
   if(finished) return;
-  if(movie.id === target.id){ finish(true); return; }
+  if(Media.sameTarget(movie, target)){ finish(true); return; }
   toast('Not it — frame sharpened');
   advance('wrong');
 }
@@ -304,8 +305,10 @@ function renderResult(streak){
 
 function shareText(){
   const n = solved ? (results.indexOf('win') + 1) : 'X';
-  const head = PRACTICE ? 'CineFrame Practice' : ('CineFrame #' + PUZZLE);
-  return head + ' — ' + n + '/' + MAX_GUESSES + '\n' + emojiGrid() + '\nhttps://cinelinks.vercel.app/cineframe.html';
+  const head = PRACTICE ? '🎞️ CineFrame (Practice)' : ('🎞️ CineFrame #' + PUZZLE);
+  const st = (!PRACTICE && solved) ? loadStreak() : null;
+  const streak = (st && st.current > 1) ? '  🔥' + st.current : '';
+  return head + '  ' + n + '/' + MAX_GUESSES + streak + '\n' + emojiGrid() + '\nhttps://cinelinks.vercel.app/cineframe.html';
 }
 function share(){
   const text = shareText();
@@ -350,8 +353,7 @@ function onInput(){
 async function doSearch(q){
   try{
     const data = await api('search/multi&query=' + encodeURIComponent(q));
-    const items = (data.results || []).filter(r => r.media_type === 'movie' && r.title).slice(0, 6);
-    suggestItems = items.map(m => ({ id:m.id, title:m.title, year:(m.release_date||'').slice(0,4), poster:m.poster_path }));
+    suggestItems = (data.results || []).map(Media.searchMap).filter(Boolean).slice(0, 6);
     renderSuggest();
   }catch(_){ closeSuggest(); }
 }
@@ -362,7 +364,7 @@ function renderSuggest(){
   el.innerHTML = suggestItems.map((m, i) =>
     '<div class="suggest-item" data-i="' + i + '">' +
       (m.poster ? '<img class="suggest-thumb" src="' + poster(m.poster, 'w92') + '" alt="">' : '<div class="suggest-thumb"></div>') +
-      '<div><div class="suggest-name">' + esc(m.title) + '</div><div class="suggest-year">' + esc(m.year || '') + '</div></div>' +
+      '<div><div class="suggest-name">' + esc(m.title) + '</div><div class="suggest-year">' + esc([m.year, m.type === 'tv' ? 'TV' : ''].filter(Boolean).join(' · ')) + '</div></div>' +
     '</div>'
   ).join('');
   el.classList.add('open');
@@ -385,7 +387,7 @@ async function init(){
   if(sw){ sw.textContent = PRACTICE ? 'Daily →' : 'Practice →'; sw.href = PRACTICE ? 'cineframe.html' : 'cineframe.html?practice=1'; }
   let t;
   try{ t = await loadTarget(); }catch(e){ showError(); return; }
-  target = { id: t.d.id, title: t.d.title, year: (t.d.release_date || '').slice(0, 4), posterPath: t.d.poster_path };
+  target = { id: t.d.id, type: t.type, title: Media.title(t.d, t.type), year: Media.year(t.d, t.type), posterPath: t.d.poster_path };
   frames = buildFrames(t);
 
   const had = restore();
