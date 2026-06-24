@@ -119,6 +119,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 
 <script src="cineline-pool.js"></script>
 <script src="/lib/timeline.js"></script>
+<script src="/lib/pool.js"></script>
 <script>
 const IMGBASE = 'https://image.tmdb.org/t/p/';
 const EPOCH = Math.floor(Date.UTC(2026, 5, 23) / 86400000);
@@ -144,6 +145,21 @@ let results = [];   // 'correct' | 'wrong' per placement
 let finished = false, solved = false, score = 0;
 
 async function loadDeck(){
+  // Practice = endless deck: one recognisable film per decade from TMDB Discover
+  // (Discover results already carry title/date/poster, so no per-id fetch).
+  if(PRACTICE && window.Pool){
+    try{
+      const perDecade = await Promise.all(Pool.DECADES.map(async d => {
+        try{ const data = await api(Pool.decadeMovie(d)); const r = (data && data.results) || []; if(r.length) return r[Math.floor(Math.random()*Math.min(r.length,10))]; }catch(_){}
+        return null;
+      }));
+      const cards = perDecade.filter(Boolean)
+        .map(m => ({ id:m.id, title:m.title, year:parseInt((m.release_date||'').slice(0,4),10), poster:m.poster_path }))
+        .filter(c => c.year && c.title);
+      if(cards.length >= 6) return Timeline.shuffle(cards, Math.floor(Math.random()*1e9)).slice(0, DECK);
+    }catch(_){}
+    // not enough from Discover → fall back to the fixed pool below
+  }
   const pool = window.CINELINE_POOL || [];
   if(!pool.length) throw new Error('empty pool');
   const seed = PRACTICE ? Math.floor(Math.random() * 1e9) : DAY;

@@ -9,7 +9,7 @@ const browser = {
   requestAnimationFrame: 'readonly', history: 'readonly', URL: 'readonly',
   URLSearchParams: 'readonly', Intl: 'readonly', console: 'readonly',
   atob: 'readonly', btoa: 'readonly', Image: 'readonly',
-  CineCredits: 'readonly', MergeStats: 'readonly', Media: 'readonly'
+  CineCredits: 'readonly', MergeStats: 'readonly', Media: 'readonly', Pool: 'readonly'
 };
 const node = {
   process: 'readonly', module: 'writable', require: 'readonly', __dirname: 'readonly',

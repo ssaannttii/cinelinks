@@ -16,10 +16,24 @@ const ALLOWED_PATHS = [
   /^tv\/\d+\/images$/,
   /^person\/\d+\/combined_credits$/,
   /^movie\/top_rated$/,
+  /^discover\/movie$/,
+  /^discover\/tv$/,
   /^search\/multi$/
 ];
 
-const ALLOWED_QUERY_PARAMS = new Set(['language', 'page', 'query']);
+const ALLOWED_QUERY_PARAMS = new Set([
+  'language', 'page', 'query',
+  // Discover (read-only) filters used for the "infinite practice pool".
+  'sort_by', 'include_adult', 'with_original_language',
+  'vote_count.gte', 'vote_average.gte',
+  'primary_release_date.gte', 'primary_release_date.lte',
+  'first_air_date.gte', 'first_air_date.lte'
+]);
+const ALLOWED_SORT = new Set([
+  'popularity.desc', 'vote_count.desc', 'vote_average.desc', 'revenue.desc',
+  'primary_release_date.desc', 'primary_release_date.asc',
+  'first_air_date.desc', 'first_air_date.asc'
+]);
 
 function isAllowedPath(path) {
   return typeof path === 'string' && ALLOWED_PATHS.some((rule) => rule.test(path));
@@ -45,6 +59,23 @@ function buildTmdbParams(queryParams, apiKey) {
       if (!Number.isInteger(page) || page < 1 || page > 500 || String(page) !== value) {
         return { error: 'Invalid page parameter' };
       }
+    }
+
+    if (key === 'sort_by' && !ALLOWED_SORT.has(value)) {
+      return { error: 'Invalid sort_by parameter' };
+    }
+    if ((key === 'vote_count.gte' || key === 'vote_average.gte')) {
+      const n = Number(value);
+      if (!Number.isFinite(n) || n < 0 || n > 1000000) return { error: 'Invalid ' + key };
+    }
+    if (/_date\.(gte|lte)$/.test(key) && !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return { error: 'Invalid ' + key };
+    }
+    if (key === 'include_adult' && value !== 'false' && value !== 'true') {
+      return { error: 'Invalid include_adult parameter' };
+    }
+    if (key === 'with_original_language' && !/^[a-z]{2}$/.test(value)) {
+      return { error: 'Invalid with_original_language parameter' };
     }
 
     params.set(key, value);

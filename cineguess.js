@@ -55,13 +55,33 @@
   const RAND_START = Math.floor(Math.random() * 100003);
   let target = null, clues = [], stage = 0, results = [], finished = false, solved = false;
 
-  async function loadTarget() {
+  function poolCandidates(base, n) {
     const pool = window.CINECLUE_POOL || [];
-    if (!pool.length) throw new Error('empty pool');
-    const base = PRACTICE ? RAND_START : (DAY + SALT);
-    for (let attempt = 0; attempt < 8; attempt++) {
-      const idx = (((base + attempt) % pool.length) + pool.length) % pool.length;
-      const { type, id } = Media.parseEntry(pool[idx]);
+    const out = [];
+    for (let i = 0; i < n && pool.length; i++) out.push(Media.parseEntry(pool[(((base + i) % pool.length) + pool.length) % pool.length]));
+    return out;
+  }
+  // Practice = endless pool: a random page of recognisable titles from TMDB
+  // Discover (same quality bar as the curated pool). Falls back to the fixed pool.
+  async function practiceCandidates() {
+    if (window.Pool) {
+      try {
+        const wantTv = Math.random() < 0.25;
+        const data = await api(wantTv ? Pool.practiceTv() : Pool.practiceMovie());
+        const results = (data && data.results) || [];
+        if (results.length) {
+          const type = wantTv ? 'tv' : 'movie';
+          return results.slice().sort(() => Math.random() - 0.5).slice(0, 8).map(m => ({ type: type, id: m.id }));
+        }
+      } catch (_) {}
+    }
+    return poolCandidates(Math.floor(Math.random() * 100003), 8);
+  }
+
+  async function loadTarget() {
+    const candidates = PRACTICE ? await practiceCandidates() : poolCandidates(DAY + SALT, 8);
+    if (!candidates.length) throw new Error('empty pool');
+    for (const { type, id } of candidates) {
       try {
         const [d, kw, cr] = await Promise.all([
           api(Media.detailPath(type, id)),

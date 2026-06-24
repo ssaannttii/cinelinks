@@ -132,6 +132,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 
 <script src="cineclue-pool.js"></script>
 <script src="/lib/media.js"></script>
+<script src="/lib/pool.js"></script>
 <script>
 const IMGBASE = 'https://image.tmdb.org/t/p/';
 const EPOCH = Math.floor(Date.UTC(2026, 5, 23) / 86400000); // #1 = 2026-06-23
@@ -165,14 +166,31 @@ let solved = false;
 const STATE_KEY = 'cineclueState';
 const STREAK_KEY = 'cineclueStreak';
 
-// ── Daily target (resilient + deterministic) ───────────────────────────────
-async function loadTarget(){
+// ── Daily target (fixed pool) + Practice (endless TMDB Discover pool) ───────
+function poolCandidates(base, n){
   const pool = window.CINECLUE_POOL || [];
-  if(!pool.length) throw new Error('empty pool');
-  const base = PRACTICE ? RAND_START : DAY;
-  for(let attempt = 0; attempt < 8; attempt++){
-    const idx = (((base + attempt) % pool.length) + pool.length) % pool.length;
-    const { type, id } = Media.parseEntry(pool[idx]);
+  const out = [];
+  for(let i=0;i<n && pool.length;i++) out.push(Media.parseEntry(pool[(((base+i)%pool.length)+pool.length)%pool.length]));
+  return out;
+}
+async function practiceCandidates(){
+  if(window.Pool){
+    try{
+      const wantTv = Math.random() < 0.25;
+      const data = await api(wantTv ? Pool.practiceTv() : Pool.practiceMovie());
+      const results = (data && data.results) || [];
+      if(results.length){
+        const type = wantTv ? 'tv' : 'movie';
+        return results.slice().sort(()=>Math.random()-0.5).slice(0,8).map(m=>({type, id:m.id}));
+      }
+    }catch(_){}
+  }
+  return poolCandidates(Math.floor(Math.random()*100003), 8);
+}
+async function loadTarget(){
+  const candidates = PRACTICE ? await practiceCandidates() : poolCandidates(DAY, 8);
+  if(!candidates.length) throw new Error('empty pool');
+  for(const { type, id } of candidates){
     try{
       const [d, kw, cr] = await Promise.all([
         api(Media.detailPath(type, id)),
