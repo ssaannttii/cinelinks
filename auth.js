@@ -7,7 +7,7 @@
 // fine to hard-code here. Get one at https://console.cloud.google.com/apis/credentials
 (function () {
   'use strict';
-  var CLIENT_ID = ''; // <-- paste your Google OAuth Web client ID to enable sync
+  var CLIENT_ID = '136867217006-lvud0hvsncgsitlbi0fqo8rfgge9l1hv.apps.googleusercontent.com';
   if (!CLIENT_ID) return;
 
   var SYNC_KEYS = (window.MergeStats && window.MergeStats.SYNC_KEYS) ||
