@@ -45,15 +45,18 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 /* timeline */
 .tl-hint{font-size:.72rem;color:var(--mut);text-align:center;margin-bottom:8px}
-.tl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:6px 2px 12px}
+.tl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:6px 2px 12px;scrollbar-width:none;-ms-overflow-style:none;-webkit-mask-image:linear-gradient(90deg,transparent,#000 22px,#000 calc(100% - 22px),transparent);mask-image:linear-gradient(90deg,transparent,#000 22px,#000 calc(100% - 22px),transparent)}
+.tl-wrap::-webkit-scrollbar{display:none}
+.tl-wrap.fit{overflow:visible;-webkit-mask-image:none;mask-image:none}
 .tl-row{display:inline-flex;align-items:stretch;gap:0;min-width:100%;justify-content:center}
-.tl-card{display:flex;flex-direction:column;align-items:center;gap:4px;width:62px;flex-shrink:0}
-.tl-card img,.tl-card .tl-ph{width:62px;height:93px;border-radius:7px;object-fit:cover;background:var(--s2);box-shadow:0 8px 18px rgba(0,0,0,.4)}
-.tl-year{font-size:.74rem;font-weight:800;color:var(--txt);padding:2px 7px;border-radius:999px;background:var(--s2)}
+.tl-row.wrapped{display:flex;flex-wrap:wrap;justify-content:center;gap:12px 5px;min-width:0}
+.tl-card{display:flex;flex-direction:column;align-items:center;gap:4px;width:54px;flex-shrink:0}
+.tl-card img,.tl-card .tl-ph{width:54px;height:81px;border-radius:7px;object-fit:cover;background:var(--s2);box-shadow:0 8px 18px rgba(0,0,0,.4)}
+.tl-year{font-size:.7rem;font-weight:800;color:var(--txt);padding:2px 6px;border-radius:999px;background:var(--s2)}
 .tl-card.correct .tl-year{background:rgba(91,189,122,.18);color:#7fd49a}
 .tl-card.wrong .tl-year{background:rgba(216,80,58,.2);color:#e8806f}
 .tl-card.anchor .tl-year{background:var(--golddim);color:var(--gold)}
-.tl-slot{flex-shrink:0;align-self:center;width:26px;height:96px;margin:0 -1px;border:2px dashed rgba(232,160,0,.0);border-radius:8px;background:transparent;color:rgba(232,160,0,.55);font-size:1.2rem;font-weight:800;cursor:pointer;transition:all .12s}
+.tl-slot{flex-shrink:0;align-self:center;width:24px;height:84px;margin:0 -1px;border:2px dashed rgba(232,160,0,.0);border-radius:8px;background:transparent;color:rgba(232,160,0,.55);font-size:1.2rem;font-weight:800;cursor:pointer;transition:all .12s}
 .tl-slot:hover,.tl-slot:focus{border-color:rgba(232,160,0,.55);background:rgba(232,160,0,.08);color:var(--gold);outline:none}
 .tl-slot.done{display:none}
 .tl-card.anchor{margin-bottom:0}
@@ -173,6 +176,11 @@ function renderTimeline(){
     }
   }
   const row = document.getElementById('timeline');
+  const wrap = row.parentElement;
+  // Finished: wrap all cards into centered rows (no scrollbar). Playing: single
+  // row, hidden scrollbar + soft edge fade hinting there's more to swipe.
+  row.classList.toggle('wrapped', finished);
+  if(wrap) wrap.classList.toggle('fit', finished);
   row.innerHTML = h;
   if(!finished) row.querySelectorAll('.tl-slot').forEach(b => { b.onclick = () => place(+b.dataset.slot); });
 }
