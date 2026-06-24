@@ -3,28 +3,26 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CineCast - Guess the film from its cast</title>
-<meta name="description" content="A daily film &amp; TV guessing game: name the title from its cast, revealed one actor at a time - obscure to famous - in as few guesses as possible. Data from TMDB.">
+<title>CinePlot - Guess the film from its synopsis</title>
+<meta name="description" content="A daily film &amp; TV guessing game: name the title from its plot synopsis (title hidden), revealed bit by bit, in as few guesses as possible. Data from TMDB.">
 <meta name="theme-color" content="#0d0d0d">
 <link rel="icon" type="image/png" href="/logo.png">
-<link rel="canonical" href="https://cinelinks.vercel.app/cinecast.html">
+<link rel="canonical" href="https://cinelinks.vercel.app/cineplot.html">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://cinelinks.vercel.app/cinecast.html">
-<meta property="og:title" content="CineCast - Guess the film from its cast">
-<meta property="og:description" content="Name the film or series from its cast, revealed one actor at a time. A new puzzle every day.">
+<meta property="og:url" content="https://cinelinks.vercel.app/cineplot.html">
+<meta property="og:title" content="CinePlot - Guess the film from its synopsis">
+<meta property="og:description" content="Name the film or series from its plot, revealed bit by bit. A new puzzle every day.">
 <meta property="og:image" content="https://cinelinks.vercel.app/og-image.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:site" content="@cinelinksgame">
-<meta name="twitter:title" content="CineCast - Guess the film from its cast">
-<meta name="twitter:description" content="Name the film or series from its cast, revealed one actor at a time. A new puzzle every day.">
+<meta name="twitter:title" content="CinePlot - Guess the film from its synopsis">
+<meta name="twitter:description" content="Name the film or series from its plot, revealed bit by bit. A new puzzle every day.">
 <meta name="twitter:image" content="https://cinelinks.vercel.app/og-image.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#0d0d0d;--s1:#181818;--s2:#222;--bdr:rgba(255,255,255,0.09);--txt:#f0f0f0;--mut:#8d8d8d;--gold:#e8a000;--golddim:rgba(232,160,0,0.15)}
 body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(circle at 50% -10%,rgba(232,160,0,.08),transparent 34%),linear-gradient(180deg,#101010 0%,var(--bg) 330px);color:var(--txt);min-height:100vh}
-#cineBackdrop{position:fixed;inset:0;z-index:-1;background-size:cover;background-position:center;opacity:0;filter:blur(12px) brightness(.6);transform:scale(1.08);transition:opacity 1.6s ease;pointer-events:none}
-#cineBackdrop.on{opacity:.1}
 .wrap{max-width:540px;margin:0 auto;padding:18px 16px 60px}
 .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
 .home-link{display:inline-flex;align-items:center;gap:6px;color:var(--mut);text-decoration:none;font-size:.8rem;font-weight:600}
@@ -97,8 +95,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     </span>
   </div>
   <div class="head">
-    <div class="title">Cine<span>Cast</span></div>
-    <div class="subtitle">Guess the film or series from its cast, revealed one by one.</div>
+    <div class="title">Cine<span>Plot</span></div>
+    <div class="subtitle">Guess the film or series from its synopsis, revealed bit by bit.</div>
   </div>
 
   <div id="loading" class="loading">Loading today's title…</div>
@@ -131,33 +129,31 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 <script src="/lib/media.js"></script>
 <script>
 window.CINE_GAME = {
-  mode: 'cast', salt: 233, page: 'cinecast.html',
-  stateKey: 'cinecastState', streakKey: 'cinecastStreak',
-  emoji: '🎭', name: 'CineCast', shareUrl: 'https://cinelinks.vercel.app/cinecast.html'
+  mode: 'plot', salt: 359, page: 'cineplot.html',
+  stateKey: 'cineplotState', streakKey: 'cineplotStreak',
+  emoji: '📖', name: 'CinePlot', shareUrl: 'https://cinelinks.vercel.app/cineplot.html'
 };
 </script>
 <script src="/cineguess.js"></script>
 <script>
 window.HOWTO = {
-  key: 'cinecast', title: 'How to play CineCast', icon: '🎭',
+  key: 'cineplot', title: 'How to play CinePlot', icon: '📖',
   steps: [
-    'Guess the day’s film or series from its <b>cast</b>.',
-    'You start with one lesser-known actor - type to search and pick a title (<b>6 tries</b>).',
-    'Each wrong guess or skip reveals another, more famous cast member.',
-    'The last clue shows the top billing and the poster.',
+    'Guess the day’s film or series from its <b>plot synopsis</b> (the title is hidden as ▒▒▒).',
+    'You start with the opening lines - type to search and pick a title (<b>6 tries</b>).',
+    'Each wrong guess or skip reveals more of the synopsis.',
+    'Later clues add the genre/year, the cast and finally the poster.',
     'Fewer guesses = better. <b>Daily</b> keeps your streak; <b>Practice</b> is unlimited.'
   ],
   example: '<div style="display:flex;flex-direction:column;gap:6px">' +
-      '<span class="ht-chip">🎭 Ned Beatty</span>' +
-      '<span class="ht-chip">🎭 Burt Reynolds</span>' +
-      '<span class="ht-chip">🎭 + top billing…</span>' +
-    '</div><p>Names build up until you guess the title 🎉</p>'
+      '<span class="ht-chip">📖 “A thief who steals secrets through dream-sharing…”</span>' +
+      '<span class="ht-chip">🎭 Action · Sci-Fi · 2010</span>' +
+    '</div><p>The synopsis grows until you guess the title 🎉</p>'
 };
 </script>
 <script defer src="/ads.js"></script>
 <script defer src="/support.js"></script>
 <script defer src="/howto.js"></script>
-<script defer src="/home-art.js"></script>
 <script defer src="/cookie.js"></script>
 <script defer src="/lib/merge-stats.js"></script>
 <script defer src="/auth.js"></script>

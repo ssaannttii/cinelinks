@@ -23,8 +23,6 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#0d0d0d;--s1:#181818;--s2:#222;--bdr:rgba(255,255,255,0.09);--txt:#f0f0f0;--mut:#8d8d8d;--gold:#e8a000;--golddim:rgba(232,160,0,0.15)}
 body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(circle at 50% -10%,rgba(232,160,0,.08),transparent 34%),linear-gradient(180deg,#101010 0%,var(--bg) 330px);color:var(--txt);min-height:100vh}
-#cineBackdrop{position:fixed;inset:0;z-index:-1;background-size:cover;background-position:center;opacity:0;filter:blur(12px) brightness(.6);transform:scale(1.08);transition:opacity 1.6s ease;pointer-events:none}
-#cineBackdrop.on{opacity:.1}
 .wrap{max-width:540px;margin:0 auto;padding:18px 16px 60px}
 .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
 .home-link{display:inline-flex;align-items:center;gap:6px;color:var(--mut);text-decoration:none;font-size:.8rem;font-weight:600}
@@ -157,7 +155,6 @@ window.HOWTO = {
 <script defer src="/ads.js"></script>
 <script defer src="/support.js"></script>
 <script defer src="/howto.js"></script>
-<script defer src="/home-art.js"></script>
 <script defer src="/cookie.js"></script>
 <script defer src="/lib/merge-stats.js"></script>
 <script defer src="/auth.js"></script>

@@ -3,28 +3,26 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CineFrame - Guess the daily film from a frame</title>
-<meta name="description" content="A daily film-guessing game: name the movie from a blurred frame that sharpens with each wrong guess. A new film every day. Images from TMDB.">
+<title>CineClue - Guess the daily film from clues</title>
+<meta name="description" content="A daily film-guessing game: name the movie from progressive clues - keywords, cast, tagline and a blurred poster - in as few guesses as possible. Data from TMDB.">
 <meta name="theme-color" content="#0d0d0d">
 <link rel="icon" type="image/png" href="/logo.png">
-<link rel="canonical" href="https://cinelinks.vercel.app/cineframe.html">
+<link rel="canonical" href="https://cinelinks.vercel.app/cineclue.html">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://cinelinks.vercel.app/cineframe.html">
-<meta property="og:title" content="CineFrame - Guess the daily film">
-<meta property="og:description" content="Name the movie from a blurred frame that sharpens with each guess. A new film every day.">
+<meta property="og:url" content="https://cinelinks.vercel.app/cineclue.html">
+<meta property="og:title" content="CineClue - Guess the daily film">
+<meta property="og:description" content="Name the movie from progressive clues in as few guesses as possible. A new film every day.">
 <meta property="og:image" content="https://cinelinks.vercel.app/og-image.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:site" content="@cinelinksgame">
-<meta name="twitter:title" content="CineFrame - Guess the daily film">
-<meta name="twitter:description" content="Name the movie from a blurred frame that sharpens with each guess. A new film every day.">
+<meta name="twitter:title" content="CineClue - Guess the daily film">
+<meta name="twitter:description" content="Name the movie from progressive clues in as few guesses as possible. A new film every day.">
 <meta name="twitter:image" content="https://cinelinks.vercel.app/og-image.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#0d0d0d;--s1:#181818;--s2:#222;--bdr:rgba(255,255,255,0.09);--txt:#f0f0f0;--mut:#8d8d8d;--gold:#e8a000;--golddim:rgba(232,160,0,0.15)}
 body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(circle at 50% -10%,rgba(232,160,0,.08),transparent 34%),linear-gradient(180deg,#101010 0%,var(--bg) 330px);color:var(--txt);min-height:100vh}
-#cineBackdrop{position:fixed;inset:0;z-index:-1;background-size:cover;background-position:center;opacity:0;filter:blur(12px) brightness(.6);transform:scale(1.08);transition:opacity 1.6s ease;pointer-events:none}
-#cineBackdrop.on{opacity:.1}
 .wrap{max-width:540px;margin:0 auto;padding:18px 16px 60px}
 .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
 .home-link{display:inline-flex;align-items:center;gap:6px;color:var(--mut);text-decoration:none;font-size:.8rem;font-weight:600}
@@ -34,13 +32,18 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .title{font-size:2rem;font-weight:800;letter-spacing:-.02em}
 .title span{color:var(--gold)}
 .subtitle{color:var(--mut);font-size:.85rem;margin-top:4px}
-.pips{display:flex;gap:6px;justify-content:center;margin:16px 0 14px}
+.pips{display:flex;gap:6px;justify-content:center;margin:16px 0 20px}
 .pip{width:26px;height:8px;border-radius:4px;background:rgba(255,255,255,.08);transition:background .2s}
 .pip.win{background:#5bbd7a}.pip.wrong{background:#d8503a}.pip.skip{background:#caa23a}.pip.current{background:var(--gold);box-shadow:0 0 8px rgba(232,160,0,.5)}
-.frame-cap{text-align:center;font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
-.frame-wrap{margin-bottom:18px;border-radius:12px;overflow:hidden;border:1px solid var(--bdr);background:#000;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center}
-/* canvas, not <img>: keeps the clean image URL out of the DOM (no long-press / open-in-tab cheat) */
-.frame-img{width:100%;height:100%;display:block;pointer-events:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.clues{display:flex;flex-direction:column;gap:10px;margin-bottom:18px}
+.clue{background:rgba(255,255,255,.04);border:1px solid var(--bdr);border-radius:12px;padding:12px 14px;animation:fadeIn .3s ease both}
+.clue-label{font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+.clue-body{font-size:.95rem;color:var(--txt);line-height:1.5}
+.clue-body em{color:var(--mut)}
+.clue-chip{display:inline-block;background:rgba(232,160,0,.1);border:1px solid rgba(232,160,0,.25);color:var(--txt);font-size:.82rem;padding:3px 9px;border-radius:999px;margin:0 5px 5px 0}
+/* canvas, not <img>: keeps the clean poster URL out of the DOM (no long-press / open-in-tab cheat) */
+.clue-poster{width:150px;height:225px;border-radius:8px;display:block;box-shadow:0 12px 30px rgba(0,0,0,.4);pointer-events:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .guessbox{position:relative;margin-bottom:10px}
 .guess-input{width:100%;background:var(--s1);border:1px solid var(--bdr);border-radius:12px;padding:13px 14px;color:var(--txt);font-family:inherit;font-size:.95rem;outline:none}
 .guess-input:focus{border-color:rgba(232,160,0,.5)}
@@ -59,11 +62,11 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .btn-gold:hover{opacity:.9}
 .btn:disabled{opacity:.4;cursor:not-allowed}
 .guesses{margin-top:14px;display:flex;flex-direction:column;gap:6px}
-.grow{display:flex;align-items:center;gap:8px;font-size:.85rem;padding:8px 12px;border-radius:9px;background:rgba(255,255,255,.03);border:1px solid var(--bdr);color:var(--mut)}
+.grow{display:flex;align-items:center;gap:8px;font-size:.85rem;padding:8px 12px;border-radius:9px;background:rgba(255,255,255,.03);border:1px solid var(--bdr)}
 .grow .gico{flex-shrink:0}
+.grow.wrong{color:var(--mut)}
 .result{text-align:center;margin-top:8px;background:linear-gradient(180deg,rgba(232,160,0,.08),transparent 140px),var(--s1);border:1px solid rgba(232,160,0,.18);border-radius:14px;padding:24px 18px;box-shadow:0 24px 60px rgba(0,0,0,.35);animation:fadeIn .35s ease both}
 .result.hidden{display:none}
-@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .result-poster{width:130px;border-radius:10px;margin:0 auto 14px;display:block;box-shadow:0 16px 36px rgba(0,0,0,.45)}
 .result-verdict{font-size:1.3rem;font-weight:800;margin-bottom:2px}
 .result-verdict.win{color:#5bbd7a}.result-verdict.lose{color:#d8503a}
@@ -78,8 +81,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .footer a{color:var(--mut);text-decoration:none}.footer a:hover{color:var(--gold)}
 .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--s2);border:1px solid var(--bdr);color:var(--txt);padding:10px 16px;border-radius:10px;font-size:.85rem;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-/* desktop: wider column makes the 16:9 frame noticeably bigger */
-@media(min-width:760px){.wrap{max-width:680px}.title{font-size:2.4rem}.subtitle{font-size:.92rem}.result-poster{width:160px}.clue-body{font-size:1rem}body{min-height:100vh;display:flex}.wrap{margin:auto}}
+/* desktop: use the extra width — bigger visual & roomier column */
+@media(min-width:760px){.wrap{max-width:640px}.title{font-size:2.4rem}.subtitle{font-size:.92rem}.clue-poster{width:190px;height:285px}.result-poster{width:160px}.clue-body{font-size:1rem}body{min-height:100vh;display:flex}.wrap{margin:auto}}
 </style>
 </head>
 <body>
@@ -93,16 +96,16 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     </span>
   </div>
   <div class="head">
-    <div class="title">Cine<span>Frame</span></div>
-    <div class="subtitle">Guess the film from the frame. It sharpens with each guess.</div>
+    <div class="title">Cine<span>Clue</span></div>
+    <div class="subtitle">Guess the film from the clues. Fewer guesses, better.</div>
   </div>
 
-  <div id="loading" class="loading">Loading today's frame…</div>
+  <div id="loading" class="loading">Loading today's film…</div>
   <div id="error" class="errbox" style="display:none">Couldn't load today's puzzle. Please try again later.</div>
 
   <div id="game" style="display:none">
     <div class="pips" id="pips"></div>
-    <div id="frame"></div>
+    <div class="clues" id="clues"></div>
 
     <div id="play">
       <div class="guessbox">
@@ -110,7 +113,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
         <div class="suggest" id="suggest"></div>
       </div>
       <div class="actions">
-        <button class="btn" id="skipBtn">Skip frame</button>
+        <button class="btn" id="skipBtn">Skip clue</button>
         <button class="btn btn-gold" id="guessBtn" disabled>Guess</button>
       </div>
       <div class="guesses" id="guesses"></div>
@@ -131,62 +134,73 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 const IMGBASE = 'https://image.tmdb.org/t/p/';
 const EPOCH = Math.floor(Date.UTC(2026, 5, 23) / 86400000); // #1 = 2026-06-23
 const MAX_GUESSES = 6;
-const BLURS = [22, 15, 10, 6, 3, 0]; // blur px per stage (sharper each guess)
 
 function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function api(path){ return fetch('/api/tmdb?path=' + path).then(r => r.json()); }
 function dayNumber(){ const n = new Date(); return Math.floor(Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate()) / 86400000); }
 function poster(p, size){ return p ? IMGBASE + (size || 'w342') + p : ''; }
+function maskTitle(text, title){
+  if(!text || !title) return text || '';
+  const words = title.split(/\s+/).filter(w => w.length >= 4);
+  let out = text;
+  for(const w of words){ out = out.replace(new RegExp(w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'gi'), '▒▒▒'); }
+  return out;
+}
 function toast(msg){ const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('show'), 1800); }
 
 // ── State ──────────────────────────────────────────────────────────────────
 const DAY = dayNumber();
 const PUZZLE = DAY - EPOCH + 1;
 const PRACTICE = new URLSearchParams(location.search).get('practice') === '1';
-const RAND_START = Math.floor(Math.random() * 100003);
-const GAME_SALT = 101; // offset so CineFrame's daily film differs from CineClue's
-let target = null;
-let frames = [];          // [{url, blur}]
-let stage = 0;
-let results = [];
+const RAND_START = Math.floor(Math.random() * 100003); // practice: random film
+let target = null;        // { id, title, year, posterPath }
+let clues = [];           // [{label, html}]
+let stage = 0;            // index of highest revealed clue (0-based)
+let results = [];         // 'wrong' | 'skip' (per used guess)
 let finished = false;
 let solved = false;
 
-const STATE_KEY = 'cineframeState';
-const STREAK_KEY = 'cineframeStreak';
+const STATE_KEY = 'cineclueState';
+const STREAK_KEY = 'cineclueStreak';
 
-// ── Daily target (needs backdrops; resilient + deterministic) ───────────────
+// ── Daily target (resilient + deterministic) ───────────────────────────────
 async function loadTarget(){
   const pool = window.CINECLUE_POOL || [];
   if(!pool.length) throw new Error('empty pool');
-  const base = PRACTICE ? RAND_START : (DAY + GAME_SALT);
-  for(let attempt = 0; attempt < 12; attempt++){
+  const base = PRACTICE ? RAND_START : DAY;
+  for(let attempt = 0; attempt < 8; attempt++){
     const idx = (((base + attempt) % pool.length) + pool.length) % pool.length;
     const { type, id } = Media.parseEntry(pool[idx]);
     try{
-      const [d, img] = await Promise.all([ api(Media.detailPath(type, id)), api(Media.imagesPath(type, id)) ]);
-      const backs = pickBackdrops(img);
-      if(d && d.id && Media.title(d, type) && backs.length){ return { d, backs, id, type }; }
+      const [d, kw, cr] = await Promise.all([
+        api(Media.detailPath(type, id)),
+        api(Media.keywordsPath(type, id)),
+        api(Media.creditsPath(type, id))
+      ]);
+      if(d && d.id && Media.title(d, type)){ return { d, kw, cr, id, type }; }
     }catch(_){}
   }
   throw new Error('could not load any target');
 }
 
-function pickBackdrops(img){
-  const all = (img && img.backdrops) || [];
-  // Prefer textless backdrops (no title overlay) for a fair guess.
-  let backs = all.filter(b => b.iso_639_1 === null);
-  if(backs.length < 2) backs = all.slice();
-  return backs.slice(0, MAX_GUESSES).map(b => b.file_path);
-}
-
-function buildFrames(t){
-  const out = [];
-  for(let i = 0; i < MAX_GUESSES; i++){
-    const fp = t.backs[Math.min(i, t.backs.length - 1)];
-    out.push({ url: IMGBASE + 'w780' + fp, blur: BLURS[i] });
-  }
-  return out;
+function buildClues(t){
+  const ttl = Media.title(t.d, t.type);
+  const yr = Media.year(t.d, t.type);
+  const genres = (t.d.genres || []).map(g => g.name).join(', ');
+  const lengthL = Media.lengthLabel(t.d, t.type);
+  const kws = (t.kw.keywords || t.kw.results || []).slice(0, 5).map(k => k.name);
+  const cast = (t.cr.cast || []).slice(0, 3).map(c => c.name);
+  const makers = Media.makers(t.d, t.cr, t.type).join(', ');
+  const tagline = t.d.tagline || '';
+  const pUrl = poster(t.d.poster_path, 'w342');
+  return [
+    { label: 'Keywords', html: kws.length ? kws.map(k => '<span class="clue-chip">' + esc(k) + '</span>').join('') : '<span class="clue-body">No keywords on TMDB - here\'s a free one 🙂</span>' },
+    { label: Media.mediumLabel(t.type) + ' · Genre · Year', html: '<span class="clue-body">' + esc([Media.mediumLabel(t.type), genres, yr, lengthL].filter(Boolean).join('  ·  ')) + '</span>' },
+    { label: makers ? (Media.makerLabel(t.type) + (tagline ? ' · Tagline' : '')) : 'Tagline', html: '<span class="clue-body">' + esc(makers) + (tagline ? ' - <em>"' + esc(maskTitle(tagline, ttl)) + '"</em>' : '') + '</span>' },
+    { label: 'Main cast', html: '<span class="clue-body">' + (cast.length ? cast.map(esc).join(', ') : '-') + '</span>' },
+    { label: 'Poster (blurred)', html: pUrl ? '<canvas class="clue-poster" width="300" height="450" data-url="' + pUrl + '" data-blur="16"></canvas>' : '<span class="clue-body">No poster</span>' },
+    { label: 'Poster', html: pUrl ? '<canvas class="clue-poster" width="300" height="450" data-url="' + pUrl + '" data-blur="5"></canvas>' : '<span class="clue-body">No poster</span>' }
+  ];
 }
 
 // ── Rendering ──────────────────────────────────────────────────────────────
@@ -202,8 +216,8 @@ function renderPips(){
   }
   el.innerHTML = h;
 }
-// Draw an image onto the canvas with a baked-in blur (cover-fit + overscan so the
-// blur doesn't leave transparent edges). The canvas never exposes the clean URL.
+// Draw a poster onto a canvas with baked-in blur (cover-fit + overscan). The
+// canvas never exposes the clean image URL, so long-press / open-in-tab can't cheat.
 function coverFit(iw, ih, w, h, over){
   const ir = iw / ih, cr = w / h; let dw, dh;
   if(ir > cr){ dh = h * over; dw = dh * ir; } else { dw = w * over; dh = dw / ir; }
@@ -222,7 +236,6 @@ function drawBlurred(canvas, url, blurPx){
       ctx.drawImage(img, f.dx, f.dy, f.dw, f.dh);
       ctx.filter = 'none';
     } else if(blurPx > 0){
-      // Fallback for browsers without canvas filter (older Safari/iOS): downscale then upscale.
       const scale = Math.max(0.015, 1 / (blurPx * 1.3));
       const tw = Math.max(2, Math.round(w * scale)), th = Math.max(2, Math.round(h * scale));
       const off = document.createElement('canvas'); off.width = tw; off.height = th;
@@ -239,39 +252,44 @@ function drawBlurred(canvas, url, blurPx){
   img.onerror = () => {};
   img.src = url;
 }
-function renderFrame(){
-  const f = frames[stage];
-  document.getElementById('frame').innerHTML =
-    '<div class="frame-cap">Frame · ' + (stage + 1) + ' / ' + MAX_GUESSES + '</div>' +
-    '<div class="frame-wrap"><canvas class="frame-img" id="frameCanvas" width="780" height="439"></canvas></div>';
-  drawBlurred(document.getElementById('frameCanvas'), f.url, f.blur);
+function renderClues(){
+  const el = document.getElementById('clues');
+  el.innerHTML = clues.slice(0, stage + 1).map(c =>
+    '<div class="clue"><div class="clue-label">' + esc(c.label) + '</div>' + c.html + '</div>'
+  ).join('');
+  el.querySelectorAll('canvas[data-url]').forEach(c => drawBlurred(c, c.dataset.url, +c.dataset.blur));
 }
 function renderGuesses(){
-  document.getElementById('guesses').innerHTML = results.map(r =>
-    '<div class="grow"><span class="gico">' + (r === 'skip' ? '⏭️' : '❌') + '</span>' +
-    (r === 'skip' ? 'Skipped' : 'Wrong guess') + '</div>'
+  const el = document.getElementById('guesses');
+  el.innerHTML = results.map(r =>
+    '<div class="grow wrong"><span class="gico">' + (r === 'skip' ? '⏭️' : '❌') + '</span>' +
+    (r === 'skip' ? 'Skipped a clue' : 'Wrong guess') + '</div>'
   ).join('');
 }
 
 // ── Game flow ──────────────────────────────────────────────────────────────
-function advance(kind){
+function advance(kind){ // 'wrong' | 'skip'
   results.push(kind);
   if(results.length >= MAX_GUESSES){ finish(false); return; }
-  stage = Math.min(stage + 1, frames.length - 1);
-  renderPips(); renderFrame(); renderGuesses(); save();
+  stage = Math.min(stage + 1, clues.length - 1);
+  renderPips(); renderClues(); renderGuesses(); save();
 }
+
 function makeGuess(movie){
   if(finished) return;
   if(Media.sameTarget(movie, target)){ finish(true); return; }
-  toast('Not it - frame sharpened');
+  toast('Not it - new clue revealed');
   advance('wrong');
 }
-function skip(){ if(!finished) advance('skip'); }
+
+function skip(){
+  if(finished) return;
+  advance('skip');
+}
 
 function finish(win){
   finished = true; solved = win;
   document.getElementById('play').style.display = 'none';
-  stage = frames.length - 1; renderFrame(); // reveal the clearest frame
   if(win){ results = results.concat(['win']); }
   const streak = updateStreak(win);
   renderPips();
@@ -280,8 +298,14 @@ function finish(win){
 }
 
 function emojiGrid(){
-  let g = '', used = 0;
-  for(const r of results){ g += (r === 'win' ? '🟩' : r === 'skip' ? '🟨' : '🟥'); used++; }
+  // one square per attempt slot
+  let g = '';
+  let used = 0;
+  for(const r of results){
+    if(r === 'win'){ g += '🟩'; used++; }
+    else if(r === 'skip'){ g += '🟨'; used++; }
+    else { g += '🟥'; used++; }
+  }
   for(let i = used; i < MAX_GUESSES; i++) g += '⬛';
   return g;
 }
@@ -294,7 +318,7 @@ function renderResult(streak){
     el.style.backgroundSize = 'cover'; el.style.backgroundPosition = 'center';
   }
   const verdict = solved
-    ? '<div class="result-verdict win">Solved in ' + (results.indexOf('win') + 1) + '!</div>'
+    ? '<div class="result-verdict win">Solved in ' + (solved ? results.indexOf('win') + 1 : MAX_GUESSES) + '!</div>'
     : '<div class="result-verdict lose">Out of guesses</div>';
   const bestPart = streak.best > streak.current ? ' · best <strong>' + streak.best + '</strong>' : '';
   const streakLine = PRACTICE ? '' : '<div class="result-streak">🔥 Streak <strong>' + streak.current + '</strong>' + bestPart + '</div>';
@@ -311,15 +335,15 @@ function renderResult(streak){
     '<div class="result-actions">' + actions + '</div>';
   document.getElementById('shareBtn').onclick = share;
   const again = document.getElementById('againBtn');
-  if(again) again.onclick = () => { location.href = 'cineframe.html?practice=1&n=' + Date.now(); };
+  if(again) again.onclick = () => { location.href = 'cineclue.html?practice=1&n=' + Date.now(); };
 }
 
 function shareText(){
   const n = solved ? (results.indexOf('win') + 1) : 'X';
-  const head = PRACTICE ? '🎞️ CineFrame (Practice)' : ('🎞️ CineFrame #' + PUZZLE);
+  const head = PRACTICE ? '🔍 CineClue (Practice)' : ('🔍 CineClue #' + PUZZLE);
   const st = (!PRACTICE && solved) ? loadStreak() : null;
   const streak = (st && st.current > 1) ? '  🔥' + st.current : '';
-  return head + '  ' + n + '/' + MAX_GUESSES + streak + '\n' + emojiGrid() + '\nhttps://cinelinks.vercel.app/cineframe.html';
+  return head + '  ' + n + '/' + MAX_GUESSES + streak + '\n' + emojiGrid() + '\nhttps://cinelinks.vercel.app/cineclue.html';
 }
 function share(){
   const text = shareText();
@@ -331,9 +355,9 @@ function share(){
 // ── Streak + persistence ───────────────────────────────────────────────────
 function loadStreak(){ try{ const s = JSON.parse(localStorage.getItem(STREAK_KEY)); if(s) return { current:s.current|0, best:s.best|0, last:s.last|0 }; }catch(_){} return { current:0, best:0, last:0 }; }
 function updateStreak(win){
-  if(PRACTICE) return loadStreak();
+  if(PRACTICE) return loadStreak(); // practice never touches the streak
   const s = loadStreak();
-  if(s.last === DAY) return s;
+  if(s.last === DAY) return s; // already counted today
   if(win){ s.current = (s.last === DAY - 1) ? s.current + 1 : 1; s.best = Math.max(s.best, s.current); }
   else { s.current = 0; }
   s.last = DAY;
@@ -342,7 +366,7 @@ function updateStreak(win){
 }
 function save(){ if(PRACTICE) return; const s={ day:DAY, results, stage, finished, solved }; if(finished && target) s.answer={ title:target.title, poster:target.posterPath }; try{ localStorage.setItem(STATE_KEY, JSON.stringify(s)); }catch(_){} }
 function restore(){
-  if(PRACTICE) return false;
+  if(PRACTICE) return false; // practice is always a fresh game
   try{
     const s = JSON.parse(localStorage.getItem(STATE_KEY));
     if(s && s.day === DAY){ results = s.results || []; stage = s.stage || 0; finished = !!s.finished; solved = !!s.solved; return true; }
@@ -379,10 +403,13 @@ function renderSuggest(){
     '</div>'
   ).join('');
   el.classList.add('open');
-  el.querySelectorAll('.suggest-item').forEach(node => { node.onclick = () => pick(suggestItems[+node.dataset.i]); });
+  el.querySelectorAll('.suggest-item').forEach(node => {
+    node.onclick = () => pick(suggestItems[+node.dataset.i]);
+  });
 }
 function closeSuggest(){ suggestItems = []; activeIdx = -1; document.getElementById('suggest').classList.remove('open'); }
 function pick(m){ closeSuggest(); const inp = document.getElementById('guessInput'); inp.value = ''; document.getElementById('guessBtn').disabled = true; makeGuess(m); }
+
 function submitTyped(){
   if(activeIdx >= 0 && suggestItems[activeIdx]){ pick(suggestItems[activeIdx]); return; }
   if(suggestItems.length){ pick(suggestItems[0]); return; }
@@ -395,23 +422,26 @@ function showError(){ document.getElementById('loading').style.display = 'none';
 async function init(){
   document.getElementById('dateBadge').textContent = PRACTICE ? 'Practice' : ('Daily #' + PUZZLE);
   const sw = document.getElementById('modeSwitch');
-  if(sw){ sw.textContent = PRACTICE ? 'Daily →' : 'Practice →'; sw.href = PRACTICE ? 'cineframe.html' : 'cineframe.html?practice=1'; }
+  if(sw){ sw.textContent = PRACTICE ? 'Daily →' : 'Practice →'; sw.href = PRACTICE ? 'cineclue.html' : 'cineclue.html?practice=1'; }
   let t;
   try{ t = await loadTarget(); }catch(e){ showError(); return; }
   target = { id: t.d.id, type: t.type, title: Media.title(t.d, t.type), year: Media.year(t.d, t.type), posterPath: t.d.poster_path, backdropPath: t.d.backdrop_path, genres: (t.d.genres || []).slice(0, 3).map(g => g.name).join(' · ') };
-  frames = buildFrames(t);
+  clues = buildClues(t);
 
   const had = restore();
   if(!had){ stage = 0; results = []; finished = false; solved = false; }
-  if(finished && solved && results.indexOf('win') === -1) results.push('win');
+  if(finished && solved && results.indexOf('win') === -1) results.push('win'); // safety for restored solved state
 
   document.getElementById('loading').style.display = 'none';
   document.getElementById('game').style.display = 'block';
-  if(finished) stage = frames.length - 1;
-  renderPips(); renderFrame(); renderGuesses();
+  renderPips(); renderClues(); renderGuesses();
 
-  if(finished){ document.getElementById('play').style.display = 'none'; renderResult(loadStreak()); }
+  if(finished){
+    document.getElementById('play').style.display = 'none';
+    renderResult(loadStreak());
+  }
 
+  // wire inputs
   const inp = document.getElementById('guessInput');
   inp.addEventListener('input', onInput);
   inp.addEventListener('keydown', e => {
@@ -424,32 +454,32 @@ async function init(){
   document.getElementById('skipBtn').onclick = skip;
   document.addEventListener('click', e => { if(!e.target.closest('.guessbox')) closeSuggest(); });
 }
-function highlight(){ document.querySelectorAll('.suggest-item').forEach((n, i) => n.classList.toggle('active', i === activeIdx)); }
+function highlight(){
+  document.querySelectorAll('.suggest-item').forEach((n, i) => n.classList.toggle('active', i === activeIdx));
+}
 
 init();
 </script>
 <script>
 window.HOWTO = {
-  key: 'cineframe', title: 'How to play CineFrame', icon: '🎞️',
+  key: 'cineclue', title: 'How to play CineClue', icon: '🔍',
   steps: [
-    'Guess the day’s film from a single, heavily-blurred frame.',
+    'Guess the day’s film. You start with one cryptic clue.',
     'Type to search and pick a title - you have <b>6 tries</b>.',
-    'Every wrong guess or skip sharpens the image a little more.',
+    'Every wrong guess or skip reveals a new, easier clue.',
+    'Order: keywords → genre &amp; year → tagline → cast → poster.',
     'Fewer guesses = better. <b>Daily</b> keeps your streak; <b>Practice</b> is unlimited.'
   ],
-  example: '<div class="ht-row" style="gap:8px">' +
-      '<span style="display:inline-block;width:48px;height:32px;border-radius:6px;background:linear-gradient(135deg,#e8a000,#506a87);filter:blur(4px)"></span>' +
-      '<span class="ht-arrow">→</span>' +
-      '<span style="display:inline-block;width:48px;height:32px;border-radius:6px;background:linear-gradient(135deg,#e8a000,#506a87);filter:blur(2px)"></span>' +
-      '<span class="ht-arrow">→</span>' +
-      '<span style="display:inline-block;width:48px;height:32px;border-radius:6px;background:linear-gradient(135deg,#e8a000,#506a87)"></span>' +
-    '</div><p>The frame goes from blurry to sharp as your guesses run out.</p>'
+  example: '<div style="display:flex;flex-direction:column;gap:6px">' +
+      '<span class="ht-chip">🔑 dream · heist · subconscious</span>' +
+      '<span class="ht-chip">🎭 Action · Sci-Fi · 2010</span>' +
+      '<span class="ht-chip">🎬 dir. Christopher Nolan</span>' +
+    '</div><p>Clues stack up until you guess: <b style="color:#f0f0f0">Inception</b> 🎉</p>'
 };
 </script>
 <script defer src="/ads.js"></script>
 <script defer src="/support.js"></script>
 <script defer src="/howto.js"></script>
-<script defer src="/home-art.js"></script>
 <script defer src="/cookie.js"></script>
 <script defer src="/lib/merge-stats.js"></script>
 <script defer src="/auth.js"></script>
