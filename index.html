@@ -64,8 +64,17 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .archive-btn{width:100%;margin-top:8px;padding:9px;border-radius:10px;border:1px solid var(--bdr);background:transparent;color:var(--mut);font-family:inherit;font-size:.8rem;font-weight:600;cursor:pointer;transition:border-color .15s,color .15s,background .15s}
 .archive-btn:hover{border-color:rgba(232,160,0,.5);color:var(--gold);background:rgba(232,160,0,.04)}
 .games{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
-.game-card{background:rgba(255,255,255,.045);border:1px solid var(--bdr);border-radius:14px;padding:14px;text-align:left;display:flex;flex-direction:column;gap:12px;transition:border-color .15s}
+.game-card{background:rgba(255,255,255,.045);border:1px solid var(--bdr);border-radius:14px;padding:14px;text-align:left;display:flex;flex-direction:column;gap:12px;transition:border-color .15s,background .15s}
 .game-card:hover{border-color:rgba(232,160,0,.3)}
+.game-card.done{border-color:rgba(91,189,122,.45);background:linear-gradient(180deg,rgba(91,189,122,.09),rgba(255,255,255,.04))}
+.game-card.done .game-ic{background:rgba(91,189,122,.16);color:#7fd49a}
+/* CineLinks = hero card: full width, bigger, the headline game */
+.game-card.hero{grid-column:1 / -1;background:linear-gradient(120deg,rgba(232,160,0,.13),rgba(255,255,255,.04));border-color:rgba(232,160,0,.32);padding:18px 18px 16px}
+.game-card.hero.done{background:linear-gradient(120deg,rgba(91,189,122,.13),rgba(255,255,255,.04))}
+.game-card.hero .game-ic{width:50px;height:50px;font-size:1.7rem}
+.game-card.hero .game-name{font-size:1.3rem}
+.game-card.hero .game-desc{font-size:.8rem;margin-top:2px}
+.game-card.hero .game-modes{max-width:340px}
 .game-head{display:flex;align-items:center;gap:10px}
 .game-ic{font-size:1.35rem;width:38px;height:38px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--golddim);border-radius:10px;color:var(--gold)}
 .games-section{font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin:18px 0 8px;text-align:left}
@@ -75,7 +84,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .game-name{font-weight:800;font-size:.95rem;display:flex;align-items:center;gap:6px}
 .game-desc{font-size:.68rem;color:var(--mut);margin-top:1px}
 .new-tag{font-size:.52rem;font-weight:800;letter-spacing:.06em;color:#111;background:var(--gold);padding:1px 5px;border-radius:999px}
-.game-done{color:#5bbd7a;font-weight:800;font-size:.85rem;margin-left:5px}
+.game-done{display:none}
+.game-done.on{display:inline-flex;align-items:center;color:#7fd49a;font-weight:800;font-size:.56rem;letter-spacing:.06em;text-transform:uppercase;background:rgba(91,189,122,.16);border:1px solid rgba(91,189,122,.38);padding:2px 7px;border-radius:999px;margin-left:7px}
 .game-modes{display:flex;gap:8px;margin-top:auto}
 .mode{flex:1;text-align:center;padding:9px;border-radius:9px;border:1px solid var(--bdr);background:transparent;color:var(--txt);font-family:inherit;font-size:.8rem;font-weight:700;cursor:pointer;text-decoration:none;transition:background .15s,border-color .15s,opacity .15s}
 .mode:hover{border-color:rgba(232,160,0,.5);background:rgba(232,160,0,.05)}
@@ -512,8 +522,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 
     <div class="games-section">Daily puzzles</div>
     <div class="games">
-      <div class="game-card">
-        <div class="game-head"><span class="game-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"/></svg></span><span class="game-meta"><span class="game-name">CineLinks<span class="game-done" data-done="cl"></span></span><span class="game-desc">Connect actors → movies → TV</span></span></div>
+      <div class="game-card hero">
+        <div class="game-head"><span class="game-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"/></svg></span><span class="game-meta"><span class="game-name">CineLinks<span class="game-done" data-done="cl"></span></span><span class="game-desc">Connect actors → movies → TV in the fewest clicks</span></span></div>
         <div class="game-modes">
           <button class="mode mode-daily" onclick="game.startDaily()">Daily</button>
           <button class="mode mode-practice" onclick="game.startRandom()">Practice</button>
@@ -1463,8 +1473,11 @@ function markDoneBadges() {
   };
   document.querySelectorAll('.game-done[data-done]').forEach(el => {
     const done = !!state[el.dataset.done];
-    el.textContent = done ? '✓' : '';
-    el.title = done ? 'Solved today' : '';
+    el.textContent = done ? '✓ Done' : '';
+    el.classList.toggle('on', done);
+    el.title = done ? 'Completed today' : '';
+    const card = el.closest('.game-card');
+    if (card) card.classList.toggle('done', done);
   });
 }
 
