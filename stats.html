@@ -54,6 +54,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .site-foot .dot{margin:0 8px;opacity:.5}
 .reset{display:block;margin:18px auto 0;background:none;border:none;color:var(--mut);font-size:.72rem;cursor:pointer;text-decoration:underline;opacity:.6}
 .reset:hover{opacity:1;color:#d8503a}
+/* desktop: two columns of cards instead of one tall stack */
+@media(min-width:720px){.wrap{max-width:780px}#cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}#cards .card{margin-bottom:0}}
 </style>
 </head>
 <body>

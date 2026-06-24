@@ -76,6 +76,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .footer a{color:var(--mut);text-decoration:none}.footer a:hover{color:var(--gold)}
 .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--s2);border:1px solid var(--bdr);color:var(--txt);padding:10px 16px;border-radius:10px;font-size:.85rem;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* desktop: wider column makes the 16:9 frame noticeably bigger */
+@media(min-width:760px){.wrap{max-width:680px}.title{font-size:2.4rem}.subtitle{font-size:.92rem}.result-poster{width:160px}.clue-body{font-size:1rem}}
 </style>
 </head>
 <body>
