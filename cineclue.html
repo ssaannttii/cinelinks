@@ -3,19 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CineClue — Guess the daily film from clues</title>
-<meta name="description" content="A daily film-guessing game: name the movie from progressive clues — keywords, cast, tagline and a blurred poster — in as few guesses as possible. Data from TMDB.">
+<title>CineClue - Guess the daily film from clues</title>
+<meta name="description" content="A daily film-guessing game: name the movie from progressive clues - keywords, cast, tagline and a blurred poster - in as few guesses as possible. Data from TMDB.">
 <meta name="theme-color" content="#0d0d0d">
 <link rel="icon" type="image/png" href="/logo.png">
 <link rel="canonical" href="https://cinelinks.vercel.app/cineclue.html">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://cinelinks.vercel.app/cineclue.html">
-<meta property="og:title" content="CineClue — Guess the daily film">
+<meta property="og:title" content="CineClue - Guess the daily film">
 <meta property="og:description" content="Name the movie from progressive clues in as few guesses as possible. A new film every day.">
 <meta property="og:image" content="https://cinelinks.vercel.app/og-image.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:site" content="@cinelinksgame">
-<meta name="twitter:title" content="CineClue — Guess the daily film">
+<meta name="twitter:title" content="CineClue - Guess the daily film">
 <meta name="twitter:description" content="Name the movie from progressive clues in as few guesses as possible. A new film every day.">
 <meta name="twitter:image" content="https://cinelinks.vercel.app/og-image.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -191,10 +191,10 @@ function buildClues(t){
   const tagline = t.d.tagline || '';
   const pUrl = poster(t.d.poster_path, 'w342');
   return [
-    { label: 'Keywords', html: kws.length ? kws.map(k => '<span class="clue-chip">' + esc(k) + '</span>').join('') : '<span class="clue-body">No keywords on TMDB — here\'s a free one 🙂</span>' },
+    { label: 'Keywords', html: kws.length ? kws.map(k => '<span class="clue-chip">' + esc(k) + '</span>').join('') : '<span class="clue-body">No keywords on TMDB - here\'s a free one 🙂</span>' },
     { label: Media.mediumLabel(t.type) + ' · Genre · Year', html: '<span class="clue-body">' + esc([Media.mediumLabel(t.type), genres, yr, lengthL].filter(Boolean).join('  ·  ')) + '</span>' },
-    { label: makers ? (Media.makerLabel(t.type) + (tagline ? ' · Tagline' : '')) : 'Tagline', html: '<span class="clue-body">' + esc(makers) + (tagline ? ' — <em>"' + esc(maskTitle(tagline, ttl)) + '"</em>' : '') + '</span>' },
-    { label: 'Main cast', html: '<span class="clue-body">' + (cast.length ? cast.map(esc).join(', ') : '—') + '</span>' },
+    { label: makers ? (Media.makerLabel(t.type) + (tagline ? ' · Tagline' : '')) : 'Tagline', html: '<span class="clue-body">' + esc(makers) + (tagline ? ' - <em>"' + esc(maskTitle(tagline, ttl)) + '"</em>' : '') + '</span>' },
+    { label: 'Main cast', html: '<span class="clue-body">' + (cast.length ? cast.map(esc).join(', ') : '-') + '</span>' },
     { label: 'Poster (blurred)', html: pUrl ? '<canvas class="clue-poster" width="300" height="450" data-url="' + pUrl + '" data-blur="16"></canvas>' : '<span class="clue-body">No poster</span>' },
     { label: 'Poster', html: pUrl ? '<canvas class="clue-poster" width="300" height="450" data-url="' + pUrl + '" data-blur="5"></canvas>' : '<span class="clue-body">No poster</span>' }
   ];
@@ -275,7 +275,7 @@ function advance(kind){ // 'wrong' | 'skip'
 function makeGuess(movie){
   if(finished) return;
   if(Media.sameTarget(movie, target)){ finish(true); return; }
-  toast('Not it — new clue revealed');
+  toast('Not it - new clue revealed');
   advance('wrong');
 }
 
@@ -458,7 +458,7 @@ window.HOWTO = {
   key: 'cineclue', title: 'How to play CineClue', icon: '🔍',
   steps: [
     'Guess the day’s film. You start with one cryptic clue.',
-    'Type to search and pick a title — you have <b>6 tries</b>.',
+    'Type to search and pick a title - you have <b>6 tries</b>.',
     'Every wrong guess or skip reveals a new, easier clue.',
     'Order: keywords → genre &amp; year → tagline → cast → poster.',
     'Fewer guesses = better. <b>Daily</b> keeps your streak; <b>Practice</b> is unlimited.'

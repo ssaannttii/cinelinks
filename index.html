@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CineLinks — Connect actors, movies & TV in the fewest clicks</title>
+<title>CineLinks - Connect actors, movies & TV in the fewest clicks</title>
 <meta name="description" content="A daily film-trivia game: connect actors, movies, directors and TV shows in as few clicks as possible. New challenge every day. Data from TMDB.">
 <meta name="theme-color" content="#0d0d0d">
 <link rel="canonical" href="https://cinelinks.vercel.app/">
@@ -13,7 +13,7 @@
 <!-- Open Graph -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="CineLinks">
-<meta property="og:title" content="CineLinks — Connect the film world in the fewest clicks">
+<meta property="og:title" content="CineLinks - Connect the film world in the fewest clicks">
 <meta property="og:description" content="A daily film-trivia game: connect actors, movies, directors and TV shows in as few clicks as possible. New challenge every day.">
 <meta property="og:url" content="https://cinelinks.vercel.app/">
 <meta property="og:image" content="https://cinelinks.vercel.app/og-image.png">
@@ -23,7 +23,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:site" content="@cinelinksgame">
 <meta name="twitter:creator" content="@cinelinksgame">
-<meta name="twitter:title" content="CineLinks — Connect the film world in the fewest clicks">
+<meta name="twitter:title" content="CineLinks - Connect the film world in the fewest clicks">
 <meta name="twitter:description" content="A daily film-trivia game: connect actors, movies, directors and TV shows in as few clicks as possible.">
 <meta name="twitter:image" content="https://cinelinks.vercel.app/og-image.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -315,7 +315,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .card:not(.visited):hover::before{opacity:1;transform:translateY(0)}
 .card:hover .card-img img{filter:brightness(.72) saturate(1.08)}
 .card.goal{border-color:rgba(232,160,0,.85);box-shadow:0 0 16px rgba(232,160,0,.3),0 0 0 2px rgba(232,160,0,.4);position:relative;overflow:hidden;animation:goalCardGlow 2.1s ease-in-out infinite}
-/* Shine sweep — runs once every 2.4s (delay covers the pause between sweeps) */
+/* Shine sweep - runs once every 2.4s (delay covers the pause between sweeps) */
 .card.goal::after{content:"";position:absolute;inset:0 auto 0 -80%;width:60%;background:linear-gradient(90deg,transparent,rgba(232,160,0,.3),rgba(255,255,255,.12),transparent);transform:skewX(-12deg);animation:goalShine 2.4s ease-in-out infinite;pointer-events:none;z-index:2}
 @keyframes goalCardGlow{0%,100%{box-shadow:0 0 14px rgba(232,160,0,.28),0 0 0 2px rgba(232,160,0,.34)}50%{box-shadow:0 0 36px rgba(232,160,0,.6),0 0 0 2px rgba(232,160,0,.62)}}
 /* GOAL badge on the target card */
@@ -486,8 +486,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 
 <div id="startScreen" class="screen active">
   <div class="start-inner">
-    <img src="/logo.png" alt="CineLinks — A Cinematic Link Puzzle" class="start-logo">
-    <p class="tagline">A new film puzzle every day — pick your game.</p>
+    <img src="/logo.png" alt="CineLinks - A Cinematic Link Puzzle" class="start-logo">
+    <p class="tagline">A new film puzzle every day - pick your game.</p>
     <div id="dailyDateLbl" class="start-kicker" style="margin:2px 0 14px;opacity:.7"></div>
 
     <div class="games-section">Daily puzzles</div>
@@ -656,7 +656,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     <div id="pathRow" class="path-row"></div>
     <div id="goalBanner" class="goal-banner">
       <span class="goal-banner-icon">🎯</span>
-      <span class="goal-banner-text">The goal is in reach — <strong id="goalBannerName"></strong> is here!</span>
+      <span class="goal-banner-text">The goal is in reach - <strong id="goalBannerName"></strong> is here!</span>
     </div>
     <div id="secLbl" class="sec-lbl">CONNECTIONS</div>
     <div id="tabsRow" class="tabs" style="display:none">
@@ -1210,7 +1210,7 @@ function isCuratedKnownFor(person, title) {
 }
 
 // Two people are "too close" if they're both known for the same title (iconic
-// co-stars) — that makes for a trivial 2-click puzzle, so we avoid it.
+// co-stars) - that makes for a trivial 2-click puzzle, so we avoid it.
 function peopleShareKnownFor(a, b) {
   const setA = new Set(a.knownFor || []);
   return (b.knownFor || []).some(k => setA.has(k));
@@ -1268,7 +1268,7 @@ function fallbackDailyChallenge(key) {
   return {s:{...c.s}, e:{...c.e}};
 }
 
-// Non-repeating per-cycle ordering — see lib/daily.js (shared with api/admin.js).
+// Non-repeating per-cycle ordering - see lib/daily.js (shared with api/admin.js).
 function dailyListIndex(key, length) {
   return CineDaily.dailyListIndex(key, length);
 }
@@ -1331,7 +1331,7 @@ function parDifficulty(par) {
   return CineDifficulty.difficultyI18nKey(par) || 'diffExpert';
 }
 
-// Par data (precomputed minimum clicks per challenge) — loaded once, optional.
+// Par data (precomputed minimum clicks per challenge) - loaded once, optional.
 let _parData = null;
 async function loadParData() {
   if (_parData) return _parData;
@@ -1386,7 +1386,7 @@ function prevDateStr(key) {
 }
 function recordStreak(todayKey) {
   const s = loadStreak();
-  if (s.last === todayKey) return s; // already counted today — don't double-count on refresh
+  if (s.last === todayKey) return s; // already counted today - don't double-count on refresh
   s.current = (s.last === prevDateStr(todayKey)) ? s.current + 1 : 1;
   s.best = Math.max(s.best, s.current);
   s.last = todayKey;
@@ -1410,7 +1410,7 @@ function markDoneBadges() {
     try { const s = JSON.parse(localStorage.getItem(k)); return !!(s && s.day === utcDay && s.finished); } catch(_) { return false; }
   }
   // CineLinks counts as done if today is in clPlayed (the canonical signal, same
-  // one stats uses) OR a stored daily result exists — so the badge is resilient
+  // one stats uses) OR a stored daily result exists - so the badge is resilient
   // even when the rich result blob wasn't captured (e.g. an older win).
   function linksDone() {
     try {
@@ -1766,7 +1766,7 @@ const game = window.game = {
           this._pushRecentRandom(key);
           break;
         }
-        // Last attempt — use it anyway
+        // Last attempt - use it anyway
         if (attempt === 3) { challenge = candidate; this._pushRecentRandom(key); }
       }
       if (!challenge) throw 0;
@@ -1934,7 +1934,7 @@ const game = window.game = {
   renderCurrentPrompt() {
     const prompt = document.getElementById('curPrompt');
     if (!prompt) return;
-    // Only show prompt on first step — after that the player knows how it works
+    // Only show prompt on first step - after that the player knows how it works
     if (this.clicks > 0) { prompt.style.display = 'none'; return; }
     prompt.style.display = '';
     prompt.textContent = this.cur.type === 'person'
@@ -2098,7 +2098,7 @@ const game = window.game = {
     const actions = document.createElement('div');
     actions.className = 'empty-actions';
 
-    // Back button — only if we've made at least one move
+    // Back button - only if we've made at least one move
     if (this.path.length > 1) {
       const back = document.createElement('button');
       back.className = 'btn btn-ghost btn-sm';
@@ -2304,7 +2304,7 @@ const game = window.game = {
       if (allVisited && this.path.length > 1) {
         const nodeName = node.name;
         await new Promise(r => setTimeout(r, 320));
-        this._showToast(`Dead end — all connections from <strong>${nodeName}</strong> already visited. Going back…`);
+        this._showToast(`Dead end - all connections from <strong>${nodeName}</strong> already visited. Going back…`);
         await new Promise(r => setTimeout(r, 1800));
         this._goBack();
       }
@@ -2342,7 +2342,7 @@ const game = window.game = {
     if (!el) return;
     const pathArr = (await loadParPaths())[this._challengeKey()];
     if (!Array.isArray(pathArr) || !pathArr.length) {
-      el.innerHTML = '<div class="dbg-sol-label">Best solution</div>No path data — run <strong>npm run par</strong> to generate par-paths.json.';
+      el.innerHTML = '<div class="dbg-sol-label">Best solution</div>No path data - run <strong>npm run par</strong> to generate par-paths.json.';
       el.style.display = 'block';
       return;
     }
@@ -2456,7 +2456,7 @@ const game = window.game = {
       } catch(_) {}
     }
 
-    // Submit daily score and show today's average + record — only for today's
+    // Submit daily score and show today's average + record - only for today's
     // official daily, and only on a fresh win (replays just read the stats).
     const avgEl = document.getElementById('winAvg');
     if (avgEl && this.scoreDate === dateKey() && replay) {
@@ -2605,7 +2605,7 @@ const game = window.game = {
   _makeCard(item) {
     const isGoal = item.id === this.end.id && item.type === this.end.type;
     const isVisited = this.visited.has(item.type + '-' + item.id);
-    // Note: don't skip start node — show it as visited/blocked instead
+    // Note: don't skip start node - show it as visited/blocked instead
     const div = document.createElement('div');
     const isDir = item.sub === 'Director';
     div.className = 'card' + (isGoal ? ' goal' : '') + (isVisited ? ' visited' : '') + (isDir ? ' director-card' : '');

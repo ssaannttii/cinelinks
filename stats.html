@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Your stats — CineLinks suite</title>
+<title>Your stats - CineLinks suite</title>
 <meta name="description" content="Your streaks and history across the CineLinks film games.">
 <meta name="theme-color" content="#0d0d0d">
 <meta name="robots" content="noindex, follow">
 <link rel="canonical" href="https://cinelinks.vercel.app/stats.html">
 <link rel="icon" type="image/png" href="/logo.png">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Your stats — CineLinks suite">
+<meta property="og:title" content="Your stats - CineLinks suite">
 <meta property="og:description" content="Your streaks and history across the CineLinks film games.">
 <meta property="og:url" content="https://cinelinks.vercel.app/stats.html">
 <meta property="og:image" content="https://cinelinks.vercel.app/og-image.png">
@@ -93,7 +93,7 @@ function cineLinks(){
     stats:[
       {n: streak.current|0, l:'Streak'},
       {n: streak.best|0, l:'Best streak'},
-      {n: doneToday ? '✓' : '—', l:'Today'}
+      {n: doneToday ? '✓' : '-', l:'Today'}
     ],
     extra: doneToday ? 'Solved today ✓' : (dates.length ? (dates.length + ' day' + (dates.length===1?'':'s') + ' played') : 'Not played today'),
     daily:'/?daily=1', practice:'/?practice=1'  // jump straight into play
@@ -108,7 +108,7 @@ function cineClue(){
     stats:[
       {n: streak.current|0, l:'Streak'},
       {n: streak.best|0, l:'Best streak'},
-      {n: state? '✓':'—', l:'Today'}
+      {n: state? '✓':'-', l:'Today'}
     ],
     extra: todayDone,
     daily:'/cineclue.html', practice:'/cineclue.html?practice=1'
@@ -134,7 +134,7 @@ function cineFrame(){
     stats:[
       {n: streak.current|0, l:'Streak'},
       {n: streak.best|0, l:'Best streak'},
-      {n: state? '✓':'—', l:'Today'}
+      {n: state? '✓':'-', l:'Today'}
     ],
     extra: todayDone,
     daily:'/cineframe.html', practice:'/cineframe.html?practice=1'
@@ -147,7 +147,7 @@ function cineCast(){
   const todayDone = state && state.finished ? (state.solved ? 'Solved today ✓' : 'Played today') : 'Not played today';
   return {
     icon:'🎭', title:'CineCast', sub:'Guess the film from its cast',
-    stats:[{n: streak.current|0, l:'Streak'},{n: streak.best|0, l:'Best streak'},{n: state? '✓':'—', l:'Today'}],
+    stats:[{n: streak.current|0, l:'Streak'},{n: streak.best|0, l:'Best streak'},{n: state? '✓':'-', l:'Today'}],
     extra: todayDone, daily:'/cinecast.html', practice:'/cinecast.html?practice=1'
   };
 }
@@ -157,7 +157,7 @@ function cinePlot(){
   const todayDone = state && state.finished ? (state.solved ? 'Solved today ✓' : 'Played today') : 'Not played today';
   return {
     icon:'📖', title:'CinePlot', sub:'Guess the film from its synopsis',
-    stats:[{n: streak.current|0, l:'Streak'},{n: streak.best|0, l:'Best streak'},{n: state? '✓':'—', l:'Today'}],
+    stats:[{n: streak.current|0, l:'Streak'},{n: streak.best|0, l:'Best streak'},{n: state? '✓':'-', l:'Today'}],
     extra: todayDone, daily:'/cineplot.html', practice:'/cineplot.html?practice=1'
   };
 }
@@ -175,9 +175,9 @@ function cineRating(){
   return {
     icon:'⭐', title:'Rating games', sub:'Higher or Lower · Career · Guess the Score',
     stats:[
-      {n: doneToday ? (d.score|0)+'/10' : '—', l:'Today'},
+      {n: doneToday ? (d.score|0)+'/10' : '-', l:'Today'},
       {n: doneToday ? (d.maxStreak|0) : 0, l:'Best streak'},
-      {n: doneToday ? '✓' : '—', l:'Daily'}
+      {n: doneToday ? '✓' : '-', l:'Daily'}
     ],
     extra: doneToday ? ('Higher or Lower: '+(d.score|0)+'/10 today ✓') : 'Not played today',
     daily:'/rating/versus?mode=daily', practice:'/rating/versus'

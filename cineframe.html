@@ -3,19 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CineFrame — Guess the daily film from a frame</title>
+<title>CineFrame - Guess the daily film from a frame</title>
 <meta name="description" content="A daily film-guessing game: name the movie from a blurred frame that sharpens with each wrong guess. A new film every day. Images from TMDB.">
 <meta name="theme-color" content="#0d0d0d">
 <link rel="icon" type="image/png" href="/logo.png">
 <link rel="canonical" href="https://cinelinks.vercel.app/cineframe.html">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://cinelinks.vercel.app/cineframe.html">
-<meta property="og:title" content="CineFrame — Guess the daily film">
+<meta property="og:title" content="CineFrame - Guess the daily film">
 <meta property="og:description" content="Name the movie from a blurred frame that sharpens with each guess. A new film every day.">
 <meta property="og:image" content="https://cinelinks.vercel.app/og-image.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:site" content="@cinelinksgame">
-<meta name="twitter:title" content="CineFrame — Guess the daily film">
+<meta name="twitter:title" content="CineFrame - Guess the daily film">
 <meta name="twitter:description" content="Name the movie from a blurred frame that sharpens with each guess. A new film every day.">
 <meta name="twitter:image" content="https://cinelinks.vercel.app/og-image.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -258,7 +258,7 @@ function advance(kind){
 function makeGuess(movie){
   if(finished) return;
   if(Media.sameTarget(movie, target)){ finish(true); return; }
-  toast('Not it — frame sharpened');
+  toast('Not it - frame sharpened');
   advance('wrong');
 }
 function skip(){ if(!finished) advance('skip'); }
@@ -424,7 +424,7 @@ window.HOWTO = {
   key: 'cineframe', title: 'How to play CineFrame', icon: '🎞️',
   steps: [
     'Guess the day’s film from a single, heavily-blurred frame.',
-    'Type to search and pick a title — you have <b>6 tries</b>.',
+    'Type to search and pick a title - you have <b>6 tries</b>.',
     'Every wrong guess or skip sharpens the image a little more.',
     'Fewer guesses = better. <b>Daily</b> keeps your streak; <b>Practice</b> is unlimited.'
   ],
