@@ -22,7 +22,7 @@ const worker = {
 };
 
 export default [
-  { ignores: ['ratinggame/**', 'node_modules/**', '**/.next/**', '.claude/**', '**/*.json', '**/*.html'] },
+  { ignores: ['ratinggame/**', 'node_modules/**', '**/.next/**', '.claude/**', '**/*.json', '**/*.html', '_smoke.js'] },
   js.configs.recommended,
 
   // Node serverless functions + offline scripts

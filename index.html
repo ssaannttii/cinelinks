@@ -41,9 +41,6 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .start-inner{width:100%;max-width:560px;text-align:center;position:relative;z-index:2;background:rgba(255,255,255,.045);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:34px 28px 28px;box-shadow:0 30px 80px rgba(0,0,0,.38)}
 #cineBackdrop{position:absolute;inset:0;z-index:0;background-size:cover;background-position:center;opacity:0;filter:blur(4px);transform:scale(1.06);transition:opacity 1.4s ease;pointer-events:none}
 #cineBackdrop.on{opacity:.18}
-.poster-strip{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;margin:10px 0 2px;min-height:0}
-.poster-strip img{width:42px;height:63px;border-radius:5px;object-fit:cover;box-shadow:0 8px 18px rgba(0,0,0,.4);opacity:0;transition:opacity .5s ease}
-.poster-strip img.on{opacity:.9}
 @media (min-width:1000px){.start-inner{max-width:620px;padding:42px 44px 34px}.start-logo{max-width:300px}}
 .start-kicker{font-size:.62rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:12px}
 .start-logo{width:100%;max-width:280px;height:auto;display:block;margin:0 auto 20px}
@@ -543,7 +540,6 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
       </div>
     </div>
 
-    <div id="ratingStrip" class="poster-strip" aria-hidden="true"></div>
     <div class="games-section">Rating games</div>
     <div class="games">
       <div class="game-card">

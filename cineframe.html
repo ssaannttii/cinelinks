@@ -284,6 +284,10 @@ function emojiGrid(){
 function renderResult(streak){
   const el = document.getElementById('result');
   el.classList.remove('hidden');
+  if(target.backdropPath){
+    el.style.backgroundImage = 'linear-gradient(180deg,rgba(22,22,22,.86),rgba(22,22,22,.97)),url(' + IMGBASE + 'w780' + target.backdropPath + ')';
+    el.style.backgroundSize = 'cover'; el.style.backgroundPosition = 'center';
+  }
   const verdict = solved
     ? '<div class="result-verdict win">Solved in ' + (results.indexOf('win') + 1) + '!</div>'
     : '<div class="result-verdict lose">Out of guesses</div>';
@@ -296,7 +300,7 @@ function renderResult(streak){
     (target.posterPath ? '<img class="result-poster" src="' + poster(target.posterPath, 'w342') + '" alt="">' : '') +
     verdict +
     '<div class="result-film">' + esc(target.title) + '</div>' +
-    '<div class="result-year">' + esc(target.year || '') + '</div>' +
+    '<div class="result-year">' + esc([target.year, target.genres].filter(Boolean).join('  ·  ')) + '</div>' +
     '<div class="result-grid">' + emojiGrid() + '</div>' +
     streakLine +
     '<div class="result-actions">' + actions + '</div>';
@@ -389,7 +393,7 @@ async function init(){
   if(sw){ sw.textContent = PRACTICE ? 'Daily →' : 'Practice →'; sw.href = PRACTICE ? 'cineframe.html' : 'cineframe.html?practice=1'; }
   let t;
   try{ t = await loadTarget(); }catch(e){ showError(); return; }
-  target = { id: t.d.id, type: t.type, title: Media.title(t.d, t.type), year: Media.year(t.d, t.type), posterPath: t.d.poster_path };
+  target = { id: t.d.id, type: t.type, title: Media.title(t.d, t.type), year: Media.year(t.d, t.type), posterPath: t.d.poster_path, backdropPath: t.d.backdrop_path, genres: (t.d.genres || []).slice(0, 3).map(g => g.name).join(' · ') };
   frames = buildFrames(t);
 
   const had = restore();
