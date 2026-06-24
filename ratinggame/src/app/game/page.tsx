@@ -6,6 +6,7 @@ import { Suspense } from "react";
 import AutoNextButton from "@/components/AutoNextButton";
 import ShareButton from "@/components/ShareButton";
 import HomeIcon from "@/components/HomeIcon";
+import { api } from "@/lib/base";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -67,7 +68,7 @@ function buildShareText(mode: GameMode, score: number, max: number, rounds: Roun
     const p = r.totalPoints ?? 0;
     return p >= 80 ? "🟩" : p >= 50 ? "🟨" : "🟥";
   }).join("");
-  return `CineRating: ${modeLabel}\n${score}/${max} pts (${pct}%)\n${bars}\nhttps://cinerating.vercel.app/game?mode=${mode}`;
+  return `CineRating: ${modeLabel}\n${score}/${max} pts (${pct}%)\n${bars}\nhttps://cinelinks.vercel.app/rating/game?mode=${mode}`;
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -177,7 +178,7 @@ function GameContent() {
   // API returns { pairs: [MovieStub, MovieStub][] } — flatten to individual movies.
   // (Doesn't set loading=true itself, so it's safe to call directly from an effect.)
   const loadSession = useCallback(() => {
-    return fetch("/api/session?count=10")
+    return fetch(api("/api/session?count=10"))
       .then((r) => r.json())
       .then((d) => {
         const flat = ((d.pairs ?? []) as Array<{ imdbId: string; title: string; year: string }[]>).flat();
@@ -192,7 +193,7 @@ function GameContent() {
     if (fetchedIds.current.has(imdbId)) return;
     fetchedIds.current.add(imdbId);
     setMovieLoading(true);
-    const res = await fetch(`/api/movie?id=${imdbId}`);
+    const res = await fetch(api(`/api/movie?id=${imdbId}`));
     const data: MovieData = await res.json();
     setMovieLoading(false);
     setRounds((prev) => {

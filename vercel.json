@@ -1,4 +1,10 @@
 {
+  "rewrites": [
+    {
+      "source": "/rating/:path*",
+      "destination": "https://cinerating.vercel.app/rating/:path*"
+    }
+  ],
   "headers": [
     {
       "source": "/index.html",

@@ -34,40 +34,44 @@ emoji-grid sharing, and TMDB data.
   new bits are the `movie/{id}/images` TMDB endpoint and the blur reveal.
 
 ## Shared history / stats
-`/stats.html` aggregates streaks & history from `localStorage`. It can read **only
-same-origin** games (CineLinks + CineClue, both served from the root deploy).
-CineRating lives on a different origin, so its stats are **not** readable from here.
-That is the main reason to unify domains (below).
+`/stats.html` aggregates streaks & history from `localStorage`. Now that the rating
+games are served same-origin under `/rating` (merge below), it reads **all four**:
+CineLinks, CineClue, CineFrame **and** the Rating games (`cinerating_daily`).
 
-## Unifying everything under one domain (the real merge)
+## Unifying everything under one domain (the real merge) — DONE
 
-Goal: serve the rating games under `cinelinks.vercel.app/...` so the whole suite is
-one origin → **shared stats**, one nav, one "site". Recommended approach **without
-rewriting** the Next.js app into vanilla:
+The rating games are served under `cinelinks.vercel.app/rating/...` via a Vercel
+rewrite, so the whole suite is **one origin → shared stats, one "site"**. What was
+wired:
 
-1. In `ratinggame/next.config.ts` set `basePath: '/rating'` (and `assetPrefix` if
-   needed). The CineRating app now lives at `/rating/versus`, `/rating/game`, etc.
-2. Keep CineRating as its own Vercel project/deploy, OR add it as a second deploy.
-3. In the **root** project's `vercel.json`, add a rewrite that proxies the subpath
-   to the CineRating deployment:
-   ```json
-   { "rewrites": [
-     { "source": "/rating/:path*", "destination": "https://cinerating.vercel.app/rating/:path*" }
-   ] }
-   ```
-   Now `cinelinks.vercel.app/rating/...` serves the rating app from the **same
-   origin** → its `localStorage` is shared with CineLinks/CineClue, and `stats.html`
-   can include it.
-4. Update cross-links to use `/rating/...` instead of the external domain.
+1. `ratinggame/next.config.ts` → `basePath: "/rating"`. The app now lives at
+   `/rating/versus`, `/rating/career`, `/rating/game`, and its API at
+   `/rating/api/*`. (assetPrefix isn't needed — basePath covers `_next` assets.)
+2. **basePath does NOT prefix raw `fetch()`**, so every client call to the app's own
+   API was routed through `api()` in `ratinggame/src/lib/base.ts`
+   (`/rating/api/...`). Without this they'd hit CineLinks' root `/api` (the TMDB
+   proxy) once same-origin — the one real gotcha.
+3. Root `vercel.json` rewrite:
+   `{"source":"/rating/:path*","destination":"https://cinerating.vercel.app/rating/:path*"}`.
+4. Cross-links in `index.html`/`stats.html` use `/rating/...`; the rating share URLs
+   point to `https://cinelinks.vercel.app/rating/...`.
+5. `stats.html` reads `cinerating_daily` and shows the Higher-or-Lower daily card.
 
-**Why it's not done blind here:** sub-path proxying of a Next.js app (asset URLs,
-client routing, the daily seed, image domains) only really proves out on a live
-deploy. Do it as a focused step where each route can be checked after deploying,
-then flip the cross-links and extend `stats.html` to read the rating keys.
+**Deploy order (matters):** deploy the **CineRating** project first (so
+`cinerating.vercel.app/rating/*` exists with basePath), then the **root** project
+(whose rewrite proxies to it). 
 
-A heavier alternative (single deploy: host the static games inside the Next app via
-`public/`) is possible but a bigger restructure; the rewrite approach gets ~all the
-benefit (one origin, shared stats) with far less risk.
+**Verify live after deploy:** open `cinelinks.vercel.app/rating/versus` — it should
+load in-place (URL stays on cinelinks), play a round, then check `/stats.html`
+shows the rating card filled in. Watch the Network tab for any `/rating/_next/...`
+or `/rating/api/...` 404s.
+
+**Rollback if needed:** revert `vercel.json` (drop the rewrite), the `/rating/*`
+cross-links back to `https://cinerating.vercel.app/...`, and `basePath` — each is a
+small, isolated change.
+
+> Not yet synced: `cinerating_daily` isn't in the Google-login sync set (it's a
+> single-day blob that resets daily). Easy to add to `lib/merge-stats.js` later.
 
 ## Accounts / cross-device sync (Google login) — BUILT, dormant until you add a client ID
 

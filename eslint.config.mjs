@@ -5,11 +5,11 @@ import js from '@eslint/js';
 const browser = {
   window: 'readonly', document: 'readonly', navigator: 'readonly', location: 'readonly',
   fetch: 'readonly', localStorage: 'readonly', sessionStorage: 'readonly',
-  setTimeout: 'readonly', setInterval: 'readonly', clearInterval: 'readonly',
+  setTimeout: 'readonly', clearTimeout: 'readonly', setInterval: 'readonly', clearInterval: 'readonly',
   requestAnimationFrame: 'readonly', history: 'readonly', URL: 'readonly',
   URLSearchParams: 'readonly', Intl: 'readonly', console: 'readonly',
-  atob: 'readonly', btoa: 'readonly',
-  CineCredits: 'readonly', MergeStats: 'readonly'
+  atob: 'readonly', btoa: 'readonly', Image: 'readonly',
+  CineCredits: 'readonly', MergeStats: 'readonly', Media: 'readonly'
 };
 const node = {
   process: 'readonly', module: 'writable', require: 'readonly', __dirname: 'readonly',
@@ -44,7 +44,7 @@ export default [
   // Browser scripts loaded by index.html. LANGS/I18N/DAILY_CHALLENGE_KEYS are
   // intentionally consumed by other scripts on the page.
   {
-    files: ['i18n.js', 'daily-challenges.js', 'cineclue-pool.js', 'ads.js', 'support.js', 'howto.js', 'auth.js'],
+    files: ['i18n.js', 'daily-challenges.js', 'cineclue-pool.js', 'ads.js', 'support.js', 'howto.js', 'auth.js', 'cookie.js', 'cineguess.js'],
     languageOptions: { ecmaVersion: 2022, sourceType: 'script', globals: browser },
     rules: { 'no-unused-vars': 'off', 'no-empty': ['warn', { allowEmptyCatch: true }] }
   },

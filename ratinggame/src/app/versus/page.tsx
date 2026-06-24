@@ -7,6 +7,7 @@ import AutoNextButton from "@/components/AutoNextButton";
 import ShareButton from "@/components/ShareButton";
 import HomeIcon from "@/components/HomeIcon";
 import { getDailyPairs, getDayNumber } from "@/lib/movies";
+import { api } from "@/lib/base";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -48,9 +49,9 @@ function buildShareText(score: number, results: RoundResult[], isDaily: boolean)
   const squares = results.map((r) => (r.correct ? "🟩" : "🟥")).join("");
   if (isDaily) {
     const day = getDayNumber();
-    return `CineRating Daily #${day}\n${score}/${ROUNDS} ${squares}\nhttps://cinerating.vercel.app/versus?mode=daily`;
+    return `CineRating Daily #${day}\n${score}/${ROUNDS} ${squares}\nhttps://cinelinks.vercel.app/rating/versus?mode=daily`;
   }
-  return `CineRating: Higher or Lower\n${score}/${ROUNDS}\n${squares}\nhttps://cinerating.vercel.app/versus`;
+  return `CineRating: Higher or Lower\n${score}/${ROUNDS}\n${squares}\nhttps://cinelinks.vercel.app/rating/versus`;
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -86,7 +87,7 @@ function VersusGame() {
       });
     }
     fetchingRef.current.add(id);
-    const res = await fetch(`/api/movie?id=${id}`);
+    const res = await fetch(api(`/api/movie?id=${id}`));
     const data: Movie = await res.json();
     cacheRef.current[id] = data;
     return data;
@@ -112,7 +113,7 @@ function VersusGame() {
       loadRound(0);
       return;
     }
-    fetch("/api/session?count=10")
+    fetch(api("/api/session?count=10"))
       .then((r) => r.json())
       .then((d) => {
         const pairs: [string, string][] = (d.pairs as [{ imdbId: string }, { imdbId: string }][])

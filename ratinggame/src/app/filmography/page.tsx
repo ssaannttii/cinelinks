@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import AutoNextButton from "@/components/AutoNextButton";
 import HomeIcon from "@/components/HomeIcon";
+import { api } from "@/lib/base";
 
 interface Movie {
   imdbId: string; title: string; year: string; poster: string; imdbRating: string; director: string;
@@ -87,7 +88,7 @@ async function generateShareBlob(score: number, results: RoundResult[]): Promise
   ctx.fillStyle = "#444";
   ctx.font = "11px 'Inter', system-ui, sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText("cinerating.vercel.app/filmography", W / 2, H - 16);
+  ctx.fillText("cinelinks.vercel.app/rating/filmography", W / 2, H - 16);
 
   return new Promise((resolve) => canvas.toBlob((b) => resolve(b), "image/png"));
 }
@@ -176,7 +177,7 @@ export default function FilmographyPage() {
       });
     }
     fetchingRef.current.add(id);
-    const res = await fetch(`/api/movie?id=${id}`);
+    const res = await fetch(api(`/api/movie?id=${id}`));
     const data: Movie = await res.json();
     cacheRef.current[id] = data;
     return data;
@@ -185,7 +186,7 @@ export default function FilmographyPage() {
   const fetchPersonPhoto = useCallback(async (slug: string): Promise<string | null> => {
     if (slug in photoCache.current) return photoCache.current[slug];
     try {
-      const res = await fetch(`/api/person-photo?slug=${encodeURIComponent(slug)}`);
+      const res = await fetch(api(`/api/person-photo?slug=${encodeURIComponent(slug)}`));
       const data = await res.json();
       photoCache.current[slug] = data.photo ?? null;
       return photoCache.current[slug];
@@ -207,7 +208,7 @@ export default function FilmographyPage() {
   }, [fetchMovie, fetchPersonPhoto]);
 
   const initGame = useCallback(() => {
-    fetch(`/api/filmography?count=${ROUNDS}`)
+    fetch(api(`/api/filmography?count=${ROUNDS}`))
       .then((r) => r.json())
       .then((d: { challenges: Challenge[] }) => { challengesRef.current = d.challenges; loadRound(0); });
   }, [loadRound]);

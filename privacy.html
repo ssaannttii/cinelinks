@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy &amp; data — CineLinks</title>
+<meta name="description" content="How CineLinks handles your data: local-first stats, optional Google sync, cookies, and third-party film data.">
+<meta name="theme-color" content="#0d0d0d">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://cinelinks.vercel.app/privacy.html">
+<link rel="icon" type="image/png" href="/logo.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Privacy &amp; data — CineLinks">
+<meta property="og:description" content="How CineLinks handles your data: local-first stats, optional Google sync, cookies, and third-party film data.">
+<meta property="og:url" content="https://cinelinks.vercel.app/privacy.html">
+<meta property="og:image" content="https://cinelinks.vercel.app/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@cinelinksgame">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0d0d0d;--s1:#181818;--bdr:rgba(255,255,255,0.09);--txt:#f0f0f0;--mut:#8d8d8d;--gold:#e8a000}
+body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(circle at 50% -10%,rgba(232,160,0,.08),transparent 34%),linear-gradient(180deg,#101010 0%,var(--bg) 330px);color:var(--txt);min-height:100vh;line-height:1.65}
+.wrap{max-width:680px;margin:0 auto;padding:18px 18px 70px}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.home-link{display:inline-flex;align-items:center;gap:6px;color:var(--mut);text-decoration:none;font-size:.8rem;font-weight:600}
+.home-link:hover{color:var(--gold)}
+h1{font-size:1.9rem;font-weight:800;letter-spacing:-.02em;margin:8px 0 4px}
+.updated{color:var(--mut);font-size:.78rem;margin-bottom:26px}
+h2{font-size:1.05rem;font-weight:800;color:var(--gold);margin:26px 0 8px}
+p{margin:0 0 12px;color:#d8d8d8;font-size:.95rem}
+ul{margin:0 0 12px;padding-left:20px;color:#d8d8d8;font-size:.95rem}
+li{margin:5px 0}
+a{color:var(--gold);text-decoration:none}
+a:hover{text-decoration:underline}
+strong{color:var(--txt);font-weight:700}
+.foot{margin-top:34px;border-top:1px solid var(--bdr);padding-top:16px;color:var(--mut);font-size:.78rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <a class="home-link" href="/">&#8592; Home</a>
+    <span class="home-link" style="cursor:default">Privacy &amp; data</span>
+  </div>
+
+  <h1>Privacy &amp; data</h1>
+  <div class="updated">Last updated: 24 June 2026</div>
+
+  <p>CineLinks is a small set of daily film games (CineLinks, CineClue, CineFrame, and the Rating games). It is built to be <strong>local-first</strong>: by default everything you do stays in your own browser and nothing about you is sent to us.</p>
+
+  <h2>What's stored on your device</h2>
+  <p>Your streaks, played days and per-game state are saved in your browser's <strong>localStorage</strong> — on your device only. We don't need an account for this, and it never leaves your browser unless you choose to sign in (below). Clearing your browser data, or using the <a href="/stats.html">Reset</a> button, erases it.</p>
+
+  <h2>Optional Google sign-in (sync)</h2>
+  <p>Signing in with Google is entirely optional and only exists to <strong>sync the same game stats across your devices</strong>. If you sign in:</p>
+  <ul>
+    <li>We store your game stats (streaks, played days, daily state) keyed to your Google account's anonymous identifier (the <em>"sub"</em>). <strong>We do not store your name, email, or photo</strong> — those are shown to you in your browser but never saved on our side.</li>
+    <li>The data lives in our database (Upstash/Vercel KV). It's used only to give the games back to you on another device.</li>
+    <li>You can <strong>sign out</strong> or <strong>delete your synced data</strong> at any time from the account menu (top-right when signed in). Deleting removes the server copy; your local stats stay on the device.</li>
+  </ul>
+
+  <h2>Cookies &amp; similar tech</h2>
+  <ul>
+    <li><strong>The games themselves set no tracking cookies.</strong> Game state uses localStorage, which is functional/strictly necessary.</li>
+    <li><strong>Google sign-in:</strong> only if you actively sign in, Google may set cookies to keep your session. This is handled by Google under <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">their privacy policy</a>.</li>
+    <li><strong>Analytics:</strong> we use Vercel Web Analytics, which is privacy-friendly and does not use cookies or track you across sites.</li>
+  </ul>
+
+  <h2>Third-party film data</h2>
+  <p>Film and TV data and images come from <a href="https://www.themoviedb.org/" target="_blank" rel="noopener">TMDB</a> and <a href="https://www.omdbapi.com/" target="_blank" rel="noopener">OMDb</a>; some person photos come from Wikipedia. This product uses these APIs but is not endorsed or certified by them. Requests to those services are proxied through our server so your API keys and IP are not exposed to them directly.</p>
+
+  <h2>Your choices</h2>
+  <ul>
+    <li>Play fully anonymously — just don't sign in.</li>
+    <li>Reset local stats anytime from the <a href="/stats.html">stats page</a>.</li>
+    <li>Delete synced data anytime from the account menu, or by emailing us.</li>
+  </ul>
+
+  <h2>Contact</h2>
+  <p>Questions or requests: <a href="mailto:cinelinksgame@gmail.com">cinelinksgame@gmail.com</a> · <a href="https://x.com/cinelinksgame" target="_blank" rel="noopener">@cinelinksgame</a></p>
+
+  <div class="foot">CineLinks is an independent, ad-light hobby project. This page is written in plain language to explain what happens with your data; it isn't legal advice.</div>
+</div>
+</body>
+</html>

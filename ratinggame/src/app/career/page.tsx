@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import ShareButton from "@/components/ShareButton";
 import HomeIcon from "@/components/HomeIcon";
+import { api } from "@/lib/base";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -28,7 +29,7 @@ const MOVIE_COUNT = 5;
 
 function buildShareText(name: string, score: number, total: number, correctOrder: Movie[], userOrder: Movie[]) {
   const emojis = correctOrder.map((m, i) => (userOrder[i]?.imdbId === m.imdbId ? "🟩" : "🟥")).join("");
-  return `CineRating: Career Mode\n${name}\n${score}/${total} ${emojis}\nhttps://cinerating.vercel.app/career`;
+  return `CineRating: Career Mode\n${name}\n${score}/${total} ${emojis}\nhttps://cinelinks.vercel.app/rating/career`;
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -62,7 +63,7 @@ export default function CareerPage() {
   // ── Fetching ──────────────────────────────────────────────────────────────
 
   const fetchMovie = useCallback(async (id: string): Promise<Movie> => {
-    const res = await fetch(`/api/movie?id=${id}`);
+    const res = await fetch(api(`/api/movie?id=${id}`));
     return res.json();
   }, []);
 
@@ -73,12 +74,12 @@ export default function CareerPage() {
     setActiveDragIdx(null);
     dragIdxRef.current = null;
 
-    const res = await fetch(`/api/filmography?count=1&movies=${MOVIE_COUNT}`);
+    const res = await fetch(api(`/api/filmography?count=1&movies=${MOVIE_COUNT}`));
     const data = await res.json();
     const p: Person = data.challenges[0];
     setPerson(p);
 
-    fetch(`/api/person-photo?slug=${encodeURIComponent(p.wikipediaSlug)}`)
+    fetch(api(`/api/person-photo?slug=${encodeURIComponent(p.wikipediaSlug)}`))
       .then((r) => r.json())
       .then((d) => setPersonPhoto(d.photo ?? null))
       .catch(() => {});

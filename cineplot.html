@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CinePlot — Guess the film from its synopsis</title>
+<meta name="description" content="A daily film &amp; TV guessing game: name the title from its plot synopsis (title hidden), revealed bit by bit, in as few guesses as possible. Data from TMDB.">
+<meta name="theme-color" content="#0d0d0d">
+<link rel="icon" type="image/png" href="/logo.png">
+<link rel="canonical" href="https://cinelinks.vercel.app/cineplot.html">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://cinelinks.vercel.app/cineplot.html">
+<meta property="og:title" content="CinePlot — Guess the film from its synopsis">
+<meta property="og:description" content="Name the film or series from its plot, revealed bit by bit. A new puzzle every day.">
+<meta property="og:image" content="https://cinelinks.vercel.app/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@cinelinksgame">
+<meta name="twitter:title" content="CinePlot — Guess the film from its synopsis">
+<meta name="twitter:description" content="Name the film or series from its plot, revealed bit by bit. A new puzzle every day.">
+<meta name="twitter:image" content="https://cinelinks.vercel.app/og-image.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0d0d0d;--s1:#181818;--s2:#222;--bdr:rgba(255,255,255,0.09);--txt:#f0f0f0;--mut:#8d8d8d;--gold:#e8a000;--golddim:rgba(232,160,0,0.15)}
+body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(circle at 50% -10%,rgba(232,160,0,.08),transparent 34%),linear-gradient(180deg,#101010 0%,var(--bg) 330px);color:var(--txt);min-height:100vh}
+.wrap{max-width:540px;margin:0 auto;padding:18px 16px 60px}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.home-link{display:inline-flex;align-items:center;gap:6px;color:var(--mut);text-decoration:none;font-size:.8rem;font-weight:600}
+.home-link:hover{color:var(--gold)}
+.date-badge{font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);background:var(--golddim);padding:4px 9px;border-radius:999px}
+.head{text-align:center;margin-bottom:18px}
+.title{font-size:2rem;font-weight:800;letter-spacing:-.02em}
+.title span{color:var(--gold)}
+.subtitle{color:var(--mut);font-size:.85rem;margin-top:4px}
+.pips{display:flex;gap:6px;justify-content:center;margin:16px 0 20px}
+.pip{width:26px;height:8px;border-radius:4px;background:rgba(255,255,255,.08);transition:background .2s}
+.pip.win{background:#5bbd7a}.pip.wrong{background:#d8503a}.pip.skip{background:#caa23a}.pip.current{background:var(--gold);box-shadow:0 0 8px rgba(232,160,0,.5)}
+.clues{display:flex;flex-direction:column;gap:10px;margin-bottom:18px}
+.clue{background:rgba(255,255,255,.04);border:1px solid var(--bdr);border-radius:12px;padding:12px 14px;animation:fadeIn .3s ease both}
+.clue-label{font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+.clue-body{font-size:.95rem;color:var(--txt);line-height:1.5}
+.clue-body em{color:var(--mut)}
+.clue-chip{display:inline-block;background:rgba(232,160,0,.1);border:1px solid rgba(232,160,0,.25);color:var(--txt);font-size:.82rem;padding:3px 9px;border-radius:999px;margin:0 5px 5px 0}
+.clue-poster{width:150px;height:225px;border-radius:8px;display:block;box-shadow:0 12px 30px rgba(0,0,0,.4);pointer-events:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.guessbox{position:relative;margin-bottom:10px}
+.guess-input{width:100%;background:var(--s1);border:1px solid var(--bdr);border-radius:12px;padding:13px 14px;color:var(--txt);font-family:inherit;font-size:.95rem;outline:none}
+.guess-input:focus{border-color:rgba(232,160,0,.5)}
+.suggest{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--s1);border:1px solid var(--bdr);border-radius:12px;overflow:hidden;z-index:10;max-height:280px;overflow-y:auto;display:none;box-shadow:0 18px 50px rgba(0,0,0,.5)}
+.suggest.open{display:block}
+.suggest-item{display:flex;align-items:center;gap:10px;padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--bdr)}
+.suggest-item:last-child{border-bottom:none}
+.suggest-item:hover,.suggest-item.active{background:rgba(232,160,0,.1)}
+.suggest-thumb{width:30px;height:45px;border-radius:4px;object-fit:cover;background:var(--s2);flex-shrink:0}
+.suggest-name{font-size:.86rem;font-weight:600}
+.suggest-year{font-size:.72rem;color:var(--mut)}
+.actions{display:flex;gap:10px}
+.btn{flex:1;padding:12px;border-radius:12px;border:1px solid var(--bdr);background:transparent;color:var(--txt);font-family:inherit;font-size:.9rem;font-weight:700;cursor:pointer;transition:background .15s,border-color .15s,opacity .15s}
+.btn:hover{border-color:rgba(232,160,0,.5)}
+.btn-gold{background:var(--gold);color:#111;border-color:var(--gold)}
+.btn-gold:hover{opacity:.9}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.guesses{margin-top:14px;display:flex;flex-direction:column;gap:6px}
+.grow{display:flex;align-items:center;gap:8px;font-size:.85rem;padding:8px 12px;border-radius:9px;background:rgba(255,255,255,.03);border:1px solid var(--bdr)}
+.grow .gico{flex-shrink:0}
+.grow.wrong{color:var(--mut)}
+.result{text-align:center;margin-top:8px;background:linear-gradient(180deg,rgba(232,160,0,.08),transparent 140px),var(--s1);border:1px solid rgba(232,160,0,.18);border-radius:14px;padding:24px 18px;box-shadow:0 24px 60px rgba(0,0,0,.35);animation:fadeIn .35s ease both}
+.result.hidden{display:none}
+.result-poster{width:130px;border-radius:10px;margin:0 auto 14px;display:block;box-shadow:0 16px 36px rgba(0,0,0,.45)}
+.result-verdict{font-size:1.3rem;font-weight:800;margin-bottom:2px}
+.result-verdict.win{color:#5bbd7a}.result-verdict.lose{color:#d8503a}
+.result-film{font-size:1rem;color:var(--txt);font-weight:700}
+.result-year{color:var(--mut);font-size:.85rem;margin-bottom:12px}
+.result-grid{font-size:1.3rem;letter-spacing:3px;margin:10px 0 4px}
+.result-streak{color:var(--mut);font-size:.82rem;margin-bottom:14px}
+.result-streak strong{color:var(--gold)}
+.result-actions{display:flex;gap:10px}
+.loading,.errbox{text-align:center;color:var(--mut);padding:40px 0;font-size:.9rem}
+.footer{text-align:center;margin-top:26px;color:var(--mut);font-size:.68rem;opacity:.7}
+.footer a{color:var(--mut);text-decoration:none}.footer a:hover{color:var(--gold)}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--s2);border:1px solid var(--bdr);color:var(--txt);padding:10px 16px;border-radius:10px;font-size:.85rem;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <a class="home-link" href="/">&#8592; CineLinks</a>
+    <span style="display:flex;align-items:center;gap:8px">
+      <a class="home-link" id="modeSwitch" href="?practice=1"></a>
+      <span class="date-badge" id="dateBadge"></span>
+    </span>
+  </div>
+  <div class="head">
+    <div class="title">Cine<span>Plot</span></div>
+    <div class="subtitle">Guess the film or series from its synopsis, revealed bit by bit.</div>
+  </div>
+
+  <div id="loading" class="loading">Loading today's title…</div>
+  <div id="error" class="errbox" style="display:none">Couldn't load today's puzzle. Please try again later.</div>
+
+  <div id="game" style="display:none">
+    <div class="pips" id="pips"></div>
+    <div class="clues" id="clues"></div>
+    <div id="play">
+      <div class="guessbox">
+        <input class="guess-input" id="guessInput" type="text" autocomplete="off" placeholder="Name the film or show…">
+        <div class="suggest" id="suggest"></div>
+      </div>
+      <div class="actions">
+        <button class="btn" id="skipBtn">Skip clue</button>
+        <button class="btn btn-gold" id="guessBtn" disabled>Guess</button>
+      </div>
+      <div class="guesses" id="guesses"></div>
+    </div>
+    <div class="result hidden" id="result"></div>
+  </div>
+
+  <div class="footer">
+    Data &amp; images by <a href="https://www.themoviedb.org/" target="_blank" rel="noopener">TMDB</a>. Not endorsed by TMDB. · <a href="/privacy.html" style="color:inherit">Privacy</a>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="cineclue-pool.js"></script>
+<script src="/lib/media.js"></script>
+<script>
+window.CINE_GAME = {
+  mode: 'plot', salt: 359, page: 'cineplot.html',
+  stateKey: 'cineplotState', streakKey: 'cineplotStreak',
+  emoji: '📖', name: 'CinePlot', shareUrl: 'https://cinelinks.vercel.app/cineplot.html'
+};
+</script>
+<script src="/cineguess.js"></script>
+<script>
+window.HOWTO = {
+  key: 'cineplot', title: 'How to play CinePlot', icon: '📖',
+  steps: [
+    'Guess the day’s film or series from its <b>plot synopsis</b> (the title is hidden as ▒▒▒).',
+    'You start with the opening lines — type to search and pick a title (<b>6 tries</b>).',
+    'Each wrong guess or skip reveals more of the synopsis.',
+    'Later clues add the genre/year, the cast and finally the poster.',
+    'Fewer guesses = better. <b>Daily</b> keeps your streak; <b>Practice</b> is unlimited.'
+  ],
+  example: '<div style="display:flex;flex-direction:column;gap:6px">' +
+      '<span class="ht-chip">📖 “A thief who steals secrets through dream-sharing…”</span>' +
+      '<span class="ht-chip">🎭 Action · Sci-Fi · 2010</span>' +
+    '</div><p>The synopsis grows until you guess the title 🎉</p>'
+};
+</script>
+<script defer src="/ads.js"></script>
+<script defer src="/support.js"></script>
+<script defer src="/howto.js"></script>
+<script defer src="/cookie.js"></script>
+<script defer src="/lib/merge-stats.js"></script>
+<script defer src="/auth.js"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

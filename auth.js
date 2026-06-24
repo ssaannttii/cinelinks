@@ -54,7 +54,7 @@
     var menu = document.createElement('div');
     menu.style.cssText = 'display:none;margin-top:6px;width:230px;background:#181818;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:10px;box-shadow:0 12px 34px rgba(0,0,0,.5);color:#f0f0f0;font-size:.78rem';
     menu.innerHTML =
-      '<p style="margin:0 0 9px;color:#8d8d8d;font-size:.72rem;line-height:1.5">Your streaks &amp; history sync across devices. We only store game stats and your Google ID — nothing else.</p>';
+      '<p style="margin:0 0 9px;color:#8d8d8d;font-size:.72rem;line-height:1.5">Your streaks &amp; history sync across devices. We only store game stats and your Google ID — nothing else. <a href="/privacy.html" style="color:#e8a000;text-decoration:none;font-weight:700">Privacy</a></p>';
     var out = document.createElement('button');
     out.textContent = 'Sign out';
     out.style.cssText = 'width:100%;padding:8px;margin-bottom:6px;border:1px solid rgba(255,255,255,.14);border-radius:8px;background:transparent;color:#f0f0f0;font-family:inherit;font-weight:700;font-size:.78rem;cursor:pointer';

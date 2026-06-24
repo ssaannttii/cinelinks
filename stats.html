@@ -6,7 +6,16 @@
 <title>Your stats — CineLinks suite</title>
 <meta name="description" content="Your streaks and history across the CineLinks film games.">
 <meta name="theme-color" content="#0d0d0d">
+<meta name="robots" content="noindex, follow">
+<link rel="canonical" href="https://cinelinks.vercel.app/stats.html">
 <link rel="icon" type="image/png" href="/logo.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Your stats — CineLinks suite">
+<meta property="og:description" content="Your streaks and history across the CineLinks film games.">
+<meta property="og:url" content="https://cinelinks.vercel.app/stats.html">
+<meta property="og:image" content="https://cinelinks.vercel.app/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@cinelinksgame">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -63,6 +72,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     <a href="https://x.com/cinelinksgame" target="_blank" rel="noopener">Follow on X</a>
     <span class="dot">·</span>
     <a href="mailto:cinelinksgame@gmail.com">Contact</a>
+    <span class="dot">·</span>
+    <a href="/privacy.html">Privacy</a>
   </div>
   <button class="reset" id="resetBtn">Reset all stats on this device</button>
 </div>
@@ -130,14 +141,57 @@ function cineFrame(){
   };
 }
 
+function cineCast(){
+  const streak = getLS('cinecastStreak') || {current:0,best:0};
+  const state = getLS('cinecastState');
+  const todayDone = state && state.finished ? (state.solved ? 'Solved today ✓' : 'Played today') : 'Not played today';
+  return {
+    icon:'🎭', title:'CineCast', sub:'Guess the film from its cast',
+    stats:[{n: streak.current|0, l:'Streak'},{n: streak.best|0, l:'Best streak'},{n: state? '✓':'—', l:'Today'}],
+    extra: todayDone, daily:'/cinecast.html', practice:'/cinecast.html?practice=1'
+  };
+}
+function cinePlot(){
+  const streak = getLS('cineplotStreak') || {current:0,best:0};
+  const state = getLS('cineplotState');
+  const todayDone = state && state.finished ? (state.solved ? 'Solved today ✓' : 'Played today') : 'Not played today';
+  return {
+    icon:'📖', title:'CinePlot', sub:'Guess the film from its synopsis',
+    stats:[{n: streak.current|0, l:'Streak'},{n: streak.best|0, l:'Best streak'},{n: state? '✓':'—', l:'Today'}],
+    extra: todayDone, daily:'/cineplot.html', practice:'/cineplot.html?practice=1'
+  };
+}
+
+// Rating games now live under the same origin (/rating via a rewrite), so we can
+// read their localStorage too. The Higher-or-Lower daily persists cinerating_daily
+// = {date:"YYYYMMDD" (UTC), score, maxStreak}.
+function ratingTodayKey(){
+  const d = new Date();
+  return '' + d.getUTCFullYear() + String(d.getUTCMonth()+1).padStart(2,'0') + String(d.getUTCDate()).padStart(2,'0');
+}
+function cineRating(){
+  const d = getLS('cinerating_daily');
+  const doneToday = d && d.date === ratingTodayKey();
+  return {
+    icon:'⭐', title:'Rating games', sub:'Higher or Lower · Career · Guess the Score',
+    stats:[
+      {n: doneToday ? (d.score|0)+'/10' : '—', l:'Today'},
+      {n: doneToday ? (d.maxStreak|0) : 0, l:'Best streak'},
+      {n: doneToday ? '✓' : '—', l:'Daily'}
+    ],
+    extra: doneToday ? ('Higher or Lower: '+(d.score|0)+'/10 today ✓') : 'Not played today',
+    daily:'/rating/versus?mode=daily', practice:'/rating/versus'
+  };
+}
+
 function render(){
   document.getElementById('cards').innerHTML =
     cardHTML(cineLinks()) +
     cardHTML(cineClue()) +
     cardHTML(cineFrame()) +
-    '<a class="ext" href="https://cinerating.vercel.app/versus?mode=daily">' +
-      '<div class="ext-i">⭐</div><div class="ext-t"><b>Rating games</b><span>Higher or Lower · Career · Guess the Score</span></div><div class="ext-arrow">→</div>' +
-    '</a>';
+    cardHTML(cineCast()) +
+    cardHTML(cinePlot()) +
+    cardHTML(cineRating());
 }
 render();
 // Re-read localStorage whenever the user returns (e.g. after playing a game in
@@ -158,5 +212,6 @@ document.getElementById('resetBtn').onclick = () => {
 <script defer src="/support.js"></script>
 <script defer src="/lib/merge-stats.js"></script>
 <script defer src="/auth.js"></script>
+<script defer src="/cookie.js"></script>
 </body>
 </html>

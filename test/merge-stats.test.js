@@ -71,6 +71,7 @@ test('merge tolerates empty / missing blobs and unknown keys', () => {
 });
 
 test('SYNC_KEYS covers all synced stores', () => {
-  ['clStreak', 'cineclueStreak', 'cineframeStreak', 'cineclueState', 'cineframeState', 'clPlayed']
+  ['clStreak', 'cineclueStreak', 'cineframeStreak', 'cinecastStreak', 'cineplotStreak',
+    'cineclueState', 'cineframeState', 'cinecastState', 'cineplotState', 'clPlayed']
     .forEach(k => assert.ok(M.SYNC_KEYS.includes(k), 'missing ' + k));
 });
