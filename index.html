@@ -41,6 +41,13 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .start-inner{width:100%;max-width:560px;text-align:center;position:relative;z-index:2;background:rgba(255,255,255,.045);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:34px 28px 28px;box-shadow:0 30px 80px rgba(0,0,0,.38)}
 #cineBackdrop{position:absolute;inset:0;z-index:0;background-size:cover;background-position:center;opacity:0;filter:blur(4px);transform:scale(1.06);transition:opacity 1.4s ease;pointer-events:none}
 #cineBackdrop.on{opacity:.18}
+#dailyGallery{margin:18px 0 2px;background:linear-gradient(180deg,rgba(232,160,0,.06),transparent),var(--s1);border:1px solid rgba(232,160,0,.18);border-radius:14px;padding:14px}
+.dg-title{font-size:.7rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:11px}
+.dg-grid{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.dg-item{width:74px;display:flex;flex-direction:column;align-items:center;gap:4px}
+.dg-item img,.dg-item .dg-ph{width:74px;height:111px;border-radius:8px;object-fit:cover;background:var(--s2);box-shadow:0 10px 24px rgba(0,0,0,.45)}
+.dg-name{font-size:.68rem;font-weight:600;text-align:center;line-height:1.25;color:var(--txt);max-width:74px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.dg-lbl{font-size:.58rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--mut)}
 @media (min-width:1000px){.start-inner{max-width:620px;padding:42px 44px 34px}.start-logo{max-width:300px}}
 .start-kicker{font-size:.62rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:12px}
 .start-logo{width:100%;max-width:280px;height:auto;display:block;margin:0 auto 20px}
@@ -377,7 +384,9 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 #winScreen{min-height:100vh;align-items:center;justify-content:center;padding:40px 20px;position:relative;overflow-x:hidden;overflow-y:auto}
 #winScreen{position:relative}
 .win-header{position:absolute;top:14px;left:14px;display:flex;gap:10px;z-index:5}
-.win-box{background:linear-gradient(180deg,rgba(232,160,0,.08),transparent 150px),var(--s1);border:1px solid rgba(232,160,0,.18);border-radius:8px;padding:30px;max-width:680px;width:100%;text-align:center;box-shadow:0 24px 70px rgba(0,0,0,.35)}
+#winBackdrop{position:absolute;inset:0;z-index:0;background-size:cover;background-position:center;opacity:0;filter:blur(7px);transform:scale(1.08);transition:opacity 1s ease;pointer-events:none}
+#winBackdrop.on{opacity:.15}
+.win-box{position:relative;z-index:1;background:linear-gradient(180deg,rgba(232,160,0,.08),transparent 150px),var(--s1);border:1px solid rgba(232,160,0,.18);border-radius:8px;padding:30px;max-width:680px;width:100%;text-align:center;box-shadow:0 24px 70px rgba(0,0,0,.35)}
 .win-em{font-size:2.1rem;margin-bottom:10px}
 .win-h{font-size:1.55rem;font-weight:700;margin-bottom:4px}
 .win-sub{color:var(--mut);font-size:.86rem;margin-bottom:22px}
@@ -538,8 +547,16 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
           <a class="mode mode-practice" href="/cineplot.html?practice=1">Practice</a>
         </div>
       </div>
+      <div class="game-card">
+        <div class="game-head"><span class="game-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18"/><circle cx="7" cy="12" r="2"/><circle cx="17" cy="12" r="2"/><path d="M7 7v3M17 14v3"/></svg></span><span class="game-meta"><span class="game-name">CineLine <span class="new-tag">NEW</span><span class="game-done" data-done="line"></span></span><span class="game-desc">Place films on a timeline</span></span></div>
+        <div class="game-modes">
+          <a class="mode mode-daily" href="/cineline.html">Daily</a>
+          <a class="mode mode-practice" href="/cineline.html?practice=1">Practice</a>
+        </div>
+      </div>
     </div>
 
+    <div id="dailyGallery" style="display:none"></div>
     <div class="games-section">Rating games</div>
     <div class="games">
       <div class="game-card">
@@ -693,6 +710,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 </div>
 
 <div id="winScreen" class="screen">
+  <div id="winBackdrop"></div>
   <header class="win-header">
     <button class="hdr-back" onclick="game.reset()"><svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;margin-right:5px"><path d="M1.5 7L7 1.5L12.5 7V13H9V9.5H5V13H1.5Z"/></svg>Home</button>
     <button class="hdr-back" onclick="game.startRandom()" style="color:var(--gold)">&#8635; New</button>
@@ -1441,7 +1459,7 @@ function markDoneBadges() {
   }
   const state = {
     cl: linksDone(), clue: clueDone('cineclueState'), frame: clueDone('cineframeState'),
-    cast: clueDone('cinecastState'), plot: clueDone('cineplotState')
+    cast: clueDone('cinecastState'), plot: clueDone('cineplotState'), line: clueDone('cinelineState')
   };
   document.querySelectorAll('.game-done[data-done]').forEach(el => {
     const done = !!state[el.dataset.done];
@@ -1541,6 +1559,7 @@ function showOnly(id) {
       inner.classList.add('anim-in');
     }
     markDoneBadges();
+    if (window.renderDailyGallery) { try { window.renderDailyGallery(); } catch (_) {} }
     _clearParticles();
   }
   if (id === 'loadingScreen') _spawnParticles();
@@ -2429,6 +2448,13 @@ const game = window.game = {
   async showWin(replay) {
     await Promise.all(this.path.map(n => hydrateNodeImage(n)));
     showOnly('winScreen');
+    // Ambient backdrop of the target behind the win card (matches the other modes).
+    const wbd = document.getElementById('winBackdrop');
+    if (wbd) {
+      const im = this.end && this.end.img;
+      if (im) { wbd.style.backgroundImage = 'url(' + (im.startsWith('http') ? im : IMGBASE + im) + ')'; wbd.classList.add('on'); }
+      else { wbd.classList.remove('on'); }
+    }
     this.renderStreak();
     this.renderPar();
     const winSub = document.querySelector('.win-sub');
@@ -3086,6 +3112,7 @@ window.HOWTO = {
 <script defer src="/howto.js"></script>
 <script defer src="/cookie.js"></script>
 <script defer src="/home-art.js"></script>
+<script defer src="/daily-gallery.js"></script>
 <script defer src="/lib/merge-stats.js"></script>
 <script defer src="/auth.js"></script>
 <script defer src="/_vercel/insights/script.js"></script>

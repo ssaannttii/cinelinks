@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CineLine — Place the films on the timeline</title>
+<meta name="description" content="A daily film game: place movies on a timeline by release year. How many can you put in the right spot? A new deck every day. Data from TMDB.">
+<meta name="theme-color" content="#0d0d0d">
+<link rel="icon" type="image/png" href="/logo.png">
+<link rel="canonical" href="https://cinelinks.vercel.app/cineline.html">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://cinelinks.vercel.app/cineline.html">
+<meta property="og:title" content="CineLine — Place the films on the timeline">
+<meta property="og:description" content="Place movies on a timeline by release year. A new deck every day.">
+<meta property="og:image" content="https://cinelinks.vercel.app/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@cinelinksgame">
+<meta name="twitter:title" content="CineLine — Place the films on the timeline">
+<meta name="twitter:description" content="Place movies on a timeline by release year. A new deck every day.">
+<meta name="twitter:image" content="https://cinelinks.vercel.app/og-image.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0d0d0d;--s1:#181818;--s2:#222;--bdr:rgba(255,255,255,0.09);--txt:#f0f0f0;--mut:#8d8d8d;--gold:#e8a000;--golddim:rgba(232,160,0,0.15)}
+body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(circle at 50% -10%,rgba(232,160,0,.08),transparent 34%),linear-gradient(180deg,#101010 0%,var(--bg) 330px);color:var(--txt);min-height:100vh}
+.wrap{max-width:600px;margin:0 auto;padding:18px 16px 60px}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.home-link{display:inline-flex;align-items:center;gap:6px;color:var(--mut);text-decoration:none;font-size:.8rem;font-weight:600}
+.home-link:hover{color:var(--gold)}
+.date-badge{font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);background:var(--golddim);padding:4px 9px;border-radius:999px}
+.head{text-align:center;margin-bottom:16px}
+.title{font-size:2rem;font-weight:800;letter-spacing:-.02em}
+.title span{color:var(--gold)}
+.subtitle{color:var(--mut);font-size:.85rem;margin-top:4px}
+.loading,.errbox{text-align:center;color:var(--mut);padding:40px 0;font-size:.9rem}
+.progress{text-align:center;font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin:6px 0 14px}
+.progress b{color:var(--gold)}
+/* current card to place */
+.current{background:linear-gradient(180deg,rgba(232,160,0,.07),transparent),var(--s1);border:1px solid rgba(232,160,0,.2);border-radius:14px;padding:14px;margin-bottom:16px;text-align:center;animation:fadeIn .3s ease both}
+.cc-label{font-size:.62rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+.cc-card{display:flex;align-items:center;gap:14px;text-align:left}
+.cc-card img{width:78px;height:117px;border-radius:8px;object-fit:cover;flex-shrink:0;box-shadow:0 12px 28px rgba(0,0,0,.45);background:var(--s2)}
+.cc-title{font-size:1.15rem;font-weight:800;line-height:1.2}
+.cc-q{font-size:.82rem;color:var(--mut);margin-top:5px}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+/* timeline */
+.tl-hint{font-size:.72rem;color:var(--mut);text-align:center;margin-bottom:8px}
+.tl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:6px 2px 12px}
+.tl-row{display:inline-flex;align-items:stretch;gap:0;min-width:100%;justify-content:center}
+.tl-card{display:flex;flex-direction:column;align-items:center;gap:4px;width:62px;flex-shrink:0}
+.tl-card img,.tl-card .tl-ph{width:62px;height:93px;border-radius:7px;object-fit:cover;background:var(--s2);box-shadow:0 8px 18px rgba(0,0,0,.4)}
+.tl-year{font-size:.74rem;font-weight:800;color:var(--txt);padding:2px 7px;border-radius:999px;background:var(--s2)}
+.tl-card.correct .tl-year{background:rgba(91,189,122,.18);color:#7fd49a}
+.tl-card.wrong .tl-year{background:rgba(216,80,58,.2);color:#e8806f}
+.tl-card.anchor .tl-year{background:var(--golddim);color:var(--gold)}
+.tl-slot{flex-shrink:0;align-self:center;width:26px;height:96px;margin:0 -1px;border:2px dashed rgba(232,160,0,.0);border-radius:8px;background:transparent;color:rgba(232,160,0,.55);font-size:1.2rem;font-weight:800;cursor:pointer;transition:all .12s}
+.tl-slot:hover,.tl-slot:focus{border-color:rgba(232,160,0,.55);background:rgba(232,160,0,.08);color:var(--gold);outline:none}
+.tl-slot.done{display:none}
+.tl-card.anchor{margin-bottom:0}
+/* result */
+.result{text-align:center;margin-top:10px;background:linear-gradient(180deg,rgba(232,160,0,.08),transparent 140px),var(--s1);border:1px solid rgba(232,160,0,.18);border-radius:14px;padding:24px 18px;box-shadow:0 24px 60px rgba(0,0,0,.35);animation:fadeIn .35s ease both}
+.result.hidden{display:none}
+.result-verdict{font-size:1.4rem;font-weight:800;margin-bottom:2px}
+.result-verdict.win{color:#5bbd7a}.result-verdict.lose{color:#e8a000}
+.result-sub{color:var(--mut);font-size:.85rem;margin-bottom:12px}
+.result-grid{font-size:1.25rem;letter-spacing:3px;margin:10px 0 6px;line-height:1.5}
+.result-streak{color:var(--mut);font-size:.82rem;margin-bottom:14px}
+.result-streak strong{color:var(--gold)}
+.result-actions{display:flex;gap:10px}
+.btn{flex:1;padding:12px;border-radius:12px;border:1px solid var(--bdr);background:transparent;color:var(--txt);font-family:inherit;font-size:.9rem;font-weight:700;cursor:pointer;text-decoration:none;text-align:center;transition:background .15s,border-color .15s,opacity .15s}
+.btn:hover{border-color:rgba(232,160,0,.5)}
+.btn-gold{background:var(--gold);color:#111;border-color:var(--gold)}
+.btn-gold:hover{opacity:.9}
+.footer{text-align:center;margin-top:26px;color:var(--mut);font-size:.68rem;opacity:.7}
+.footer a{color:var(--mut);text-decoration:none}.footer a:hover{color:var(--gold)}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--s2);border:1px solid var(--bdr);color:var(--txt);padding:10px 16px;border-radius:10px;font-size:.85rem;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <a class="home-link" href="/">&#8592; CineLinks</a>
+    <span style="display:flex;align-items:center;gap:8px">
+      <a class="home-link" id="modeSwitch" href="?practice=1"></a>
+      <span class="date-badge" id="dateBadge"></span>
+    </span>
+  </div>
+  <div class="head">
+    <div class="title">Cine<span>Line</span></div>
+    <div class="subtitle">Place each film on the timeline by its release year.</div>
+  </div>
+
+  <div id="loading" class="loading">Dealing today's deck…</div>
+  <div id="error" class="errbox" style="display:none">Couldn't load today's deck. Please try again later.</div>
+
+  <div id="game" style="display:none">
+    <div class="progress" id="progress"></div>
+    <div class="current" id="current"></div>
+    <div class="tl-hint" id="tlHint">Tap a gap to drop the film where you think it belongs ↓</div>
+    <div class="tl-wrap"><div class="tl-row" id="timeline"></div></div>
+    <div class="result hidden" id="result"></div>
+  </div>
+
+  <div class="footer">
+    Data &amp; images by <a href="https://www.themoviedb.org/" target="_blank" rel="noopener">TMDB</a>. Not endorsed by TMDB. · <a href="/privacy.html" style="color:inherit">Privacy</a>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="cineline-pool.js"></script>
+<script src="/lib/timeline.js"></script>
+<script>
+const IMGBASE = 'https://image.tmdb.org/t/p/';
+const EPOCH = Math.floor(Date.UTC(2026, 5, 23) / 86400000);
+const DECK = 11;   // 1 anchor + 10 to place
+const PASS = 6;    // daily counts toward your streak at 6/10 or better
+
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function api(path){ return fetch('/api/tmdb?path=' + path).then(r => r.json()); }
+function dayNumber(){ const n = new Date(); return Math.floor(Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate()) / 86400000); }
+function poster(p, size){ return p ? IMGBASE + (size || 'w185') + p : ''; }
+function toast(msg){ const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('show'), 1700); }
+
+const DAY = dayNumber();
+const PUZZLE = DAY - EPOCH + 1;
+const PRACTICE = new URLSearchParams(location.search).get('practice') === '1';
+const STATE_KEY = 'cinelineState';
+const STREAK_KEY = 'cinelineStreak';
+
+let deck = [];      // [{id,title,year,poster}]
+let placed = [];    // cards on the timeline (each may carry _res)
+let pendingIdx = 0; // index into deck of the card being placed
+let results = [];   // 'correct' | 'wrong' per placement
+let finished = false, solved = false, score = 0;
+
+async function loadDeck(){
+  const pool = window.CINELINE_POOL || [];
+  if(!pool.length) throw new Error('empty pool');
+  const seed = PRACTICE ? Math.floor(Math.random() * 1e9) : DAY;
+  const order = Timeline.shuffle(pool, seed).slice(0, 16);
+  const ds = await Promise.all(order.map(id => api('movie/' + id).catch(()=>null)));
+  const cards = [];
+  for(const d of ds){
+    if(cards.length >= DECK) break;
+    const y = d && parseInt((d.release_date || '').slice(0, 4), 10);
+    if(d && d.id && d.title && y) cards.push({ id:d.id, title:d.title, year:y, poster:d.poster_path });
+  }
+  if(cards.length < 4) throw new Error('deck too small');
+  return cards;
+}
+
+function sortedPlaced(){ return placed.slice().sort((a,b)=>a.year-b.year); }
+
+function renderProgress(){
+  const placedCount = Math.min(pendingIdx - 1, deck.length - 1);
+  document.getElementById('progress').innerHTML = finished
+    ? 'Final score <b>' + score + ' / ' + (deck.length - 1) + '</b>'
+    : 'Placed <b>' + placedCount + ' / ' + (deck.length - 1) + '</b>';
+}
+
+function renderTimeline(){
+  const sorted = sortedPlaced();
+  let h = '';
+  for(let i = 0; i <= sorted.length; i++){
+    h += '<button class="tl-slot' + (finished ? ' done' : '') + '" data-slot="' + i + '"' + (finished ? ' disabled' : '') + ' aria-label="place here">+</button>';
+    if(i < sorted.length){
+      const c = sorted[i];
+      const cls = c._anchor ? ' anchor' : (c._res ? ' ' + c._res : '');
+      h += '<div class="tl-card' + cls + '">' +
+        (c.poster ? '<img src="' + poster(c.poster, 'w185') + '" alt="">' : '<div class="tl-ph"></div>') +
+        '<span class="tl-year">' + c.year + '</span></div>';
+    }
+  }
+  const row = document.getElementById('timeline');
+  row.innerHTML = h;
+  if(!finished) row.querySelectorAll('.tl-slot').forEach(b => { b.onclick = () => place(+b.dataset.slot); });
+}
+
+function renderCurrent(){
+  const c = deck[pendingIdx];
+  const el = document.getElementById('current');
+  el.style.display = 'block';
+  el.innerHTML =
+    '<div class="cc-label">Film ' + pendingIdx + ' of ' + (deck.length - 1) + '</div>' +
+    '<div class="cc-card">' +
+      (c.poster ? '<img src="' + poster(c.poster, 'w342') + '" alt="">' : '') +
+      '<div><div class="cc-title">' + esc(c.title) + '</div><div class="cc-q">When was it released?</div></div>' +
+    '</div>';
+}
+
+function place(slot){
+  if(finished) return;
+  const c = deck[pendingIdx];
+  const ok = Timeline.isCorrect(sortedPlaced().map(x => x.year), c.year, slot);
+  c._res = ok ? 'correct' : 'wrong';
+  results.push(c._res);
+  placed.push(c);
+  toast(ok ? ('✓ ' + c.title + ' — ' + c.year) : ('✗ ' + c.title + ' — ' + c.year));
+  pendingIdx++;
+  renderTimeline();
+  renderProgress();
+  if(pendingIdx >= deck.length){ finish(); }
+  else { renderCurrent(); }
+}
+
+function emojiGrid(){
+  let g = '';
+  results.forEach((r, i) => { g += (r === 'correct' ? '🟩' : '🟥'); if((i + 1) % 5 === 0 && i + 1 < results.length) g += '\n'; });
+  return g;
+}
+
+function finish(){
+  finished = true;
+  score = results.filter(r => r === 'correct').length;
+  solved = score >= PASS;
+  const streak = updateStreak(solved);
+  document.getElementById('current').style.display = 'none';
+  document.getElementById('tlHint').style.display = 'none';
+  renderTimeline();
+  renderProgress();
+  renderResult(streak);
+  save();
+}
+
+function renderResult(streak){
+  const el = document.getElementById('result');
+  el.classList.remove('hidden');
+  const total = deck.length - 1;
+  const verdict = score === total ? 'Flawless!' : score >= PASS ? 'Nicely placed!' : 'Tough deck';
+  const bestPart = streak.best > streak.current ? ' · best <strong>' + streak.best + '</strong>' : '';
+  const streakLine = PRACTICE ? '' : '<div class="result-streak">🔥 Streak <strong>' + streak.current + '</strong>' + bestPart + '</div>';
+  const actions = PRACTICE
+    ? '<button class="btn btn-gold" id="againBtn">New deck</button><button class="btn" id="shareBtn">Share</button>'
+    : '<button class="btn btn-gold" id="shareBtn">Share</button><a class="btn" href="/">CineLinks</a>';
+  el.innerHTML =
+    '<div class="result-verdict ' + (score >= PASS ? 'win' : 'lose') + '">' + score + ' / ' + total + '</div>' +
+    '<div class="result-sub">' + verdict + '</div>' +
+    '<div class="result-grid">' + emojiGrid().replace(/\n/g, '<br>') + '</div>' +
+    streakLine +
+    '<div class="result-actions">' + actions + '</div>';
+  document.getElementById('shareBtn').onclick = share;
+  const again = document.getElementById('againBtn');
+  if(again) again.onclick = () => { location.href = 'cineline.html?practice=1&n=' + Date.now(); };
+}
+
+function shareText(){
+  const total = deck.length - 1;
+  const head = PRACTICE ? '🕰️ CineLine (Practice)' : ('🕰️ CineLine #' + PUZZLE);
+  const st = (!PRACTICE && solved) ? loadStreak() : null;
+  const streak = (st && st.current > 1) ? '  🔥' + st.current : '';
+  return head + '  ' + score + '/' + total + streak + '\n' + emojiGrid() + '\nhttps://cinelinks.vercel.app/cineline.html';
+}
+function share(){
+  const text = shareText();
+  if(navigator.share){ navigator.share({ text }).catch(()=>{}); return; }
+  if(navigator.clipboard){ navigator.clipboard.writeText(text).then(()=>toast('Copied to clipboard')).catch(()=>toast(text)); }
+  else toast('Copy: ' + text);
+}
+
+function loadStreak(){ try{ const s = JSON.parse(localStorage.getItem(STREAK_KEY)); if(s) return { current:s.current|0, best:s.best|0, last:s.last|0 }; }catch(_){} return { current:0, best:0, last:0 }; }
+function updateStreak(win){
+  if(PRACTICE) return loadStreak();
+  const s = loadStreak();
+  if(s.last === DAY) return s;
+  if(win){ s.current = (s.last === DAY - 1) ? s.current + 1 : 1; s.best = Math.max(s.best, s.current); }
+  else { s.current = 0; }
+  s.last = DAY;
+  try{ localStorage.setItem(STREAK_KEY, JSON.stringify(s)); }catch(_){}
+  return s;
+}
+function save(){
+  if(PRACTICE) return;
+  try{ localStorage.setItem(STATE_KEY, JSON.stringify({
+    day: DAY, finished: true, solved, score, results,
+    board: sortedPlaced().map(c => ({ title:c.title, year:c.year, poster:c.poster, _res:c._res, _anchor:c._anchor }))
+  })); }catch(_){}
+}
+function loadState(){
+  try{ const s = JSON.parse(localStorage.getItem(STATE_KEY)); if(s && s.day === DAY && s.finished) return s; }catch(_){}
+  return null;
+}
+
+function showError(){ document.getElementById('loading').style.display = 'none'; document.getElementById('error').style.display = 'block'; }
+
+async function init(){
+  document.getElementById('dateBadge').textContent = PRACTICE ? 'Practice' : ('Daily #' + PUZZLE);
+  const sw = document.getElementById('modeSwitch');
+  if(sw){ sw.textContent = PRACTICE ? 'Daily →' : 'Practice →'; sw.href = PRACTICE ? 'cineline.html' : 'cineline.html?practice=1'; }
+
+  // Already played today's daily? Show the finished board (no replay).
+  if(!PRACTICE){
+    const saved = loadState();
+    if(saved){
+      placed = saved.board || [];
+      results = saved.results || [];
+      score = saved.score | 0;
+      solved = !!saved.solved;
+      finished = true;
+      deck = new Array((results.length || 0) + 1); // length-1 == placements, for totals
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('game').style.display = 'block';
+      document.getElementById('current').style.display = 'none';
+      document.getElementById('tlHint').style.display = 'none';
+      renderTimeline(); renderProgress(); renderResult(loadStreak());
+      return;
+    }
+  }
+
+  try{ deck = await loadDeck(); }catch(e){ showError(); return; }
+  deck[0]._anchor = true;
+  placed = [deck[0]];
+  pendingIdx = 1; results = []; finished = false; solved = false; score = 0;
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('game').style.display = 'block';
+  renderProgress(); renderCurrent(); renderTimeline();
+}
+
+init();
+</script>
+<script>
+window.HOWTO = {
+  key: 'cineline', title: 'How to play CineLine', icon: '🕰️',
+  steps: [
+    'Each film appears with its <b>release year hidden</b>.',
+    'Tap the <b>gap</b> on the timeline where you think it belongs (older ← → newer).',
+    'Right spot reveals it green; wrong slots it into place in red — either way you move on.',
+    'Place all 10. Your score is how many you nailed; <b>6/10+</b> keeps your daily streak.',
+    '<b>Daily</b> is one shared deck a day; <b>Practice</b> deals a random one.'
+  ],
+  example: '<div class="ht-row" style="gap:8px;align-items:flex-end">' +
+      '<span class="ht-chip">🎬 1977</span><span class="ht-arrow">→</span>' +
+      '<span class="ht-chip">🎬 ?</span><span class="ht-arrow">→</span>' +
+      '<span class="ht-chip">🎬 1999</span>' +
+    '</div><p>Drop the mystery film into the right gap by year.</p>'
+};
+</script>
+<script defer src="/ads.js"></script>
+<script defer src="/support.js"></script>
+<script defer src="/howto.js"></script>
+<script defer src="/cookie.js"></script>
+<script defer src="/lib/merge-stats.js"></script>
+<script defer src="/auth.js"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

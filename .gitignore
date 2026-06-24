@@ -9,4 +9,4 @@ package-lock.json
 generated-challenges.txt
 *.log
 .env*
-_smoke.js
+_*.js

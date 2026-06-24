@@ -300,7 +300,12 @@
     try { localStorage.setItem(STREAK_KEY, JSON.stringify(s)); } catch (_) {}
     return s;
   }
-  function save() { if (PRACTICE) return; try { localStorage.setItem(STATE_KEY, JSON.stringify({ day: DAY, results, stage, finished, solved })); } catch (_) {} }
+  function save() {
+    if (PRACTICE) return;
+    var s = { day: DAY, results: results, stage: stage, finished: finished, solved: solved };
+    if (finished && target) s.answer = { title: target.title, poster: target.posterPath };
+    try { localStorage.setItem(STATE_KEY, JSON.stringify(s)); } catch (_) {}
+  }
   function restore() {
     if (PRACTICE) return false;
     try {

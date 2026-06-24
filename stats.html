@@ -162,6 +162,18 @@ function cinePlot(){
   };
 }
 
+function cineLine(){
+  const streak = getLS('cinelineStreak') || {current:0,best:0};
+  const state = getLS('cinelineState');
+  const done = state && state.finished;
+  const todayDone = done ? ('Scored ' + (state.score|0) + '/10 today ✓') : 'Not played today';
+  return {
+    icon:'🕰️', title:'CineLine', sub:'Place films on a timeline',
+    stats:[{n: streak.current|0, l:'Streak'},{n: streak.best|0, l:'Best streak'},{n: done? (state.score|0):'—', l:'Today'}],
+    extra: todayDone, daily:'/cineline.html', practice:'/cineline.html?practice=1'
+  };
+}
+
 // Rating games now live under the same origin (/rating via a rewrite), so we can
 // read their localStorage too. The Higher-or-Lower daily persists cinerating_daily
 // = {date:"YYYYMMDD" (UTC), score, maxStreak}.
@@ -191,6 +203,7 @@ function render(){
     cardHTML(cineFrame()) +
     cardHTML(cineCast()) +
     cardHTML(cinePlot()) +
+    cardHTML(cineLine()) +
     cardHTML(cineRating());
 }
 render();

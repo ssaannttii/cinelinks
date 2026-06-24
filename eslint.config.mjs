@@ -22,7 +22,7 @@ const worker = {
 };
 
 export default [
-  { ignores: ['ratinggame/**', 'node_modules/**', '**/.next/**', '.claude/**', '**/*.json', '**/*.html', '_smoke.js'] },
+  { ignores: ['ratinggame/**', 'node_modules/**', '**/.next/**', '.claude/**', '**/*.json', '**/*.html', '_*.js'] },
   js.configs.recommended,
 
   // Node serverless functions + offline scripts
@@ -44,7 +44,7 @@ export default [
   // Browser scripts loaded by index.html. LANGS/I18N/DAILY_CHALLENGE_KEYS are
   // intentionally consumed by other scripts on the page.
   {
-    files: ['i18n.js', 'daily-challenges.js', 'cineclue-pool.js', 'ads.js', 'support.js', 'howto.js', 'auth.js', 'cookie.js', 'cineguess.js', 'home-art.js'],
+    files: ['i18n.js', 'daily-challenges.js', 'cineclue-pool.js', 'cineline-pool.js', 'ads.js', 'support.js', 'howto.js', 'auth.js', 'cookie.js', 'cineguess.js', 'home-art.js', 'daily-gallery.js'],
     languageOptions: { ecmaVersion: 2022, sourceType: 'script', globals: browser },
     rules: { 'no-unused-vars': 'off', 'no-empty': ['warn', { allowEmptyCatch: true }] }
   },
