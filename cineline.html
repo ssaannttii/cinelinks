@@ -47,6 +47,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 /* timeline — vertical: full-width rows (poster + title + year), tap the gaps */
 .tl-hint{font-size:.72rem;color:var(--mut);text-align:center;margin-bottom:6px}
+.tl-edge{text-align:center;font-size:1.7rem;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);opacity:.12;line-height:1;margin:6px 0;user-select:none;pointer-events:none}
 .tl-list{display:flex;flex-direction:column;gap:0}
 .tl-item{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.045);border:1px solid var(--bdr);border-radius:11px;padding:8px 12px;animation:fadeIn .25s ease both}
 .tl-item img,.tl-item .tl-ph{width:40px;height:60px;border-radius:6px;object-fit:cover;background:var(--s2);flex-shrink:0;box-shadow:0 6px 14px rgba(0,0,0,.4)}
@@ -79,7 +80,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--s2);border:1px solid var(--bdr);color:var(--txt);padding:10px 16px;border-radius:10px;font-size:.85rem;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 /* desktop: roomier rows + bigger mystery poster */
-@media(min-width:760px){.wrap{max-width:680px}.title{font-size:2.4rem}.cc-card img{width:92px;height:138px}.tl-item img,.tl-item .tl-ph{width:46px;height:69px}.tl-name{font-size:.98rem}body{min-height:100vh;display:flex}.wrap{margin:auto}}
+@media(min-width:760px){.wrap{max-width:680px}.title{font-size:2.4rem}.cc-card img{width:92px;height:138px}.tl-item img,.tl-item .tl-ph{width:46px;height:69px}.tl-name{font-size:.98rem}.tl-edge{font-size:2.3rem}body{min-height:100vh;display:flex}.wrap{margin:auto}}
 </style>
 </head>
 <body>
@@ -103,8 +104,10 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   <div id="game" style="display:none">
     <div class="progress" id="progress"></div>
     <div class="current" id="current"></div>
-    <div class="tl-hint" id="tlHint">Tap the line where it belongs — older at the top, newer at the bottom</div>
+    <div class="tl-hint" id="tlHint">Tap the line where the film belongs</div>
+    <div class="tl-edge" aria-hidden="true">Older</div>
     <div class="tl-list" id="timeline"></div>
+    <div class="tl-edge" aria-hidden="true">Newer</div>
     <div class="result hidden" id="result"></div>
   </div>
 
