@@ -31,13 +31,19 @@
     try { return JSON.parse(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))); } catch (_) { return {}; }
   }
 
-  // --- UI: a small pill, top-right ---
-  var wrap = document.createElement('div');
-  wrap.id = 'gauth';
-  wrap.style.cssText = 'position:fixed;top:12px;right:12px;z-index:95;font-family:Inter,-apple-system,sans-serif';
+  // --- UI host: an inline slot on the home (#authInline) if present, otherwise a
+  // small fixed pill, top-right. Same button/menu either way. ---
   var slot = document.createElement('div');
-  wrap.appendChild(slot);
-  document.body.appendChild(wrap);
+  var inlineHost = document.getElementById('authInline');
+  if (inlineHost) {
+    inlineHost.appendChild(slot);
+  } else {
+    var wrap = document.createElement('div');
+    wrap.id = 'gauth';
+    wrap.style.cssText = 'position:fixed;top:12px;right:12px;z-index:95;font-family:Inter,-apple-system,sans-serif';
+    wrap.appendChild(slot);
+    document.body.appendChild(wrap);
+  }
 
   function renderSignedIn(p) {
     slot.innerHTML = '';

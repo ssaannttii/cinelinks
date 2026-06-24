@@ -134,6 +134,12 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .how li{list-style:none;color:var(--mut);font-size:.83rem;line-height:1.8;padding-left:22px;position:relative}
 .how li::before{content:"→";position:absolute;left:0;color:var(--gold);font-weight:600}
 .credits{margin-top:22px;border-top:1px solid var(--bdr);padding-top:18px;text-align:left}
+.account-card{display:flex;align-items:center;gap:12px;background:linear-gradient(180deg,rgba(232,160,0,.07),transparent),var(--s1);border:1px solid rgba(232,160,0,.2);border-radius:14px;padding:13px 15px;margin:20px 0 2px;text-align:left}
+.account-ic{width:40px;height:40px;flex-shrink:0;border-radius:11px;background:rgba(232,160,0,.14);display:flex;align-items:center;justify-content:center;font-size:1.2rem}
+.account-tx{flex:1;min-width:0}
+.account-tx b{display:block;font-size:.9rem}
+.account-tx span{display:block;font-size:.75rem;color:var(--mut);margin-top:1px}
+#authInline{flex-shrink:0}
 .site-foot{margin-top:18px;text-align:center;font-size:.78rem;color:var(--mut)}
 .site-foot a{color:var(--mut);text-decoration:none;font-weight:600}
 .site-foot a:hover{color:var(--gold)}
@@ -367,6 +373,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 
 /* WIN */
 #winScreen{min-height:100vh;align-items:center;justify-content:center;padding:40px 20px;position:relative;overflow-x:hidden;overflow-y:auto}
+#winScreen{position:relative}
+.win-header{position:absolute;top:14px;left:14px;display:flex;gap:10px;z-index:5}
 .win-box{background:linear-gradient(180deg,rgba(232,160,0,.08),transparent 150px),var(--s1);border:1px solid rgba(232,160,0,.18);border-radius:8px;padding:30px;max-width:680px;width:100%;text-align:center;box-shadow:0 24px 70px rgba(0,0,0,.35)}
 .win-em{font-size:2.1rem;margin-bottom:10px}
 .win-h{font-size:1.55rem;font-weight:700;margin-bottom:4px}
@@ -551,6 +559,11 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
         </div>
       </div>
     </div>
+    <div class="account-card">
+      <div class="account-ic">☁️</div>
+      <div class="account-tx"><b>Cross-device sync</b><span>Sign in with Google to save your streaks on every device.</span></div>
+      <div id="authInline"></div>
+    </div>
     <div class="secondary-actions">
       <button class="archive-btn" id="archiveBtn" onclick="game.openArchive()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-2px;margin-right:6px"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Past challenges</button>
       <button class="archive-btn" onclick="creator.open()">+ Create your own</button>
@@ -677,6 +690,10 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 </div>
 
 <div id="winScreen" class="screen">
+  <header class="win-header">
+    <button class="hdr-back" onclick="game.reset()"><svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;margin-right:5px"><path d="M1.5 7L7 1.5L12.5 7V13H9V9.5H5V13H1.5Z"/></svg>Home</button>
+    <button class="hdr-back" onclick="game.startRandom()" style="color:var(--gold)">&#8635; New</button>
+  </header>
   <div class="win-box">
     <div class="win-em">&#127916;</div>
     <h1 class="win-h">You made it!</h1>
