@@ -30,6 +30,23 @@
     for (const w of words) { out = out.replace(new RegExp(w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), '▒▒▒'); }
     return out;
   }
+  // Heuristic spoiler masking (no AI): hide the title's words AND the main
+  // characters' names (full phrase + distinctive ≥5-char tokens) so a synopsis
+  // doesn't give the answer away via a recognisable character name.
+  function maskSpoilers(text, title, characters) {
+    if (!text) return '';
+    let terms = [];
+    String(title || '').split(/\s+/).forEach(w => { if (w.length >= 4) terms.push(w); });
+    (characters || []).forEach(ch => {
+      if (!ch || ch.length < 3) return;
+      terms.push(ch);
+      ch.split(/\s+/).forEach(w => { if (w.length >= 5) terms.push(w); });
+    });
+    terms = Array.from(new Set(terms)).sort((a, b) => b.length - a.length);
+    let out = text;
+    for (const t of terms) { out = out.replace(new RegExp(t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), '▒▒▒'); }
+    return out;
+  }
   function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 1800); }
 
   const DAY = dayNumber();
@@ -63,6 +80,15 @@
     const ch = c.character || (c.roles && c.roles[0] && c.roles[0].character) || '';
     return esc(c.name) + (ch ? ' <span style="color:#8d8d8d">as ' + esc(ch) + '</span>' : '');
   }
+  // A cast clue: actor headshot (plain img — the name is shown anyway, so it's a
+  // clue, not a leak) + name + character.
+  function castClueHtml(c) {
+    const ph = c.profile_path ? (IMGBASE + 'w185' + c.profile_path) : '';
+    const avatar = ph
+      ? '<img src="' + ph + '" alt="" referrerpolicy="no-referrer" style="width:58px;height:58px;border-radius:50%;object-fit:cover;flex-shrink:0;background:#222">'
+      : '<span style="width:58px;height:58px;border-radius:50%;background:#222;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;color:#666;font-weight:800">?</span>';
+    return '<div style="display:flex;align-items:center;gap:12px">' + avatar + '<span class="clue-body">' + castChar(c) + '</span></div>';
+  }
 
   // ── Clue strategies ──────────────────────────────────────────────────────
   function cluesClue(t) {
@@ -93,7 +119,7 @@
     const seq = top.slice().reverse();                              // obscure → famous
     const out = [];
     seq.slice(0, 4).forEach((c, i) => {
-      out.push({ label: i === 0 ? 'A cast member' : 'Another cast member', html: '<span class="clue-body">' + castChar(c) + '</span>' });
+      out.push({ label: i === 0 ? 'A cast member' : 'Another cast member', html: castClueHtml(c) });
     });
     out.push({ label: Media.mediumLabel(t.type) + ' · Genre · Year', html: clueBody([Media.mediumLabel(t.type), genres, yr].filter(Boolean).join('  ·  ')) });
     out.push({ label: 'Top billing' + (pUrl ? ' · Poster' : ''), html: clueBody(top.slice(0, 3).map(c => c.name).join(', ')) + posterCanvas(pUrl, 6) });
@@ -106,7 +132,10 @@
     const genres = (t.d.genres || []).map(g => g.name).join(', ');
     const cast = (t.cr.cast || []).slice(0, 3).map(c => c.name);
     const pUrl = poster(t.d.poster_path, 'w342');
-    const ov = maskTitle(t.d.overview || '', ttl);
+    const chars = (t.cr.cast || []).slice(0, 8)
+      .map(c => c.character || (c.roles && c.roles[0] && c.roles[0].character) || '')
+      .filter(Boolean);
+    const ov = maskSpoilers(t.d.overview || '', ttl, chars);
     const frac = p => { if (!ov) return ''; const n = Math.max(20, Math.round(ov.length * p)); return ov.slice(0, n) + (n < ov.length ? '…' : ''); };
     return [
       { label: 'Synopsis (opening)', html: clueBody(ov ? frac(0.25) : 'No synopsis on TMDB') },
