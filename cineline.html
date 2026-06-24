@@ -36,30 +36,28 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .progress{text-align:center;font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin:6px 0 14px}
 .progress b{color:var(--gold)}
 /* current card to place */
-.current{background:linear-gradient(180deg,rgba(232,160,0,.07),transparent),var(--s1);border:1px solid rgba(232,160,0,.2);border-radius:14px;padding:14px;margin-bottom:16px;text-align:center;animation:fadeIn .3s ease both}
+.current{position:sticky;top:8px;z-index:5;background:linear-gradient(180deg,#1d1a12,var(--s1));border:1px solid rgba(232,160,0,.25);border-radius:14px;padding:14px;margin-bottom:14px;text-align:center;box-shadow:0 14px 30px rgba(0,0,0,.45);animation:fadeIn .3s ease both}
 .cc-label{font-size:.62rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
 .cc-card{display:flex;align-items:center;gap:14px;text-align:left}
 .cc-card img{width:78px;height:117px;border-radius:8px;object-fit:cover;flex-shrink:0;box-shadow:0 12px 28px rgba(0,0,0,.45);background:var(--s2)}
 .cc-title{font-size:1.15rem;font-weight:800;line-height:1.2}
 .cc-q{font-size:.82rem;color:var(--mut);margin-top:5px}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-/* timeline */
-.tl-hint{font-size:.72rem;color:var(--mut);text-align:center;margin-bottom:8px}
-.tl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:6px 2px 12px;scrollbar-width:none;-ms-overflow-style:none;-webkit-mask-image:linear-gradient(90deg,transparent,#000 22px,#000 calc(100% - 22px),transparent);mask-image:linear-gradient(90deg,transparent,#000 22px,#000 calc(100% - 22px),transparent)}
-.tl-wrap::-webkit-scrollbar{display:none}
-.tl-wrap.fit{overflow:visible;-webkit-mask-image:none;mask-image:none}
-.tl-row{display:inline-flex;align-items:stretch;gap:0;min-width:100%;justify-content:center}
-.tl-row.wrapped{display:flex;flex-wrap:wrap;justify-content:center;gap:12px 5px;min-width:0}
-.tl-card{display:flex;flex-direction:column;align-items:center;gap:4px;width:54px;flex-shrink:0}
-.tl-card img,.tl-card .tl-ph{width:54px;height:81px;border-radius:7px;object-fit:cover;background:var(--s2);box-shadow:0 8px 18px rgba(0,0,0,.4)}
-.tl-year{font-size:.7rem;font-weight:800;color:var(--txt);padding:2px 6px;border-radius:999px;background:var(--s2)}
-.tl-card.correct .tl-year{background:rgba(91,189,122,.18);color:#7fd49a}
-.tl-card.wrong .tl-year{background:rgba(216,80,58,.2);color:#e8806f}
-.tl-card.anchor .tl-year{background:var(--golddim);color:var(--gold)}
-.tl-slot{flex-shrink:0;align-self:center;width:24px;height:84px;margin:0 -1px;border:2px dashed rgba(232,160,0,.0);border-radius:8px;background:transparent;color:rgba(232,160,0,.55);font-size:1.2rem;font-weight:800;cursor:pointer;transition:all .12s}
-.tl-slot:hover,.tl-slot:focus{border-color:rgba(232,160,0,.55);background:rgba(232,160,0,.08);color:var(--gold);outline:none}
+/* timeline — vertical: full-width rows (poster + title + year), tap the gaps */
+.tl-hint{font-size:.72rem;color:var(--mut);text-align:center;margin-bottom:6px}
+.tl-list{display:flex;flex-direction:column;gap:0}
+.tl-item{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.045);border:1px solid var(--bdr);border-radius:11px;padding:8px 12px;animation:fadeIn .25s ease both}
+.tl-item img,.tl-item .tl-ph{width:40px;height:60px;border-radius:6px;object-fit:cover;background:var(--s2);flex-shrink:0;box-shadow:0 6px 14px rgba(0,0,0,.4)}
+.tl-name{flex:1;min-width:0;font-size:.92rem;font-weight:700;line-height:1.25}
+.tl-yr{font-size:1.05rem;font-weight:800;color:var(--txt);flex-shrink:0;font-variant-numeric:tabular-nums}
+.tl-item.correct{border-color:rgba(91,189,122,.45)}.tl-item.correct .tl-yr{color:#7fd49a}
+.tl-item.wrong{border-color:rgba(216,80,58,.45)}.tl-item.wrong .tl-yr{color:#e8806f}
+.tl-item.anchor{border-color:rgba(232,160,0,.35)}.tl-item.anchor .tl-yr{color:var(--gold)}
+.tl-slot{position:relative;width:100%;height:30px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:rgba(232,160,0,0);font-size:.7rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;transition:color .12s}
+.tl-slot::before{content:"";position:absolute;left:10px;right:10px;top:50%;height:2px;transform:translateY(-50%);border-radius:2px;background:repeating-linear-gradient(90deg,rgba(232,160,0,.22) 0 7px,transparent 7px 14px);transition:background .12s}
+.tl-slot:hover,.tl-slot:focus{color:var(--gold);outline:none}
+.tl-slot:hover::before,.tl-slot:focus::before{background:rgba(232,160,0,.6)}
 .tl-slot.done{display:none}
-.tl-card.anchor{margin-bottom:0}
 /* result */
 .result{text-align:center;margin-top:10px;background:linear-gradient(180deg,rgba(232,160,0,.08),transparent 140px),var(--s1);border:1px solid rgba(232,160,0,.18);border-radius:14px;padding:24px 18px;box-shadow:0 24px 60px rgba(0,0,0,.35);animation:fadeIn .35s ease both}
 .result.hidden{display:none}
@@ -100,8 +98,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   <div id="game" style="display:none">
     <div class="progress" id="progress"></div>
     <div class="current" id="current"></div>
-    <div class="tl-hint" id="tlHint">Tap a gap to drop the film where you think it belongs ↓</div>
-    <div class="tl-wrap"><div class="tl-row" id="timeline"></div></div>
+    <div class="tl-hint" id="tlHint">Tap the line where it belongs — older at the top, newer at the bottom</div>
+    <div class="tl-list" id="timeline"></div>
     <div class="result hidden" id="result"></div>
   </div>
 
@@ -163,24 +161,19 @@ function renderProgress(){
 }
 
 function renderTimeline(){
-  const sorted = sortedPlaced();
+  const sorted = sortedPlaced(); // oldest → newest (top → bottom)
   let h = '';
   for(let i = 0; i <= sorted.length; i++){
-    h += '<button class="tl-slot' + (finished ? ' done' : '') + '" data-slot="' + i + '"' + (finished ? ' disabled' : '') + ' aria-label="place here">+</button>';
+    h += '<button class="tl-slot' + (finished ? ' done' : '') + '" data-slot="' + i + '"' + (finished ? ' disabled' : '') + ' aria-label="place here">place here</button>';
     if(i < sorted.length){
       const c = sorted[i];
       const cls = c._anchor ? ' anchor' : (c._res ? ' ' + c._res : '');
-      h += '<div class="tl-card' + cls + '">' +
-        (c.poster ? '<img src="' + poster(c.poster, 'w185') + '" alt="">' : '<div class="tl-ph"></div>') +
-        '<span class="tl-year">' + c.year + '</span></div>';
+      h += '<div class="tl-item' + cls + '">' +
+        (c.poster ? '<img src="' + poster(c.poster, 'w92') + '" alt="">' : '<div class="tl-ph"></div>') +
+        '<span class="tl-name">' + esc(c.title) + '</span><span class="tl-yr">' + c.year + '</span></div>';
     }
   }
   const row = document.getElementById('timeline');
-  const wrap = row.parentElement;
-  // Finished: wrap all cards into centered rows (no scrollbar). Playing: single
-  // row, hidden scrollbar + soft edge fade hinting there's more to swipe.
-  row.classList.toggle('wrapped', finished);
-  if(wrap) wrap.classList.toggle('fit', finished);
   row.innerHTML = h;
   if(!finished) row.querySelectorAll('.tl-slot').forEach(b => { b.onclick = () => place(+b.dataset.slot); });
 }
@@ -331,8 +324,8 @@ window.HOWTO = {
   key: 'cineline', title: 'How to play CineLine', icon: '🕰️',
   steps: [
     'Each film appears with its <b>release year hidden</b>.',
-    'Tap the <b>gap</b> on the timeline where you think it belongs (older ← → newer).',
-    'Right spot reveals it green; wrong slots it into place in red — either way you move on.',
+    'Tap the <b>gap</b> where it belongs — older films near the top, newer near the bottom.',
+    'Right spot turns green; a wrong one drops into its correct place in red — either way you move on.',
     'Place all 10. Your score is how many you nailed; <b>6/10+</b> keeps your daily streak.',
     '<b>Daily</b> is one shared deck a day; <b>Practice</b> deals a random one.'
   ],
