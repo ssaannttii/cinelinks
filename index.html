@@ -572,6 +572,13 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
           <a class="mode mode-practice" href="/cineline.html?practice=1">Practice</a>
         </div>
       </div>
+      <div class="game-card">
+        <div class="game-head"><span class="game-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.2"/><circle cx="12" cy="6.3" r="1"/><circle cx="12" cy="17.7" r="1"/><circle cx="6.3" cy="12" r="1"/><circle cx="17.7" cy="12" r="1"/></svg></span><span class="game-meta"><span class="game-name">CineReel <span class="new-tag">NEW</span><span class="game-done" data-done="reel"></span></span><span class="game-desc">Guess the actor from their films</span></span></div>
+        <div class="game-modes">
+          <a class="mode mode-daily" href="/cinereel.html">Daily</a>
+          <a class="mode mode-practice" href="/cinereel.html?practice=1">Practice</a>
+        </div>
+      </div>
     </div>
 
     <div id="dailyGallery" style="display:none"></div>
@@ -1490,7 +1497,8 @@ function markDoneBadges() {
   }
   const state = {
     cl: linksDone(), clue: clueDone('cineclueState'), frame: clueDone('cineframeState'),
-    cast: clueDone('cinecastState'), plot: clueDone('cineplotState'), line: clueDone('cinelineState')
+    cast: clueDone('cinecastState'), plot: clueDone('cineplotState'), line: clueDone('cinelineState'),
+    reel: clueDone('cinereelState')
   };
   document.querySelectorAll('.game-done[data-done]').forEach(el => {
     const done = !!state[el.dataset.done];
