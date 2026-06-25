@@ -80,12 +80,14 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .games-section{font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin:18px 0 8px;text-align:left}
 .mode-play{background:var(--gold);color:#111;border-color:var(--gold)}
 .mode-play:hover{opacity:.9;background:var(--gold)}
-.game-meta{display:flex;flex-direction:column;min-width:0}
-.game-name{font-weight:800;font-size:.95rem;display:flex;align-items:center;gap:6px}
+.game-meta{display:flex;flex-direction:column;min-width:0;flex:1}
+.game-name{font-weight:800;font-size:.95rem;display:flex;align-items:center;flex-wrap:wrap;gap:5px 6px;min-width:0}
 .game-desc{font-size:.68rem;color:var(--mut);margin-top:1px}
 .new-tag{font-size:.52rem;font-weight:800;letter-spacing:.06em;color:#111;background:var(--gold);padding:1px 5px;border-radius:999px}
 .game-done{display:none}
-.game-done.on{display:inline-flex;align-items:center;color:#7fd49a;font-weight:800;font-size:.56rem;letter-spacing:.06em;text-transform:uppercase;background:rgba(91,189,122,.16);border:1px solid rgba(91,189,122,.38);padding:2px 7px;border-radius:999px;margin-left:7px}
+.game-done.on{display:inline-flex;align-items:center;color:#7fd49a;font-weight:800;font-size:.56rem;letter-spacing:.06em;text-transform:uppercase;background:rgba(91,189,122,.16);border:1px solid rgba(91,189,122,.38);padding:2px 7px;border-radius:999px;white-space:nowrap;flex-shrink:0}
+/* Once done, drop the redundant NEW tag so "✓ DONE" never gets clipped. */
+.game-card.done .new-tag{display:none}
 .game-modes{display:flex;gap:8px;margin-top:auto}
 .mode{flex:1;text-align:center;padding:9px;border-radius:9px;border:1px solid var(--bdr);background:transparent;color:var(--txt);font-family:inherit;font-size:.8rem;font-weight:700;cursor:pointer;text-decoration:none;transition:background .15s,border-color .15s,opacity .15s}
 .mode:hover{border-color:rgba(232,160,0,.5);background:rgba(232,160,0,.05)}
@@ -3143,7 +3145,15 @@ window.HOWTO = {
     '</div><p>Start → one shared movie → target. Solved in <b style="color:#f0f0f0">2 clicks</b>.</p>'
 };
 </script>
-<script>window.onStatsSync = function () { try { markDoneBadges(); } catch (_) {} };</script>
+<script>
+window.onStatsSync = function () { try { markDoneBadges(); } catch (_) {} };
+// Live-refresh the hub's done badges if a game is completed in another tab.
+window.addEventListener('storage', function (e) {
+  if (!e.key || e.key === 'clPlayed' || e.key === 'clDailyResult' || e.key.endsWith('State')) {
+    try { markDoneBadges(); } catch (_) {}
+  }
+});
+</script>
 <script defer src="/ads.js"></script>
 <script defer src="/support.js"></script>
 <script defer src="/howto.js"></script>
