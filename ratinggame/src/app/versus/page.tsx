@@ -32,6 +32,27 @@ interface RoundResult {
 const ROUNDS = 10;
 
 const DAILY_KEY = "cinerating_daily";
+const SEEN_KEY = "cinerating_seen";
+const SEEN_CAP = 80; // remember roughly the last ~4 practice sessions
+
+function readSeen(): string[] {
+  try {
+    const v = JSON.parse(localStorage.getItem(SEEN_KEY) || "[]");
+    return Array.isArray(v) ? v.filter((x) => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function rememberSeen(ids: string[]) {
+  try {
+    const merged = [...ids, ...readSeen()];
+    const deduped = Array.from(new Set(merged)).slice(0, SEEN_CAP);
+    localStorage.setItem(SEEN_KEY, JSON.stringify(deduped));
+  } catch {
+    /* ignore */
+  }
+}
 
 function getTodayString() {
   const d = new Date();
@@ -113,13 +134,16 @@ function VersusGame() {
       loadRound(0);
       return;
     }
-    fetch(api("/api/session?count=10"))
+    const seen = readSeen();
+    const qs = seen.length ? `&exclude=${seen.join(",")}` : "";
+    fetch(api(`/api/session?count=10${qs}`))
       .then((r) => r.json())
       .then((d) => {
         const pairs: [string, string][] = (d.pairs as [{ imdbId: string }, { imdbId: string }][])
           .slice(0, ROUNDS)
           .map((p) => [p[0].imdbId, p[1].imdbId]);
         pairsRef.current = pairs;
+        rememberSeen(pairs.flat());
         loadRound(0);
       });
   }, [loadRound, isDaily]);

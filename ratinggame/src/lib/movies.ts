@@ -242,40 +242,66 @@ export const MOVIE_POOL: MovieStub[] = [
   { imdbId: "tt1877830", title: "The Batman",                                year: "2022" },
 ];
 
-// ── Tier classification ───────────────────────────────────────────────────────
-// Tier 1 = Elite (~8.3+) — hard comparisons within a thin rating band
-const TIER_1 = new Set([
-  "tt0111161","tt0068646","tt0071562","tt0468569","tt0050083","tt0108052",
-  "tt0167260","tt0110912","tt0120737","tt0060196","tt1375666","tt0137523",
-  "tt0245429","tt0816692","tt0133093","tt0099685","tt0120815","tt0034583",
-  "tt0082971","tt0047478","tt0407887","tt2582802","tt0317248","tt0057012",
-  "tt0102926","tt0103064","tt0080684","tt0076759","tt0038650","tt0078788",
-  "tt0110413","tt0118799","tt0167261","tt0081505","tt0093058","tt0062622",
-  "tt0086879","tt0073486","tt0253474","tt6751668","tt4633694","tt1392190",
-  "tt8760708","tt2380307","tt15398776","tt0042876","tt0089881","tt0040522",
-  "tt0046438","tt1832382","tt0095765","tt0211915","tt1675434","tt0052311",
-  "tt0056592","tt0364569","tt1187043","tt0043014","tt0044081","tt0050825",
-  "tt0114709","tt0910970","tt1049413","tt0066921","tt15239678","tt7286456",
-  "tt4154796","tt4154756","tt0482571","tt0120689","tt0361748","tt0317248",
-]);
+// ── Approximate IMDb ratings ─────────────────────────────────────────────────
+// Used ONLY to choose matchups by difficulty (rating gap). The actual winner is
+// always decided by the live OMDb rating fetched at reveal time, so an imprecise
+// value here can never make a round "wrong" — it only nudges how close the call
+// feels. Keep within ~0.2 of the real IMDb score.
+const RATING: Record<string, number> = {
+  tt0111161: 9.3, tt0068646: 9.2, tt0071562: 9.0, tt0468569: 9.0, tt0050083: 9.0,
+  tt0108052: 9.0, tt0167260: 9.0, tt0110912: 8.9, tt0120737: 8.9, tt0060196: 8.8,
+  tt1375666: 8.8, tt0137523: 8.8, tt0245429: 8.6, tt0816692: 8.7, tt0133093: 8.7,
+  tt0099685: 8.7, tt0120815: 8.6, tt0034583: 8.5, tt0082971: 8.4, tt0047478: 8.6,
+  tt0407887: 8.5, tt2582802: 8.5, tt0317248: 8.6, tt0057012: 8.4, tt0102926: 8.6,
+  tt0103064: 8.6, tt0080684: 8.7, tt0076759: 8.6, tt0038650: 8.6, tt0078788: 8.5,
+  tt0110413: 8.5, tt0118799: 8.6, tt0167261: 8.8, tt0081505: 8.4, tt0093058: 8.3,
+  tt0062622: 8.3, tt0086879: 8.4, tt0073486: 8.7, tt0253474: 8.5, tt6751668: 8.5,
+  tt4633694: 8.4, tt1392190: 8.1, tt8760708: 8.2, tt2380307: 8.4, tt15398776: 8.3,
+  tt0042876: 8.2, tt0089881: 8.2, tt0040522: 8.3, tt0046438: 8.1, tt1832382: 8.3,
+  tt0095765: 8.5, tt0211915: 8.3, tt1675434: 8.5, tt0052311: 8.3, tt0056592: 8.3,
+  tt0364569: 8.3, tt1187043: 8.4, tt0043014: 8.4, tt0044081: 8.3, tt0050825: 8.4,
+  tt0114709: 8.3, tt0910970: 8.4, tt1049413: 8.3, tt0066921: 8.3, tt15239678: 8.5,
+  tt7286456: 8.4, tt4154796: 8.4, tt4154756: 8.4, tt0482571: 8.5, tt0120689: 8.6,
+  tt0361748: 8.4, tt0109830: 8.8, tt0172495: 8.5, tt1345836: 8.4, tt0120586: 8.5,
+  tt0114369: 8.6, tt0116282: 8.1, tt0105236: 8.3, tt0071853: 8.2, tt0095016: 8.2,
+  tt0097576: 8.2, tt0112573: 8.3, tt0110357: 8.5, tt0107290: 8.2, tt0266543: 8.2,
+  tt2096673: 8.1, tt0435761: 8.3, tt0167404: 8.2, tt0118715: 8.1, tt0372784: 8.2,
+  tt1160419: 8.0, tt0052357: 8.3, tt0073195: 8.1, tt1853728: 8.5, tt0092005: 8.1,
+  tt0101414: 8.0, tt1285016: 7.8, tt1130884: 8.2, tt0096283: 8.1, tt0119488: 8.2,
+  tt0118694: 8.1, tt0097216: 7.7, tt0120735: 8.1, tt0208092: 8.2, tt0087332: 7.8,
+  tt1185836: 8.1, tt1270797: 7.6, tt7131622: 7.6, tt1454468: 7.9, tt3783958: 8.0,
+  tt0093822: 7.6, tt0088258: 7.8, tt0099674: 7.6, tt5052448: 7.8, tt7784604: 7.3,
+  tt6644200: 7.5, tt1457767: 7.5, tt0054215: 8.5, tt0075314: 8.2, tt0077416: 8.1,
+  tt0047396: 8.5, tt0180093: 8.3, tt2543164: 7.9, tt0470752: 7.7, tt1182345: 7.8,
+  tt1856101: 8.0, tt1136608: 7.9, tt1798709: 8.0, tt0114746: 8.0, tt0209144: 8.4,
+  tt6710474: 7.8, tt0338013: 8.3, tt4975722: 7.4, tt1895587: 8.1, tt2024544: 8.1,
+  tt0119822: 7.7, tt0407304: 8.2, tt0993846: 8.2, tt1663202: 8.0, tt1124035: 7.5,
+  tt0358273: 7.8, tt0107818: 7.7, tt0041959: 8.2, tt0025316: 8.1, tt2911666: 7.4,
+  tt4912910: 7.7, tt0848228: 8.0, tt1843866: 7.7, tt0113277: 8.3, tt0071315: 8.2,
+  tt0477348: 8.2, tt0443706: 7.7, tt2267998: 8.1, tt3315342: 8.1, tt1570728: 8.2,
+  tt3659388: 7.6, tt0081398: 8.2, tt0112641: 8.2, tt0266697: 8.2, tt0162222: 7.8,
+  tt0264464: 8.1, tt0119698: 8.3, tt0347149: 8.2, tt0092067: 8.0, tt0317219: 8.0,
+  tt0369271: 8.1, tt0198781: 8.1, tt2948356: 8.0, tt5311514: 8.0, tt0298148: 7.9,
+  tt6155172: 7.7, tt8772262: 8.1, tt1745960: 8.2, tt5013056: 7.8, tt1877830: 7.8,
+  tt10954984: 7.8, tt11813216: 7.7, tt0088763: 8.5, tt0083658: 8.1, tt0090605: 8.4,
+  tt0078748: 8.5, tt0371746: 7.9, tt2015381: 8.0, tt0780504: 7.8, tt2872718: 7.8,
+  tt1950186: 8.1, tt0388795: 7.7, tt0246578: 8.0, tt2488496: 7.8, tt3501632: 7.9,
+  tt10872600: 8.2, tt0120338: 7.9, tt0499549: 7.9, tt0325980: 8.1, tt0365748: 7.9,
+  tt0425112: 7.8, tt0446029: 7.5, tt3890160: 7.5, tt1790885: 7.4, tt0102685: 7.3,
+  tt0335266: 7.7, tt0289043: 7.6, tt0945513: 7.5, tt0332280: 7.8, tt5834426: 7.6,
+  tt6334354: 7.5, tt0120591: 6.7, tt0116629: 7.0, tt1228705: 6.9, tt0800369: 7.0,
+  tt2395427: 7.3, tt0948470: 6.9, tt0369610: 6.9, tt0120616: 7.1, tt0145487: 7.4,
+  tt0413300: 7.5, tt3480822: 7.3, tt14209916: 7.0, tt4016934: 6.9, tt2674426: 6.8,
+  tt2094766: 7.1, tt2294629: 7.4, tt0083866: 7.9, tt0087544: 6.6, tt0441773: 7.6,
+};
 
-// Tier 3 = Popular/Fun (~5.5–7.0) — more accessible, wider rating differences
-const TIER_3 = new Set([
-  "tt0120591","tt0116629","tt1228705","tt0800369","tt2395427","tt0948470",
-  "tt0369610","tt0120616","tt0145487","tt0413300","tt3480822","tt14209916",
-  "tt4016934","tt2674426","tt2094766","tt2294629","tt0083866","tt0087544",
-  "tt0441773",
-]);
-
-function getTier(id: string): 1 | 2 | 3 {
-  if (TIER_1.has(id)) return 1;
-  if (TIER_3.has(id)) return 3;
-  return 2;
+function ratingOf(id: string): number {
+  return RATING[id] ?? 7.5;
 }
 
 // ── Seeded RNG (LCG) — deterministic per date ────────────────────────────────
 function seededRng(seed: number): () => number {
-  let s = seed;
+  let s = seed >>> 0;
   return () => {
     s = (Math.imul(1664525, s) + 1013904223) & 0xffffffff;
     return (s >>> 0) / 4294967296;
@@ -290,91 +316,93 @@ export function getDailySeed(): number {
 
 // Day number since launch (2025-04-01 = day 1)
 export function getDayNumber(): number {
-  const epoch = Date.UTC(2025, 3, 1); // April 1 2025
+  const epoch = Date.UTC(2025, 3, 1);
   const today = new Date();
   const todayUTC = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
   return Math.floor((todayUTC - epoch) / 86400000) + 1;
 }
 
-// ── Fisher-Yates shuffle ───────────────────────────────────────────────────────
-function shuffle<T>(arr: T[]): T[] {
+// ── Shuffles ──────────────────────────────────────────────────────────────────
+function shuffleWith<T>(arr: T[], rand: () => number): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(rand() * (i + 1));
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
+}
+function shuffle<T>(arr: T[]): T[] {
+  return shuffleWith(arr, Math.random);
 }
 
 // ── Deduplicate pool ──────────────────────────────────────────────────────────
 function uniquePool(): MovieStub[] {
   const seen = new Set<string>();
-  return MOVIE_POOL.filter((m) => {
-    if (seen.has(m.imdbId)) return false;
-    seen.add(m.imdbId);
-    return true;
-  });
+  return MOVIE_POOL.filter((m) => (seen.has(m.imdbId) ? false : (seen.add(m.imdbId), true)));
 }
 
-// ── Balanced pairing: both films in a pair share the same tier ────────────────
-// Distribution per session: ~35% tier-1, ~45% tier-2, ~20% tier-3
-export function pickBalancedPairs(count: number): [MovieStub, MovieStub][] {
-  const pool = uniquePool();
-  const t1 = shuffle(pool.filter((m) => getTier(m.imdbId) === 1));
-  const t2 = shuffle(pool.filter((m) => getTier(m.imdbId) === 2));
-  const t3 = shuffle(pool.filter((m) => getTier(m.imdbId) === 3));
-
-  const n1 = Math.max(1, Math.round(count * 0.35));
-  const n3 = Math.max(1, Math.round(count * 0.20));
-  const n2 = Math.max(1, count - n1 - n3);
-
-  const makePairs = (movies: MovieStub[], n: number): [MovieStub, MovieStub][] => {
-    const pairs: [MovieStub, MovieStub][] = [];
-    for (let i = 0; i + 1 < movies.length && pairs.length < n; i += 2) {
-      pairs.push([movies[i], movies[i + 1]]);
-    }
-    return pairs;
-  };
-
-  return shuffle([
-    ...makePairs(t1, n1),
-    ...makePairs(t2, n2),
-    ...makePairs(t3, n3),
-  ]);
+// ── Difficulty-aware pairing by rating gap ────────────────────────────────────
+// The game knows every film's rating, so difficulty == how close the two scores
+// are. We build a smooth ramp from an obvious gap down to a razor-thin one, and
+// for each round pick a partner whose gap is near the round's target — chosen at
+// random among the closest few so matchups vary every session.
+function pickPartner(
+  anchor: MovieStub,
+  candidates: MovieStub[],
+  target: number,
+  rand: () => number
+): MovieStub | null {
+  const ra = ratingOf(anchor.imdbId);
+  const scored = candidates
+    .map((m) => ({ m, gap: Math.abs(ratingOf(m.imdbId) - ra) }))
+    .filter((x) => x.gap >= 0.1) // avoid exact ties as the intended answer
+    .sort((a, b) => Math.abs(a.gap - target) - Math.abs(b.gap - target));
+  if (!scored.length) return null;
+  const k = Math.min(8, scored.length);
+  return scored[Math.floor(rand() * k)].m;
 }
 
-// ── Daily challenge: seeded balanced pairs — same for everyone on same UTC day ─
+function buildPairs(
+  count: number,
+  rand: () => number,
+  exclude?: Set<string>
+): [MovieStub, MovieStub][] {
+  let pool = uniquePool();
+  if (exclude && exclude.size) {
+    const fresh = pool.filter((m) => !exclude.has(m.imdbId));
+    if (fresh.length >= count * 2 + 6) pool = fresh; // only honor it if enough remain
+  }
+  const order = shuffleWith(pool, rand);
+  const used = new Set<string>();
+  const pairs: [MovieStub, MovieStub][] = [];
+  const EASY = 1.6, HARD = 0.25;
+
+  for (let i = 0; i < count; i++) {
+    const t = count > 1 ? i / (count - 1) : 0;
+    const target = EASY - t * (EASY - HARD); // ramp: obvious → close call
+    const anchor = order.find((m) => !used.has(m.imdbId));
+    if (!anchor) break;
+    used.add(anchor.imdbId);
+    const partner = pickPartner(anchor, order.filter((m) => !used.has(m.imdbId)), target, rand);
+    if (!partner) { used.delete(anchor.imdbId); continue; }
+    used.add(partner.imdbId);
+    pairs.push(rand() < 0.5 ? [anchor, partner] : [partner, anchor]);
+  }
+  return pairs;
+}
+
+// Practice: fresh, difficulty-ramped matchups. `exclude` skips recently-seen films.
+export function pickBalancedPairs(count: number, exclude?: Set<string>): [MovieStub, MovieStub][] {
+  return buildPairs(count, Math.random, exclude);
+}
+
+// Daily: same difficulty-ramped set for everyone on a given UTC day.
 export function getDailyPairs(count: number): [MovieStub, MovieStub][] {
-  const rng = seededRng(getDailySeed());
-  const seededShuffle = <T>(arr: T[]): T[] => {
-    const a = [...arr];
-    for (let i = a.length - 1; i > 0; i--) {
-      const j = Math.floor(rng() * (i + 1));
-      [a[i], a[j]] = [a[j], a[i]];
-    }
-    return a;
-  };
-
-  const pool = uniquePool();
-  const t1 = seededShuffle(pool.filter((m) => getTier(m.imdbId) === 1));
-  const t2 = seededShuffle(pool.filter((m) => getTier(m.imdbId) === 2));
-  const t3 = seededShuffle(pool.filter((m) => getTier(m.imdbId) === 3));
-
-  const n1 = Math.max(1, Math.round(count * 0.35));
-  const n3 = Math.max(1, Math.round(count * 0.20));
-  const n2 = Math.max(1, count - n1 - n3);
-
-  const makePairs = (movies: MovieStub[], n: number): [MovieStub, MovieStub][] => {
-    const pairs: [MovieStub, MovieStub][] = [];
-    for (let i = 0; i + 1 < movies.length && pairs.length < n; i += 2)
-      pairs.push([movies[i], movies[i + 1]]);
-    return pairs;
-  };
-
-  return seededShuffle([...makePairs(t1, n1), ...makePairs(t2, n2), ...makePairs(t3, n3)]);
+  return buildPairs(count, seededRng(getDailySeed()));
 }
 
-// ── Legacy: flat random list (used by classic/game mode) ─────────────────────
+// ── Legacy: flat random list (classic/game mode) ─────────────────────────────
 export function pickRandomMovies(count: number): MovieStub[] {
-  return shuffle(uniquePool()).slice(0, Math.min(count, uniquePool().length));
+  const pool = uniquePool();
+  return shuffle(pool).slice(0, Math.min(count, pool.length));
 }

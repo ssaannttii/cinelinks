@@ -91,6 +91,12 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .mode:hover{border-color:rgba(232,160,0,.5);background:rgba(232,160,0,.05)}
 .mode-daily{background:var(--gold);color:#111;border-color:var(--gold)}
 .mode-daily:hover{opacity:.9;background:var(--gold)}
+/* Once a game is done today, Daily just shows the result (de-emphasised) and
+   Practice becomes the primary call-to-action. */
+.game-card.done .mode-daily{background:transparent;color:var(--mut);border-color:var(--bdr);font-weight:600}
+.game-card.done .mode-daily:hover{background:rgba(255,255,255,.05);border-color:var(--bdr);color:var(--txt)}
+.game-card.done .mode-practice{background:var(--gold);color:#111;border-color:var(--gold)}
+.game-card.done .mode-practice:hover{opacity:.9;background:var(--gold);border-color:var(--gold)}
 .secondary-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}
 .secondary-actions .archive-btn{margin-top:0}
 @media (max-width:560px){.games{grid-template-columns:1fr}.secondary-actions{grid-template-columns:1fr}}
@@ -1030,6 +1036,8 @@ function applyI18n() {
       else label.textContent = t(icons[i]);
     }
   });
+  // Re-assert done-state labels (Daily→Results) after re-localising the buttons.
+  try { markDoneBadges(); } catch (_) {}
 }
 
 // In-memory cache of TMDB responses for the current session: avoids re-fetching
@@ -1488,7 +1496,12 @@ function markDoneBadges() {
     el.classList.toggle('on', done);
     el.title = done ? 'Completed today' : '';
     const card = el.closest('.game-card');
-    if (card) card.classList.toggle('done', done);
+    if (card) {
+      card.classList.toggle('done', done);
+      // Done → Daily button drops to a quiet "Results" link, Practice goes gold.
+      const daily = card.querySelector('.mode-daily');
+      if (daily) daily.textContent = done ? t('modeResults') : t('modeDaily');
+    }
   });
 }
 

@@ -10,7 +10,7 @@ const LANGS = {
 const I18N = {
   'en-US': {
     // hub mode labels
-    modeDaily: 'Daily', modePractice: 'Practice', modePlay: 'Play',
+    modeDaily: 'Daily', modePractice: 'Practice', modePlay: 'Play', modeResults: 'Results',
     // click singular + goal tag
     clickSingular: 'click', goalTag: 'GOAL',
     // difficulty labels (from par)
@@ -55,7 +55,7 @@ const I18N = {
   },
   'es-ES': {
     // hub mode labels
-    modeDaily: 'Diario', modePractice: 'Práctica', modePlay: 'Jugar',
+    modeDaily: 'Diario', modePractice: 'Práctica', modePlay: 'Jugar', modeResults: 'Resultado',
     // click singular + goal tag
     clickSingular: 'clic', goalTag: 'OBJETIVO',
     // difficulty labels (from par)
@@ -100,7 +100,7 @@ const I18N = {
   },
   'es-MX': {
     // hub mode labels
-    modeDaily: 'Diario', modePractice: 'Práctica', modePlay: 'Jugar',
+    modeDaily: 'Diario', modePractice: 'Práctica', modePlay: 'Jugar', modeResults: 'Resultado',
     // click singular + goal tag
     clickSingular: 'clic', goalTag: 'OBJETIVO',
     // difficulty labels (from par)
@@ -145,7 +145,7 @@ const I18N = {
   },
   'fr-FR': {
     // hub mode labels
-    modeDaily: 'Quotidien', modePractice: 'Entraînement', modePlay: 'Jouer',
+    modeDaily: 'Quotidien', modePractice: 'Entraînement', modePlay: 'Jouer', modeResults: 'Résultat',
     // click singular + goal tag
     clickSingular: 'clic', goalTag: 'OBJECTIF',
     // difficulty labels (from par)
@@ -190,7 +190,7 @@ const I18N = {
   },
   'de-DE': {
     // hub mode labels
-    modeDaily: 'Täglich', modePractice: 'Üben', modePlay: 'Spielen',
+    modeDaily: 'Täglich', modePractice: 'Üben', modePlay: 'Spielen', modeResults: 'Ergebnis',
     // click singular + goal tag
     clickSingular: 'Klick', goalTag: 'ZIEL',
     // difficulty labels (from par)
@@ -235,7 +235,7 @@ const I18N = {
   },
   'pt-BR': {
     // hub mode labels
-    modeDaily: 'Diário', modePractice: 'Treino', modePlay: 'Jogar',
+    modeDaily: 'Diário', modePractice: 'Treino', modePlay: 'Jogar', modeResults: 'Resultado',
     // click singular + goal tag
     clickSingular: 'clique', goalTag: 'ALVO',
     // difficulty labels (from par)
