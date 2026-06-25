@@ -71,18 +71,13 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   const REVEALS=6;            // total posters available
   const START=1;              // posters shown at the first guess (then one more per miss)
   const VOTE_FLOOR=250;       // recognisability gate
-  const ACTOR_POOL=[{id:35224,name:"Anndi McAfee"},{id:2387,name:"Patrick Stewart"},{id:109513,name:"Alexandra Daddario"},{id:976,name:"Jason Statham"},{id:9278,name:"Jennifer Garner"},{id:31,name:"Tom Hanks"},{id:1059597,name:"Zoey Deutch"},{id:1173984,name:"Olivia Cooke"},{id:115440,name:"Sydney Sweeney"},{id:73968,name:"Henry Cavill"},{id:1245,name:"Scarlett Johansson"},{id:550843,name:"Elizabeth Olsen"},{id:18897,name:"Jackie Chan"},{id:1108907,name:"Nick Robinson"},{id:65731,name:"Sam Worthington"},{id:287,name:"Brad Pitt"},{id:1813,name:"Anne Hathaway"},{id:1186941,name:"Mika Abdalla"},{id:64439,name:"Fan Bingbing"},{id:289,name:"Madeleine Stowe"},{id:505710,name:"Zendaya"},{id:500,name:"Tom Cruise"},{id:64,name:"Gary Oldman"},{id:974169,name:"Jenna Ortega"},{id:84788,name:"Kim Moo-yul"},{id:2963,name:"Nicolas Cage"},{id:5081,name:"Emily Blunt"},{id:117642,name:"Jason Momoa"},{id:1892,name:"Matt Damon"},{id:17521,name:"Kelly Reilly"},{id:1253360,name:"Pedro Pascal"},{id:12835,name:"Vin Diesel"},{id:6161,name:"Jennifer Connelly"},{id:54882,name:"Morena Baccarin"},{id:6384,name:"Keanu Reeves"},{id:5887,name:"Catalina Sandino Moreno"},{id:8767,name:"Jim Caviezel"},{id:1372369,name:"Samara Weaving"},{id:18918,name:"Dwayne Johnson"},{id:1356210,name:"Millie Bobby Brown"},{id:76070,name:"Mia Wasikowska"},{id:2786960,name:"Gabriel Guevara"},{id:1172108,name:"Mckenna Grace"},{id:30614,name:"Ryan Gosling"},{id:14061,name:"Jacqueline Bisset"},{id:6856,name:"Kurt Russell"},{id:2604515,name:"Emma Myers"},{id:234352,name:"Margot Robbie"},{id:4808,name:"Giancarlo Esposito"},{id:49624,name:"Jensen Ackles"},{id:192,name:"Morgan Freeman"},{id:205,name:"Kirsten Dunst"},{id:18999,name:"J.K. Simmons"},{id:1190668,name:"Timothée Chalamet"},{id:224513,name:"Ana de Armas"},{id:16501,name:"Milo Ventimiglia"},{id:1136406,name:"Tom Holland"},{id:1397778,name:"Anya Taylor-Joy"},{id:7056,name:"Emma Thompson"},{id:5292,name:"Denzel Washington"},{id:11023,name:"Shawn Ashmore"},{id:16483,name:"Sylvester Stallone"},{id:989411,name:"Ella Hunt"},{id:6195,name:"Harold Perrineau"},{id:2034418,name:"Jacob Elordi"},{id:54693,name:"Emma Stone"},{id:2749024,name:"Avantika"},{id:9273,name:"Amy Adams"},{id:90130,name:"Aaron Ashmore"},{id:1580,name:"Daveigh Chase"},{id:19498,name:"Jon Bernthal"},{id:6574,name:"Clancy Brown"},{id:47296,name:"Jeffrey Dean Morgan"},{id:27972,name:"Josh Hutcherson"},{id:17276,name:"Gerard Butler"},{id:70851,name:"Jack Black"},{id:1425934,name:"Nicholas Galitzine"},{id:164945,name:"Sarah Shahi"},{id:10882,name:"Rosamund Pike"},{id:3223,name:"Robert Downey Jr."},{id:2203,name:"Neal McDonough"},{id:2227,name:"Nicole Kidman"},{id:2037,name:"Cillian Murphy"},{id:587020,name:"Theo James"},{id:131,name:"Jake Gyllenhaal"},{id:11701,name:"Angelina Jolie"},{id:18277,name:"Sandra Bullock"},{id:1372,name:"Karl Urban"},{id:73457,name:"Chris Pratt"},{id:91671,name:"Colman Domingo"},{id:3896,name:"Liam Neeson"},{id:1231,name:"Julianne Moore"},{id:524,name:"Natalie Portman"},{id:17401,name:"Stephen Root"},{id:1222992,name:"Eiza González"},{id:17303,name:"Ali Larter"},{id:56734,name:"Chloë Grace Moretz"},{id:380,name:"Robert De Niro"},{id:64295,name:"Alan Ritchson"},{id:85,name:"Johnny Depp"}];
-  const app=document.getElementById('cinereel-app');
+  const ACTOR_POOL=[{id:2387,name:"Patrick Stewart"},{id:109513,name:"Alexandra Daddario"},{id:976,name:"Jason Statham"},{id:9278,name:"Jennifer Garner"},{id:31,name:"Tom Hanks"},{id:1059597,name:"Zoey Deutch"},{id:1173984,name:"Olivia Cooke"},{id:115440,name:"Sydney Sweeney"},{id:73968,name:"Henry Cavill"},{id:1245,name:"Scarlett Johansson"},{id:550843,name:"Elizabeth Olsen"},{id:18897,name:"Jackie Chan"},{id:1108907,name:"Nick Robinson"},{id:65731,name:"Sam Worthington"},{id:287,name:"Brad Pitt"},{id:1813,name:"Anne Hathaway"},{id:64439,name:"Fan Bingbing"},{id:289,name:"Madeleine Stowe"},{id:505710,name:"Zendaya"},{id:500,name:"Tom Cruise"},{id:64,name:"Gary Oldman"},{id:974169,name:"Jenna Ortega"},{id:2963,name:"Nicolas Cage"},{id:5081,name:"Emily Blunt"},{id:117642,name:"Jason Momoa"},{id:1892,name:"Matt Damon"},{id:17521,name:"Kelly Reilly"},{id:1253360,name:"Pedro Pascal"},{id:12835,name:"Vin Diesel"},{id:6161,name:"Jennifer Connelly"},{id:54882,name:"Morena Baccarin"},{id:6384,name:"Keanu Reeves"},{id:8767,name:"Jim Caviezel"},{id:1372369,name:"Samara Weaving"},{id:18918,name:"Dwayne Johnson"},{id:1356210,name:"Millie Bobby Brown"},{id:76070,name:"Mia Wasikowska"},{id:1172108,name:"Mckenna Grace"},{id:30614,name:"Ryan Gosling"},{id:14061,name:"Jacqueline Bisset"},{id:6856,name:"Kurt Russell"},{id:2604515,name:"Emma Myers"},{id:234352,name:"Margot Robbie"},{id:4808,name:"Giancarlo Esposito"},{id:49624,name:"Jensen Ackles"},{id:192,name:"Morgan Freeman"},{id:205,name:"Kirsten Dunst"},{id:18999,name:"J.K. Simmons"},{id:1190668,name:"Timothée Chalamet"},{id:224513,name:"Ana de Armas"},{id:16501,name:"Milo Ventimiglia"},{id:1136406,name:"Tom Holland"},{id:1397778,name:"Anya Taylor-Joy"},{id:7056,name:"Emma Thompson"},{id:5292,name:"Denzel Washington"},{id:11023,name:"Shawn Ashmore"},{id:16483,name:"Sylvester Stallone"},{id:2034418,name:"Jacob Elordi"},{id:54693,name:"Emma Stone"},{id:9273,name:"Amy Adams"},{id:90130,name:"Aaron Ashmore"},{id:19498,name:"Jon Bernthal"},{id:47296,name:"Jeffrey Dean Morgan"},{id:27972,name:"Josh Hutcherson"},{id:17276,name:"Gerard Butler"},{id:70851,name:"Jack Black"},{id:1425934,name:"Nicholas Galitzine"},{id:164945,name:"Sarah Shahi"},{id:10882,name:"Rosamund Pike"},{id:3223,name:"Robert Downey Jr."},{id:2227,name:"Nicole Kidman"},{id:2037,name:"Cillian Murphy"},{id:587020,name:"Theo James"},{id:131,name:"Jake Gyllenhaal"},{id:11701,name:"Angelina Jolie"},{id:18277,name:"Sandra Bullock"},{id:1372,name:"Karl Urban"},{id:73457,name:"Chris Pratt"},{id:91671,name:"Colman Domingo"},{id:3896,name:"Liam Neeson"},{id:1231,name:"Julianne Moore"},{id:524,name:"Natalie Portman"},{id:1222992,name:"Eiza González"},{id:17303,name:"Ali Larter"},{id:56734,name:"Chloë Grace Moretz"},{id:380,name:"Robert De Niro"},{id:64295,name:"Alan Ritchson"},{id:85,name:"Johnny Depp"}];
   const stage=document.getElementById('stage');
   const isDaily=!/[?&]practice=1/.test(location.search);
   document.getElementById('modeLbl').textContent=isDaily?'Daily':'Practice';
 
   // ── helpers ───────────────────────────────────────────────
   const norm=s=>(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim();
-  function dateKey(){
-    try{const f=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Madrid',year:'numeric',month:'2-digit',day:'2-digit'});return f.format(new Date());}
-    catch(_){return new Date().toISOString().slice(0,10);}
-  }
   function hash(str){let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
   function rng(seed){let s=seed>>>0;return()=>{s=(Math.imul(1664525,s)+1013904223)&0xffffffff;return (s>>>0)/4294967296;};}
   function api(path){return fetch('/api/tmdb?path='+path+'&language=en-US').then(r=>r.json());}
@@ -92,6 +87,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   function utcDay(){const n=new Date();return Math.floor(Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),n.getUTCDate())/864e5);}
   function loadDone(){try{return JSON.parse(localStorage.getItem('cinereelState')||'null');}catch(_){return null;}}
   function saveDone(o){try{localStorage.setItem('cinereelState',JSON.stringify(o));}catch(_){}}
+  function face(pp){return pp?IMG+'w185'+pp:'/logo.png';} // headshot with a safe fallback
 
   // ── pick a target actor + build the reveal set ────────────
   // How strongly a credit identifies the actor: title fame × how central they are
@@ -131,7 +127,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   async function pickTarget(){
     // Daily: deterministic pick from the curated pool (same actor for everyone, all day).
     if(isDaily){
-      const order=shuffleSeeded(ACTOR_POOL, hash('cinereel-'+dateKey()));
+      const order=shuffleSeeded(ACTOR_POOL, hash('cinereel-'+utcDay()));
       for(const a of order){ const t=await fromPerson(a); if(t) return t; }
     } else {
       // Practice: random from the pool, skipping recently-seen actors.
@@ -223,12 +219,12 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     const reels=won?guesses.length:T.reveal.length;
     const p=T.person;
     if(isDaily) saveDone({day:utcDay(),finished:true,won:won,reels:reels,name:p.name,photo:p.profile_path});
-    const day=Math.floor((Date.parse(dateKey())-Date.parse('2026-01-01'))/864e5);
+    const day=utcDay()-Math.floor(Date.UTC(2026,0,1)/864e5);
     const squares=guesses.map(g=>g.win?'🟩':'🟥').join('');
     const share='🎬 CineReel'+(isDaily?' #'+day:'')+'\n'+squares+' ('+reels+' '+(reels===1?'reel':'reels')+')\nhttps://cinelinks.vercel.app/cinereel.html';
     document.getElementById('result').innerHTML=
       '<h2 class="'+(won?'win':'')+'">'+(won?'Got it!':'So close!')+'</h2>'+
-      '<div class="who"><img src="'+IMG+'w185'+p.profile_path+'" alt=""><div><div class="nm">'+p.name+'</div>'+
+      '<div class="who"><img src="'+face(p.profile_path)+'" alt=""><div><div class="nm">'+p.name+'</div>'+
         '<div class="sub">'+(won?('solved in '+reels+' '+(reels===1?'guess':'guesses')):'the answer')+'</div></div></div>'+
       '<div class="row"><button class="btn" id="shareBtn">Share</button><button class="btn gold" id="again">'+(isDaily?'Practice':'New career')+'</button></div>';
     document.getElementById('again').onclick=()=>{location.href='/cinereel.html'+(isDaily?'?practice=1':'?practice=1&r='+Date.now());};
@@ -241,7 +237,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   function renderReplay(d){
     stage.innerHTML='<div class="result show">'+
       '<h2 class="'+(d.won?'win':'')+'">'+(d.won?'Solved today':'Today’s answer')+'</h2>'+
-      '<div class="who"><img src="'+IMG+'w185'+d.photo+'" alt=""><div><div class="nm">'+d.name+'</div>'+
+      '<div class="who"><img src="'+face(d.photo)+'" alt=""><div><div class="nm">'+d.name+'</div>'+
       '<div class="sub">'+(d.won?('solved in '+d.reels+' '+(d.reels===1?'guess':'guesses')):'come back tomorrow')+'</div></div></div>'+
       '<div class="row"><button class="btn gold" id="again">Practice</button></div>';
     document.getElementById('again').onclick=()=>{location.href='/cinereel.html?practice=1';};
