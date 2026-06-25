@@ -1206,10 +1206,13 @@ function filterTvShows(results) {
 }
 
 async function fetchChallengePools(pages) {
+  // Practice/Random pulls from a WIDE but recognisable set: Discover sorted by
+  // vote_count (well-known films/shows) across a big page range, instead of just
+  // the same ~top-20 of movie/popular. Daily is unaffected (it uses DAILY_POOL).
   const [pd, md, td] = await Promise.all([
     api('person/popular&language=en-US&page=' + pages.people),
-    api('movie/popular&language=en-US&page=' + pages.movies),
-    api('tv/popular&language=en-US&page=' + pages.tv)
+    api('discover/movie&language=en-US&with_original_language=en&sort_by=vote_count.desc&vote_count.gte=400&include_adult=false&page=' + pages.movies),
+    api('discover/tv&language=en-US&with_original_language=en&sort_by=vote_count.desc&vote_count.gte=200&include_adult=false&page=' + pages.tv)
   ]);
   return {
     people: filterPeople(pd.results),
@@ -1806,9 +1809,9 @@ const game = window.game = {
       let challenge = null;
       for (let attempt = 0; attempt < 4; attempt++) {
         const pools = await fetchChallengePools({
-          people: randInt(1, 5),
-          movies: randInt(1, 8),
-          tv: randInt(1, 6)
+          people: randInt(1, 8),
+          movies: randInt(1, 40),
+          tv: randInt(1, 20)
         });
         const candidate = buildChallenge(pools.people, pools.titles);
         if (!candidate) continue;
