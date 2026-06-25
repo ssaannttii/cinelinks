@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CineReel — Whose filmography is this?</title>
+<meta name="description" content="Guess the actor from their films, revealed one poster at a time — from deep cut to blockbuster.">
+<meta name="theme-color" content="#0d0d0d">
+<link rel="icon" type="image/png" href="/logo.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0d0d0d;--s1:#181818;--bdr:rgba(255,255,255,.1);--txt:#f0f0f0;--mut:#8d8d8d;--gold:#e8a000;--good:#5bbd7a}
+body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(circle at 50% -10%,rgba(232,160,0,.10),transparent 36%),linear-gradient(180deg,#101010,var(--bg) 340px);color:var(--txt);min-height:100vh;display:flex}
+.wrap{max-width:560px;margin:auto;padding:26px 18px 70px;width:100%;text-align:center}
+.logo{font-size:2rem;font-weight:800;letter-spacing:-.02em}
+.logo b{color:var(--gold)}
+.tag{color:var(--mut);font-size:.9rem;margin:6px 0 4px}
+.kicker{color:var(--gold);font-weight:700;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:20px}
+.board{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 auto 18px;max-width:430px}
+.cell{aspect-ratio:2/3;border-radius:10px;border:1px solid var(--bdr);background:var(--s1);overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center}
+.cell img{width:100%;height:100%;object-fit:cover;animation:pop .35s cubic-bezier(.22,1,.36,1)}
+.cell .lock{color:#3a3a3a;font-size:1.6rem;font-weight:800}
+.cell .yr{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(transparent,rgba(0,0,0,.82));color:#fff;font-size:.62rem;font-weight:600;padding:14px 4px 4px;letter-spacing:.03em}
+.cell.next{border-color:rgba(232,160,0,.45);box-shadow:0 0 0 2px rgba(232,160,0,.18)}
+@keyframes pop{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+.dots{display:flex;gap:6px;justify-content:center;margin:0 0 16px}
+.dot{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.16)}
+.dot.used{background:#c0494a}
+.dot.win{background:var(--good)}
+.guess{position:relative;max-width:420px;margin:0 auto}
+.guess input{width:100%;padding:13px 15px;border-radius:11px;border:1px solid var(--bdr);background:rgba(255,255,255,.05);color:var(--txt);font-family:inherit;font-size:.95rem;outline:none}
+.guess input:focus{border-color:rgba(232,160,0,.55)}
+.ac{position:absolute;left:0;right:0;top:54px;background:#1c1c1c;border:1px solid var(--bdr);border-radius:11px;overflow:hidden;z-index:5;text-align:left;box-shadow:0 18px 50px rgba(0,0,0,.5)}
+.ac-item{display:flex;align-items:center;gap:10px;padding:8px 11px;cursor:pointer}
+.ac-item:hover,.ac-item.sel{background:rgba(232,160,0,.12)}
+.ac-item img{width:30px;height:42px;object-fit:cover;border-radius:5px;background:#333;flex-shrink:0}
+.ac-item .nm{font-weight:600;font-size:.88rem}
+.ac-item .kf{color:var(--mut);font-size:.72rem}
+.row{display:flex;gap:8px;max-width:420px;margin:10px auto 0}
+.btn{flex:1;padding:11px;border-radius:11px;border:1px solid var(--bdr);background:transparent;color:var(--txt);font-family:inherit;font-weight:700;font-size:.85rem;cursor:pointer}
+.btn.gold{background:var(--gold);color:#111;border-color:var(--gold)}
+.btn:hover{opacity:.92}
+.miss{min-height:20px;color:#d98b8b;font-size:.8rem;margin-top:10px}
+.result{margin-top:18px;padding:18px;border-radius:14px;border:1px solid var(--bdr);background:rgba(255,255,255,.04);display:none}
+.result.show{display:block;animation:pop .4s both}
+.result h2{font-size:1.3rem;margin-bottom:4px}
+.result h2.win{color:var(--good)}
+.result .who{display:flex;align-items:center;gap:12px;justify-content:center;margin:12px 0}
+.result .who img{width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid var(--gold)}
+.result .who .nm{font-weight:800;font-size:1.05rem;text-align:left}
+.result .who .sub{color:var(--mut);font-size:.8rem}
+.loading{color:var(--mut);font-size:.9rem;padding:40px 0}
+.foot{margin-top:26px;color:var(--mut);font-size:.74rem}
+.foot a{color:var(--gold);text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap" id="cinereel-app">
+  <div class="logo">Cine<b>Reel</b></div>
+  <div class="tag">Whose filmography is this?</div>
+  <div class="kicker" id="modeLbl">Daily</div>
+  <div id="stage"><div class="loading">Loading a career…</div></div>
+  <div class="foot">Posters &amp; data from TMDB · part of <a href="/">CineLinks</a></div>
+</div>
+
+<script>
+(function(){
+  const IMG='https://image.tmdb.org/t/p/';
+  const REVEALS=6;            // max posters / guesses
+  const VOTE_FLOOR=250;       // recognisability gate
+  const app=document.getElementById('cinereel-app');
+  const stage=document.getElementById('stage');
+  const isDaily=!/[?&]practice=1/.test(location.search);
+  document.getElementById('modeLbl').textContent=isDaily?'Daily':'Practice';
+
+  // ── helpers ───────────────────────────────────────────────
+  const norm=s=>(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim();
+  function dateKey(){
+    try{const f=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Madrid',year:'numeric',month:'2-digit',day:'2-digit'});return f.format(new Date());}
+    catch(_){return new Date().toISOString().slice(0,10);}
+  }
+  function hash(str){let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+  function rng(seed){let s=seed>>>0;return()=>{s=(Math.imul(1664525,s)+1013904223)&0xffffffff;return (s>>>0)/4294967296;};}
+  function api(path){return fetch('/api/tmdb?path='+path+'&language=en-US').then(r=>r.json());}
+  function debounce(fn,ms){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms);};}
+
+  // ── pick a target actor + build the reveal set ────────────
+  async function buildCredits(personId){
+    const cc=await api('person/'+personId+'/combined_credits');
+    const seen=new Set();
+    const films=(cc.cast||[])
+      .filter(c=>c.poster_path && (c.vote_count||0)>=VOTE_FLOOR && c.media_type==='movie' && c.character && !/\b(self|himself|herself|host|presenter|narrator)\b/i.test(c.character))
+      .filter(c=>{const k=c.media_type+c.id;if(seen.has(k))return false;seen.add(k);return true;})
+      .map(c=>({title:c.title||c.name,year:(c.release_date||c.first_air_date||'').slice(0,4),votes:c.vote_count,poster:c.poster_path}))
+      .sort((a,b)=>b.votes-a.votes);
+    return films;
+  }
+  // reveal order: spread from a mid-tier deep cut up to the signature hit
+  function revealSet(films){
+    const band=films.slice(0,16);
+    const n=band.length, k=Math.min(REVEALS,n);
+    const hi=Math.min(n-1,11);
+    const idx=[];
+    for(let i=0;i<k;i++){const frac=k>1?i/(k-1):0;idx.push(Math.round(hi*(1-frac)));} // hi(obscure)→0(iconic)
+    const uniq=[...new Set(idx)];
+    return uniq.map(i=>band[i]);
+  }
+  async function pickTarget(){
+    const seed=isDaily?hash('cinereel-'+dateKey()):Math.floor(Math.random()*1e9);
+    const r=rng(seed);
+    for(let attempt=0;attempt<8;attempt++){
+      const page=1+Math.floor(r()*20);
+      const pp=await api('person/popular&page='+page);
+      const cands=(pp.results||[]).filter(p=>p.known_for_department==='Acting'&&p.profile_path);
+      if(!cands.length) continue;
+      const person=cands[Math.floor(r()*cands.length)];
+      const films=await buildCredits(person.id);
+      if(films.length>=4) return {person,reveal:revealSet(films)};
+    }
+    return null;
+  }
+
+  // ── game state ────────────────────────────────────────────
+  let T=null, shown=1, guesses=[], over=false;
+
+  function render(){
+    const reveal=T.reveal, total=reveal.length;
+    let cells='';
+    for(let i=0;i<total;i++){
+      const f=reveal[i];
+      if(i<shown||over){
+        cells+='<div class="cell"><img src="'+IMG+'w342'+f.poster+'" alt=""><span class="yr">'+(f.year||'')+'</span></div>';
+      }else{
+        cells+='<div class="cell'+(i===shown?' next':'')+'"><span class="lock">?</span></div>';
+      }
+    }
+    let dots='';
+    for(let i=0;i<total;i++){
+      let c='dot';
+      if(over && !guesses.some(g=>g.win) && i<shown) c='dot used';
+      else if(guesses[i] && guesses[i].win) c='dot win';
+      else if(guesses[i]) c='dot used';
+      dots+='<div class="'+c+'"></div>';
+    }
+    stage.innerHTML=
+      '<div class="board">'+cells+'</div>'+
+      '<div class="dots">'+dots+'</div>'+
+      (over?'':
+        '<div class="guess"><input id="gi" type="text" autocomplete="off" placeholder="Name the actor…"><div class="ac" id="ac" style="display:none"></div></div>'+
+        '<div class="row"><button class="btn" id="skip">Skip ('+(total-shown)+' left)</button><button class="btn gold" id="go">Guess</button></div>'+
+        '<div class="miss" id="miss"></div>')+
+      '<div class="result'+(over?' show':'')+'" id="result"></div>';
+    if(over) renderResult(); else wireInputs();
+  }
+
+  function wireInputs(){
+    const gi=document.getElementById('gi'), ac=document.getElementById('ac');
+    document.getElementById('go').onclick=()=>submit(gi.value);
+    document.getElementById('skip').onclick=()=>advance(false,null);
+    gi.focus();
+    let sel=-1, items=[];
+    gi.addEventListener('keydown',e=>{
+      if(e.key==='Enter'){ if(sel>=0&&items[sel]) submit(items[sel].name); else submit(gi.value); }
+      else if(e.key==='ArrowDown'){sel=Math.min(sel+1,items.length-1);paint();e.preventDefault();}
+      else if(e.key==='ArrowUp'){sel=Math.max(sel-1,0);paint();e.preventDefault();}
+    });
+    function paint(){[...ac.children].forEach((el,i)=>el.classList.toggle('sel',i===sel));}
+    const lookup=debounce(async q=>{
+      if(q.trim().length<2){ac.style.display='none';return;}
+      const res=await api('search/multi&query='+encodeURIComponent(q));
+      items=(res.results||[]).filter(x=>x.media_type==='person'&&x.profile_path).slice(0,6);
+      if(!items.length){ac.style.display='none';return;}
+      ac.innerHTML=items.map((p,i)=>
+        '<div class="ac-item" data-i="'+i+'"><img src="'+IMG+'w185'+p.profile_path+'" alt=""><div><div class="nm">'+p.name+'</div><div class="kf">'+((p.known_for||[]).slice(0,2).map(k=>k.title||k.name).filter(Boolean).join(', ')||'Actor')+'</div></div></div>').join('');
+      sel=-1; ac.style.display='block';
+      [...ac.children].forEach(el=>el.onclick=()=>submit(items[+el.dataset.i].name));
+    },240);
+    gi.addEventListener('input',()=>lookup(gi.value));
+  }
+
+  function submit(name){
+    if(over||!name||!name.trim()) return;
+    const win=norm(name)===norm(T.person.name);
+    advance(win,name.trim());
+  }
+  function advance(win,name){
+    guesses.push({name:name||'(skipped)',win});
+    if(win){ over=true; render(); return; }
+    if(shown>=T.reveal.length){ over=true; render(); return; } // out of posters
+    shown++;
+    render();
+    const m=document.getElementById('miss');
+    if(m&&name) m.textContent='“'+name+'” — nope. One more poster…';
+  }
+
+  function renderResult(){
+    const won=guesses.some(g=>g.win);
+    const reels=won?guesses.length:T.reveal.length;
+    const p=T.person;
+    const day=Math.floor((Date.parse(dateKey())-Date.parse('2026-01-01'))/864e5);
+    const squares=guesses.map(g=>g.win?'🟩':'🟥').join('');
+    const share='🎬 CineReel'+(isDaily?' #'+day:'')+'\n'+squares+' ('+reels+' '+(reels===1?'reel':'reels')+')\nhttps://cinelinks.vercel.app/cinereel.html';
+    document.getElementById('result').innerHTML=
+      '<h2 class="'+(won?'win':'')+'">'+(won?'Got it!':'So close!')+'</h2>'+
+      '<div class="who"><img src="'+IMG+'w185'+p.profile_path+'" alt=""><div><div class="nm">'+p.name+'</div>'+
+        '<div class="sub">'+(won?('solved in '+reels+' '+(reels===1?'poster':'posters')):'the answer')+'</div></div></div>'+
+      '<div class="row"><button class="btn" id="shareBtn">Share</button><button class="btn gold" id="again">'+(isDaily?'Practice':'New career')+'</button></div>';
+    document.getElementById('again').onclick=()=>{location.href='/cinereel.html'+(isDaily?'?practice=1':'?practice=1&r='+Date.now());};
+    document.getElementById('shareBtn').onclick=()=>{
+      if(navigator.share){navigator.share({text:share}).catch(()=>{});}
+      else{navigator.clipboard&&navigator.clipboard.writeText(share);const b=document.getElementById('shareBtn');b.textContent='Copied ✓';}
+    };
+  }
+
+  // ── boot ──────────────────────────────────────────────────
+  (async()=>{
+    try{
+      T=await pickTarget();
+      if(!T){stage.innerHTML='<div class="loading">Couldn’t load a career. Reload?</div>';return;}
+      shown=1; guesses=[]; over=false; render();
+    }catch(e){stage.innerHTML='<div class="loading">Error: '+e.message+'</div>';}
+  })();
+})();
+</script>
+</body>
+</html>
