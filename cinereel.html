@@ -69,7 +69,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 (function(){
   const IMG='https://image.tmdb.org/t/p/';
   const REVEALS=6;            // total posters available
-  const START=3;              // posters shown at once from the first guess (triangulation)
+  const START=1;              // posters shown at the first guess (then one more per miss)
   const VOTE_FLOOR=250;       // recognisability gate
   const ACTOR_POOL=[{id:35224,name:"Anndi McAfee"},{id:2387,name:"Patrick Stewart"},{id:109513,name:"Alexandra Daddario"},{id:976,name:"Jason Statham"},{id:9278,name:"Jennifer Garner"},{id:31,name:"Tom Hanks"},{id:1059597,name:"Zoey Deutch"},{id:1173984,name:"Olivia Cooke"},{id:115440,name:"Sydney Sweeney"},{id:73968,name:"Henry Cavill"},{id:1245,name:"Scarlett Johansson"},{id:550843,name:"Elizabeth Olsen"},{id:18897,name:"Jackie Chan"},{id:1108907,name:"Nick Robinson"},{id:65731,name:"Sam Worthington"},{id:287,name:"Brad Pitt"},{id:1813,name:"Anne Hathaway"},{id:1186941,name:"Mika Abdalla"},{id:64439,name:"Fan Bingbing"},{id:289,name:"Madeleine Stowe"},{id:505710,name:"Zendaya"},{id:500,name:"Tom Cruise"},{id:64,name:"Gary Oldman"},{id:974169,name:"Jenna Ortega"},{id:84788,name:"Kim Moo-yul"},{id:2963,name:"Nicolas Cage"},{id:5081,name:"Emily Blunt"},{id:117642,name:"Jason Momoa"},{id:1892,name:"Matt Damon"},{id:17521,name:"Kelly Reilly"},{id:1253360,name:"Pedro Pascal"},{id:12835,name:"Vin Diesel"},{id:6161,name:"Jennifer Connelly"},{id:54882,name:"Morena Baccarin"},{id:6384,name:"Keanu Reeves"},{id:5887,name:"Catalina Sandino Moreno"},{id:8767,name:"Jim Caviezel"},{id:1372369,name:"Samara Weaving"},{id:18918,name:"Dwayne Johnson"},{id:1356210,name:"Millie Bobby Brown"},{id:76070,name:"Mia Wasikowska"},{id:2786960,name:"Gabriel Guevara"},{id:1172108,name:"Mckenna Grace"},{id:30614,name:"Ryan Gosling"},{id:14061,name:"Jacqueline Bisset"},{id:6856,name:"Kurt Russell"},{id:2604515,name:"Emma Myers"},{id:234352,name:"Margot Robbie"},{id:4808,name:"Giancarlo Esposito"},{id:49624,name:"Jensen Ackles"},{id:192,name:"Morgan Freeman"},{id:205,name:"Kirsten Dunst"},{id:18999,name:"J.K. Simmons"},{id:1190668,name:"Timothée Chalamet"},{id:224513,name:"Ana de Armas"},{id:16501,name:"Milo Ventimiglia"},{id:1136406,name:"Tom Holland"},{id:1397778,name:"Anya Taylor-Joy"},{id:7056,name:"Emma Thompson"},{id:5292,name:"Denzel Washington"},{id:11023,name:"Shawn Ashmore"},{id:16483,name:"Sylvester Stallone"},{id:989411,name:"Ella Hunt"},{id:6195,name:"Harold Perrineau"},{id:2034418,name:"Jacob Elordi"},{id:54693,name:"Emma Stone"},{id:2749024,name:"Avantika"},{id:9273,name:"Amy Adams"},{id:90130,name:"Aaron Ashmore"},{id:1580,name:"Daveigh Chase"},{id:19498,name:"Jon Bernthal"},{id:6574,name:"Clancy Brown"},{id:47296,name:"Jeffrey Dean Morgan"},{id:27972,name:"Josh Hutcherson"},{id:17276,name:"Gerard Butler"},{id:70851,name:"Jack Black"},{id:1425934,name:"Nicholas Galitzine"},{id:164945,name:"Sarah Shahi"},{id:10882,name:"Rosamund Pike"},{id:3223,name:"Robert Downey Jr."},{id:2203,name:"Neal McDonough"},{id:2227,name:"Nicole Kidman"},{id:2037,name:"Cillian Murphy"},{id:587020,name:"Theo James"},{id:131,name:"Jake Gyllenhaal"},{id:11701,name:"Angelina Jolie"},{id:18277,name:"Sandra Bullock"},{id:1372,name:"Karl Urban"},{id:73457,name:"Chris Pratt"},{id:91671,name:"Colman Domingo"},{id:3896,name:"Liam Neeson"},{id:1231,name:"Julianne Moore"},{id:524,name:"Natalie Portman"},{id:17401,name:"Stephen Root"},{id:1222992,name:"Eiza González"},{id:17303,name:"Ali Larter"},{id:56734,name:"Chloë Grace Moretz"},{id:380,name:"Robert De Niro"},{id:64295,name:"Alan Ritchson"},{id:85,name:"Johnny Depp"}];
   const app=document.getElementById('cinereel-app');
@@ -114,16 +114,11 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
       .map(c=>({title:c.title||c.name,year:(c.release_date||c.first_air_date||'').slice(0,4),votes:c.vote_count,order:c.order,score:ident(c.vote_count,c.order),poster:c.poster_path}))
       .sort((a,b)=>b.score-a.score); // most identifying first
   }
-  // Pick 6 notable films and order them notable→signature. We show 3 at once so the
-  // player can triangulate the one actor common to all; each miss reveals a more
-  // identifying role, ending on their signature lead.
+  // Their SIX most identifying films (fame × how central they are), revealed one at
+  // a time from the least-known of those six up to their signature lead. Every poster
+  // is a real, known role of theirs — the ramp just goes deep-ish hit → iconic.
   function revealSet(films){
-    const band=films.slice(0,12);            // keep everything genuinely notable
-    const n=band.length, k=Math.min(REVEALS,n);
-    const hi=Math.min(n-1,9);                // open on a notable (not obscure) role
-    const idx=[];
-    for(let i=0;i<k;i++){const frac=k>1?i/(k-1):0;idx.push(Math.round(hi*(1-frac)));} // band[hi]=hardest … band[0]=signature lead
-    return [...new Set(idx)].map(i=>band[i]);
+    return films.slice(0,REVEALS).reverse();
   }
   // recent actors seen in Practice — skipped next time so it doesn't repeat
   function seenIds(){try{return JSON.parse(localStorage.getItem('cinereelSeen')||'[]');}catch(_){return[];}}
@@ -175,7 +170,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
       '<div class="board">'+cells+'</div>'+
       '<div class="dots">'+dots+'</div>'+
       (over?'':
-        '<div class="hint">Which actor stars in all of these?</div>'+
+        '<div class="hint">Whose films are these?</div>'+
         '<div class="guess"><input id="gi" type="text" autocomplete="off" placeholder="Name the actor…"><div class="ac" id="ac" style="display:none"></div></div>'+
         '<div class="row"><button class="btn" id="skip">Reveal one more ('+(total-shown)+' left)</button><button class="btn gold" id="go">Guess</button></div>'+
         '<div class="miss" id="miss"></div>')+
