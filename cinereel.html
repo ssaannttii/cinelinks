@@ -28,6 +28,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .dot{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.16)}
 .dot.used{background:#c0494a}
 .dot.win{background:var(--good)}
+.hint{color:var(--mut);font-size:.82rem;margin:0 0 12px}
 .guess{position:relative;max-width:420px;margin:0 auto}
 .guess input{width:100%;padding:13px 15px;border-radius:11px;border:1px solid var(--bdr);background:rgba(255,255,255,.05);color:var(--txt);font-family:inherit;font-size:.95rem;outline:none}
 .guess input:focus{border-color:rgba(232,160,0,.55)}
@@ -67,7 +68,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 <script>
 (function(){
   const IMG='https://image.tmdb.org/t/p/';
-  const REVEALS=6;            // max posters / guesses
+  const REVEALS=6;            // total posters available
+  const START=3;              // posters shown at once from the first guess (triangulation)
   const VOTE_FLOOR=250;       // recognisability gate
   const ACTOR_POOL=[{id:35224,name:"Anndi McAfee"},{id:2387,name:"Patrick Stewart"},{id:109513,name:"Alexandra Daddario"},{id:976,name:"Jason Statham"},{id:9278,name:"Jennifer Garner"},{id:31,name:"Tom Hanks"},{id:1059597,name:"Zoey Deutch"},{id:1173984,name:"Olivia Cooke"},{id:115440,name:"Sydney Sweeney"},{id:73968,name:"Henry Cavill"},{id:1245,name:"Scarlett Johansson"},{id:550843,name:"Elizabeth Olsen"},{id:18897,name:"Jackie Chan"},{id:1108907,name:"Nick Robinson"},{id:65731,name:"Sam Worthington"},{id:287,name:"Brad Pitt"},{id:1813,name:"Anne Hathaway"},{id:1186941,name:"Mika Abdalla"},{id:64439,name:"Fan Bingbing"},{id:289,name:"Madeleine Stowe"},{id:505710,name:"Zendaya"},{id:500,name:"Tom Cruise"},{id:64,name:"Gary Oldman"},{id:974169,name:"Jenna Ortega"},{id:84788,name:"Kim Moo-yul"},{id:2963,name:"Nicolas Cage"},{id:5081,name:"Emily Blunt"},{id:117642,name:"Jason Momoa"},{id:1892,name:"Matt Damon"},{id:17521,name:"Kelly Reilly"},{id:1253360,name:"Pedro Pascal"},{id:12835,name:"Vin Diesel"},{id:6161,name:"Jennifer Connelly"},{id:54882,name:"Morena Baccarin"},{id:6384,name:"Keanu Reeves"},{id:5887,name:"Catalina Sandino Moreno"},{id:8767,name:"Jim Caviezel"},{id:1372369,name:"Samara Weaving"},{id:18918,name:"Dwayne Johnson"},{id:1356210,name:"Millie Bobby Brown"},{id:76070,name:"Mia Wasikowska"},{id:2786960,name:"Gabriel Guevara"},{id:1172108,name:"Mckenna Grace"},{id:30614,name:"Ryan Gosling"},{id:14061,name:"Jacqueline Bisset"},{id:6856,name:"Kurt Russell"},{id:2604515,name:"Emma Myers"},{id:234352,name:"Margot Robbie"},{id:4808,name:"Giancarlo Esposito"},{id:49624,name:"Jensen Ackles"},{id:192,name:"Morgan Freeman"},{id:205,name:"Kirsten Dunst"},{id:18999,name:"J.K. Simmons"},{id:1190668,name:"Timothée Chalamet"},{id:224513,name:"Ana de Armas"},{id:16501,name:"Milo Ventimiglia"},{id:1136406,name:"Tom Holland"},{id:1397778,name:"Anya Taylor-Joy"},{id:7056,name:"Emma Thompson"},{id:5292,name:"Denzel Washington"},{id:11023,name:"Shawn Ashmore"},{id:16483,name:"Sylvester Stallone"},{id:989411,name:"Ella Hunt"},{id:6195,name:"Harold Perrineau"},{id:2034418,name:"Jacob Elordi"},{id:54693,name:"Emma Stone"},{id:2749024,name:"Avantika"},{id:9273,name:"Amy Adams"},{id:90130,name:"Aaron Ashmore"},{id:1580,name:"Daveigh Chase"},{id:19498,name:"Jon Bernthal"},{id:6574,name:"Clancy Brown"},{id:47296,name:"Jeffrey Dean Morgan"},{id:27972,name:"Josh Hutcherson"},{id:17276,name:"Gerard Butler"},{id:70851,name:"Jack Black"},{id:1425934,name:"Nicholas Galitzine"},{id:164945,name:"Sarah Shahi"},{id:10882,name:"Rosamund Pike"},{id:3223,name:"Robert Downey Jr."},{id:2203,name:"Neal McDonough"},{id:2227,name:"Nicole Kidman"},{id:2037,name:"Cillian Murphy"},{id:587020,name:"Theo James"},{id:131,name:"Jake Gyllenhaal"},{id:11701,name:"Angelina Jolie"},{id:18277,name:"Sandra Bullock"},{id:1372,name:"Karl Urban"},{id:73457,name:"Chris Pratt"},{id:91671,name:"Colman Domingo"},{id:3896,name:"Liam Neeson"},{id:1231,name:"Julianne Moore"},{id:524,name:"Natalie Portman"},{id:17401,name:"Stephen Root"},{id:1222992,name:"Eiza González"},{id:17303,name:"Ali Larter"},{id:56734,name:"Chloë Grace Moretz"},{id:380,name:"Robert De Niro"},{id:64295,name:"Alan Ritchson"},{id:85,name:"Johnny Depp"}];
   const app=document.getElementById('cinereel-app');
@@ -112,11 +114,13 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
       .map(c=>({title:c.title||c.name,year:(c.release_date||c.first_air_date||'').slice(0,4),votes:c.vote_count,order:c.order,score:ident(c.vote_count,c.order),poster:c.poster_path}))
       .sort((a,b)=>b.score-a.score); // most identifying first
   }
-  // Reveal hard→easy: open on a buried / less-iconic role, END on their signature lead.
+  // Pick 6 notable films and order them notable→signature. We show 3 at once so the
+  // player can triangulate the one actor common to all; each miss reveals a more
+  // identifying role, ending on their signature lead.
   function revealSet(films){
-    const band=films.slice(0,20);
+    const band=films.slice(0,12);            // keep everything genuinely notable
     const n=band.length, k=Math.min(REVEALS,n);
-    const hi=Math.min(n-1,15);
+    const hi=Math.min(n-1,9);                // open on a notable (not obscure) role
     const idx=[];
     for(let i=0;i<k;i++){const frac=k>1?i/(k-1):0;idx.push(Math.round(hi*(1-frac)));} // band[hi]=hardest … band[0]=signature lead
     return [...new Set(idx)].map(i=>band[i]);
@@ -159,11 +163,11 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
         cells+='<div class="cell'+(i===shown?' next':'')+'"><span class="lock">?</span></div>';
       }
     }
+    const attempts=total-START+1;            // one guess per state from START..total posters
     let dots='';
-    for(let i=0;i<total;i++){
+    for(let i=0;i<attempts;i++){
       let c='dot';
-      if(over && !guesses.some(g=>g.win) && i<shown) c='dot used';
-      else if(guesses[i] && guesses[i].win) c='dot win';
+      if(guesses[i] && guesses[i].win) c='dot win';
       else if(guesses[i]) c='dot used';
       dots+='<div class="'+c+'"></div>';
     }
@@ -171,8 +175,9 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
       '<div class="board">'+cells+'</div>'+
       '<div class="dots">'+dots+'</div>'+
       (over?'':
+        '<div class="hint">Which actor stars in all of these?</div>'+
         '<div class="guess"><input id="gi" type="text" autocomplete="off" placeholder="Name the actor…"><div class="ac" id="ac" style="display:none"></div></div>'+
-        '<div class="row"><button class="btn" id="skip">Skip ('+(total-shown)+' left)</button><button class="btn gold" id="go">Guess</button></div>'+
+        '<div class="row"><button class="btn" id="skip">Reveal one more ('+(total-shown)+' left)</button><button class="btn gold" id="go">Guess</button></div>'+
         '<div class="miss" id="miss"></div>')+
       '<div class="result'+(over?' show':'')+'" id="result"></div>';
     if(over) renderResult(); else wireInputs();
@@ -229,7 +234,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     document.getElementById('result').innerHTML=
       '<h2 class="'+(won?'win':'')+'">'+(won?'Got it!':'So close!')+'</h2>'+
       '<div class="who"><img src="'+IMG+'w185'+p.profile_path+'" alt=""><div><div class="nm">'+p.name+'</div>'+
-        '<div class="sub">'+(won?('solved in '+reels+' '+(reels===1?'poster':'posters')):'the answer')+'</div></div></div>'+
+        '<div class="sub">'+(won?('solved in '+reels+' '+(reels===1?'guess':'guesses')):'the answer')+'</div></div></div>'+
       '<div class="row"><button class="btn" id="shareBtn">Share</button><button class="btn gold" id="again">'+(isDaily?'Practice':'New career')+'</button></div>';
     document.getElementById('again').onclick=()=>{location.href='/cinereel.html'+(isDaily?'?practice=1':'?practice=1&r='+Date.now());};
     document.getElementById('shareBtn').onclick=()=>{
@@ -242,7 +247,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     stage.innerHTML='<div class="result show">'+
       '<h2 class="'+(d.won?'win':'')+'">'+(d.won?'Solved today':'Today’s answer')+'</h2>'+
       '<div class="who"><img src="'+IMG+'w185'+d.photo+'" alt=""><div><div class="nm">'+d.name+'</div>'+
-      '<div class="sub">'+(d.won?('solved in '+d.reels+' '+(d.reels===1?'poster':'posters')):'come back tomorrow')+'</div></div></div>'+
+      '<div class="sub">'+(d.won?('solved in '+d.reels+' '+(d.reels===1?'guess':'guesses')):'come back tomorrow')+'</div></div></div>'+
       '<div class="row"><button class="btn gold" id="again">Practice</button></div>';
     document.getElementById('again').onclick=()=>{location.href='/cinereel.html?practice=1';};
   }
@@ -253,7 +258,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
       if(isDaily){const d=loadDone(); if(d&&d.day===utcDay()&&d.finished){renderReplay(d);return;}}
       T=await pickTarget();
       if(!T){stage.innerHTML='<div class="loading">Couldn’t load a career. Reload?</div>';return;}
-      shown=1; guesses=[]; over=false; render();
+      shown=Math.min(START,T.reveal.length); guesses=[]; over=false; render();
     }catch(e){stage.innerHTML='<div class="loading">Error: '+e.message+'</div>';}
   })();
 })();
