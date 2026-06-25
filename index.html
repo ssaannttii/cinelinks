@@ -1222,14 +1222,22 @@ async function fetchChallengePools(pages) {
 
 function buildChallenge(people, titles, rand = Math.random) {
   const shuffledTitles = shuffleWith(rand, titles);
-  if (people.length < 2 || shuffledTitles.length < 2) return null;
+  if (shuffledTitles.length < 2) return null;
+  const roll = rand();
 
-  if (rand() < 0.58) {
+  // ~25%: two distinct films/shows (no repeated headline star → most variety)
+  if (roll < 0.25 || people.length < 1) {
+    const a = shuffledTitles[0];
+    const b = shuffledTitles.find(t => !sameNode(t, a)) || shuffledTitles[1];
+    return {s:a, e:b};
+  }
+  // person -> title
+  if (roll < 0.65) {
     const p = sampleWith(rand, people);
     const title = shuffledTitles.find(t => !isKnownFor(p, t)) || shuffledTitles[0];
     return {s:personNode(p), e:title};
   }
-
+  // title -> person
   const title = sampleWith(rand, shuffledTitles);
   const p = shuffleWith(rand, people).find(person => !isKnownFor(person, title)) || people[0];
   return {s:title, e:personNode(p)};
@@ -1809,9 +1817,9 @@ const game = window.game = {
       let challenge = null;
       for (let attempt = 0; attempt < 4; attempt++) {
         const pools = await fetchChallengePools({
-          people: randInt(1, 8),
-          movies: randInt(1, 40),
-          tv: randInt(1, 20)
+          people: randInt(1, 14),
+          movies: randInt(1, 45),
+          tv: randInt(1, 22)
         });
         const candidate = buildChallenge(pools.people, pools.titles);
         if (!candidate) continue;
