@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CineGrid — Fill the cast grid</title>
+<meta name="description" content="A daily 3×3 film grid: name a movie that pairs each actor with each other. Rarer answers score higher.">
+<meta name="theme-color" content="#0d0d0d">
+<link rel="icon" type="image/png" href="/logo.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0d0d0d;--s1:#181818;--bdr:rgba(255,255,255,.1);--txt:#f0f0f0;--mut:#8d8d8d;--gold:#e8a000;--good:#5bbd7a}
+body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(circle at 50% -10%,rgba(232,160,0,.10),transparent 36%),linear-gradient(180deg,#101010,var(--bg) 340px);color:var(--txt);min-height:100vh;display:flex}
+.wrap{max-width:520px;margin:auto;padding:26px 16px 70px;width:100%;text-align:center}
+.logo{font-size:2rem;font-weight:800;letter-spacing:-.02em}
+.logo b{color:var(--gold)}
+.tag{color:var(--mut);font-size:.88rem;margin:6px 0 4px}
+.kicker{color:var(--gold);font-weight:700;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:16px}
+.bar{display:flex;justify-content:center;gap:18px;margin:0 0 14px;color:var(--mut);font-size:.78rem;font-weight:600}
+.bar b{color:var(--txt);font-weight:800;font-size:.95rem}
+.grid{display:grid;grid-template-columns:62px 1fr 1fr 1fr;gap:5px;max-width:430px;margin:0 auto}
+.corner{border-radius:8px}
+.hdr{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:4px 2px;text-align:center}
+.hdr img{width:42px;height:42px;border-radius:50%;object-fit:cover;background:#2a2a2a;border:1px solid var(--bdr)}
+.hdr.row img{width:38px;height:38px}
+.hdr .hn{font-size:.56rem;font-weight:700;line-height:1.1;color:var(--txt);max-width:78px}
+.cell{aspect-ratio:1;border-radius:9px;border:1px solid var(--bdr);background:var(--s1);position:relative;overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color .15s,background .15s}
+.cell:hover{border-color:rgba(232,160,0,.45)}
+.cell .plus{color:#3a3a3a;font-size:1.6rem;font-weight:300}
+.cell.filled{cursor:default;border-color:rgba(91,189,122,.4)}
+.cell.filled img{width:100%;height:100%;object-fit:cover}
+.cell .ct{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(transparent,rgba(0,0,0,.85));color:#fff;font-size:.52rem;font-weight:600;padding:10px 3px 3px;line-height:1.15;max-height:70%;overflow:hidden}
+.cell.over{cursor:default;opacity:.6}
+.done-grid .cell{cursor:default}
+/* search modal */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-start;justify-content:center;z-index:20;padding:60px 16px 16px}
+.modal.open{display:flex}
+.sheet{width:100%;max-width:420px;background:#1a1a1a;border:1px solid var(--bdr);border-radius:14px;padding:16px;box-shadow:0 24px 70px rgba(0,0,0,.6)}
+.sheet h3{font-size:.9rem;font-weight:700;margin-bottom:3px}
+.sheet .pair{color:var(--gold);font-size:.78rem;font-weight:700;margin-bottom:12px}
+.sheet input{width:100%;padding:12px 14px;border-radius:11px;border:1px solid var(--bdr);background:rgba(255,255,255,.05);color:var(--txt);font-family:inherit;font-size:.95rem;outline:none}
+.sheet input:focus{border-color:rgba(232,160,0,.55)}
+.results{margin-top:8px;max-height:46vh;overflow:auto;text-align:left}
+.ritem{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:9px;cursor:pointer}
+.ritem:hover{background:rgba(232,160,0,.12)}
+.ritem img{width:34px;height:51px;object-fit:cover;border-radius:5px;background:#333;flex-shrink:0}
+.ritem .rt{font-weight:600;font-size:.85rem}
+.ritem .ry{color:var(--mut);font-size:.72rem}
+.mfeed{min-height:18px;color:#d98b8b;font-size:.78rem;margin-top:8px}
+.mclose{margin-top:10px;width:100%;padding:9px;border-radius:10px;border:1px solid var(--bdr);background:transparent;color:var(--mut);font-family:inherit;font-weight:700;cursor:pointer}
+.result{margin-top:18px;padding:16px;border-radius:14px;border:1px solid var(--bdr);background:rgba(255,255,255,.04);display:none}
+.result.show{display:block}
+.result h2{font-size:1.25rem;margin-bottom:6px}
+.result h2.win{color:var(--good)}
+.stats{display:flex;gap:16px;justify-content:center;margin:12px 0 4px}
+.stat{display:flex;flex-direction:column;align-items:center;gap:1px;font-size:.58rem;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}
+.stat b{font-size:1.2rem;color:var(--txt);font-weight:800}
+.row-btns{display:flex;gap:8px;max-width:380px;margin:10px auto 0}
+.btn{flex:1;padding:11px;border-radius:11px;border:1px solid var(--bdr);background:transparent;color:var(--txt);font-family:inherit;font-weight:700;font-size:.85rem;cursor:pointer}
+.btn.gold{background:var(--gold);color:#111;border-color:var(--gold)}
+.loading{color:var(--mut);font-size:.9rem;padding:40px 0}
+.foot{margin-top:24px;color:var(--mut);font-size:.74rem}
+.foot a{color:var(--gold);text-decoration:none}
+.hint{color:var(--mut);font-size:.78rem;margin:2px 0 14px}
+</style>
+</head>
+<body>
+<div class="wrap" id="cinegrid-app">
+  <div class="logo">Cine<b>Grid</b></div>
+  <div class="tag">Name a film that pairs each actor</div>
+  <div class="kicker" id="modeLbl">Daily</div>
+  <div id="stage"><div class="loading">Building today's grid…</div></div>
+  <div class="foot">Posters &amp; data from TMDB · part of <a href="/">CineLinks</a></div>
+</div>
+<div class="modal" id="modal"><div class="sheet">
+  <h3>Name a film</h3><div class="pair" id="mPair"></div>
+  <input id="mInput" type="text" autocomplete="off" placeholder="Search a movie…">
+  <div class="results" id="mResults"></div>
+  <div class="mfeed" id="mFeed"></div>
+  <button class="mclose" id="mClose">Cancel</button>
+</div></div>
+<script>
+(function(){
+  const IMG='https://image.tmdb.org/t/p/';
+  const GUESSES=9;
+  const NAMES={31:"Tom Hanks",192:"Morgan Freeman",287:"Brad Pitt",380:"Robert De Niro",500:"Tom Cruise",1245:"Scarlett Johansson",1813:"Anne Hathaway",1892:"Matt Damon",2227:"Nicole Kidman",2231:"Samuel L. Jackson",3223:"Robert Downey Jr.",5081:"Emily Blunt",5292:"Denzel Washington",6193:"Leonardo DiCaprio",6384:"Keanu Reeves",6885:"Charlize Theron",12835:"Vin Diesel",16483:"Sylvester Stallone",18277:"Sandra Bullock",18918:"Dwayne Johnson",73457:"Chris Pratt",117642:"Jason Momoa",234352:"Margot Robbie"};
+  const GRIDS=[[[2231,2227,31],[6885,500,380]],[[5081,2231,1813],[73457,18918,1892]],[[1245,287,31],[6384,1892,2231]],[[73457,31,380],[16483,287,1245]],[[287,6193,6384],[500,2231,1892]],[[2227,287,31],[2231,380,16483]],[[12835,5081,2227],[1892,6885,16483]],[[287,2227,31],[380,234352,6384]],[[2231,6384,1245],[16483,287,31]],[[31,117642,380],[16483,6384,192]],[[3223,1245,380],[2231,6384,1892]],[[6384,192,2231],[287,31,5292]],[[1892,31,380],[500,6193,192]],[[73457,1892,287],[1245,2231,16483]],[[1245,1892,6193],[6384,16483,380]],[[287,234352,2227],[16483,2231,380]],[[500,31,192],[380,1892,287]],[[192,500,2231],[380,31,287]],[[500,31,192],[1245,6384,1892]],[[287,2231,6384],[1892,500,18277]],[[1892,73457,380],[1245,1813,287]],[[6885,2231,6384],[6193,380,18918]]];
+
+  const stage=document.getElementById('stage');
+  const isDaily=!/[?&]practice=1/.test(location.search);
+  document.getElementById('modeLbl').textContent=isDaily?'Daily':'Practice';
+  function api(p){return fetch('/api/tmdb?path='+p+'&language=en-US').then(r=>r.json());}
+  function utcDay(){const n=new Date();return Math.floor(Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),n.getUTCDate())/864e5);}
+  function loadState(){try{return JSON.parse(localStorage.getItem('cinegridState'));}catch(_){return null;}}
+  function saveState(o){try{localStorage.setItem('cinegridState',JSON.stringify(o));}catch(_){}}
+  function rarityOf(votes){const f=Math.min(1,Math.log10((votes||0)+10)/Math.log10(40000));return Math.max(1,Math.round(100-100*f));}
+
+  let GRID=null, photos={}, cells=[], guessesLeft=GUESSES, used=new Set(), over=false, openIdx=-1;
+
+  function pickGrid(){
+    if(isDaily){ const i=(utcDay()%GRIDS.length+GRIDS.length)%GRIDS.length; return GRIDS[i]; }
+    return GRIDS[Math.floor(Math.random()*GRIDS.length)];
+  }
+  function cellPair(idx){ const r=Math.floor(idx/3), c=idx%3; return { rid:GRID[0][r], cid:GRID[1][c] }; }
+
+  function render(){
+    let html='<div class="bar"><span>Filled <b>'+cells.filter(Boolean).length+'/9</b></span><span>Guesses <b>'+guessesLeft+'</b></span></div>';
+    if(!over) html+='<div class="hint">Tap a cell, then name a film with <b>both</b> actors.</div>';
+    html+='<div class="grid'+(over?' done-grid':'')+'">';
+    html+='<div class="corner"></div>';
+    GRID[1].forEach(function(id){ html+='<div class="hdr col"><img src="'+face(id)+'" alt=""><span class="hn">'+NAMES[id]+'</span></div>'; });
+    for(let r=0;r<3;r++){
+      html+='<div class="hdr row"><img src="'+face(GRID[0][r])+'" alt=""><span class="hn">'+NAMES[GRID[0][r]]+'</span></div>';
+      for(let c=0;c<3;c++){ const idx=r*3+c, cell=cells[idx];
+        if(cell) html+='<div class="cell filled"><img src="'+IMG+'w185'+cell.poster+'" alt=""><span class="ct">'+esc(cell.title)+'</span></div>';
+        else html+='<div class="cell'+(over?' over':'')+'" data-i="'+idx+'"><span class="plus">+</span></div>';
+      }
+    }
+    html+='</div><div class="result'+(over?' show':'')+'" id="result"></div>';
+    stage.innerHTML=html;
+    if(!over) stage.querySelectorAll('.cell[data-i]').forEach(function(el){ el.onclick=function(){ openCell(+el.dataset.i); }; });
+    if(over) renderResult();
+  }
+  function face(id){ return photos[id] ? IMG+'w185'+photos[id] : '/logo.png'; }
+  function esc(s){ return (s||'').replace(/[&<>"]/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m];}); }
+
+  // ── cell guessing ──
+  const modal=document.getElementById('modal'), mInput=document.getElementById('mInput'), mResults=document.getElementById('mResults'), mFeed=document.getElementById('mFeed'), mPair=document.getElementById('mPair');
+  document.getElementById('mClose').onclick=closeModal;
+  function openCell(idx){ if(over||cells[idx]) return; openIdx=idx; const p=cellPair(idx); mPair.textContent=NAMES[p.rid]+'  ×  '+NAMES[p.cid]; mInput.value=''; mResults.innerHTML=''; mFeed.textContent=''; modal.classList.add('open'); setTimeout(function(){mInput.focus();},30); }
+  function closeModal(){ modal.classList.remove('open'); openIdx=-1; }
+  let lk; mInput.addEventListener('input',function(){ clearTimeout(lk); lk=setTimeout(search,240); });
+  function search(){
+    const q=mInput.value.trim(); if(q.length<2){ mResults.innerHTML=''; return; }
+    api('search/multi&query='+encodeURIComponent(q)).then(function(r){
+      const items=(r.results||[]).filter(function(x){return x.media_type==='movie'&&x.poster_path;}).slice(0,8);
+      mResults.innerHTML=items.map(function(m){ return '<div class="ritem" data-id="'+m.id+'" data-p="'+m.poster_path+'" data-t="'+esc(m.title)+'" data-v="'+(m.vote_count||0)+'"><img src="'+IMG+'w92'+m.poster_path+'" alt=""><div><div class="rt">'+esc(m.title)+'</div><div class="ry">'+(m.release_date||'').slice(0,4)+'</div></div></div>'; }).join('');
+      mResults.querySelectorAll('.ritem').forEach(function(el){ el.onclick=function(){ submit(el.dataset); }; });
+    });
+  }
+  function submit(d){
+    if(openIdx<0) return;
+    const idx=openIdx, p=cellPair(idx), mid=+d.id;
+    if(used.has(mid)){ mFeed.textContent='Already used that film in another cell.'; return; }
+    mFeed.textContent='Checking…';
+    api('movie/'+mid+'/credits').then(function(cr){
+      const ids=new Set((cr.cast||[]).map(function(c){return c.id;}));
+      const ok=ids.has(p.rid)&&ids.has(p.cid);
+      guessesLeft--;
+      if(ok){ cells[idx]={movieId:mid,poster:d.p,title:d.t,votes:+d.v,rarity:rarityOf(+d.v)}; used.add(mid); closeModal(); checkEnd(); render(); }
+      else { mFeed.textContent='❌ Not a film with both — guess spent ('+guessesLeft+' left).'; if(guessesLeft<=0){ closeModal(); checkEnd(); render(); } else render(); }
+    }).catch(function(){ mFeed.textContent='Network hiccup, try again.'; });
+  }
+  function checkEnd(){ if(guessesLeft<=0||cells.filter(Boolean).length===9){ over=true; if(isDaily) persist(); } }
+
+  function persist(){
+    const filled=cells.filter(Boolean).length;
+    saveState({day:utcDay(),finished:true,filled:filled,cells:cells,grid:GRID});
+  }
+
+  function renderResult(){
+    const filled=cells.filter(Boolean).length;
+    const rar=filled?Math.round(cells.filter(Boolean).reduce(function(s,c){return s+c.rarity;},0)/filled):0;
+    const win=filled===9;
+    const dayN=utcDay()-Math.floor(Date.UTC(2026,0,1)/864e5);
+    let sq=''; for(let i=0;i<9;i++){ sq+=cells[i]?'🟩':'⬛'; if(i%3===2&&i<8)sq+='\n'; }
+    const share='🎬 CineGrid'+(isDaily?' #'+dayN:'')+'\n'+sq+'\n'+filled+'/9 · rarity '+rar+'\nhttps://cinelinks.vercel.app/cinegrid.html';
+    document.getElementById('result').innerHTML=
+      '<h2 class="'+(win?'win':'')+'">'+(win?'Perfect grid! 🎯':filled+'/9')+'</h2>'+
+      '<div class="stats"><div class="stat"><b>'+filled+'/9</b>filled</div><div class="stat"><b>'+rar+'</b>rarity</div></div>'+
+      '<div class="row-btns"><button class="btn" id="shareBtn">Share</button><button class="btn gold" id="again">'+(isDaily?'Practice':'New grid')+'</button></div>';
+    document.getElementById('again').onclick=function(){ location.href='/cinegrid.html'+(isDaily?'?practice=1':'?practice=1&r='+Date.now()); };
+    document.getElementById('shareBtn').onclick=function(){ if(navigator.share){navigator.share({text:share}).catch(function(){});} else { try{navigator.clipboard.writeText(share);}catch(_){ } const b=document.getElementById('shareBtn'); b.textContent='Copied ✓'; } };
+  }
+
+  // ── boot ──
+  (async function(){
+    try{
+      if(isDaily){ const s=loadState(); if(s&&s.day===utcDay()&&s.finished){ GRID=s.grid; cells=s.cells; over=true; await loadPhotos(); render(); return; } }
+      GRID=pickGrid();
+      cells=[null,null,null,null,null,null,null,null,null];
+      await loadPhotos();
+      render();
+    }catch(e){ stage.innerHTML='<div class="loading">Error: '+e.message+'</div>'; }
+  })();
+  async function loadPhotos(){
+    const ids=[].concat(GRID[0],GRID[1]);
+    await Promise.all(ids.map(function(id){ return api('person/'+id).then(function(d){ photos[id]=d.profile_path; }).catch(function(){}); }));
+  }
+})();
+</script>
+</body>
+</html>
