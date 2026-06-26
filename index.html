@@ -81,6 +81,17 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .archive-btn{width:100%;margin-top:8px;padding:9px;border-radius:10px;border:1px solid var(--bdr);background:transparent;color:var(--mut);font-family:inherit;font-size:.8rem;font-weight:600;cursor:pointer;transition:border-color .15s,color .15s,background .15s}
 .archive-btn:hover{border-color:rgba(232,160,0,.5);color:var(--gold);background:rgba(232,160,0,.04)}
 .games{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+/* Meta bar: portfolio streak + one-tap "share my whole day" (the retention/virality layer). */
+.meta-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;background:linear-gradient(110deg,rgba(232,160,0,.12),rgba(255,255,255,.04));border:1px solid rgba(232,160,0,.28);border-radius:14px;padding:11px 14px;margin:0 0 14px;text-align:left}
+.meta-info{display:flex;align-items:center;gap:14px;min-width:0;flex-wrap:wrap}
+.meta-streak{font-size:.98rem;font-weight:800;color:var(--gold);white-space:nowrap}
+.meta-streak span{color:var(--mut);font-weight:600;font-size:.8rem}
+.meta-prog{font-size:.8rem;color:var(--mut);font-weight:600;white-space:nowrap}
+.meta-prog b{color:var(--txt);font-weight:800}
+.meta-share{flex-shrink:0;padding:9px 16px;border-radius:10px;border:1px solid var(--gold);background:var(--gold);color:#111;font-family:inherit;font-weight:800;font-size:.82rem;cursor:pointer;transition:opacity .15s}
+.meta-share:hover{opacity:.9}
+.meta-share.copied{background:transparent;color:var(--gold)}
+@media (max-width:560px){.meta-bar{flex-direction:column;align-items:stretch}.meta-share{width:100%}}
 .game-card{background:rgba(255,255,255,.045);border:1px solid var(--bdr);border-radius:14px;padding:14px;text-align:left;display:flex;flex-direction:column;gap:12px;transition:border-color .15s,background .15s}
 .game-card:hover{border-color:rgba(232,160,0,.3)}
 .game-card.done{border-color:rgba(91,189,122,.45);background:linear-gradient(180deg,rgba(91,189,122,.09),rgba(255,255,255,.04))}
@@ -544,6 +555,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     <img src="/logo.png" alt="CineLinks - A Cinematic Link Puzzle" class="start-logo">
     <p class="tagline">A new film puzzle every day - pick your game.</p>
     <div id="dailyDateLbl" class="start-kicker" style="margin:2px 0 14px;opacity:.7"></div>
+
+    <div id="metaBar" class="meta-bar" style="display:none"></div>
 
     <div class="games-section">Daily puzzles</div>
     <div class="games">
@@ -1532,6 +1545,74 @@ function markDoneBadges() {
   });
 }
 
+// ── Meta layer: portfolio streak + unified "share my whole day" ──────────────
+// Reads each game's own today-state (same signals markDoneBadges uses) and turns
+// the day into one shareable block — the cross-game retention/virality hook.
+function metaItems() {
+  const today = dateKey();
+  const now = new Date();
+  const ud = Math.floor(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) / 86400000);
+  const gs = k => { try { return JSON.parse(localStorage.getItem(k)); } catch(_) { return null; } };
+  const items = [];
+  let clicks = null;
+  try {
+    const p = JSON.parse(localStorage.getItem('clPlayed')) || {};
+    if (p[today] != null) clicks = p[today];
+    else { const r = JSON.parse(localStorage.getItem('clDailyResult')); if (r && r.date === today) clicks = r.clicks; }
+  } catch(_) {}
+  items.push({ emoji: '🔗', done: clicks != null, text: clicks != null ? (clicks + (clicks === 1 ? ' click' : ' clicks')) : null });
+  [['🔍','cineclueState'],['🖼️','cineframeState'],['🧑','cinecastState'],['📖','cineplotState']].forEach(g => {
+    const s = gs(g[1]); const done = !!(s && s.day === ud && s.finished);
+    let text = null;
+    if (done) { const used = Array.isArray(s.results) ? Math.min(6, s.results.length) : null; text = s.solved ? ('✅ ' + (used != null ? used + '/6' : 'solved')) : '❌'; }
+    items.push({ emoji: g[0], done: done, text: text });
+  });
+  { const s = gs('cinelineState'); const done = !!(s && s.day === ud && s.finished); items.push({ emoji: '📅', done: done, text: done ? ((s.solved ? '✅ ' : '') + (s.score != null ? s.score + '/10' : 'done')) : null }); }
+  { const s = gs('cinereelState'); const done = !!(s && s.day === ud && s.finished); items.push({ emoji: '🎞️', done: done, text: done ? (s.won ? ('✅ ' + (s.score || '?') + '/6') : '❌') : null }); }
+  { const s = gs('cinerating_daily'); const td = today.replace(/-/g, ''); const done = !!(s && s.date === td); items.push({ emoji: '⚖️', done: done, text: done ? ('✅ ' + s.score + '/10') : null }); }
+  return items;
+}
+function metaStreakValue(doneToday) {
+  let days = []; try { days = JSON.parse(localStorage.getItem('metaDays')) || []; } catch(_) {}
+  const now = new Date();
+  const ud = Math.floor(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) / 86400000);
+  if (doneToday && days[days.length - 1] !== ud) { days.push(ud); days = days.slice(-500); try { localStorage.setItem('metaDays', JSON.stringify(days)); } catch(_) {} }
+  const set = new Set(days);
+  let d = set.has(ud) ? ud : (set.has(ud - 1) ? ud - 1 : null), n = 0;
+  while (d != null && set.has(d)) { n++; d--; }
+  return n;
+}
+function metaDateLabel() { try { return formatDailyDate(dateFromKey(dateKey()), { weekday: 'short', day: 'numeric', month: 'short' }); } catch(_) { return ''; } }
+function shareTodayText(items, done, total, streak) {
+  const lines = ['🎬 CineLinks · ' + metaDateLabel() + ' · ' + done + '/' + total];
+  items.forEach(i => { if (i.done) lines.push(i.emoji + ' ' + i.text); });
+  if (streak > 1) lines.push('🔥 ' + streak + '-day streak');
+  lines.push('cinelinks.vercel.app');
+  return lines.join('\n');
+}
+function renderMetaBar() {
+  const bar = document.getElementById('metaBar'); if (!bar) return;
+  const items = metaItems();
+  const done = items.filter(i => i.done).length, total = items.length;
+  const streak = metaStreakValue(done > 0);
+  if (done === 0) { bar.style.display = 'none'; return; }
+  bar.style.display = '';
+  bar.innerHTML = '<div class="meta-info">' +
+    '<span class="meta-streak">🔥 ' + streak + ' <span>day streak</span></span>' +
+    '<span class="meta-prog"><b>' + done + '/' + total + '</b> done today</span></div>' +
+    '<button class="meta-share" id="metaShareBtn">Share today</button>';
+  document.getElementById('metaShareBtn').onclick = () => {
+    const txt = shareTodayText(items, done, total, streak);
+    if (navigator.share) { navigator.share({ text: txt }).catch(() => {}); }
+    else {
+      try { navigator.clipboard.writeText(txt); } catch(_) {}
+      const b = document.getElementById('metaShareBtn');
+      b.textContent = 'Copied ✓'; b.classList.add('copied');
+      setTimeout(() => { b.textContent = 'Share today'; b.classList.remove('copied'); }, 1600);
+    }
+  };
+}
+
 // Locally-stored map of completed daily/archive dates -> best (lowest) clicks.
 const PLAYED_KEY = 'clPlayed';
 function loadPlayed() {
@@ -1623,6 +1704,7 @@ function showOnly(id) {
       inner.classList.add('anim-in');
     }
     markDoneBadges();
+    try { renderMetaBar(); } catch (_) {}
     if (window.renderDailyGallery) { try { window.renderDailyGallery(); } catch (_) {} }
     _clearParticles();
   }
@@ -3171,11 +3253,12 @@ window.HOWTO = {
 };
 </script>
 <script>
-window.onStatsSync = function () { try { markDoneBadges(); } catch (_) {} };
+window.onStatsSync = function () { try { markDoneBadges(); } catch (_) {} try { renderMetaBar(); } catch (_) {} };
 // Live-refresh the hub's done badges if a game is completed in another tab.
 window.addEventListener('storage', function (e) {
-  if (!e.key || e.key === 'clPlayed' || e.key === 'clDailyResult' || e.key.endsWith('State')) {
+  if (!e.key || e.key === 'clPlayed' || e.key === 'clDailyResult' || e.key.endsWith('State') || e.key === 'cinerating_daily') {
     try { markDoneBadges(); } catch (_) {}
+    try { renderMetaBar(); } catch (_) {}
   }
 });
 </script>
