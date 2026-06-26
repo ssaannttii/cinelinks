@@ -50,6 +50,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .foot a{color:var(--gold);text-decoration:none}
 .cl-home{position:fixed;top:13px;left:13px;z-index:50;display:inline-flex;align-items:center;gap:5px;color:var(--mut);text-decoration:none;font-size:.78rem;font-weight:700;background:rgba(20,20,20,.6);border:1px solid var(--bdr);border-radius:999px;padding:7px 13px;backdrop-filter:blur(8px)}
 .cl-home:hover{color:var(--gold);border-color:rgba(232,160,0,.45)}
+@media(min-width:760px){.wrap{max-width:560px}.logo{font-size:2.5rem}.tag{font-size:1rem}.kicker{font-size:.78rem}.chain{max-width:460px}.film img{width:48px;height:72px}.film .ft{font-size:1rem}.add,.row-btns{max-width:460px}.add input{font-size:1.05rem;padding:14px 16px}.score b{font-size:1.6rem}.hint{font-size:.92rem}}
 </style>
 </head>
 <body>
@@ -65,6 +66,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 (function(){
   const IMG='https://image.tmdb.org/t/p/';
   const CAST_N=15; // only notable billed cast can be a link (kills trivial extra-based links)
+  const DURATION=120; // seconds — build the longest chain before time runs out
   const SEEDS=[[157336,"Interstellar","/yQvGrMoipbRoddT0ZR8tPoR7NfX.jpg"],[27205,"Inception","/xlaY2zyzMfkhk0HSC5VUwzoZPU1.jpg"],[24428,"The Avengers","/RYMX2wcKCBAr24UyPD7xwmjaTn.jpg"],[155,"The Dark Knight","/qJ2tW6WMUDux911r6m7haRef0WH.jpg"],[19995,"Avatar","/gKY6q7SjCkAU6FqvqWybDYgUKIF.jpg"],[293660,"Deadpool","/3E53WEZJqP6aM84D8CckXx4pIHw.jpg"],[550,"Fight Club","/jSziioSwPVrOy9Yow3XhWIBDjq1.jpg"],[299536,"Avengers: Infinity War","/7WsyChQLEftFiDOVTGkv3hFpyyt.jpg"],[278,"The Shawshank Redemption","/9cqNxx0GxF0bflZmeSMuL5tnGzr.jpg"],[680,"Pulp Fiction","/vQWk5YBFWF4bZaofAbv0tShwBvQ.jpg"],[13,"Forrest Gump","/Cw4hIUIAmSYfK9QfaUW5igp9La.jpg"],[118340,"Guardians of the Galaxy","/r7vmZjiyZw9rpJMQJdXpjgiCOk9.jpg"],[671,"Harry Potter and the Philosopher's Stone","/wuMc08IPKEatf9rnMNXvIDxqP4W.jpg"],[1726,"Iron Man","/78lPtwv72eTNqFW9COBYI0dWDJa.jpg"],[68718,"Django Unchained","/7oWY8VDWW7thTzWh3OKYRkWUlD5.jpg"],[603,"The Matrix","/dXNAPwY7VrqMAo51EKhhCJfaGb5.jpg"],[299534,"Avengers: Endgame","/ulzhLuWrPK07P1YkdWQLZnQh1JL.jpg"],[475557,"Joker","/udDclJoHjfjb8Ekgsd4FDteOkCU.jpg"],[120,"The Lord of the Rings: The Fellowship of the Ring","/6oom5QYQ2yQTMJIbnvbkBL9cHo6.jpg"],[597,"Titanic","/9xjZS2rlVxm8SFx8kPC3aIGCOYQ.jpg"],[122,"The Lord of the Rings: The Return of the King","/rCzpDGLbOoPwLjy3OAm5NUPOTrC.jpg"],[106646,"The Wolf of Wall Street","/kW9LmvYHAaS9iA0tHmZVq8hQYoq.jpg"],[11324,"Shutter Island","/nrmXQ0zcZUL8jFLrakWc90IR8z9.jpg"],[99861,"Avengers: Age of Ultron","/4ssDuvEDkSArWEdyBl2X5EHvYKU.jpg"],[49026,"The Dark Knight Rises","/hr0L2aueqlP2BYUblTTjmtn0hw4.jpg"],[16869,"Inglourious Basterds","/3Gb6G2amMuKZmmCpRqM4N67s8eE.jpg"],[76341,"Mad Max: Fury Road","/hA2ple9q4qnwxp3hKVNhroipsir.jpg"],[271110,"Captain America: Civil War","/rAGiXaUfPzY7CDEyNKUofk3Kw2e.jpg"],[121,"The Lord of the Rings: The Two Towers","/5VTN0pR8gcqV3EPUHHfMGnJYN9L.jpg"],[672,"Harry Potter and the Chamber of Secrets","/sdEOH0992YZ0QSxgXNIGLq1ToUi.jpg"]];
 
   const stage=document.getElementById('stage');
@@ -76,13 +78,24 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   function saveState(o){try{localStorage.setItem('cinechainState',JSON.stringify(o));}catch(_){}}
   function esc(s){return (s||'').replace(/[&<>"]/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m];});}
 
-  let chain=[], usedActors=new Set(), usedFilms=new Set(), over=false, busy=false;
+  let chain=[], usedActors=new Set(), usedFilms=new Set(), over=false, busy=false, timeLeft=DURATION, timerId=null;
+
+  function fmtTime(s){ const m=Math.floor(s/60), x=s%60; return m+':'+(x<10?'0':'')+x; }
+  function startTimer(){
+    if(timerId) return;
+    timerId=setInterval(function(){
+      timeLeft--;
+      const el=document.getElementById('timer'); if(el){ el.textContent='⏱ '+fmtTime(Math.max(0,timeLeft)); if(timeLeft<=15) el.style.color='#e8806f'; }
+      if(timeLeft<=0){ stopTimer(); over=true; if(isDaily) persist(); render(); }
+    },1000);
+  }
+  function stopTimer(){ if(timerId){ clearInterval(timerId); timerId=null; } }
 
   async function castOf(id){ const cr=await api('movie/'+id+'/credits'); return (cr.cast||[]).slice(0,CAST_N).map(function(c){return {id:c.id,name:c.name};}); }
 
   function render(){
     const links=chain.length-1;
-    let html='<div class="score">Chain length <b>'+links+'</b></div>';
+    let html='<div class="score">Chain length <b>'+links+'</b>'+(over?'':' · <span id="timer">⏱ '+fmtTime(Math.max(0,timeLeft))+'</span>')+'</div>';
     html+='<div class="chain">';
     chain.forEach(function(f,i){
       if(i>0) html+='<div class="via">via '+esc(f.via)+'</div>';
@@ -102,7 +115,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 
   function wire(){
     const ci=document.getElementById('ci'), ac=document.getElementById('ac');
-    document.getElementById('finish').onclick=function(){ over=true; if(isDaily) persist(); render(); };
+    document.getElementById('finish').onclick=function(){ stopTimer(); over=true; if(isDaily) persist(); render(); };
     ci.focus();
     let lk; ci.addEventListener('input',function(){ clearTimeout(lk); lk=setTimeout(function(){ lookup(ci.value,ac); },240); });
   }
@@ -155,6 +168,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
       chain=[{id:seed[0],title:seed[1],poster:seed[2],cast:cast,via:null}];
       usedFilms.add(seed[0]);
       render();
+      startTimer();
     }catch(e){ stage.innerHTML='<div class="loading">Error: '+e.message+'</div>'; }
   })();
 })();
