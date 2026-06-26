@@ -11,6 +11,10 @@ const I18N = {
   'en-US': {
     // hub mode labels
     modeDaily: 'Daily', modePractice: 'Practice', modePlay: 'Play', modeResults: 'Results',
+    sectionDaily: 'Daily puzzles', sectionRating: 'Rating games', newTag: 'NEW',
+    navCreate: '+ Create your own', navStats: '📊 Your stats',
+    metaStreakL: 'day streak', metaDoneL: 'done today', metaShareBtn: 'Share today', metaNext: 'Next', metaStart: 'Start here', galleryTitle: '🎬 Today’s answers — revealed',
+    descCl: 'Connect actors → movies → TV in the fewest clicks', descClue: 'Guess the film from clues', descFrame: 'Guess the film from a frame', descCast: 'Guess the film from its cast', descPlot: 'Guess the film from its synopsis', descLine: 'Place films on a timeline', descReel: 'Guess the actor from their films', descGrid: 'Name a film pairing each actor', descChain: 'Build the longest film chain',
     // click singular + goal tag
     clickSingular: 'click', goalTag: 'GOAL',
     // difficulty labels (from par)
@@ -56,6 +60,10 @@ const I18N = {
   'es-ES': {
     // hub mode labels
     modeDaily: 'Diario', modePractice: 'Práctica', modePlay: 'Jugar', modeResults: 'Resultado',
+    sectionDaily: 'Retos diarios', sectionRating: 'Juegos de puntuación', newTag: 'NUEVO',
+    navCreate: '+ Crea el tuyo', navStats: '📊 Tus estadísticas',
+    metaStreakL: 'de racha', metaDoneL: 'hechos hoy', metaShareBtn: 'Compartir hoy', metaNext: 'Siguiente', metaStart: 'Empieza aquí', galleryTitle: '🎬 Respuestas de hoy',
+    descCl: 'Conecta actores → pelis → series en los menos clics', descClue: 'Adivina la peli por pistas', descFrame: 'Adivina la peli por un fotograma', descCast: 'Adivina la peli por su reparto', descPlot: 'Adivina la peli por su sinopsis', descLine: 'Ordena pelis en una línea temporal', descReel: 'Adivina al actor por sus pelis', descGrid: 'Una peli que une a cada par', descChain: 'Encadena pelis lo más largo posible',
     // click singular + goal tag
     clickSingular: 'clic', goalTag: 'OBJETIVO',
     // difficulty labels (from par)
@@ -101,6 +109,10 @@ const I18N = {
   'es-MX': {
     // hub mode labels
     modeDaily: 'Diario', modePractice: 'Práctica', modePlay: 'Jugar', modeResults: 'Resultado',
+    sectionDaily: 'Retos diarios', sectionRating: 'Juegos de puntuación', newTag: 'NUEVO',
+    navCreate: '+ Crea el tuyo', navStats: '📊 Tus estadísticas',
+    metaStreakL: 'de racha', metaDoneL: 'hechos hoy', metaShareBtn: 'Compartir hoy', metaNext: 'Siguiente', metaStart: 'Empieza aquí', galleryTitle: '🎬 Respuestas de hoy',
+    descCl: 'Conecta actores → pelis → series en los menos clics', descClue: 'Adivina la peli por pistas', descFrame: 'Adivina la peli por un fotograma', descCast: 'Adivina la peli por su reparto', descPlot: 'Adivina la peli por su sinopsis', descLine: 'Ordena pelis en una línea temporal', descReel: 'Adivina al actor por sus pelis', descGrid: 'Una peli que une a cada par', descChain: 'Encadena pelis lo más largo posible',
     // click singular + goal tag
     clickSingular: 'clic', goalTag: 'OBJETIVO',
     // difficulty labels (from par)

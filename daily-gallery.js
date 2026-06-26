@@ -36,7 +36,7 @@
 
     host.style.display = 'block';
     host.innerHTML =
-      '<div class="dg-title">🎬 Today’s answers — revealed</div>' +
+      '<div class="dg-title">' + (typeof window.t === 'function' ? window.t('galleryTitle') : '🎬 Today’s answers — revealed') + '</div>' +
       '<div class="dg-grid">' + tiles.map(function (t) {
         var p = posterUrl(t.poster);
         return '<div class="dg-item">' +

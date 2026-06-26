@@ -29,7 +29,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#0d0d0d;--s1:#181818;--s2:#222;--bdr:rgba(255,255,255,0.09);--txt:#f0f0f0;--mut:#8d8d8d;--gold:#e8a000;--golddim:rgba(232,160,0,0.15)}
+:root{--bg:#0d0d0d;--s1:#181818;--s2:#222;--bdr:rgba(255,255,255,0.13);--txt:#f5f5f5;--mut:#a6a6a6;--gold:#e8a000;--golddim:rgba(232,160,0,0.15)}
 @property --click-ring{syntax:'<angle>';inherits:false;initial-value:0deg}
 body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(circle at 50% -10%,rgba(232,160,0,.08),transparent 34%),linear-gradient(180deg,#101010 0%,var(--bg) 330px);color:var(--txt);min-height:100vh}
 .screen{display:none}
@@ -38,9 +38,9 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 /* START */
 #startScreen{min-height:100vh;align-items:center;justify-content:center;padding:40px 20px;position:relative;overflow:hidden}
 #startScreen::before{content:"";position:absolute;inset:-20%;background:radial-gradient(circle at 22% 22%,rgba(232,160,0,.20),transparent 30%),radial-gradient(circle at 78% 14%,rgba(80,106,135,.20),transparent 32%),radial-gradient(circle at 84% 82%,rgba(232,160,0,.10),transparent 34%),linear-gradient(180deg,transparent,#0d0d0d 72%);pointer-events:none}
-.start-inner{width:100%;max-width:560px;text-align:center;position:relative;z-index:2;background:rgba(255,255,255,.045);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:34px 28px 28px;box-shadow:0 30px 80px rgba(0,0,0,.38)}
+.start-inner{width:100%;max-width:560px;text-align:center;position:relative;z-index:2;background:rgba(255,255,255,.05);backdrop-filter:blur(22px);border:1px solid rgba(255,255,255,.11);border-radius:18px;padding:36px 30px 30px;box-shadow:0 40px 110px rgba(0,0,0,.6)}
 #cineBackdrop{position:absolute;inset:0;z-index:0;background-size:cover;background-position:center;opacity:0;filter:blur(4px);transform:scale(1.06);transition:opacity 1.4s ease;pointer-events:none}
-#cineBackdrop.on{opacity:.18}
+#cineBackdrop.on{opacity:.10}
 #dailyGallery{margin:18px 0 2px;background:linear-gradient(180deg,rgba(232,160,0,.06),transparent),var(--s1);border:1px solid rgba(232,160,0,.18);border-radius:14px;padding:14px}
 .dg-title{font-size:.7rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:11px}
 .dg-grid{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
@@ -88,6 +88,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .meta-streak span{color:var(--mut);font-weight:600;font-size:.8rem}
 .meta-prog{font-size:.8rem;color:var(--mut);font-weight:600;white-space:nowrap}
 .meta-prog b{color:var(--txt);font-weight:800}
+.meta-next{color:var(--gold);text-decoration:none;font-weight:800;font-size:.82rem;white-space:nowrap;cursor:pointer}
+.meta-next:hover{text-decoration:underline}
 .meta-share{flex-shrink:0;padding:9px 16px;border-radius:10px;border:1px solid var(--gold);background:var(--gold);color:#111;font-family:inherit;font-weight:800;font-size:.82rem;cursor:pointer;transition:opacity .15s}
 .meta-share:hover{opacity:.9}
 .meta-share.copied{background:transparent;color:var(--gold)}
@@ -110,7 +112,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .mode-play:hover{opacity:.9;background:var(--gold)}
 .game-meta{display:flex;flex-direction:column;min-width:0;flex:1}
 .game-name{font-weight:800;font-size:.95rem;display:flex;align-items:center;flex-wrap:wrap;gap:5px 6px;min-width:0}
-.game-desc{font-size:.68rem;color:var(--mut);margin-top:1px}
+.game-desc{font-size:.73rem;color:#bdbdbd;margin-top:2px;line-height:1.35}
 .new-tag{font-size:.52rem;font-weight:800;letter-spacing:.06em;color:#111;background:var(--gold);padding:1px 5px;border-radius:999px}
 .game-done{display:none}
 .game-done.on{display:inline-flex;align-items:center;color:#7fd49a;font-weight:800;font-size:.56rem;letter-spacing:.06em;text-transform:uppercase;background:rgba(91,189,122,.16);border:1px solid rgba(91,189,122,.38);padding:2px 7px;border-radius:999px;white-space:nowrap;flex-shrink:0}
@@ -1030,6 +1032,15 @@ function applyI18n() {
   document.querySelectorAll('.mode-daily').forEach(b => b.textContent = t('modeDaily'));
   document.querySelectorAll('.mode-practice').forEach(b => b.textContent = t('modePractice'));
   document.querySelectorAll('.mode-play').forEach(b => b.textContent = t('modePlay'));
+  // Home: section labels, NEW tags, game descriptions, secondary nav — all localized.
+  const _secs = document.querySelectorAll('.games-section');
+  if (_secs[0]) _secs[0].textContent = t('sectionDaily');
+  if (_secs[1]) _secs[1].textContent = t('sectionRating');
+  document.querySelectorAll('.new-tag').forEach(el => el.textContent = t('newTag'));
+  const _descMap = { cl:'descCl', clue:'descClue', frame:'descFrame', cast:'descCast', plot:'descPlot', line:'descLine', reel:'descReel', grid:'descGrid', chain:'descChain' };
+  document.querySelectorAll('.game-done[data-done]').forEach(el => { const k = _descMap[el.dataset.done]; if (k) { const card = el.closest('.game-card'); const d = card && card.querySelector('.game-desc'); if (d) d.textContent = t(k); } });
+  const _cBtn = document.querySelector('.archive-btn[onclick*="creator"]'); if (_cBtn) _cBtn.textContent = t('navCreate');
+  const _sLink = document.querySelector('a.archive-btn[href="/stats.html"]'); if (_sLink) _sLink.textContent = t('navStats');
   const archBtn = document.getElementById('archiveBtn');
   if (archBtn) archBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-2px;margin-right:7px"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>' + t('archiveBtn');
   const archTitle = document.getElementById('archiveTitle');
@@ -1089,8 +1100,10 @@ function applyI18n() {
       else label.textContent = t(icons[i]);
     }
   });
-  // Re-assert done-state labels (Daily→Results) after re-localising the buttons.
+  // Re-assert done-state labels (Daily→Results) and refresh the localized meta bar + gallery.
   try { markDoneBadges(); } catch (_) {}
+  try { renderMetaBar(); } catch (_) {}
+  if (window.renderDailyGallery) { try { window.renderDailyGallery(); } catch (_) {} }
 }
 
 // In-memory cache of TMDB responses for the current session: avoids re-fetching
@@ -1606,25 +1619,41 @@ function shareTodayText(items, done, total, streak) {
   lines.push('cinelinks.vercel.app');
   return lines.join('\n');
 }
+const META_NAV = [
+  { n: 'CineLinks', h: null }, { n: 'CineClue', h: '/cineclue.html' }, { n: 'CineFrame', h: '/cineframe.html' },
+  { n: 'CineCast', h: '/cinecast.html' }, { n: 'CinePlot', h: '/cineplot.html' }, { n: 'CineLine', h: '/cineline.html' },
+  { n: 'CineReel', h: '/cinereel.html' }, { n: 'CineGrid', h: '/cinegrid.html' }, { n: 'CineChain', h: '/cinechain.html' },
+  { n: 'Higher or Lower', h: '/rating/versus?mode=daily' }
+];
 function renderMetaBar() {
   const bar = document.getElementById('metaBar'); if (!bar) return;
   const items = metaItems();
   const done = items.filter(i => i.done).length, total = items.length;
   const streak = metaStreakValue(done > 0);
-  if (done === 0) { bar.style.display = 'none'; return; }
   bar.style.display = '';
-  bar.innerHTML = '<div class="meta-info">' +
-    '<span class="meta-streak">🔥 ' + streak + ' <span>day streak</span></span>' +
-    '<span class="meta-prog"><b>' + done + '/' + total + '</b> done today</span></div>' +
-    '<button class="meta-share" id="metaShareBtn">Share today</button>';
-  document.getElementById('metaShareBtn').onclick = () => {
+  let nextIdx = -1; for (let i = 0; i < items.length; i++) { if (!items[i].done) { nextIdx = i; break; } }
+  let left;
+  if (done === 0) left = '<span class="meta-prog">' + t('metaStart') + '</span>';
+  else left = '<span class="meta-streak">🔥 ' + streak + ' <span>' + t('metaStreakL') + '</span></span>' +
+    '<span class="meta-prog"><b>' + done + '/' + total + '</b> ' + t('metaDoneL') + '</span>';
+  let nudge = '';
+  if (nextIdx >= 0) {
+    const g = META_NAV[nextIdx];
+    const label = (done === 0 ? g.n : t('metaNext') + ': ' + g.n) + ' →';
+    nudge = '<a class="meta-next" id="metaNextBtn"' + (g.h ? ' href="' + g.h + '"' : '') + '>' + label + '</a>';
+  }
+  const right = done > 0 ? '<button class="meta-share" id="metaShareBtn">' + t('metaShareBtn') + '</button>' : '';
+  bar.innerHTML = '<div class="meta-info">' + left + nudge + '</div>' + right;
+  const nb = document.getElementById('metaNextBtn');
+  if (nb && nextIdx === 0) { nb.style.cursor = 'pointer'; nb.onclick = () => { try { game.startDaily(); } catch(_) {} }; }
+  const sb = document.getElementById('metaShareBtn');
+  if (sb) sb.onclick = () => {
     const txt = shareTodayText(items, done, total, streak);
     if (navigator.share) { navigator.share({ text: txt }).catch(() => {}); }
     else {
       try { navigator.clipboard.writeText(txt); } catch(_) {}
-      const b = document.getElementById('metaShareBtn');
-      b.textContent = 'Copied ✓'; b.classList.add('copied');
-      setTimeout(() => { b.textContent = 'Share today'; b.classList.remove('copied'); }, 1600);
+      sb.textContent = 'Copied ✓'; sb.classList.add('copied');
+      setTimeout(() => { sb.textContent = t('metaShareBtn'); sb.classList.remove('copied'); }, 1600);
     }
   };
 }
