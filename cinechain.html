@@ -19,6 +19,9 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .kicker{color:var(--gold);font-weight:700;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:14px}
 .score{font-size:.85rem;color:var(--mut);font-weight:600;margin-bottom:14px}
 .score b{color:var(--gold);font-weight:800;font-size:1.4rem}
+.timer-big{font-size:2.4rem;font-weight:800;font-variant-numeric:tabular-nums;color:var(--gold);letter-spacing:.02em;line-height:1;margin:0 0 8px}
+.timer-big.low{color:#e8806f;animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.5}}
 .chain{display:flex;flex-direction:column;align-items:center;gap:0;margin:0 auto 8px;max-width:340px}
 .film{display:flex;align-items:center;gap:11px;width:100%;background:rgba(255,255,255,.04);border:1px solid var(--bdr);border-radius:12px;padding:8px 11px;text-align:left}
 .film.seed{border-color:rgba(232,160,0,.4);background:linear-gradient(110deg,rgba(232,160,0,.12),rgba(255,255,255,.04))}
@@ -85,7 +88,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     if(timerId) return;
     timerId=setInterval(function(){
       timeLeft--;
-      const el=document.getElementById('timer'); if(el){ el.textContent='⏱ '+fmtTime(Math.max(0,timeLeft)); if(timeLeft<=15) el.style.color='#e8806f'; }
+      const el=document.getElementById('timer'); if(el){ el.textContent='⏱ '+fmtTime(Math.max(0,timeLeft)); el.classList.toggle('low',timeLeft<=15); }
       if(timeLeft<=0){ stopTimer(); over=true; if(isDaily) persist(); render(); }
     },1000);
   }
@@ -95,7 +98,9 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 
   function render(){
     const links=chain.length-1;
-    let html='<div class="score">Chain length <b>'+links+'</b>'+(over?'':' · <span id="timer">⏱ '+fmtTime(Math.max(0,timeLeft))+'</span>')+'</div>';
+    let html='';
+    if(!over) html+='<div class="timer-big'+(timeLeft<=15?' low':'')+'" id="timer">⏱ '+fmtTime(Math.max(0,timeLeft))+'</div>';
+    html+='<div class="score">Chain length <b>'+links+'</b></div>';
     html+='<div class="chain">';
     chain.forEach(function(f,i){
       if(i>0) html+='<div class="via">via '+esc(f.via)+'</div>';
