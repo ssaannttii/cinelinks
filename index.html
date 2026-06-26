@@ -616,6 +616,13 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
           <a class="mode mode-practice" href="/cinegrid.html?practice=1">Practice</a>
         </div>
       </div>
+      <div class="game-card">
+        <div class="game-head"><span class="game-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7H6a4 4 0 0 0 0 8h3"/><path d="M15 7h3a4 4 0 0 1 0 8h-3"/><path d="M8 11h8"/></svg></span><span class="game-meta"><span class="game-name">CineChain <span class="new-tag">NEW</span><span class="game-done" data-done="chain"></span></span><span class="game-desc">Build the longest film chain</span></span></div>
+        <div class="game-modes">
+          <a class="mode mode-daily" href="/cinechain.html">Daily</a>
+          <a class="mode mode-practice" href="/cinechain.html?practice=1">Practice</a>
+        </div>
+      </div>
     </div>
 
     <div id="dailyGallery" style="display:none"></div>
@@ -1535,7 +1542,7 @@ function markDoneBadges() {
   const state = {
     cl: linksDone(), clue: clueDone('cineclueState'), frame: clueDone('cineframeState'),
     cast: clueDone('cinecastState'), plot: clueDone('cineplotState'), line: clueDone('cinelineState'),
-    reel: clueDone('cinereelState'), grid: clueDone('cinegridState')
+    reel: clueDone('cinereelState'), grid: clueDone('cinegridState'), chain: clueDone('cinechainState')
   };
   document.querySelectorAll('.game-done[data-done]').forEach(el => {
     const done = !!state[el.dataset.done];
@@ -1577,6 +1584,7 @@ function metaItems() {
   { const s = gs('cinelineState'); const done = !!(s && s.day === ud && s.finished); items.push({ emoji: '📅', done: done, text: done ? ((s.solved ? '✅ ' : '') + (s.score != null ? s.score + '/10' : 'done')) : null }); }
   { const s = gs('cinereelState'); const done = !!(s && s.day === ud && s.finished); items.push({ emoji: '🎞️', done: done, text: done ? (s.won ? ('✅ ' + (s.score || '?') + '/6') : '❌') : null }); }
   { const s = gs('cinegridState'); const done = !!(s && s.day === ud && s.finished); items.push({ emoji: '🔲', done: done, text: done ? ('✅ ' + (s.filled || 0) + '/9') : null }); }
+  { const s = gs('cinechainState'); const done = !!(s && s.day === ud && s.finished); items.push({ emoji: '⛓️', done: done, text: done ? ('✅ chain ' + (s.length || 0)) : null }); }
   { const s = gs('cinerating_daily'); const td = today.replace(/-/g, ''); const done = !!(s && s.date === td); items.push({ emoji: '⚖️', done: done, text: done ? ('✅ ' + s.score + '/10') : null }); }
   return items;
 }

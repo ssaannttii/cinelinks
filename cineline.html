@@ -81,6 +81,21 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 /* desktop: roomier rows + bigger mystery poster */
 @media(min-width:760px){.wrap{max-width:680px}.title{font-size:2.4rem}.cc-card img{width:92px;height:138px}.tl-item img,.tl-item .tl-ph{width:46px;height:69px}.tl-name{font-size:.98rem}.tl-edge{font-size:2.3rem}body{min-height:100vh;display:flex}.wrap{margin:auto}}
+/* Wide screens: lay the timeline out HORIZONTALLY (oldest → newest, left → right).
+   Same DOM (slot,item,slot,…) just flows as a row; items become little cards and
+   the placement gaps become vertical dashed lines. Mobile keeps the vertical list. */
+@media(min-width:820px){
+  .wrap{max-width:920px}
+  .tl-edge{display:none}
+  .tl-list{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;align-items:stretch;padding:8px 2px 14px;gap:0}
+  .tl-item{flex-direction:column;width:108px;flex-shrink:0;gap:5px;text-align:center;align-items:center;padding:10px 7px}
+  .tl-item img,.tl-item .tl-ph{width:62px;height:93px}
+  .tl-name{flex:none;font-size:.74rem;line-height:1.2}
+  .tl-yr{font-size:1rem}
+  .tl-slot{width:32px;height:auto;min-height:150px;align-self:stretch}
+  .tl-slot::before{left:50%;right:auto;top:14px;bottom:14px;height:auto;width:2px;transform:translateX(-50%);background:repeating-linear-gradient(180deg,rgba(232,160,0,.22) 0 7px,transparent 7px 14px)}
+  .tl-slot:hover::before,.tl-slot:focus::before{background:rgba(232,160,0,.6)}
+}
 </style>
 </head>
 <body>

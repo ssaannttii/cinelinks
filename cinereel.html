@@ -57,9 +57,12 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .loading{color:var(--mut);font-size:.9rem;padding:40px 0}
 .foot{margin-top:26px;color:var(--mut);font-size:.74rem}
 .foot a{color:var(--gold);text-decoration:none}
+.cl-home{position:fixed;top:13px;left:13px;z-index:50;display:inline-flex;align-items:center;gap:5px;color:var(--mut);text-decoration:none;font-size:.78rem;font-weight:700;background:rgba(20,20,20,.6);border:1px solid var(--bdr);border-radius:999px;padding:7px 13px;backdrop-filter:blur(8px)}
+.cl-home:hover{color:var(--gold);border-color:rgba(232,160,0,.45)}
 </style>
 </head>
 <body>
+<a href="/" class="cl-home" aria-label="Back to CineLinks">← CineLinks</a>
 <div class="wrap" id="cinereel-app">
   <div class="logo">Cine<b>Reel</b></div>
   <div class="tag">Whose filmography is this?</div>
