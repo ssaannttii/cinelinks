@@ -17,6 +17,8 @@
 
   // Localised string with English fallback (i18n.js may load after us / be absent).
   function A(key, fallback) { try { return (typeof window.t === 'function' && window.t(key)) || fallback; } catch (_) { return fallback; } }
+  // Let the home re-localise the account card when the language switches.
+  window.refreshAuthCard = function () { try { setCardText(_lastCard.signedIn, _lastCard.name); } catch (_) {} };
 
   var SYNC_KEYS = (window.MergeStats && window.MergeStats.SYNC_KEYS) ||
     ['clStreak', 'cineclueStreak', 'cineframeStreak', 'cineclueState', 'cineframeState', 'clPlayed'];
@@ -54,7 +56,9 @@
   }
 
   // --- home account card text reflects the state (no-op on other pages) ---
+  var _lastCard = { signedIn: false, name: '' };
   function setCardText(signedIn, name) {
+    _lastCard = { signedIn: signedIn, name: name || '' };
     var tx = document.querySelector('.account-card .account-tx');
     if (!tx) return;
     var b = tx.querySelector('b'), span = tx.querySelector('span');

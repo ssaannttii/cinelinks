@@ -1010,7 +1010,24 @@ const DAILY_POOL = {
 const IMGBASE = 'https://image.tmdb.org/t/p/w342';
 
 
-let _lang = localStorage.getItem('clLang') || 'en-US';
+// Pick the UI language: a saved choice wins; otherwise fall back to the browser's
+// preferred languages (es/pt/fr/de/en families), then English.
+function _detectLang() {
+  const stored = localStorage.getItem('clLang');
+  if (stored && LANGS[stored]) return stored;
+  const navs = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || ''];
+  for (const n of navs) {
+    if (LANGS[n]) return n;
+    const base = (n || '').slice(0, 2).toLowerCase();
+    if (base === 'es') return 'es-ES';
+    if (base === 'pt') return 'pt-BR';
+    if (base === 'fr') return 'fr-FR';
+    if (base === 'de') return 'de-DE';
+    if (base === 'en') return 'en-US';
+  }
+  return 'en-US';
+}
+let _lang = _detectLang();
 function t(key, ...args) {
   const d = I18N[_lang] || I18N['en-US'];
   const v = d[key] ?? I18N['en-US'][key];
@@ -1107,6 +1124,7 @@ function applyI18n() {
   try { markDoneBadges(); } catch (_) {}
   try { renderMetaBar(); } catch (_) {}
   if (window.renderDailyGallery) { try { window.renderDailyGallery(); } catch (_) {} }
+  if (window.refreshAuthCard) { try { window.refreshAuthCard(); } catch (_) {} }
 }
 
 // In-memory cache of TMDB responses for the current session: avoids re-fetching
