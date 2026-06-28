@@ -147,7 +147,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
       const c=await credits(aid); const cast=c.cast||[]; const ids=new Set(cast.map(x=>x.id));
       if([...reserved].some(id=>ids.has(id))) continue;
       const leads=cast.filter(x=>(x.media_type==='movie'||x.media_type==='tv')&&(x.vote_count||0)>=800&&x.order!=null&&x.order<=4&&x.poster_path&&(x.release_date||x.first_air_date))
-        .sort((a,b)=>(b.popularity||0)-(a.popularity||0));
+        .sort((a,b)=>(b.vote_count||0)-(a.vote_count||0) || a.id-b.id);  // stable: vote_count never swings like popularity
       const seen=new Set(), fr=[];
       for(const f of leads){ const t=f.title||f.name; if(usedIds.has(f.id)||seen.has(t)) continue; seen.add(t); fr.push({id:f.id,title:shorten(t)}); if(fr.length>=4) break; }
       if(fr.length>=4){ actorTiles=fr; actorName=aname; actorIds=ids; fr.forEach(f=>usedIds.add(f.id)); break; }
@@ -162,7 +162,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
       const dIds=new Set(directed.map(x=>x.id));
       if([...usedIds].some(id=>dIds.has(id))) continue;
       if(actorIds && [...dIds].some(id=>actorIds.has(id))) continue;
-      const ranked=directed.sort((a,b)=>(b.popularity||0)-(a.popularity||0));
+      const ranked=directed.sort((a,b)=>(b.vote_count||0)-(a.vote_count||0) || a.id-b.id);  // stable order across players/days
       const seen=new Set(), fr=[];
       for(const f of ranked){ const t=f.title; if(usedIds.has(f.id)||seen.has(t)) continue; seen.add(t); fr.push({id:f.id,title:shorten(t)}); if(fr.length>=4) break; }
       if(fr.length>=4){ dirTiles=fr; dirName=dname; fr.forEach(f=>usedIds.add(f.id)); break; }
