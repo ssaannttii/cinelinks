@@ -222,8 +222,8 @@
   }
   function renderClues() {
     const el = document.getElementById('clues');
-    el.innerHTML = clues.slice(0, stage + 1).map(c =>
-      '<div class="clue"><div class="clue-label">' + esc(c.label) + '</div>' + c.html + '</div>'
+    el.innerHTML = clues.slice(0, stage + 1).map((c, i) =>
+      '<div class="clue' + (i === stage ? ' fx-in' : '') + '"><div class="clue-label">' + esc(c.label) + '</div>' + c.html + '</div>'
     ).join('');
     el.querySelectorAll('canvas[data-url]').forEach(c => drawBlurred(c, c.dataset.url, +c.dataset.blur));
   }
@@ -245,6 +245,7 @@
     if (finished) return;
     if (Media.sameTarget(movie, target)) { finish(true); return; }
     toast('Not it — next clue revealed');
+    if (window.Fx) Fx.play(document.getElementById('guessInput'), 'fx-shake', 450);
     advance('wrong');
   }
   function skip() { if (!finished) advance('skip'); }
@@ -290,6 +291,13 @@
       '<div class="result-grid">' + emojiGrid() + '</div>' +
       streakLine +
       '<div class="result-actions">' + actions + '</div>';
+    // Polish: card entrance, poster pop, and a confetti burst on a win.
+    el.classList.add('fx-in');
+    const pst = el.querySelector('.result-poster'); if (pst) pst.classList.add('fx-poster');
+    if (solved) {
+      const v = el.querySelector('.result-verdict'); if (v) v.classList.add('fx-win');
+      if (window.Fx) setTimeout(() => Fx.confetti({ count: 90 }), 120);
+    }
     document.getElementById('shareBtn').onclick = share;
     const again = document.getElementById('againBtn');
     if (again) again.onclick = () => { location.href = PAGE + '?practice=1&n=' + Date.now(); };

@@ -1,0 +1,22 @@
+/* Shared visual-polish layer for all Cine* games — consistent, tasteful motion.
+   Include with <link rel="stylesheet" href="/fx.css"> and the matching /fx.js. */
+@keyframes fxFadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes fxPop{0%{transform:scale(.9);opacity:0}60%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
+@keyframes fxShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+@keyframes fxPulse{0%,100%{transform:scale(1)}45%{transform:scale(1.045)}}
+@keyframes fxPosterIn{0%{opacity:0;transform:scale(.82) rotate(-3deg)}100%{opacity:1;transform:none}}
+@keyframes fxGlow{0%,100%{box-shadow:0 0 0 0 rgba(232,160,0,0)}50%{box-shadow:0 0 0 3px rgba(232,160,0,.4),0 14px 40px rgba(232,160,0,.28)}}
+.fx-in{animation:fxFadeUp .4s cubic-bezier(.2,.8,.2,1) backwards}
+.fx-pop{animation:fxPop .42s cubic-bezier(.3,1.3,.5,1) backwards}
+.fx-shake{animation:fxShake .42s}
+.fx-win{animation:fxPulse .9s ease}
+.fx-poster{animation:fxPosterIn .55s cubic-bezier(.2,.9,.25,1) both}
+.fx-glow{animation:fxGlow 1s ease}
+.fx-confetti{position:fixed;top:0;left:0;width:8px;height:8px;border-radius:2px;pointer-events:none;z-index:9999;will-change:transform,opacity}
+/* gentle press feedback for any tappable control opted in with .fx-tap */
+.fx-tap{transition:transform .09s ease}
+.fx-tap:active{transform:scale(.95)}
+@media(prefers-reduced-motion:reduce){
+  .fx-in,.fx-pop,.fx-shake,.fx-win,.fx-poster,.fx-glow{animation:none!important}
+  .fx-confetti{display:none!important}
+}

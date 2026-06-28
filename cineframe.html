@@ -83,6 +83,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 /* desktop: wider column makes the 16:9 frame noticeably bigger */
 @media(min-width:760px){.wrap{max-width:680px}.title{font-size:2.4rem}.subtitle{font-size:.92rem}.result-poster{width:160px}.clue-body{font-size:1rem}body{min-height:100vh;display:flex}.wrap{margin:auto}}
 </style>
+<link rel="stylesheet" href="/fx.css">
 </head>
 <body>
 <div id="cineBackdrop" aria-hidden="true"></div>
@@ -127,6 +128,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 </div>
 <div class="toast" id="toast"></div>
 
+<script src="/fx.js"></script>
 <script src="cineclue-pool.js"></script>
 <script src="/lib/media.js"></script>
 <script src="/lib/pool.js"></script>
@@ -281,6 +283,7 @@ function makeGuess(movie){
   if(finished) return;
   if(Media.sameTarget(movie, target)){ finish(true); return; }
   toast('Not it - frame sharpened');
+  if(window.Fx) Fx.play(document.getElementById('guessInput'), 'fx-shake', 450);
   advance('wrong');
 }
 function skip(){ if(!finished) advance('skip'); }
@@ -326,6 +329,9 @@ function renderResult(streak){
     '<div class="result-grid">' + emojiGrid() + '</div>' +
     streakLine +
     '<div class="result-actions">' + actions + '</div>';
+  el.classList.add('fx-in');
+  const pst = el.querySelector('.result-poster'); if(pst) pst.classList.add('fx-poster');
+  if(solved){ const v = el.querySelector('.result-verdict'); if(v) v.classList.add('fx-win'); if(window.Fx) setTimeout(() => Fx.confetti({count:90}), 120); }
   document.getElementById('shareBtn').onclick = share;
   const again = document.getElementById('againBtn');
   if(again) again.onclick = () => { location.href = 'cineframe.html?practice=1&n=' + Date.now(); };

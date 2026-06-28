@@ -9,7 +9,8 @@ const browser = {
   requestAnimationFrame: 'readonly', history: 'readonly', URL: 'readonly',
   URLSearchParams: 'readonly', Intl: 'readonly', console: 'readonly',
   atob: 'readonly', btoa: 'readonly', Image: 'readonly',
-  CineCredits: 'readonly', MergeStats: 'readonly', Media: 'readonly', Pool: 'readonly'
+  matchMedia: 'readonly', performance: 'readonly',
+  CineCredits: 'readonly', MergeStats: 'readonly', Media: 'readonly', Pool: 'readonly', Fx: 'readonly'
 };
 const node = {
   process: 'readonly', module: 'writable', require: 'readonly', __dirname: 'readonly',
@@ -44,7 +45,7 @@ export default [
   // Browser scripts loaded by index.html. LANGS/I18N/DAILY_CHALLENGE_KEYS are
   // intentionally consumed by other scripts on the page.
   {
-    files: ['i18n.js', 'daily-challenges.js', 'cineclue-pool.js', 'cineline-pool.js', 'ads.js', 'support.js', 'howto.js', 'auth.js', 'cookie.js', 'cineguess.js', 'home-art.js', 'daily-gallery.js'],
+    files: ['i18n.js', 'daily-challenges.js', 'cineclue-pool.js', 'cineline-pool.js', 'ads.js', 'support.js', 'howto.js', 'auth.js', 'cookie.js', 'cineguess.js', 'home-art.js', 'daily-gallery.js', 'fx.js'],
     languageOptions: { ecmaVersion: 2022, sourceType: 'script', globals: browser },
     rules: { 'no-unused-vars': 'off', 'no-empty': ['warn', { allowEmptyCatch: true }] }
   },
