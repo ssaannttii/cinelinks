@@ -15,6 +15,9 @@
   var CLIENT_ID = '136867217006-lvud0hvsncgsitlbi0fqo8rfgge9l1hv.apps.googleusercontent.com';
   if (!CLIENT_ID) return;
 
+  // Localised string with English fallback (i18n.js may load after us / be absent).
+  function A(key, fallback) { try { return (typeof window.t === 'function' && window.t(key)) || fallback; } catch (_) { return fallback; } }
+
   var SYNC_KEYS = (window.MergeStats && window.MergeStats.SYNC_KEYS) ||
     ['clStreak', 'cineclueStreak', 'cineframeStreak', 'cineclueState', 'cineframeState', 'clPlayed'];
   var lastToken = '';
@@ -57,11 +60,11 @@
     var b = tx.querySelector('b'), span = tx.querySelector('span');
     if (!b || !span) return;
     if (signedIn) {
-      b.textContent = '✓ Progress synced';
-      span.textContent = name ? ('Backed up to your Google account · ' + name) : 'Backed up across your devices';
+      b.textContent = A('authSyncedTitle', '✓ Progress synced');
+      span.textContent = name ? (A('authBackedAccount', 'Backed up to your Google account · ') + name) : A('authBackedDevices', 'Backed up across your devices');
     } else {
-      b.textContent = 'Cross-device sync';
-      span.textContent = 'Sign in with Google to save your streaks on every device.';
+      b.textContent = A('authSyncTitle', 'Cross-device sync');
+      span.textContent = A('authSyncDesc', 'Sign in with Google to save your streaks on every device.');
     }
   }
 
@@ -89,19 +92,19 @@
     var img = p.picture
       ? '<img src="' + p.picture + '" alt="" referrerpolicy="no-referrer" style="width:24px;height:24px;border-radius:50%;object-fit:cover">'
       : '<span style="width:24px;height:24px;border-radius:50%;background:#e8a000;color:#111;display:flex;align-items:center;justify-content:center;font-weight:800">' + ((p.name || '?')[0] || '?').toUpperCase() + '</span>';
-    pill.innerHTML = img + '<span style="color:#5bbd7a">✓ Synced</span>';
+    pill.innerHTML = img + '<span style="color:#5bbd7a">' + A('authSyncedPill', '✓ Synced') + '</span>';
 
     var menu = document.createElement('div');
     menu.style.cssText = 'display:none;margin-top:6px;width:236px;background:#181818;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:11px;box-shadow:0 12px 34px rgba(0,0,0,.5);color:#f0f0f0;font-size:.78rem';
     var who = p.name || p.email ? ('<p style="margin:0 0 8px;font-weight:700">' + (p.name || p.email) + '</p>') : '';
     menu.innerHTML = who +
-      '<p style="margin:0 0 10px;color:#8d8d8d;font-size:.72rem;line-height:1.5">Your streaks &amp; history are backed up and synced across devices. We only store game stats and your Google ID. <a href="/privacy.html" style="color:#e8a000;text-decoration:none;font-weight:700">Privacy</a></p>';
+      '<p style="margin:0 0 10px;color:#8d8d8d;font-size:.72rem;line-height:1.5">' + A('authMenuBlurb', 'Your streaks &amp; history are backed up and synced across devices. We only store game stats and your Google ID.') + ' <a href="/privacy.html" style="color:#e8a000;text-decoration:none;font-weight:700">' + A('authPrivacy', 'Privacy') + '</a></p>';
     var out = document.createElement('button');
-    out.textContent = 'Sign out';
+    out.textContent = A('authSignOut', 'Sign out');
     out.style.cssText = 'width:100%;padding:8px;margin-bottom:6px;border:1px solid rgba(255,255,255,.14);border-radius:8px;background:transparent;color:#f0f0f0;font-family:inherit;font-weight:700;font-size:.78rem;cursor:pointer';
     out.onclick = signOut;
     var del = document.createElement('button');
-    del.textContent = 'Delete my synced data';
+    del.textContent = A('authDelete', 'Delete my synced data');
     del.style.cssText = 'width:100%;padding:8px;border:1px solid rgba(216,80,58,.4);border-radius:8px;background:transparent;color:#d8503a;font-family:inherit;font-weight:700;font-size:.78rem;cursor:pointer';
     del.onclick = deleteData;
     menu.appendChild(out); menu.appendChild(del);

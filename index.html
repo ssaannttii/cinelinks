@@ -123,6 +123,9 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .mode:hover{border-color:rgba(232,160,0,.5);background:rgba(232,160,0,.05)}
 .mode-daily{background:var(--gold);color:#111;border-color:var(--gold)}
 .mode-daily:hover{opacity:.9;background:var(--gold)}
+/* Button hierarchy: only the hero gets a solid-gold CTA. Secondary cards use a softer gold so the eye lands on the lead game first. */
+.game-card:not(.hero):not(.done) .mode-daily{background:rgba(232,160,0,.13);color:var(--gold);border-color:rgba(232,160,0,.5)}
+.game-card:not(.hero):not(.done) .mode-daily:hover{background:var(--gold);color:#111;border-color:var(--gold);opacity:1}
 /* Once a game is done today, Daily just shows the result (de-emphasised) and
    Practice becomes the primary call-to-action. */
 .game-card.done .mode-daily{background:transparent;color:var(--mut);border-color:var(--bdr);font-weight:600}
