@@ -342,9 +342,11 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
       const allIds=puzzle.groups.flatMap(g=>g.tiles.map(t=>t.id));
       board=shuffle(allIds, PRACTICE?seed:('b'+day));
     }
-    loadDaily();
-    // if reloading a saved daily, drop already-solved tiles from board
-    if(solved.length){ const solvedIds=new Set(solved.flatMap(s=>s.tiles.map(t=>t.id))); board=board.filter(id=>!solvedIds.has(id)); }
+    // Only restore saved progress in daily mode — practice is always a fresh game.
+    if(!PRACTICE){
+      loadDaily();
+      if(solved.length){ const solvedIds=new Set(solved.flatMap(s=>s.tiles.map(t=>t.id))); board=board.filter(id=>!solvedIds.has(id)); }
+    }
     render();
   }
   boot();
