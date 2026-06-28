@@ -31,7 +31,12 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .grid.focus .tile:not(.sel){opacity:.42}
 .tile.wrong{animation:shake .4s}
 .tile.pop{animation:pop .25s}
-.tile.solving{animation:solveBounce .5s cubic-bezier(.3,1.3,.5,1) both;background:var(--gold);color:#111;border-color:var(--gold);box-shadow:0 8px 22px rgba(232,160,0,.45)}
+.tile.solving{animation:solveBounce .5s cubic-bezier(.3,1.3,.5,1) both;color:#111;border-color:transparent;box-shadow:0 8px 22px rgba(0,0,0,.35)}
+.tile.done{color:#111;font-weight:800;border-color:transparent;opacity:.62;cursor:default;pointer-events:none;position:relative}
+.tile.done::after{content:"✓";position:absolute;top:3px;right:5px;font-size:.62rem;font-weight:900;opacity:.65}
+.legend{display:flex;flex-wrap:wrap;gap:6px 10px;justify-content:center;margin:14px 0 10px}
+.leg{display:inline-flex;align-items:center;gap:5px;font-size:.64rem;font-weight:700;color:var(--mut)}
+.leg i{width:10px;height:10px;border-radius:3px;background:var(--lc);flex-shrink:0}
 @keyframes tileIn{from{opacity:0;transform:translateY(10px) scale(.96)}to{opacity:1;transform:none}}
 @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
 @keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
@@ -383,9 +388,14 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   // ---------- rendering ----------
   function render(){
     if(finished){ renderResult(); return; }
-    let h='<div class="solved-area" id="solvedArea">'+solved.map(s=>solvedRow(s, s.key===lastSolvedKey?'new':'')).join('')+'</div>';
+    const solvedKeys=new Set(solved.map(s=>s.key));
+    let h='';
+    if(solved.length){ h+='<div class="legend">'+puzzle.groups.filter(g=>solvedKeys.has(g.key)).map(g=>'<span class="leg" style="--lc:'+g.color+'"><i></i>'+esc(g.label)+'</span>').join('')+'</div>'; }
     h+='<div class="grid'+(selected.length?' focus':'')+'" id="grid">';
-    board.forEach((id,i)=>{ const t=tileMap[id]; if(t) h+='<div class="tile" data-id="'+id+'" style="animation-delay:'+(i*0.022).toFixed(3)+'s">'+esc(t.title)+'</div>'; });
+    board.forEach((id,i)=>{ const t=tileMap[id]; if(!t) return; const dl='animation-delay:'+(i*0.022).toFixed(3)+'s';
+      if(solvedKeys.has(t.key)) h+='<div class="tile done" style="background:'+groupByKey(t.key).color+';'+dl+'">'+esc(t.title)+'</div>';
+      else h+='<div class="tile" data-id="'+id+'" style="'+dl+'">'+esc(t.title)+'</div>';
+    });
     h+='</div>';
     h+='<div class="mistakes">Mistakes remaining <span class="dots" id="dots">'+dotsHtml()+'</span></div>';
     h+='<div class="controls">'+
@@ -394,7 +404,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
        '<button class="btn btn-go" id="goBtn" disabled>Submit</button>'+
        '</div>';
     stage.innerHTML=h;
-    document.querySelectorAll('.tile').forEach(el=>el.addEventListener('click',()=>onTile(el.dataset.id)));
+    document.querySelectorAll('.tile[data-id]').forEach(el=>el.addEventListener('click',()=>onTile(el.dataset.id)));
     document.getElementById('shuffleBtn').onclick=onShuffle;
     document.getElementById('deselBtn').onclick=()=>{ selected=[]; syncSel(); };
     document.getElementById('goBtn').onclick=onSubmit;
@@ -403,14 +413,19 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   function dotsHtml(){ let h=''; for(let i=0;i<MAX_MIST;i++) h+='<span class="dot'+(i<mistakes?' gone':'')+'"></span>'; return h; }
   function solvedRow(g,cls){ return '<div class="solved'+(cls?' '+cls:'')+'" style="background:'+g.color+'"><div class="s-label">'+esc(g.label)+'</div><div class="s-titles">'+g.tiles.map(t=>esc(t.title)).join(' · ')+'</div></div>'; }
   function syncSel(){
-    document.querySelectorAll('.tile').forEach(el=>el.classList.toggle('sel',selected.includes(el.dataset.id)));
+    document.querySelectorAll('.tile[data-id]').forEach(el=>el.classList.toggle('sel',selected.includes(el.dataset.id)));
     const grid=document.getElementById('grid'); if(grid) grid.classList.toggle('focus', selected.length>0);
     const go=document.getElementById('goBtn'), des=document.getElementById('deselBtn');
     if(go) go.disabled=selected.length!==4;
     if(des) des.disabled=selected.length===0;
   }
   function onTile(id){ if(locked) return; const i=selected.indexOf(id); if(i>=0) selected.splice(i,1); else { if(selected.length>=4) return; selected.push(id); } syncSel(); }
-  function onShuffle(){ board=shuffle(board, Date.now()); const g=document.getElementById('grid'); if(g){ g.innerHTML=board.map((id,i)=>{const t=tileMap[id];return '<div class="tile" data-id="'+id+'" style="animation-delay:'+(i*0.022).toFixed(3)+'s">'+esc(t.title)+'</div>';}).join(''); document.querySelectorAll('.tile').forEach(el=>el.addEventListener('click',()=>onTile(el.dataset.id))); syncSel(); } }
+  function onShuffle(){ // shuffle only the unsolved tiles; solved ones stay pinned in place
+    const solvedKeys=new Set(solved.map(s=>s.key));
+    const pos=[], ids=[]; board.forEach((id,i)=>{ if(!solvedKeys.has(tileMap[id].key)){ pos.push(i); ids.push(id); } });
+    const sh=shuffle(ids, Date.now()); pos.forEach((p,k)=>board[p]=sh[k]);
+    saveDaily(); render();
+  }
 
   function pushSolved(g){ solved.push({key:g.key,label:g.label,color:g.color,tiles:g.tiles}); }
   function onSubmit(){
@@ -421,17 +436,17 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     if(allSame){
       locked=true;
       const g=groupByKey(keys[0]);
-      // bounce the four correct tiles in a quick ripple, then collapse into the banner
-      selected.forEach((id,i)=>{ const el=document.querySelector('.tile[data-id="'+id+'"]'); if(el){ el.style.animationDelay=(i*0.08)+'s'; el.classList.remove('sel'); el.classList.add('solving'); } });
+      // bounce the four correct tiles in a ripple (colored), then lock them in place
+      selected.forEach((id,i)=>{ const el=document.querySelector('.tile[data-id="'+id+'"]'); if(el){ el.style.animationDelay=(i*0.08)+'s'; el.style.background=g.color; el.classList.remove('sel'); el.classList.add('solving'); } });
       lastSolvedKey=g.key;
+      toast('✓ '+g.label);              // reveal the category
       setTimeout(()=>{
-        pushSolved(g);
-        board=board.filter(id=>!selected.includes(id));
+        pushSolved(g);                  // tiles stay in place, become locked + dimmed via render()
         selected=[]; locked=false;
         saveDaily();
-        if(solved.length===4){ finished=true; won=true; statsBump(true); render(); }
-        else render();
-      },640);
+        if(solved.length===4){ finished=true; won=true; statsBump(true); }
+        render();
+      },720);
     } else {
       const counts={}; keys.forEach(k=>counts[k]=(counts[k]||0)+1);
       const max=Math.max(...Object.values(counts));
@@ -502,12 +517,11 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     // Only restore saved progress in daily mode — practice is always a fresh game.
     if(!PRACTICE){
       loadDaily();
-      // Migration guard: discard pre-v2 saved state (no per-group keys) that won't match the new board.
+      // Discard pre-v2 saved state (no per-group keys) that won't match this puzzle.
       const validKeys=new Set(puzzle.groups.map(g=>g.key));
-      const staleSolved=solved.some(s=>!s.key||!validKeys.has(s.key));
-      const staleBoard=(st=>st&&st.day===day&&st.board&&st.board.some(id=>!tileMap[id]))(getLS(SKEY));
-      if(staleSolved||staleBoard){ solved=[]; mistakes=0; guesses=[]; finished=false; won=false; board=shuffle(puzzle.groups.flatMap(g=>g.tiles.map(t=>t.id)),'b'+day); }
-      else if(solved.length){ const solvedIds=new Set(solved.flatMap(s=>s.tiles.map(t=>t.id))); board=board.filter(id=>!solvedIds.has(id)); }
+      if(solved.some(s=>!s.key||!validKeys.has(s.key))){ solved=[]; mistakes=0; guesses=[]; finished=false; won=false; }
+      // The board always holds all 16 tiles (solved ones stay pinned); rebuild if missing or legacy.
+      if(!board||board.length!==16||board.some(id=>!tileMap[id])){ board=shuffle(puzzle.groups.flatMap(g=>g.tiles.map(t=>t.id)),'b'+day); }
     }
     render();
   }
