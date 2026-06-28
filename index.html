@@ -140,10 +140,12 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .game-card:not(.hero):not(.done) .mode-daily:hover{background:var(--gold);color:#111;border-color:var(--gold);opacity:1}
 /* Once a game is done today, Daily just shows the result (de-emphasised) and
    Practice becomes the primary call-to-action. */
-.game-card.done .mode-daily{background:transparent;color:var(--mut);border-color:var(--bdr);font-weight:600}
-.game-card.done .mode-daily:hover{background:rgba(255,255,255,.05);border-color:var(--bdr);color:var(--txt)}
-.game-card.done .mode-practice{background:var(--gold);color:#111;border-color:var(--gold)}
-.game-card.done .mode-practice:hover{opacity:.9;background:var(--gold);border-color:var(--gold)}
+/* Done card: the green state is the signal. "Results" reads as the quiet primary;
+   "Practice" is a soft-gold secondary (no longer a solid-gold wall across the grid). */
+.game-card.done .mode-daily{background:transparent;color:var(--txt);border-color:var(--bdr);font-weight:700}
+.game-card.done .mode-daily:hover{background:rgba(255,255,255,.05);border-color:rgba(232,160,0,.4);color:var(--txt)}
+.game-card.done .mode-practice{background:rgba(232,160,0,.12);color:var(--gold);border-color:rgba(232,160,0,.45);font-weight:700}
+.game-card.done .mode-practice:hover{background:var(--gold);color:#111;border-color:var(--gold)}
 .secondary-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}
 .secondary-actions .archive-btn{margin-top:0}
 @media (max-width:560px){.games{grid-template-columns:1fr}.secondary-actions{grid-template-columns:1fr}}
@@ -686,11 +688,11 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
       <a href="/stats.html" class="archive-btn" style="text-decoration:none;text-align:center">📊 Your stats</a>
     </div>
     <div class="how">
-      <div class="how-title">Rules</div>
+      <div class="how-title">How it works</div>
       <ul>
-        <li>Start at one actor or movie</li>
-        <li>Choose connections through cast, crew, and filmographies</li>
-        <li>Reach the goal in as few clicks as possible</li>
+        <li>A fresh movie &amp; TV puzzle every day</li>
+        <li>Daily is one shared puzzle — it keeps your streak</li>
+        <li>Practice is unlimited, any time</li>
       </ul>
     </div>
     <div class="credits">
@@ -1088,11 +1090,11 @@ function applyI18n() {
   const archTitle = document.getElementById('archiveTitle');
   if (archTitle) archTitle.textContent = t('archiveTitle');
   const howTitle = document.querySelector('.how-title');
-  if (howTitle) howTitle.textContent = t('rulesTitle');
+  if (howTitle) howTitle.textContent = t('howWorksTitle');
   const rules = document.querySelectorAll('.how li');
-  if (rules[0]) rules[0].textContent = t('rule1');
-  if (rules[1]) rules[1].textContent = t('rule2');
-  if (rules[2]) rules[2].textContent = t('rule3');
+  if (rules[0]) rules[0].textContent = t('howWorks1');
+  if (rules[1]) rules[1].textContent = t('howWorks2');
+  if (rules[2]) rules[2].textContent = t('howWorks3');
   const credTitle = document.querySelector('.credits-title');
   if (credTitle) credTitle.textContent = t('creditsTitle');
   // Loading
