@@ -46,6 +46,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .result{margin-top:8px}
 .result h2{font-size:1.5rem;margin-bottom:4px}
 .result p{color:var(--mut);font-size:.86rem;margin-bottom:12px}
+.trapline{background:rgba(232,160,0,.08);border:1px solid rgba(232,160,0,.25);border-radius:10px;padding:9px 12px;color:var(--txt)!important;font-size:.8rem!important;line-height:1.4}
+.trapline b{color:var(--gold)}
 .statline{display:flex;justify-content:center;gap:22px;margin:12px 0}
 .stat{display:flex;flex-direction:column;gap:1px;font-size:.6rem;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}
 .stat b{font-size:1.2rem;color:var(--txt);font-weight:800}
@@ -127,60 +129,197 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 
   const credCache={};
   async function credits(id){ if(credCache[id]) return credCache[id]; const d=await fetch(IMG+'person/'+id+'/combined_credits&language=en-US').then(r=>r.json()).catch(()=>({})); credCache[id]=d; return d; }
+  const mcCache={};
+  async function movieCredits(id){ if(mcCache[id]) return mcCache[id]; const d=await fetch(IMG+'movie/'+id+'/credits&language=en-US').then(r=>r.json()).catch(()=>({})); mcCache[id]=d; return d; }
 
   const YEAR=new Date().getUTCFullYear()+1;
 
-  // ---------- daily generator (mixed, ambiguity-proof by construction) ----------
-  async function generate(seed){
-    const saga=SAGAS[hash('s'+seed)%SAGAS.length];
-    const theme=THEMES[hash('t'+seed)%THEMES.length];
-    const usedIds=new Set();
-    const sagaTiles=[], themeTiles=[];
-    for(const f of saga.f){ if(sagaTiles.length>=4) break; if(!usedIds.has(f[0])){ usedIds.add(f[0]); sagaTiles.push({id:f[0],title:f[2]||f[1]}); } }
-    for(const f of theme.f){ if(themeTiles.length>=4) break; if(!usedIds.has(f[0])){ usedIds.add(f[0]); themeTiles.push({id:f[0],title:f[1]}); } }
+  // Curated actor–director collaborations: their filmographies OVERLAP, which is the
+  // raw material for fair "traps". [actorId, directorId, actorName, directorName].
+  const COLLABS=[
+   [3894,525,"Christian Bale","Christopher Nolan"],
+   [2037,525,"Cillian Murphy","Christopher Nolan"],
+   [6193,1032,"Leonardo DiCaprio","Martin Scorsese"],
+   [380,1032,"Robert De Niro","Martin Scorsese"],
+   [85,510,"Johnny Depp","Tim Burton"],
+   [31,488,"Tom Hanks","Steven Spielberg"],
+   [287,7467,"Brad Pitt","David Fincher"],
+   [2231,138,"Samuel L. Jackson","Quentin Tarantino"],
+   [131,137427,"Jake Gyllenhaal","Denis Villeneuve"],
+   [1532,5655,"Bill Murray","Wes Anderson"],
+   [1892,578,"Matt Damon","Ridley Scott"]
+  ];
+  // Famous actors the solver is allowed to treat as a nameable category (avoids
+  // flagging character actors who happen to appear in 4 tiles).
+  const FAMOUS_ACTORS=new Set([...ACTORS.map(a=>a[0]), ...COLLABS.map(c=>c[0])]);
+
+  // ---- title-feature predicates (free wordplay categories, for the solver) ----
+  const COLOR_RE=/\b(red|blue|green|black|white|yellow|purple|pink|orange|gold|golden|silver|scarlet|crimson|grey|gray)\b/i;
+  function featNumber(t){ return /\d/.test(t); }
+  function featColor(t){ return COLOR_RE.test(t); }
+  function featOneWord(t){ return t.trim().split(/\s+/).length===1; }
+  const TITLE_FEATS=[['number',featNumber],['color',featColor],['oneword',featOneWord]];
+
+  const movieFilter=x=>x.media_type==='movie'&&x.poster_path&&x.release_date&&parseInt(x.release_date.slice(0,4))<=YEAR&&(x.vote_count||0)>=800;
+  const stableSort=(a,b)=>(b.vote_count||0)-(a.vote_count||0) || a.id-b.id;
+
+  // facts per tile from movie/{id}/credits — for the uniqueness solver
+  async function buildFacts(tiles){
+    const facts={};
+    await Promise.all(tiles.map(async t=>{
+      const c=await movieCredits(t.id);
+      const directorIds=new Set((c.crew||[]).filter(x=>x.job==='Director').map(x=>x.id));
+      const leadIds=new Set((c.cast||[]).filter(x=>x.order!=null&&x.order<=4).map(x=>x.id));
+      facts[t.id]={id:t.id,title:t.title,directorIds,leadIds};
+    }));
+    return facts;
+  }
+
+  // all nameable categories present among the 16 tiles (>=4 members)
+  function buildCats(tiles,facts){
+    const ids=tiles.map(t=>t.id);
+    const cats=[];
+    const add=(set)=>{ if(set.size>=4) cats.push({set}); };
+    // sagas / themes
+    for(const s of SAGAS){ const sids=new Set(s.f.map(f=>f[0])); add(new Set(ids.filter(id=>sids.has(id)))); }
+    for(const th of THEMES){ const tids=new Set(th.f.map(f=>f[0])); add(new Set(ids.filter(id=>tids.has(id)))); }
+    // directors (any person directing >=4 tiles)
+    const dirCount={};
+    for(const id of ids) for(const p of facts[id].directorIds) (dirCount[p]=dirCount[p]||new Set()).add(id);
+    for(const p in dirCount) add(dirCount[p]);
+    // famous actors leading >=4 tiles
+    const actCount={};
+    for(const id of ids) for(const p of facts[id].leadIds) if(FAMOUS_ACTORS.has(p)) (actCount[p]=actCount[p]||new Set()).add(id);
+    for(const p in actCount) add(actCount[p]);
+    // title-feature categories
+    for(const [,test] of TITLE_FEATS) add(new Set(ids.filter(id=>test(facts[id].title))));
+    return cats;
+  }
+
+  // count full 4×4 partitions where every group is a single nameable category.
+  // Early-exits at 2 (we only need "exactly one"); a node cap rejects over-ambiguous boards.
+  function countPartitions(ids,cats){
+    let count=0, nodes=0, capped=false;
+    function rec(remaining){
+      if(count>1||capped) return;
+      if(!remaining.length){ count++; return; }
+      if(++nodes>120000){ capped=true; return; }
+      const t=remaining[0], rest=remaining.slice(1);
+      for(const cat of cats){
+        if(!cat.set.has(t)) continue;
+        const others=rest.filter(x=>cat.set.has(x));
+        if(others.length<3) continue;
+        for(let i=0;i<others.length&&count<=1;i++)
+          for(let j=i+1;j<others.length&&count<=1;j++)
+            for(let k=j+1;k<others.length&&count<=1;k++){
+              const grp=new Set([t,others[i],others[j],others[k]]);
+              rec(remaining.filter(x=>!grp.has(x)));
+            }
+        if(count>1) return;
+      }
+    }
+    rec(ids);
+    return capped?99:count;
+  }
+
+  // ---------- v2 generator: deliberate trap, provably unique ----------
+  async function genTrap(seed){
+    for(const [aid,did,aname,dname] of orderBy(COLLABS,'c'+seed).slice(0,3)){
+      const ac=await credits(aid), dc=await credits(did);
+      const aIds=new Set((ac.cast||[]).map(x=>x.id));
+      const aLeads=(ac.cast||[]).filter(x=>movieFilter(x)&&x.order!=null&&x.order<=4).sort(stableSort);
+      const directed=(dc.crew||[]).filter(x=>x.job==='Director'&&movieFilter(x)).sort(stableSort);
+      if(directed.length<4) continue;
+      const overlap=directed.filter(f=>aIds.has(f.id));        // D films starring A → traps
+      const nonOverlapDir=directed.filter(f=>!aIds.has(f.id));
+      if(!overlap.length || nonOverlapDir.length<2) continue;
+      const trapN=1+(hash('tn'+seed)%2);                       // 1 or 2 trap tiles
+      const dirPick=[...overlap.slice(0,trapN), ...nonOverlapDir].slice(0,4);
+      if(dirPick.length<4) continue;
+      const dirSet=new Set(dirPick.map(f=>f.id));
+      // actor group: A's lead films NOT directed by D
+      const aSeen=new Set(), aGroup=[];
+      for(const f of aLeads){ const t=f.title; if(dirSet.has(f.id)||aSeen.has(t)) continue; const dd=directed.find(x=>x.id===f.id); if(dd) continue; aSeen.add(t); aGroup.push({id:f.id,title:shorten(t)}); if(aGroup.length>=4) break; }
+      if(aGroup.length<4) continue;
+      const used=new Set([...dirSet, ...aGroup.map(f=>f.id)]);
+      const dDir=new Set(directed.map(f=>f.id));
+      // fill the other 8 with the first clean saga + theme (none starring A or directed by D)
+      const cleanGroup=(pool,seedKey,titleFn)=>{
+        for(const p of orderBy(pool,seedKey+seed)){
+          const tiles=[];
+          for(const f of p.f){ if(tiles.length>=4)break; if(!used.has(f[0])&&!aIds.has(f[0])&&!dDir.has(f[0])) tiles.push({id:f[0],title:titleFn(f)}); }
+          if(tiles.length>=4){ tiles.forEach(t=>used.add(t.id)); return {pool:p, tiles}; }
+        }
+        return null;
+      };
+      const sg=cleanGroup(SAGAS,'s',f=>f[2]||f[1]); if(!sg) continue;
+      const tg=cleanGroup(THEMES,'t',f=>f[1]); if(!tg) continue;
+      const raw=[
+        {type:'saga', label:'Same franchise: '+sg.pool.n, tiles:sg.tiles},
+        {type:'theme', label:tg.pool.n, tiles:tg.tiles},
+        {type:'actor', label:'Starring '+aname, tiles:aGroup},
+        {type:'director', label:'Directed by '+dname, tiles:dirPick.map(f=>({id:f.id,title:shorten(f.title)}))}
+      ];
+      const all=raw.flatMap(g=>g.tiles);
+      if(new Set(all.map(t=>t.id)).size<16) continue;            // defensive: 16 distinct tiles
+      const facts=await buildFacts(all);
+      if(countPartitions(all.map(t=>t.id), buildCats(all,facts))!==1) continue;  // must be the only solution
+      const trapTitles=dirPick.filter(f=>aIds.has(f.id)).map(f=>shorten(f.title));
+      return {raw, trap:{actor:aname, director:dname, films:trapTitles}};
+    }
+    return null;
+  }
+
+  // ---------- v1 fallback: fully disjoint (no traps), always solvable ----------
+  async function genSimple(seed){
+    const saga=SAGAS[hash('s'+seed)%SAGAS.length], theme=THEMES[hash('t'+seed)%THEMES.length];
+    const usedIds=new Set(); const sagaTiles=[], themeTiles=[];
+    for(const f of saga.f){ if(sagaTiles.length>=4)break; if(!usedIds.has(f[0])){ usedIds.add(f[0]); sagaTiles.push({id:f[0],title:f[2]||f[1]}); } }
+    for(const f of theme.f){ if(themeTiles.length>=4)break; if(!usedIds.has(f[0])){ usedIds.add(f[0]); themeTiles.push({id:f[0],title:f[1]}); } }
     if(sagaTiles.length<4||themeTiles.length<4) return null;
     const reserved=new Set([...usedIds]);
-
-    // actor group — actor must not appear in any reserved tile, and must field 4 fresh leads
-    let actorTiles=null, actorName=null, actorIds=null;
+    let aTiles=null,aName=null,aIds=null;
     for(const [aid,aname] of orderBy(ACTORS,'a'+seed)){
       const c=await credits(aid); const cast=c.cast||[]; const ids=new Set(cast.map(x=>x.id));
       if([...reserved].some(id=>ids.has(id))) continue;
-      const leads=cast.filter(x=>(x.media_type==='movie'||x.media_type==='tv')&&(x.vote_count||0)>=800&&x.order!=null&&x.order<=4&&x.poster_path&&(x.release_date||x.first_air_date))
-        .sort((a,b)=>(b.vote_count||0)-(a.vote_count||0) || a.id-b.id);  // stable: vote_count never swings like popularity
-      const seen=new Set(), fr=[];
-      for(const f of leads){ const t=f.title||f.name; if(usedIds.has(f.id)||seen.has(t)) continue; seen.add(t); fr.push({id:f.id,title:shorten(t)}); if(fr.length>=4) break; }
-      if(fr.length>=4){ actorTiles=fr; actorName=aname; actorIds=ids; fr.forEach(f=>usedIds.add(f.id)); break; }
+      const leads=cast.filter(x=>(x.media_type==='movie'||x.media_type==='tv')&&(x.vote_count||0)>=800&&x.order!=null&&x.order<=4&&x.poster_path&&(x.release_date||x.first_air_date)).sort(stableSort);
+      const seen=new Set(),fr=[];
+      for(const f of leads){ const t=f.title||f.name; if(usedIds.has(f.id)||seen.has(t))continue; seen.add(t); fr.push({id:f.id,title:shorten(t)}); if(fr.length>=4)break; }
+      if(fr.length>=4){ aTiles=fr;aName=aname;aIds=ids;fr.forEach(f=>usedIds.add(f.id)); break; }
     }
-    if(!actorTiles) return null;
-
-    // director group — directed nothing in the chosen set, actor not in director's films
-    let dirTiles=null, dirName=null;
+    if(!aTiles) return null;
+    let dTiles=null,dName=null;
     for(const [did,dname] of orderBy(DIRECTORS,'d'+seed)){
-      const c=await credits(did); const crew=c.crew||[];
-      const directed=crew.filter(x=>x.job==='Director'&&x.media_type==='movie'&&x.poster_path&&x.release_date&&parseInt(x.release_date.slice(0,4))<=YEAR&&(x.vote_count||0)>=800);
+      const c=await credits(did); const directed=(c.crew||[]).filter(x=>x.job==='Director'&&movieFilter(x));
       const dIds=new Set(directed.map(x=>x.id));
       if([...usedIds].some(id=>dIds.has(id))) continue;
-      if(actorIds && [...dIds].some(id=>actorIds.has(id))) continue;
-      const ranked=directed.sort((a,b)=>(b.vote_count||0)-(a.vote_count||0) || a.id-b.id);  // stable order across players/days
-      const seen=new Set(), fr=[];
-      for(const f of ranked){ const t=f.title; if(usedIds.has(f.id)||seen.has(t)) continue; seen.add(t); fr.push({id:f.id,title:shorten(t)}); if(fr.length>=4) break; }
-      if(fr.length>=4){ dirTiles=fr; dirName=dname; fr.forEach(f=>usedIds.add(f.id)); break; }
+      if(aIds&&[...dIds].some(id=>aIds.has(id))) continue;
+      const ranked=directed.sort(stableSort); const seen=new Set(),fr=[];
+      for(const f of ranked){ const t=f.title; if(usedIds.has(f.id)||seen.has(t))continue; seen.add(t); fr.push({id:f.id,title:shorten(t)}); if(fr.length>=4)break; }
+      if(fr.length>=4){ dTiles=fr;dName=dname;fr.forEach(f=>usedIds.add(f.id)); break; }
     }
-    if(!dirTiles) return null;
+    if(!dTiles) return null;
+    return {raw:[
+      {type:'saga', label:'Same franchise: '+saga.n, tiles:sagaTiles},
+      {type:'theme', label:theme.n, tiles:themeTiles},
+      {type:'actor', label:'Starring '+aName, tiles:aTiles},
+      {type:'director', label:'Directed by '+dName, tiles:dTiles}
+    ], trap:null};
+  }
 
-    return {
-      groups:[
-        {type:'saga', label:'Same franchise: '+saga.n, tiles:sagaTiles},
-        {type:'theme', label:theme.n, tiles:themeTiles},
-        {type:'actor', label:'Starring '+actorName, tiles:actorTiles},
-        {type:'director', label:'Directed by '+dirName, tiles:dirTiles}
-      ]
-    };
+  // difficulty → colour/square (yellow easiest … purple hardest, where the trap lives)
+  const DIFF={saga:1, actor:2, theme:3, director:4};
+  const COLORS=['#e8c24a','#86c98a','#7aa6e8','#b58ad6'];
+  const SQ=['🟨','🟩','🟦','🟪'];
+  function finalize(out){
+    const groups=out.raw.slice().sort((a,b)=>(DIFF[a.type]||3)-(DIFF[b.type]||3));
+    groups.forEach((g,i)=>{ g.key='g'+i; g.color=COLORS[i]; g.sq=SQ[i]; });
+    return {groups, trap:out.trap};
   }
 
   async function generateWithRetry(seed){
-    for(let k=0;k<6;k++){ const p=await generate(seed+k*7919); if(p) return p; }
+    for(let k=0;k<3;k++){ const t=await genTrap(seed+k*7919); if(t) return finalize(t); }   // prefer trap puzzles
+    for(let k=0;k<6;k++){ const s=await genSimple(seed+k*7919); if(s) return finalize(s); }   // fallback
     return null;
   }
 
@@ -205,8 +344,9 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 
   function buildTileMap(){
     tileMap={};
-    for(const g of puzzle.groups) for(const t of g.tiles) tileMap[t.id]={id:t.id,title:t.title,type:g.type};
+    for(const g of puzzle.groups) for(const t of g.tiles) tileMap[t.id]={id:t.id,title:t.title,key:g.key,sq:g.sq};
   }
+  function groupByKey(k){ return puzzle.groups.find(g=>g.key===k); }
 
   function loadDaily(){
     const st=getLS(SKEY);
@@ -249,7 +389,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     syncSel();
   }
   function dotsHtml(){ let h=''; for(let i=0;i<MAX_MIST;i++) h+='<span class="dot'+(i<mistakes?' gone':'')+'"></span>'; return h; }
-  function solvedRow(g){ const c='var(--c-'+g.type+')'; return '<div class="solved" style="background:'+c+'"><div class="s-label">'+esc(g.label)+'</div><div class="s-titles">'+g.tiles.map(t=>esc(t.title)).join(' · ')+'</div></div>'; }
+  function solvedRow(g){ return '<div class="solved" style="background:'+g.color+'"><div class="s-label">'+esc(g.label)+'</div><div class="s-titles">'+g.tiles.map(t=>esc(t.title)).join(' · ')+'</div></div>'; }
   function syncSel(){
     document.querySelectorAll('.tile').forEach(el=>el.classList.toggle('sel',selected.includes(el.dataset.id)));
     const go=document.getElementById('goBtn'), des=document.getElementById('deselBtn');
@@ -259,18 +399,18 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   function onTile(id){ if(locked) return; const i=selected.indexOf(id); if(i>=0) selected.splice(i,1); else { if(selected.length>=4) return; selected.push(id); } syncSel(); }
   function onShuffle(){ board=shuffle(board, Date.now()); const g=document.getElementById('grid'); if(g){ g.innerHTML=board.map(id=>{const t=tileMap[id];return '<div class="tile" data-id="'+id+'">'+esc(t.title)+'</div>';}).join(''); document.querySelectorAll('.tile').forEach(el=>el.addEventListener('click',()=>onTile(el.dataset.id))); syncSel(); } }
 
+  function pushSolved(g){ solved.push({key:g.key,label:g.label,color:g.color,tiles:g.tiles}); }
   function onSubmit(){
     if(locked||selected.length!==4) return;
-    const types=selected.map(id=>tileMap[id].type);
-    guesses.push(types.slice());
-    const allSame=types.every(t=>t===types[0]);
+    const keys=selected.map(id=>tileMap[id].key);
+    guesses.push(keys.slice());
+    const allSame=keys.every(k=>k===keys[0]);
     if(allSame){
       locked=true;
-      const type=types[0];
-      const g=puzzle.groups.find(x=>x.type===type);
+      const g=groupByKey(keys[0]);
       selected.forEach(id=>{ const el=document.querySelector('.tile[data-id="'+id+'"]'); if(el) el.classList.add('pop'); });
       setTimeout(()=>{
-        solved.push({type:g.type,label:g.label,tiles:g.tiles});
+        pushSolved(g);
         board=board.filter(id=>!selected.includes(id));
         selected=[]; locked=false;
         saveDaily();
@@ -278,8 +418,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
         else render();
       },360);
     } else {
-      // count max-of-a-type for "one away"
-      const counts={}; types.forEach(t=>counts[t]=(counts[t]||0)+1);
+      const counts={}; keys.forEach(k=>counts[k]=(counts[k]||0)+1);
       const max=Math.max(...Object.values(counts));
       selected.forEach(id=>{ const el=document.querySelector('.tile[data-id="'+id+'"]'); if(el){ el.classList.add('wrong'); setTimeout(()=>el.classList.remove('wrong'),400);} });
       mistakes++;
@@ -287,24 +426,26 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
       if(max===3) toast('One away…');
       saveDaily();
       if(mistakes>=MAX_MIST){
-        // reveal: lock in remaining groups (unsolved) in difficulty order
-        const remaining=ORDER.filter(t=>!solved.find(s=>s.type===t));
-        for(const t of remaining){ const g=puzzle.groups.find(x=>x.type===t); solved.push({type:g.type,label:g.label,tiles:g.tiles}); }
+        const have=new Set(solved.map(s=>s.key));
+        for(const g of puzzle.groups){ if(!have.has(g.key)) pushSolved(g); }
         finished=true; won=false; statsBump(false); saveDaily(); render();
       }
     }
   }
 
   // ---------- result ----------
+  function keySq(k){ const g=groupByKey(k); return g?g.sq:'⬛'; }
   function shareGrid(){
-    return guesses.map(row=>row.map(t=>TYPE[t].sq).join('')).join('\n');
+    return guesses.map(row=>row.map(keySq).join('')).join('\n');
   }
   function renderResult(){
-    const sa='<div class="solved-area">'+ORDER.filter(t=>solved.find(s=>s.type===t)).map(t=>solvedRow(solved.find(s=>s.type===t))).join('')+'</div>';
+    const order=puzzle.groups.map(g=>g.key);
+    const sa='<div class="solved-area">'+order.map(k=>solved.find(s=>s.key===k)).filter(Boolean).map(solvedRow).join('')+'</div>';
     const st=getLS(STKEY)||{streak:0,best:0,won:0,played:0};
     let h=sa+'<div class="result">';
     h+='<h2>'+(won?'Solved it! 🎬':'Out of guesses')+'</h2>';
     h+='<p>'+(won?('Found all four with '+mistakes+' mistake'+(mistakes===1?'':'s')+'.'):'Here were the four connections.')+'</p>';
+    if(puzzle.trap&&puzzle.trap.films&&puzzle.trap.films.length){ h+='<p class="trapline">🎬 Trap of the day: <b>'+esc(puzzle.trap.films[0])+'</b> looked like a '+esc(puzzle.trap.actor)+' film — but it belonged with '+esc(puzzle.trap.director)+'.</p>'; }
     if(!PRACTICE) h+='<div class="statline"><div class="stat"><b>'+st.streak+'</b>streak</div><div class="stat"><b>'+st.best+'</b>best</div><div class="stat"><b>'+st.won+'</b>solved</div></div>';
     h+='<div class="controls"><button class="btn btn-go" id="shareBtn">Share</button>';
     h+=PRACTICE?'<button class="btn" id="againBtn">New puzzle</button>':'<a class="btn" href="?practice=1" style="display:flex;align-items:center;justify-content:center;text-decoration:none">Practice</a>';
@@ -329,8 +470,9 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   // ---------- boot ----------
   async function boot(){
     const seed = PRACTICE ? (Date.now()%1e9) : day;
-    // cached daily puzzle (avoid refetch + keep determinism even if pools shift)
-    if(!PRACTICE){ const cp=getLS(PKEY); if(cp && cp.day===day && cp.puzzle){ puzzle=cp.puzzle; } }
+    // cached daily puzzle (avoid refetch + keep determinism even if pools shift).
+    // Ignore caches from before v2 (groups now carry a per-group `key`/`color`).
+    if(!PRACTICE){ const cp=getLS(PKEY); if(cp && cp.day===day && cp.puzzle && cp.puzzle.groups && cp.puzzle.groups[0] && cp.puzzle.groups[0].key){ puzzle=cp.puzzle; } }
     if(!puzzle){
       puzzle=await generateWithRetry(seed);
       if(!puzzle){ stage.innerHTML='<div class="loading">Could not build a puzzle. Please try again later.</div>'; return; }
@@ -345,7 +487,12 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     // Only restore saved progress in daily mode — practice is always a fresh game.
     if(!PRACTICE){
       loadDaily();
-      if(solved.length){ const solvedIds=new Set(solved.flatMap(s=>s.tiles.map(t=>t.id))); board=board.filter(id=>!solvedIds.has(id)); }
+      // Migration guard: discard pre-v2 saved state (no per-group keys) that won't match the new board.
+      const validKeys=new Set(puzzle.groups.map(g=>g.key));
+      const staleSolved=solved.some(s=>!s.key||!validKeys.has(s.key));
+      const staleBoard=(st=>st&&st.day===day&&st.board&&st.board.some(id=>!tileMap[id]))(getLS(SKEY));
+      if(staleSolved||staleBoard){ solved=[]; mistakes=0; guesses=[]; finished=false; won=false; board=shuffle(puzzle.groups.flatMap(g=>g.tiles.map(t=>t.id)),'b'+day); }
+      else if(solved.length){ const solvedIds=new Set(solved.flatMap(s=>s.tiles.map(t=>t.id))); board=board.filter(id=>!solvedIds.has(id)); }
     }
     render();
   }
