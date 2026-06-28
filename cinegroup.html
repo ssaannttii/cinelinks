@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>CineGroup — Find the four hidden connections</title>
+<meta name="description" content="Group 16 movie titles into four hidden cinematic connections — a film twist on Connections. New puzzle every day.">
+<link rel="icon" href="/logo.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+:root{--bg:#0d0d0d;--s1:#181818;--s2:#222;--bdr:rgba(255,255,255,0.10);--txt:#f0f0f0;--mut:#8d8d8d;--gold:#e8a000;--golddim:rgba(232,160,0,0.15);
+ --c-saga:#e8c24a;--c-theme:#7aa6e8;--c-actor:#86c98a;--c-director:#b58ad6;--good:#5bbd7a;--bad:#d8503a}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(circle at 50% -10%,rgba(232,160,0,.07),transparent 34%),var(--bg);color:var(--txt);min-height:100vh;padding:54px 14px 40px}
+.wrap{max-width:480px;margin:0 auto;text-align:center}
+.logo{font-size:2rem;font-weight:800;letter-spacing:-.02em}
+.logo b{color:var(--gold)}
+.tag{color:var(--mut);font-size:.86rem;margin-top:4px}
+.kicker{margin-top:10px;font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
+.loading{color:var(--mut);font-size:.9rem;padding:48px 0}
+.solved-area{display:flex;flex-direction:column;gap:7px;margin:16px 0 7px}
+.solved{border-radius:9px;padding:9px 10px;color:#111}
+.solved .s-label{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+.solved .s-titles{font-size:.74rem;font-weight:600;margin-top:1px;opacity:.85}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.tile{display:flex;align-items:center;justify-content:center;text-align:center;min-height:74px;padding:5px 4px;border-radius:9px;background:var(--s2);border:1px solid var(--bdr);color:var(--txt);font-weight:700;font-size:.64rem;line-height:1.12;cursor:pointer;user-select:none;-webkit-user-select:none;transition:transform .08s,background .12s,border-color .12s;word-break:break-word;hyphens:auto}
+.tile:hover{border-color:rgba(232,160,0,.4)}
+.tile.sel{background:var(--gold);color:#111;border-color:var(--gold);transform:scale(.95)}
+.tile.wrong{animation:shake .4s}
+.tile.pop{animation:pop .25s}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+@keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
+.mistakes{display:flex;align-items:center;justify-content:center;gap:9px;margin:16px 0 4px;color:var(--mut);font-size:.74rem;font-weight:600}
+.dots{display:flex;gap:6px}
+.dot{width:11px;height:11px;border-radius:50%;background:var(--gold);transition:background .2s,transform .2s}
+.dot.gone{background:var(--s2);transform:scale(.7)}
+.controls{display:flex;gap:8px;justify-content:center;margin-top:14px}
+.btn{flex:1;padding:11px;border-radius:999px;border:1px solid var(--bdr);background:transparent;color:var(--txt);font-family:inherit;font-size:.82rem;font-weight:700;cursor:pointer;transition:opacity .15s,background .15s,border-color .15s}
+.btn:hover{border-color:rgba(232,160,0,.5)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn-go{background:var(--gold);color:#111;border-color:var(--gold);flex:1.3}
+.btn-go:disabled{background:var(--s2);color:var(--mut);border-color:var(--bdr)}
+.toast{position:fixed;left:50%;top:64px;transform:translateX(-50%);background:#fff;color:#111;font-weight:800;font-size:.82rem;padding:8px 16px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:60}
+.toast.on{opacity:1}
+.result{margin-top:8px}
+.result h2{font-size:1.5rem;margin-bottom:4px}
+.result p{color:var(--mut);font-size:.86rem;margin-bottom:12px}
+.statline{display:flex;justify-content:center;gap:22px;margin:12px 0}
+.stat{display:flex;flex-direction:column;gap:1px;font-size:.6rem;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}
+.stat b{font-size:1.2rem;color:var(--txt);font-weight:800}
+.foot{margin-top:24px;color:var(--mut);font-size:.74rem}
+.foot a{color:var(--gold);text-decoration:none}
+.cl-home{position:fixed;top:13px;left:13px;z-index:50;display:inline-flex;align-items:center;gap:5px;color:var(--mut);text-decoration:none;font-size:.78rem;font-weight:700;background:rgba(20,20,20,.6);border:1px solid var(--bdr);border-radius:999px;padding:7px 13px;backdrop-filter:blur(8px)}
+.cl-home:hover{color:var(--gold);border-color:rgba(232,160,0,.45)}
+.switch{position:fixed;top:13px;right:13px;z-index:50;color:var(--mut);text-decoration:none;font-size:.78rem;font-weight:700;background:rgba(20,20,20,.6);border:1px solid var(--bdr);border-radius:999px;padding:7px 13px;backdrop-filter:blur(8px)}
+.switch:hover{color:var(--gold);border-color:rgba(232,160,0,.45)}
+@media(min-width:680px){.wrap{max-width:560px}.logo{font-size:2.5rem}.tag{font-size:1rem}.tile{min-height:92px;font-size:.78rem;border-radius:11px}.grid{gap:9px}.solved .s-label{font-size:.8rem}.solved .s-titles{font-size:.82rem}}
+</style>
+</head>
+<body>
+<a href="/" class="cl-home" aria-label="Back to CineLinks">&#8592; CineLinks</a>
+<a href="#" class="switch" id="modeSwitch"></a>
+<div class="wrap" id="app">
+  <div class="logo">Cine<b>Group</b></div>
+  <div class="tag">Find the four hidden connections.</div>
+  <div class="kicker" id="modeLbl">Daily</div>
+  <div id="stage"><div class="loading">Building today's puzzle…</div></div>
+  <div class="foot">Data from TMDB · part of <a href="/">CineLinks</a></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  'use strict';
+  const PRACTICE = /[?&]practice=1/.test(location.search);
+  const IMG='/api/tmdb?path=';
+
+  // ---------- baked pools (validated against TMDB) ----------
+  // saga films: [tmdbId, fullTitle, shortDisplay]
+  const SAGAS=[
+   {n:"John Wick", f:[[245891,"John Wick","John Wick"],[324552,"John Wick: Chapter 2","John Wick 2"],[458156,"John Wick: Chapter 3 - Parabellum","John Wick 3"],[603692,"John Wick: Chapter 4","John Wick 4"]]},
+   {n:"Middle-earth", f:[[120,"The Fellowship of the Ring","The Fellowship of the Ring"],[121,"The Two Towers","The Two Towers"],[122,"The Return of the King","The Return of the King"],[49051,"The Hobbit: An Unexpected Journey","An Unexpected Journey"],[57158,"The Hobbit: The Desolation of Smaug","Desolation of Smaug"]]},
+   {n:"Toy Story", f:[[862,"Toy Story","Toy Story"],[863,"Toy Story 2","Toy Story 2"],[10193,"Toy Story 3","Toy Story 3"],[301528,"Toy Story 4","Toy Story 4"]]},
+   {n:"The Hunger Games", f:[[70160,"The Hunger Games","The Hunger Games"],[101299,"Catching Fire","Catching Fire"],[131631,"Mockingjay - Part 1","Mockingjay - Part 1"],[131634,"Mockingjay - Part 2","Mockingjay - Part 2"]]},
+   {n:"Mission: Impossible", f:[[954,"Mission: Impossible","Mission: Impossible"],[56292,"Ghost Protocol","Ghost Protocol"],[177677,"Rogue Nation","Rogue Nation"],[353081,"Fallout","Fallout"]]},
+   {n:"Jurassic Park", f:[[329,"Jurassic Park","Jurassic Park"],[330,"The Lost World","The Lost World"],[135397,"Jurassic World","Jurassic World"],[351286,"Fallen Kingdom","Fallen Kingdom"]]},
+   {n:"The Matrix", f:[[603,"The Matrix","The Matrix"],[604,"The Matrix Reloaded","Reloaded"],[605,"The Matrix Revolutions","Revolutions"],[624860,"The Matrix Resurrections","Resurrections"]]},
+   {n:"Shrek", f:[[808,"Shrek","Shrek"],[809,"Shrek 2","Shrek 2"],[810,"Shrek the Third","Shrek the Third"],[10192,"Shrek Forever After","Shrek Forever After"]]},
+   {n:"Pirates of the Caribbean", f:[[22,"The Curse of the Black Pearl","Curse of the Black Pearl"],[58,"Dead Man's Chest","Dead Man's Chest"],[285,"At World's End","At World's End"],[1865,"On Stranger Tides","On Stranger Tides"]]},
+   {n:"Rocky", f:[[1366,"Rocky","Rocky"],[1367,"Rocky II","Rocky II"],[1371,"Rocky III","Rocky III"],[1374,"Rocky IV","Rocky IV"],[1246,"Rocky Balboa","Rocky Balboa"]]},
+   {n:"Despicable Me", f:[[20352,"Despicable Me","Despicable Me"],[93456,"Despicable Me 2","Despicable Me 2"],[324852,"Despicable Me 3","Despicable Me 3"],[519182,"Despicable Me 4","Despicable Me 4"]]},
+   {n:"Indiana Jones", f:[[85,"Raiders of the Lost Ark","Raiders of the Lost Ark"],[87,"The Temple of Doom","The Temple of Doom"],[89,"The Last Crusade","The Last Crusade"],[217,"The Kingdom of the Crystal Skull","Crystal Skull"]]},
+   {n:"Harry Potter", f:[[671,"The Philosopher's Stone","Philosopher's Stone"],[672,"The Chamber of Secrets","Chamber of Secrets"],[673,"The Prisoner of Azkaban","Prisoner of Azkaban"],[674,"The Goblet of Fire","Goblet of Fire"]]},
+   {n:"Star Wars", f:[[11,"Star Wars","Star Wars"],[1891,"The Empire Strikes Back","Empire Strikes Back"],[1892,"Return of the Jedi","Return of the Jedi"],[140607,"The Force Awakens","The Force Awakens"]]}
+  ];
+  const THEMES=[
+   {n:"Stranded in space", f:[[157336,"Interstellar"],[49047,"Gravity"],[286217,"The Martian"],[568,"Apollo 13"],[419704,"Ad Astra"]]},
+   {n:"Heist crews", f:[[161,"Ocean's Eleven"],[949,"Heat"],[9654,"The Italian Job"],[388,"Inside Man"],[339403,"Baby Driver"]]},
+   {n:"Boxing dramas", f:[[1578,"Raging Bull"],[70,"Million Dollar Baby"],[312221,"Creed"],[45317,"The Fighter"],[921,"Cinderella Man"]]},
+   {n:"Time travel", f:[[105,"Back to the Future"],[59967,"Looper"],[137113,"Edge of Tomorrow"],[577922,"Tenet"],[141,"Donnie Darko"]]},
+   {n:"Shark attacks", f:[[578,"Jaws"],[345940,"The Meg"],[403119,"47 Meters Down"],[332567,"The Shallows"],[8914,"Deep Blue Sea"]]},
+   {n:"Zombie outbreaks", f:[[72190,"World War Z"],[19908,"Zombieland"],[170,"28 Days Later"],[396535,"Train to Busan"],[747,"Shaun of the Dead"]]},
+   {n:"Natural disasters", f:[[664,"Twister"],[254128,"San Andreas"],[435,"The Day After Tomorrow"],[14161,"2012"],[9619,"Dante's Peak"]]},
+   {n:"Music biopics", f:[[424694,"Bohemian Rhapsody"],[504608,"Rocketman"],[69,"Walk the Line"],[1677,"Ray"],[614934,"Elvis"]]},
+   {n:"Courtroom dramas", f:[[881,"A Few Good Men"],[389,"12 Angry Men"],[1645,"A Time to Kill"],[24226,"The Verdict"],[9800,"Philadelphia"]]},
+   {n:"Spy thrillers", f:[[49517,"Tinker Tailor Soldier Spy"],[296098,"Bridge of Spies"],[341013,"Atomic Blonde"],[27576,"Salt"],[13479,"Spy Game"]]},
+   {n:"Pandemic outbreaks", f:[[39538,"Contagion"],[6950,"Outbreak"],[6479,"I Am Legend"],[63,"Twelve Monkeys"]]},
+   {n:"Westerns", f:[[429,"The Good, the Bad and the Ugly"],[68718,"Django Unchained"],[44264,"True Grit"],[14168,"3:10 to Yuma"],[11969,"Tombstone"]]}
+  ];
+  const ACTORS=[[31,"Tom Hanks"],[500,"Tom Cruise"],[6193,"Leonardo DiCaprio"],[287,"Brad Pitt"],[5292,"Denzel Washington"],[1245,"Scarlett Johansson"],[234352,"Margot Robbie"],[1813,"Anne Hathaway"],[1892,"Matt Damon"],[6384,"Keanu Reeves"],[3223,"Robert Downey Jr."],[54693,"Emma Stone"],[30614,"Ryan Gosling"],[2037,"Cillian Murphy"],[6885,"Charlize Theron"],[524,"Natalie Portman"],[2231,"Samuel L. Jackson"],[505710,"Zendaya"],[18897,"Jackie Chan"],[5081,"Emily Blunt"],[1136406,"Tom Holland"],[71580,"Benedict Cumberbatch"],[10882,"Rosamund Pike"],[224513,"Ana de Armas"]];
+  const DIRECTORS=[[525,"Christopher Nolan"],[138,"Quentin Tarantino"],[488,"Steven Spielberg"],[1032,"Martin Scorsese"],[5655,"Wes Anderson"],[45400,"Greta Gerwig"],[137427,"Denis Villeneuve"],[2710,"James Cameron"],[510,"Tim Burton"],[240,"Stanley Kubrick"],[578,"Ridley Scott"],[7467,"David Fincher"],[10828,"Guillermo del Toro"],[291263,"Jordan Peele"],[21684,"Bong Joon-ho"],[1769,"Sofia Coppola"],[55934,"Taika Waititi"],[11218,"Alfonso Cuarón"]];
+
+  const TYPE={ saga:{color:'var(--c-saga)',sq:'🟨'}, theme:{color:'var(--c-theme)',sq:'🟦'}, actor:{color:'var(--c-actor)',sq:'🟩'}, director:{color:'var(--c-director)',sq:'🟪'} };
+  const ORDER=['saga','theme','actor','director'];
+
+  // ---------- helpers ----------
+  function utcDay(){ const n=new Date(); return Math.floor(Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),n.getUTCDate())/864e5); }
+  function hash(s){ s=''+s; let h=5381; for(let i=0;i<s.length;i++) h=((h<<5)+h+s.charCodeAt(i))|0; return h>>>0; }
+  function rnd(seed,i){ let x=(hash(seed)^Math.imul(i+1,0x9E3779B1))>>>0; x=Math.imul(x^(x>>>15),0x85EBCA6B)>>>0; x=Math.imul(x^(x>>>13),0xC2B2AE35)>>>0; return (x^(x>>>16))>>>0; }
+  function orderBy(arr,seed){ return arr.map((x,i)=>[x,rnd(seed,i)]).sort((a,b)=>a[1]-b[1]).map(p=>p[0]); }
+  function shuffle(arr,seed){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=rnd(seed,i)%(i+1); const t=a[i];a[i]=a[j];a[j]=t; } return a; }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+  function shorten(t){ if(t.length<=26) return t; for(const sep of [' - ',' – ']){ const i=t.indexOf(sep); if(i>6&&i<26) return t.slice(0,i); } return t.slice(0,24).trim()+'…'; }
+  function getLS(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(_){ return null; } }
+  function setLS(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(_){} }
+
+  const credCache={};
+  async function credits(id){ if(credCache[id]) return credCache[id]; const d=await fetch(IMG+'person/'+id+'/combined_credits&language=en-US').then(r=>r.json()).catch(()=>({})); credCache[id]=d; return d; }
+
+  const YEAR=new Date().getUTCFullYear()+1;
+
+  // ---------- daily generator (mixed, ambiguity-proof by construction) ----------
+  async function generate(seed){
+    const saga=SAGAS[hash('s'+seed)%SAGAS.length];
+    const theme=THEMES[hash('t'+seed)%THEMES.length];
+    const usedIds=new Set();
+    const sagaTiles=[], themeTiles=[];
+    for(const f of saga.f){ if(sagaTiles.length>=4) break; if(!usedIds.has(f[0])){ usedIds.add(f[0]); sagaTiles.push({id:f[0],title:f[2]||f[1]}); } }
+    for(const f of theme.f){ if(themeTiles.length>=4) break; if(!usedIds.has(f[0])){ usedIds.add(f[0]); themeTiles.push({id:f[0],title:f[1]}); } }
+    if(sagaTiles.length<4||themeTiles.length<4) return null;
+    const reserved=new Set([...usedIds]);
+
+    // actor group — actor must not appear in any reserved tile, and must field 4 fresh leads
+    let actorTiles=null, actorName=null, actorIds=null;
+    for(const [aid,aname] of orderBy(ACTORS,'a'+seed)){
+      const c=await credits(aid); const cast=c.cast||[]; const ids=new Set(cast.map(x=>x.id));
+      if([...reserved].some(id=>ids.has(id))) continue;
+      const leads=cast.filter(x=>(x.media_type==='movie'||x.media_type==='tv')&&(x.vote_count||0)>=800&&x.order!=null&&x.order<=4&&x.poster_path&&(x.release_date||x.first_air_date))
+        .sort((a,b)=>(b.popularity||0)-(a.popularity||0));
+      const seen=new Set(), fr=[];
+      for(const f of leads){ const t=f.title||f.name; if(usedIds.has(f.id)||seen.has(t)) continue; seen.add(t); fr.push({id:f.id,title:shorten(t)}); if(fr.length>=4) break; }
+      if(fr.length>=4){ actorTiles=fr; actorName=aname; actorIds=ids; fr.forEach(f=>usedIds.add(f.id)); break; }
+    }
+    if(!actorTiles) return null;
+
+    // director group — directed nothing in the chosen set, actor not in director's films
+    let dirTiles=null, dirName=null;
+    for(const [did,dname] of orderBy(DIRECTORS,'d'+seed)){
+      const c=await credits(did); const crew=c.crew||[];
+      const directed=crew.filter(x=>x.job==='Director'&&x.media_type==='movie'&&x.poster_path&&x.release_date&&parseInt(x.release_date.slice(0,4))<=YEAR&&(x.vote_count||0)>=800);
+      const dIds=new Set(directed.map(x=>x.id));
+      if([...usedIds].some(id=>dIds.has(id))) continue;
+      if(actorIds && [...dIds].some(id=>actorIds.has(id))) continue;
+      const ranked=directed.sort((a,b)=>(b.popularity||0)-(a.popularity||0));
+      const seen=new Set(), fr=[];
+      for(const f of ranked){ const t=f.title; if(usedIds.has(f.id)||seen.has(t)) continue; seen.add(t); fr.push({id:f.id,title:shorten(t)}); if(fr.length>=4) break; }
+      if(fr.length>=4){ dirTiles=fr; dirName=dname; fr.forEach(f=>usedIds.add(f.id)); break; }
+    }
+    if(!dirTiles) return null;
+
+    return {
+      groups:[
+        {type:'saga', label:'Same franchise: '+saga.n, tiles:sagaTiles},
+        {type:'theme', label:theme.n, tiles:themeTiles},
+        {type:'actor', label:'Starring '+actorName, tiles:actorTiles},
+        {type:'director', label:'Directed by '+dirName, tiles:dirTiles}
+      ]
+    };
+  }
+
+  async function generateWithRetry(seed){
+    for(let k=0;k<6;k++){ const p=await generate(seed+k*7919); if(p) return p; }
+    return null;
+  }
+
+  // ---------- state ----------
+  const SKEY='cinegroupState', STKEY='cinegroupStats', PKEY='cinegroupPuzzle';
+  const day=utcDay();
+  let puzzle=null;          // {groups:[...]}
+  let tileMap={};           // tileId -> {id,title,type}
+  let board=[];             // ordered tile ids on the grid
+  let selected=[];          // selected tile ids
+  let solved=[];            // [{type,label,tiles}]
+  let mistakes=0;
+  const MAX_MIST=4;
+  let guesses=[];           // [[type,type,type,type], ...] for share
+  let finished=false, won=false;
+  let locked=false;
+
+  const stage=document.getElementById('stage');
+  const toastEl=document.getElementById('toast');
+  let toastT=null;
+  function toast(msg){ toastEl.textContent=msg; toastEl.classList.add('on'); clearTimeout(toastT); toastT=setTimeout(()=>toastEl.classList.remove('on'),1500); }
+
+  function buildTileMap(){
+    tileMap={};
+    for(const g of puzzle.groups) for(const t of g.tiles) tileMap[t.id]={id:t.id,title:t.title,type:g.type};
+  }
+
+  function loadDaily(){
+    const st=getLS(SKEY);
+    if(st && st.day===day){
+      solved=st.solved||[]; mistakes=st.mistakes||0; guesses=st.guesses||[]; finished=!!st.finished; won=!!st.won;
+      board=st.board||board;
+    }
+  }
+  function saveDaily(){
+    if(PRACTICE) return;
+    setLS(SKEY,{day,solved,mistakes,guesses,finished,won,board});
+  }
+
+  function statsBump(didWin){
+    if(PRACTICE) return;
+    const s=getLS(STKEY)||{played:0,won:0,streak:0,best:0,lastDay:null};
+    if(s.lastDay===day) return;
+    s.played++; if(didWin){ s.won++; s.streak=(s.lastDay===day-1?s.streak:0)+1; if(s.streak>s.best)s.best=s.streak; } else { s.streak=0; }
+    s.lastDay=day; setLS(STKEY,s);
+  }
+
+  // ---------- rendering ----------
+  function render(){
+    if(finished){ renderResult(); return; }
+    let h='<div class="solved-area" id="solvedArea">'+solved.map(solvedRow).join('')+'</div>';
+    h+='<div class="grid" id="grid">';
+    for(const id of board){ const t=tileMap[id]; if(!t) continue; h+='<div class="tile" data-id="'+id+'">'+esc(t.title)+'</div>'; }
+    h+='</div>';
+    h+='<div class="mistakes">Mistakes remaining <span class="dots" id="dots">'+dotsHtml()+'</span></div>';
+    h+='<div class="controls">'+
+       '<button class="btn" id="shuffleBtn">Shuffle</button>'+
+       '<button class="btn" id="deselBtn" disabled>Deselect</button>'+
+       '<button class="btn btn-go" id="goBtn" disabled>Submit</button>'+
+       '</div>';
+    stage.innerHTML=h;
+    document.querySelectorAll('.tile').forEach(el=>el.addEventListener('click',()=>onTile(el.dataset.id)));
+    document.getElementById('shuffleBtn').onclick=onShuffle;
+    document.getElementById('deselBtn').onclick=()=>{ selected=[]; syncSel(); };
+    document.getElementById('goBtn').onclick=onSubmit;
+    syncSel();
+  }
+  function dotsHtml(){ let h=''; for(let i=0;i<MAX_MIST;i++) h+='<span class="dot'+(i<mistakes?' gone':'')+'"></span>'; return h; }
+  function solvedRow(g){ const c='var(--c-'+g.type+')'; return '<div class="solved" style="background:'+c+'"><div class="s-label">'+esc(g.label)+'</div><div class="s-titles">'+g.tiles.map(t=>esc(t.title)).join(' · ')+'</div></div>'; }
+  function syncSel(){
+    document.querySelectorAll('.tile').forEach(el=>el.classList.toggle('sel',selected.includes(el.dataset.id)));
+    const go=document.getElementById('goBtn'), des=document.getElementById('deselBtn');
+    if(go) go.disabled=selected.length!==4;
+    if(des) des.disabled=selected.length===0;
+  }
+  function onTile(id){ if(locked) return; const i=selected.indexOf(id); if(i>=0) selected.splice(i,1); else { if(selected.length>=4) return; selected.push(id); } syncSel(); }
+  function onShuffle(){ board=shuffle(board, Date.now()); const g=document.getElementById('grid'); if(g){ g.innerHTML=board.map(id=>{const t=tileMap[id];return '<div class="tile" data-id="'+id+'">'+esc(t.title)+'</div>';}).join(''); document.querySelectorAll('.tile').forEach(el=>el.addEventListener('click',()=>onTile(el.dataset.id))); syncSel(); } }
+
+  function onSubmit(){
+    if(locked||selected.length!==4) return;
+    const types=selected.map(id=>tileMap[id].type);
+    guesses.push(types.slice());
+    const allSame=types.every(t=>t===types[0]);
+    if(allSame){
+      locked=true;
+      const type=types[0];
+      const g=puzzle.groups.find(x=>x.type===type);
+      selected.forEach(id=>{ const el=document.querySelector('.tile[data-id="'+id+'"]'); if(el) el.classList.add('pop'); });
+      setTimeout(()=>{
+        solved.push({type:g.type,label:g.label,tiles:g.tiles});
+        board=board.filter(id=>!selected.includes(id));
+        selected=[]; locked=false;
+        saveDaily();
+        if(solved.length===4){ finished=true; won=true; statsBump(true); render(); }
+        else render();
+      },360);
+    } else {
+      // count max-of-a-type for "one away"
+      const counts={}; types.forEach(t=>counts[t]=(counts[t]||0)+1);
+      const max=Math.max(...Object.values(counts));
+      selected.forEach(id=>{ const el=document.querySelector('.tile[data-id="'+id+'"]'); if(el){ el.classList.add('wrong'); setTimeout(()=>el.classList.remove('wrong'),400);} });
+      mistakes++;
+      const dots=document.getElementById('dots'); if(dots) dots.innerHTML=dotsHtml();
+      if(max===3) toast('One away…');
+      saveDaily();
+      if(mistakes>=MAX_MIST){
+        // reveal: lock in remaining groups (unsolved) in difficulty order
+        const remaining=ORDER.filter(t=>!solved.find(s=>s.type===t));
+        for(const t of remaining){ const g=puzzle.groups.find(x=>x.type===t); solved.push({type:g.type,label:g.label,tiles:g.tiles}); }
+        finished=true; won=false; statsBump(false); saveDaily(); render();
+      }
+    }
+  }
+
+  // ---------- result ----------
+  function shareGrid(){
+    return guesses.map(row=>row.map(t=>TYPE[t].sq).join('')).join('\n');
+  }
+  function renderResult(){
+    const sa='<div class="solved-area">'+ORDER.filter(t=>solved.find(s=>s.type===t)).map(t=>solvedRow(solved.find(s=>s.type===t))).join('')+'</div>';
+    const st=getLS(STKEY)||{streak:0,best:0,won:0,played:0};
+    let h=sa+'<div class="result">';
+    h+='<h2>'+(won?'Solved it! 🎬':'Out of guesses')+'</h2>';
+    h+='<p>'+(won?('Found all four with '+mistakes+' mistake'+(mistakes===1?'':'s')+'.'):'Here were the four connections.')+'</p>';
+    if(!PRACTICE) h+='<div class="statline"><div class="stat"><b>'+st.streak+'</b>streak</div><div class="stat"><b>'+st.best+'</b>best</div><div class="stat"><b>'+st.won+'</b>solved</div></div>';
+    h+='<div class="controls"><button class="btn btn-go" id="shareBtn">Share</button>';
+    h+=PRACTICE?'<button class="btn" id="againBtn">New puzzle</button>':'<a class="btn" href="?practice=1" style="display:flex;align-items:center;justify-content:center;text-decoration:none">Practice</a>';
+    h+='</div></div>';
+    stage.innerHTML=h;
+    document.getElementById('shareBtn').onclick=doShare;
+    if(PRACTICE){ const a=document.getElementById('againBtn'); if(a) a.onclick=()=>location.reload(); }
+  }
+  function doShare(){
+    const head='CineGroup'+(PRACTICE?'':' #'+(day-20000))+(won?' '+(mistakes)+'/'+MAX_MIST:' ✗');
+    const txt=head+'\n'+shareGrid()+'\ncinelinks.vercel.app';
+    if(navigator.share){ navigator.share({text:txt}).catch(()=>{}); }
+    else { navigator.clipboard.writeText(txt).then(()=>toast('Copied!')).catch(()=>toast('Copy failed')); }
+  }
+
+  // ---------- mode switch link ----------
+  const ms=document.getElementById('modeSwitch');
+  document.getElementById('modeLbl').textContent=PRACTICE?'Practice':'Daily';
+  ms.textContent=PRACTICE?'Daily →':'Practice →';
+  ms.href=PRACTICE?'/cinegroup.html':'?practice=1';
+
+  // ---------- boot ----------
+  async function boot(){
+    const seed = PRACTICE ? (Date.now()%1e9) : day;
+    // cached daily puzzle (avoid refetch + keep determinism even if pools shift)
+    if(!PRACTICE){ const cp=getLS(PKEY); if(cp && cp.day===day && cp.puzzle){ puzzle=cp.puzzle; } }
+    if(!puzzle){
+      puzzle=await generateWithRetry(seed);
+      if(!puzzle){ stage.innerHTML='<div class="loading">Could not build a puzzle. Please try again later.</div>'; return; }
+      if(!PRACTICE) setLS(PKEY,{day,puzzle});
+    }
+    buildTileMap();
+    // build board order
+    if(!board.length){
+      const allIds=puzzle.groups.flatMap(g=>g.tiles.map(t=>t.id));
+      board=shuffle(allIds, PRACTICE?seed:('b'+day));
+    }
+    loadDaily();
+    // if reloading a saved daily, drop already-solved tiles from board
+    if(solved.length){ const solvedIds=new Set(solved.flatMap(s=>s.tiles.map(t=>t.id))); board=board.filter(id=>!solvedIds.has(id)); }
+    render();
+  }
+  boot();
+})();
+</script>
+</body>
+</html>

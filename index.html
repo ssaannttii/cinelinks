@@ -628,6 +628,13 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
           <a class="mode mode-practice" href="/cinechain.html?practice=1">Practice</a>
         </div>
       </div>
+      <div class="game-card">
+        <div class="game-head"><span class="game-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg></span><span class="game-meta"><span class="game-name">CineGroup <span class="new-tag">NEW</span><span class="game-done" data-done="grp"></span></span><span class="game-desc">Group 16 titles into 4 connections</span></span></div>
+        <div class="game-modes">
+          <a class="mode mode-daily" href="/cinegroup.html">Daily</a>
+          <a class="mode mode-practice" href="/cinegroup.html?practice=1">Practice</a>
+        </div>
+      </div>
     </div>
 
     <div id="dailyGallery" style="display:none"></div>
@@ -1057,7 +1064,7 @@ function applyI18n() {
   if (_secs[0]) _secs[0].textContent = t('sectionDaily');
   if (_secs[1]) _secs[1].textContent = t('sectionRating');
   document.querySelectorAll('.new-tag').forEach(el => el.textContent = t('newTag'));
-  const _descMap = { cl:'descCl', clue:'descClue', frame:'descFrame', cast:'descCast', plot:'descPlot', line:'descLine', reel:'descReel', grid:'descGrid', chain:'descChain' };
+  const _descMap = { cl:'descCl', clue:'descClue', frame:'descFrame', cast:'descCast', plot:'descPlot', line:'descLine', reel:'descReel', grid:'descGrid', chain:'descChain', grp:'descGroup' };
   document.querySelectorAll('.game-done[data-done]').forEach(el => { const k = _descMap[el.dataset.done]; if (k) { const card = el.closest('.game-card'); const d = card && card.querySelector('.game-desc'); if (d) d.textContent = t(k); } });
   const _cBtn = document.querySelector('.archive-btn[onclick*="creator"]'); if (_cBtn) _cBtn.textContent = t('navCreate');
   const _sLink = document.querySelector('a.archive-btn[href="/stats.html"]'); if (_sLink) _sLink.textContent = t('navStats');
@@ -1576,7 +1583,8 @@ function markDoneBadges() {
   const state = {
     cl: linksDone(), clue: clueDone('cineclueState'), frame: clueDone('cineframeState'),
     cast: clueDone('cinecastState'), plot: clueDone('cineplotState'), line: clueDone('cinelineState'),
-    reel: clueDone('cinereelState'), grid: clueDone('cinegridState'), chain: clueDone('cinechainState')
+    reel: clueDone('cinereelState'), grid: clueDone('cinegridState'), chain: clueDone('cinechainState'),
+    grp: clueDone('cinegroupState')
   };
   document.querySelectorAll('.game-done[data-done]').forEach(el => {
     const done = !!state[el.dataset.done];
@@ -1619,6 +1627,7 @@ function metaItems() {
   { const s = gs('cinereelState'); const done = !!(s && s.day === ud && s.finished); items.push({ emoji: '🎞️', done: done, text: done ? (s.won ? ('✅ ' + (s.score || '?') + '/6') : '❌') : null }); }
   { const s = gs('cinegridState'); const done = !!(s && s.day === ud && s.finished); items.push({ emoji: '🔲', done: done, text: done ? ('✅ ' + (s.filled || 0) + '/9') : null }); }
   { const s = gs('cinechainState'); const done = !!(s && s.day === ud && s.finished); items.push({ emoji: '⛓️', done: done, text: done ? ('✅ chain ' + (s.length || 0)) : null }); }
+  { const s = gs('cinegroupState'); const done = !!(s && s.day === ud && s.finished); items.push({ emoji: '🟨', done: done, text: done ? (s.won ? ('✅ ' + (s.mistakes || 0) + '/4') : '❌') : null }); }
   { const s = gs('cinerating_daily'); const td = today.replace(/-/g, ''); const done = !!(s && s.date === td); items.push({ emoji: '⚖️', done: done, text: done ? ('✅ ' + s.score + '/10') : null }); }
   return items;
 }
@@ -1644,6 +1653,7 @@ const META_NAV = [
   { n: 'CineLinks', h: null }, { n: 'CineClue', h: '/cineclue.html' }, { n: 'CineFrame', h: '/cineframe.html' },
   { n: 'CineCast', h: '/cinecast.html' }, { n: 'CinePlot', h: '/cineplot.html' }, { n: 'CineLine', h: '/cineline.html' },
   { n: 'CineReel', h: '/cinereel.html' }, { n: 'CineGrid', h: '/cinegrid.html' }, { n: 'CineChain', h: '/cinechain.html' },
+  { n: 'CineGroup', h: '/cinegroup.html' },
   { n: 'Higher or Lower', h: '/rating/versus?mode=daily' }
 ];
 function renderMetaBar() {
