@@ -26,10 +26,12 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 #cineBackdrop{position:fixed;inset:0;z-index:-1;background-size:cover;background-position:center;opacity:0;filter:blur(12px) brightness(.6);transform:scale(1.08);transition:opacity 1.6s ease;pointer-events:none}
 #cineBackdrop.on{opacity:.1}
 .wrap{max-width:540px;margin:0 auto;padding:18px 16px 60px}
-.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.topbar{display:flex;align-items:center;justify-content:flex-end;margin-bottom:18px}
 .home-link{display:inline-flex;align-items:center;gap:6px;color:var(--mut);text-decoration:none;font-size:.8rem;font-weight:600}
 .home-link:hover{color:var(--gold)}
 .date-badge{font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);background:var(--golddim);padding:4px 9px;border-radius:999px}
+.cl-home{position:fixed;top:13px;left:13px;z-index:50;display:inline-flex;align-items:center;gap:5px;color:var(--mut);text-decoration:none;font-size:.78rem;font-weight:700;background:rgba(20,20,20,.6);border:1px solid var(--bdr);border-radius:999px;padding:7px 13px;backdrop-filter:blur(8px)}
+.cl-home:hover{color:var(--gold);border-color:rgba(232,160,0,.45)}
 .head{text-align:center;margin-bottom:18px}
 .title{font-size:2rem;font-weight:800;letter-spacing:-.02em}
 .title span{color:var(--gold)}
@@ -89,9 +91,9 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 </head>
 <body>
 <div id="cineBackdrop" aria-hidden="true"></div>
+<a href="/" class="cl-home" aria-label="Back to CineLinks">&#8592; CineLinks</a>
 <div class="wrap">
   <div class="topbar">
-    <a class="home-link" href="/">&#8592; CineLinks</a>
     <span style="display:flex;align-items:center;gap:8px">
       <a class="home-link" id="modeSwitch" href="?practice=1"></a>
       <span class="date-badge" id="dateBadge"></span>
