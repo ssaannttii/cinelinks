@@ -7,6 +7,7 @@ import AutoNextButton from "@/components/AutoNextButton";
 import ShareButton from "@/components/ShareButton";
 import HomeIcon from "@/components/HomeIcon";
 import { api } from "@/lib/base";
+import { confetti } from "@/lib/confetti";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -265,6 +266,13 @@ function GameContent() {
     router.replace(`/game?mode=${m}`);
     restartGame();
   };
+
+  // Celebrate a strong finish.
+  useEffect(() => {
+    const maxScore = rounds.length * 100;
+    if (phase === "done" && maxScore > 0 && totalScore >= maxScore * 0.7) confetti(totalScore >= maxScore * 0.92 ? 130 : 90);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, totalScore]);
 
   // ── Loading ──────────────────────────────────────────────────────────────
 

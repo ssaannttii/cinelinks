@@ -8,6 +8,7 @@ import ShareButton from "@/components/ShareButton";
 import HomeIcon from "@/components/HomeIcon";
 import { getDailyPairs, getDayNumber } from "@/lib/movies";
 import { api } from "@/lib/base";
+import { confetti } from "@/lib/confetti";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -235,6 +236,9 @@ function VersusGame() {
     setLeftMovie(null); setRightMovie(null);
     initGame();
   };
+
+  // Celebrate a strong finish.
+  useEffect(() => { if (phase === "done" && score >= ROUNDS - 2) confetti(score === ROUNDS ? 130 : 90); }, [phase, score]);
 
   // ── Render: Loading ───────────────────────────────────────────────────────
 

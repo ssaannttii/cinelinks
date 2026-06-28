@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import ShareButton from "@/components/ShareButton";
 import HomeIcon from "@/components/HomeIcon";
 import { api } from "@/lib/base";
+import { confetti } from "@/lib/confetti";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -193,6 +194,9 @@ export default function CareerPage() {
     setScore(s);
     setPhase("revealed");
   };
+
+  // Celebrate a strong finish.
+  useEffect(() => { const total = movies.length; if (phase === "revealed" && total > 0 && score >= total - 1) confetti(score === total ? 130 : 90); }, [phase, score, movies.length]);
 
   // ── Loading ───────────────────────────────────────────────────────────────
 
