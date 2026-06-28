@@ -443,8 +443,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
       setTimeout(()=>{
         pushSolved(g);                  // tiles stay in place, become locked + dimmed via render()
         selected=[]; locked=false;
-        saveDaily();
         if(solved.length===4){ finished=true; won=true; statsBump(true); }
+        saveDaily();                    // save AFTER finished is set, or a reload sticks on "4 solved, not finished"
         render();
       },720);
     } else {
@@ -520,6 +520,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
       // Discard pre-v2 saved state (no per-group keys) that won't match this puzzle.
       const validKeys=new Set(puzzle.groups.map(g=>g.key));
       if(solved.some(s=>!s.key||!validKeys.has(s.key))){ solved=[]; mistakes=0; guesses=[]; finished=false; won=false; }
+      if(solved.length>=4 && !finished){ finished=true; won=(mistakes<MAX_MIST); }   // self-heal older saves
       // The board always holds all 16 tiles (solved ones stay pinned); rebuild if missing or legacy.
       if(!board||board.length!==16||board.some(id=>!tileMap[id])){ board=shuffle(puzzle.groups.flatMap(g=>g.tiles.map(t=>t.id)),'b'+day); }
     }
