@@ -115,7 +115,19 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .game-desc{font-size:.73rem;color:#bdbdbd;margin-top:2px;line-height:1.35}
 .new-tag{font-size:.52rem;font-weight:800;letter-spacing:.06em;color:#111;background:var(--gold);padding:1px 5px;border-radius:999px}
 .game-done{display:none}
-.game-done.on{display:inline-flex;align-items:center;color:#7fd49a;font-weight:800;font-size:.56rem;letter-spacing:.06em;text-transform:uppercase;background:rgba(91,189,122,.16);border:1px solid rgba(91,189,122,.38);padding:2px 7px;border-radius:999px;white-space:nowrap;flex-shrink:0}
+.game-done.on{display:inline-flex;align-items:center;color:#7fd49a;font-weight:800;font-size:.56rem;letter-spacing:.06em;text-transform:uppercase;background:rgba(91,189,122,.16);border:1px solid rgba(91,189,122,.38);padding:2px 7px;border-radius:999px;white-space:nowrap;flex-shrink:0;transition:transform .2s}
+/* Return-to-hub celebration: a freshly-completed game's card blooms once on arrival. */
+.game-card{position:relative}
+@keyframes cardCele{0%{box-shadow:0 0 0 0 rgba(91,189,122,0)}16%{transform:scale(1.035);box-shadow:0 0 0 2px rgba(127,212,154,.6),0 18px 54px rgba(91,189,122,.42)}100%{transform:scale(1);box-shadow:0 0 0 0 rgba(91,189,122,0)}}
+@keyframes badgePop{0%{transform:scale(0) rotate(-14deg);opacity:0}55%{transform:scale(1.45) rotate(5deg);opacity:1}78%{transform:scale(.92)}100%{transform:scale(1) rotate(0)}}
+@keyframes celeSweep{0%{transform:translateX(-120%) skewX(-18deg);opacity:0}30%{opacity:.55}100%{transform:translateX(220%) skewX(-18deg);opacity:0}}
+@keyframes celePart{0%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(.25);opacity:0}}
+.game-card.celebrate{animation:cardCele 1.15s cubic-bezier(.2,.85,.25,1);z-index:3}
+.game-card.celebrate .game-done.on{animation:badgePop .72s .1s cubic-bezier(.3,1.5,.5,1) both}
+.cele-sweep{position:absolute;inset:0;border-radius:14px;overflow:hidden;pointer-events:none;z-index:2}
+.cele-sweep::before{content:"";position:absolute;top:0;bottom:0;left:0;width:42%;background:linear-gradient(100deg,transparent,rgba(232,224,180,.5),transparent);animation:celeSweep 1.05s .06s ease-out both}
+.cele-part{position:absolute;width:7px;height:7px;border-radius:50%;pointer-events:none;z-index:4;animation:celePart .82s ease-out forwards}
+@media(prefers-reduced-motion:reduce){.game-card.celebrate{animation:none}.game-card.celebrate .game-done.on{animation:none}.cele-sweep,.cele-part{display:none}}
 /* Once done, drop the redundant NEW tag so "✓ DONE" never gets clipped. */
 .game-card.done .new-tag{display:none}
 .game-modes{display:flex;gap:8px;margin-top:auto}
@@ -1599,6 +1611,52 @@ function markDoneBadges() {
       if (daily) daily.textContent = done ? t('modeResults') : t('modeDaily');
     }
   });
+  return state;
+}
+
+// Return-to-hub reward: when the user lands on the home, any game completed since
+// their last hub view gets a one-shot celebratory bloom on its card. Fully generic
+// (diffs the done-set against a stored snapshot) so no game page needs changing.
+function celebrateNewlyDone() {
+  const ss = document.getElementById('startScreen');
+  if (!ss || !ss.classList.contains('active')) return;
+  let state; try { state = markDoneBadges() || {}; } catch (_) { return; }
+  const doneKeys = Object.keys(state).filter(k => state[k]);
+  const firstRun = localStorage.getItem('clHomeSeenDone') == null;
+  let seen = []; try { seen = JSON.parse(localStorage.getItem('clHomeSeenDone')) || []; } catch (_) {}
+  const newly = doneKeys.filter(k => !seen.includes(k));
+  try { localStorage.setItem('clHomeSeenDone', JSON.stringify(doneKeys)); } catch (_) {}
+  if (firstRun || !newly.length) return;           // never replay pre-existing dones
+  newly.forEach((key, i) => setTimeout(() => celebrateCard(key, i === 0), 260 + i * 520));
+}
+function celebrateCard(key, doScroll) {
+  const badge = document.querySelector('.game-done[data-done="' + key + '"]');
+  const card = badge && badge.closest('.game-card');
+  if (!card) return;
+  if (doScroll) { try { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (_) {} }
+  const run = () => {
+    card.classList.remove('celebrate'); void card.offsetWidth; card.classList.add('celebrate');
+    const sweep = document.createElement('div'); sweep.className = 'cele-sweep';
+    card.appendChild(sweep); setTimeout(() => sweep.remove(), 1200);
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) burstParticles(card, badge);
+    setTimeout(() => card.classList.remove('celebrate'), 1300);
+  };
+  doScroll ? setTimeout(run, 320) : run();        // let the smooth-scroll settle first
+}
+function burstParticles(card, badge) {
+  const cr = card.getBoundingClientRect(), br = badge.getBoundingClientRect();
+  const ox = br.left - cr.left + br.width / 2, oy = br.top - cr.top + br.height / 2;
+  const colors = ['#e8a000', '#7fd49a', '#f0d878', '#5bbd7a', '#ffffff'];
+  for (let i = 0; i < 12; i++) {
+    const p = document.createElement('span'); p.className = 'cele-part';
+    const ang = (Math.PI * 2 * i) / 12 + Math.random() * 0.5, dist = 26 + Math.random() * 34;
+    p.style.left = ox + 'px'; p.style.top = oy + 'px';
+    p.style.background = colors[i % colors.length];
+    p.style.setProperty('--dx', Math.cos(ang) * dist + 'px');
+    p.style.setProperty('--dy', (Math.sin(ang) * dist - 6) + 'px');
+    p.style.animationDelay = (Math.random() * 0.05) + 's';
+    card.appendChild(p); setTimeout(() => p.remove(), 950);
+  }
 }
 
 // ── Meta layer: portfolio streak + unified "share my whole day" ──────────────
@@ -1782,6 +1840,7 @@ function showOnly(id) {
     markDoneBadges();
     try { renderMetaBar(); } catch (_) {}
     if (window.renderDailyGallery) { try { window.renderDailyGallery(); } catch (_) {} }
+    try { celebrateNewlyDone(); } catch (_) {}
     _clearParticles();
   }
   if (id === 'loadingScreen') _spawnParticles();
