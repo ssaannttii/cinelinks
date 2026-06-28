@@ -97,7 +97,11 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 (function(){
   const IMG='https://image.tmdb.org/t/p/';
   const CHECKS=4; // how many times you can press Check
-  const NAMES={31:"Tom Hanks",192:"Morgan Freeman",287:"Brad Pitt",380:"Robert De Niro",500:"Tom Cruise",1245:"Scarlett Johansson",1813:"Anne Hathaway",1892:"Matt Damon",2227:"Nicole Kidman",2231:"Samuel L. Jackson",3223:"Robert Downey Jr.",5081:"Emily Blunt",5292:"Denzel Washington",6193:"Leonardo DiCaprio",6384:"Keanu Reeves",6885:"Charlize Theron",12835:"Vin Diesel",16483:"Sylvester Stallone",18277:"Sandra Bullock",18918:"Dwayne Johnson",73457:"Chris Pratt",117642:"Jason Momoa",234352:"Margot Robbie"};
+  // Generation pool: well-connected leads. Grids are built live from a 3×3 biclique
+  // over their co-star graph (every row×col pair shares a film), so the daily isn't
+  // limited to a fixed list of boards. NAMES doubles as the name lookup for any cell.
+  const NAMES={31:"Tom Hanks",192:"Morgan Freeman",287:"Brad Pitt",380:"Robert De Niro",500:"Tom Cruise",1245:"Scarlett Johansson",1813:"Anne Hathaway",1892:"Matt Damon",2227:"Nicole Kidman",2231:"Samuel L. Jackson",3223:"Robert Downey Jr.",5081:"Emily Blunt",5292:"Denzel Washington",6193:"Leonardo DiCaprio",6384:"Keanu Reeves",6885:"Charlize Theron",12835:"Vin Diesel",16483:"Sylvester Stallone",18277:"Sandra Bullock",18918:"Dwayne Johnson",73457:"Chris Pratt",117642:"Jason Momoa",234352:"Margot Robbie",54693:"Emma Stone",30614:"Ryan Gosling",2037:"Cillian Murphy",524:"Natalie Portman",505710:"Zendaya",18897:"Jackie Chan",1136406:"Tom Holland",71580:"Benedict Cumberbatch",10882:"Rosamund Pike",224513:"Ana de Armas",3894:"Christian Bale",85:"Johnny Depp",1532:"Bill Murray",131:"Jake Gyllenhaal"};
+  const POOL_IDS=Object.keys(NAMES).map(Number);
   const GRIDS=[[[2231,2227,31],[6885,500,380]],[[5081,2231,1813],[73457,18918,1892]],[[1245,287,31],[6384,1892,2231]],[[73457,31,380],[16483,287,1245]],[[287,6193,6384],[500,2231,1892]],[[2227,287,31],[2231,380,16483]],[[12835,5081,2227],[1892,6885,16483]],[[287,2227,31],[380,234352,6384]],[[2231,6384,1245],[16483,287,31]],[[31,117642,380],[16483,6384,192]],[[3223,1245,380],[2231,6384,1892]],[[6384,192,2231],[287,31,5292]],[[1892,31,380],[500,6193,192]],[[73457,1892,287],[1245,2231,16483]],[[1245,1892,6193],[6384,16483,380]],[[287,234352,2227],[16483,2231,380]],[[500,31,192],[380,1892,287]],[[192,500,2231],[380,31,287]],[[500,31,192],[1245,6384,1892]],[[287,2231,6384],[1892,500,18277]],[[1892,73457,380],[1245,1813,287]],[[6885,2231,6384],[6193,380,18918]]];
 
   const stage=document.getElementById('stage');
@@ -112,7 +116,34 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 
   let GRID=null, photos={}, cells=[null,null,null,null,null,null,null,null,null], checksLeft=CHECKS, over=false, openIdx=-1, busy=false, rowFb=null, creditsCache={}, flashCells={};
 
-  function pickGrid(){ if(isDaily){ const i=(utcDay()%GRIDS.length+GRIDS.length)%GRIDS.length; return GRIDS[i]; } return GRIDS[Math.floor(Math.random()*GRIDS.length)]; }
+  // ── live grid generation (3×3 biclique over the co-star graph) ──
+  function hash(s){s=''+s;let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return h>>>0;}
+  function rnd(seed,i){let x=(hash(seed)^Math.imul(i+1,0x9E3779B1))>>>0;x=Math.imul(x^(x>>>15),0x85EBCA6B)>>>0;x=Math.imul(x^(x>>>13),0xC2B2AE35)>>>0;return(x^(x>>>16))>>>0;}
+  function order(arr,seed){return arr.map(function(x,i){return [x,rnd(seed,i)];}).sort(function(a,b){return a[1]-b[1];}).map(function(p){return p[0];});}
+  function combos3(arr){var res=[],n=arr.length;for(var i=0;i<n;i++)for(var j=i+1;j<n;j++)for(var k=j+1;k<n;k++)res.push([arr[i],arr[j],arr[k]]);return res;}
+  const filmCache={};
+  async function filmsOf(id){ if(filmCache[id])return filmCache[id]; const d=await api('person/'+id+'/combined_credits'); filmCache[id]=new Set((d.cast||[]).filter(function(x){return x.media_type==='movie'&&(x.vote_count||0)>=800&&x.poster_path;}).map(function(x){return x.id;})); return filmCache[id]; }
+  function share(a,b){ const A=filmCache[a],B=filmCache[b]; if(!A||!B)return false; for(const x of A) if(B.has(x))return true; return false; }
+  function findGrid(cands,seed){
+    const adj={}; cands.forEach(function(a){ adj[a]=new Set(cands.filter(function(b){return b!==a&&share(a,b);})); });
+    const rows=order(combos3(cands),'r'+seed);
+    for(const R of rows){
+      const common=[...adj[R[0]]].filter(function(x){return adj[R[1]].has(x)&&adj[R[2]].has(x)&&R.indexOf(x)<0;});
+      if(common.length>=3) return [R, order(common,'c'+seed).slice(0,3)];
+    }
+    return null;
+  }
+  async function generateGrid(seed){
+    for(let k=0;k<3;k++){
+      const cands=order(POOL_IDS,'g'+seed+'_'+k).slice(0,20);
+      await Promise.all(cands.map(filmsOf));
+      const g=findGrid(cands, seed+'_'+k);
+      if(g) return g;
+    }
+    return GRIDS[((seed%GRIDS.length)+GRIDS.length)%GRIDS.length];   // fallback to a baked board
+  }
+  function loadGrid(){ try{return JSON.parse(localStorage.getItem('cinegridGrid'));}catch(_){return null;} }
+  function saveGrid(o){ try{localStorage.setItem('cinegridGrid',JSON.stringify(o));}catch(_){} }
   function cellPair(idx){ const r=Math.floor(idx/3), c=idx%3; return { rid:GRID[0][r], cid:GRID[1][c] }; }
   function face(id){ return photos[id] ? IMG+'w185'+photos[id] : '/logo.png'; }
   function correctCount(){ return cells.filter(function(c){return c&&c.status==='correct';}).length; }
@@ -228,7 +259,9 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   (async function(){
     try{
       if(isDaily){ const s=loadState(); if(s&&s.day===utcDay()&&s.finished){ GRID=s.grid; cells=s.cells; over=true; rowFb=[0,1,2].map(function(r){let c=0;for(let k=0;k<3;k++){const cell=cells[r*3+k];if(cell&&cell.status==='correct')c++;}return c+'/3';}); await loadPhotos(); render(); return; } }
-      GRID=pickGrid();
+      // daily reuses the cached generated board (stable across reloads); else generate live.
+      if(isDaily){ const cg=loadGrid(); if(cg&&cg.day===utcDay()&&cg.grid){ GRID=cg.grid; } }
+      if(!GRID){ GRID=await generateGrid(isDaily?utcDay():Math.floor(Math.random()*1e9)); if(isDaily) saveGrid({day:utcDay(),grid:GRID}); }
       cells=[null,null,null,null,null,null,null,null,null];
       await loadPhotos();
       render();
