@@ -61,6 +61,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .cl-home:hover{color:var(--gold);border-color:rgba(232,160,0,.45)}
 @media(min-width:760px){.wrap{max-width:620px}.logo{font-size:2.5rem}.tag{font-size:1rem}.kicker{font-size:.78rem}.board{max-width:540px;gap:14px}.hint{font-size:.95rem}.guess input{font-size:1.05rem;padding:15px 18px}.result h2{font-size:1.55rem}.who img{width:78px;height:78px}.who .nm{font-size:1.2rem}}
 </style>
+<link rel="stylesheet" href="/fx.css">
 </head>
 <body>
 <a href="/" class="cl-home" aria-label="Back to CineLinks">← CineLinks</a>
@@ -72,6 +73,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   <div class="foot">Posters &amp; data from TMDB · part of <a href="/">CineLinks</a></div>
 </div>
 
+<script src="/fx.js"></script>
 <script>
 (function(){
   const IMG='https://image.tmdb.org/t/p/';
@@ -172,7 +174,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     for(let i=0;i<total;i++){
       const f=reveal[i];
       if(i<shown||over){
-        cells+='<div class="cell"><img src="'+IMG+'w342'+f.poster+'" alt=""><span class="yr">'+(f.year||'')+'</span></div>';
+        cells+='<div class="cell'+(i===shown-1&&!over?' fx-pop':'')+'"><img src="'+IMG+'w342'+f.poster+'" alt=""><span class="yr">'+(f.year||'')+'</span></div>';
       }else{
         cells+='<div class="cell'+(i===shown?' next':'')+'"><span class="lock">?</span></div>';
       }
@@ -228,6 +230,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     guesses.push({win:false});                                  // a real wrong guess
     if(shown>=total){ over=true; render(); return; }            // no posters left → lost
     shown++; render();
+    if(window.Fx){ const gi=document.getElementById('gi'); if(gi) Fx.play(gi,'fx-shake',450); }
     const m=document.getElementById('miss');
     if(m&&name) m.textContent='“'+name+'” — nope.';
   }
@@ -251,6 +254,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
         '<div class="sub">'+(won?('solved at '+score+'/'+total+' posters'):'the answer')+'</div></div></div>'+
       (stats?statsHTML(stats):'')+
       '<div class="row"><button class="btn" id="shareBtn">Share</button><button class="btn gold" id="again">'+(isDaily?'Practice':'New career')+'</button></div>';
+    const who=document.querySelector('#result .who img'); if(who) who.classList.add('fx-pop');
+    if(won && window.Fx) setTimeout(()=>Fx.confetti({count:90}),160);
     document.getElementById('again').onclick=()=>{location.href='/cinereel.html'+(isDaily?'?practice=1':'?practice=1&r='+Date.now());};
     document.getElementById('shareBtn').onclick=()=>{
       if(navigator.share){navigator.share({text:share}).catch(()=>{});}

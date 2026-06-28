@@ -55,6 +55,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .cl-home:hover{color:var(--gold);border-color:rgba(232,160,0,.45)}
 @media(min-width:760px){.wrap{max-width:560px}.logo{font-size:2.5rem}.tag{font-size:1rem}.kicker{font-size:.78rem}.chain{max-width:460px}.film img{width:48px;height:72px}.film .ft{font-size:1rem}.add,.row-btns{max-width:460px}.add input{font-size:1.05rem;padding:14px 16px}.score b{font-size:1.6rem}.hint{font-size:.92rem}}
 </style>
+<link rel="stylesheet" href="/fx.css">
 </head>
 <body>
 <a href="/" class="cl-home" aria-label="Back to CineLinks">← CineLinks</a>
@@ -65,6 +66,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   <div id="stage"><div class="loading">Loading today's starting film…</div></div>
   <div class="foot">Posters &amp; data from TMDB · part of <a href="/">CineLinks</a></div>
 </div>
+<script src="/fx.js"></script>
 <script>
 (function(){
   const IMG='https://image.tmdb.org/t/p/';
@@ -81,7 +83,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   function saveState(o){try{localStorage.setItem('cinechainState',JSON.stringify(o));}catch(_){}}
   function esc(s){return (s||'').replace(/[&<>"]/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m];});}
 
-  let chain=[], usedActors=new Set(), usedFilms=new Set(), over=false, busy=false, timeLeft=DURATION, timerId=null;
+  let chain=[], usedActors=new Set(), usedFilms=new Set(), over=false, busy=false, timeLeft=DURATION, timerId=null, justAdded=false;
 
   function fmtTime(s){ const m=Math.floor(s/60), x=s%60; return m+':'+(x<10?'0':'')+x; }
   function startTimer(){
@@ -103,8 +105,9 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     html+='<div class="score">Chain length <b>'+links+'</b></div>';
     html+='<div class="chain">';
     chain.forEach(function(f,i){
-      if(i>0) html+='<div class="via">via '+esc(f.via)+'</div>';
-      html+='<div class="film'+(i===0?' seed':'')+'"><img src="'+IMG+'w92'+f.poster+'" alt=""><div><div class="ft">'+esc(f.title)+'</div><div class="fy">'+(i===0?'Today’s film':('#'+i))+'</div></div></div>';
+      const isNew=(justAdded && i===chain.length-1 && !over);
+      if(i>0) html+='<div class="via'+(isNew?' fx-in':'')+'">via '+esc(f.via)+'</div>';
+      html+='<div class="film'+(i===0?' seed':'')+(isNew?' fx-in':'')+'"><img src="'+IMG+'w92'+f.poster+'" alt=""><div><div class="ft">'+esc(f.title)+'</div><div class="fy">'+(i===0?'Today’s film':('#'+i))+'</div></div></div>';
     });
     html+='</div>';
     if(!over){
@@ -115,6 +118,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     }
     html+='<div class="result'+(over?' show':'')+'" id="result"></div>';
     stage.innerHTML=html;
+    justAdded=false;
     if(!over) wire(); else renderResult();
   }
 
@@ -144,10 +148,10 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
       const ids=new Set(cast.map(function(c){return c.id;}));
       let link=null;
       for(const c of last.cast){ if(ids.has(c.id) && !usedActors.has(c.id)){ link=c; break; } }
-      if(!link){ if(feed) feed.textContent='No shared (unused) actor with '+last.title+'. Try another film.'; busy=false; return; }
+      if(!link){ if(feed) feed.textContent='No shared (unused) actor with '+last.title+'. Try another film.'; if(window.Fx){ const ci=document.getElementById('ci'); if(ci) Fx.play(ci,'fx-shake',450); } busy=false; return; }
       usedActors.add(link.id); usedFilms.add(mid);
       chain.push({id:mid,title:d.t,poster:d.p,cast:cast,via:link.name});
-      busy=false; render();
+      justAdded=true; busy=false; render();
     }catch(e){ if(feed) feed.textContent='Network hiccup, try again.'; busy=false; }
   }
 
@@ -157,10 +161,12 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     const links=chain.length-1;
     const dayN=utcDay()-Math.floor(Date.UTC(2026,0,1)/864e5);
     const share='⛓️ CineChain'+(isDaily?' #'+dayN:'')+'\nChain of '+links+' '+(links===1?'link':'links')+' from '+chain[0].title+'\n'+'🎬'.repeat(Math.min(links+1,12))+'\nhttps://cinelinks.vercel.app/cinechain.html';
-    document.getElementById('result').innerHTML=
+    const res=document.getElementById('result'); res.classList.add('fx-in');
+    res.innerHTML=
       '<h2>Chain of '+links+'!</h2>'+
       '<div class="sub">'+(chain.length)+' films linked'+(links>=8?' — masterful 🔥':links>=4?' — nice run':'')+'</div>'+
       '<div class="row-btns" style="margin-top:12px"><button class="btn" id="shareBtn">Share</button><button class="btn gold" id="again">'+(isDaily?'Practice':'New chain')+'</button></div>';
+    if(links>=1 && window.Fx) setTimeout(function(){ Fx.confetti({count:Math.min(50+links*12,130)}); }, 160);
     document.getElementById('again').onclick=function(){ location.href='/cinechain.html'+(isDaily?'?practice=1':'?practice=1&r='+Date.now()); };
     document.getElementById('shareBtn').onclick=function(){ if(navigator.share){navigator.share({text:share}).catch(function(){});} else { try{navigator.clipboard.writeText(share);}catch(_){ } const b=document.getElementById('shareBtn'); b.textContent='Copied ✓'; } };
   }

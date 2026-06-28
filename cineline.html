@@ -49,7 +49,10 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 /* timeline — vertical: full-width rows (poster + title + year), tap the gaps */
 .tl-hint{font-size:.72rem;color:var(--mut);text-align:center;margin-bottom:6px}
-.tl-edge{text-align:center;font-size:1.7rem;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);opacity:.12;line-height:1;margin:6px 0;user-select:none;pointer-events:none}
+.tl-wrap{display:block}
+.tl-edge{display:block;width:100%;text-align:center;font-size:1.35rem;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);opacity:.34;line-height:1;margin:6px 0;user-select:none;cursor:pointer;background:transparent;border:none;font-family:inherit;padding:9px 0;border-radius:9px;transition:opacity .15s,background .15s}
+.tl-edge:hover{opacity:.72;background:rgba(232,160,0,.06)}
+.tl-edge:disabled{opacity:.12;cursor:default;background:transparent}
 .tl-list{display:flex;flex-direction:column;gap:0}
 .tl-item{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.045);border:1px solid var(--bdr);border-radius:11px;padding:8px 12px;animation:fadeIn .25s ease both}
 .tl-item img,.tl-item .tl-ph{width:40px;height:60px;border-radius:6px;object-fit:cover;background:var(--s2);flex-shrink:0;box-shadow:0 6px 14px rgba(0,0,0,.4)}
@@ -87,18 +90,22 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
    Same DOM (slot,item,slot,…) just flows as a row; items become little cards and
    the placement gaps become vertical dashed lines. Mobile keeps the vertical list. */
 @media(min-width:820px){
-  .wrap{max-width:920px}
-  .tl-edge{display:none}
-  .tl-list{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;align-items:stretch;padding:8px 2px 14px;gap:0}
-  .tl-item{flex-direction:column;width:108px;flex-shrink:0;gap:5px;text-align:center;align-items:center;padding:10px 7px}
-  .tl-item img,.tl-item .tl-ph{width:62px;height:93px}
-  .tl-name{flex:none;font-size:.74rem;line-height:1.2}
-  .tl-yr{font-size:1rem}
-  .tl-slot{width:32px;height:auto;min-height:150px;align-self:stretch}
+  .wrap{max-width:1060px}
+  /* Older | timeline | Newer laid out in one centred row that fits all cards (no scroll). */
+  .tl-wrap{display:flex;align-items:stretch;justify-content:center;gap:4px}
+  .tl-edge{writing-mode:vertical-rl;width:auto;margin:0;font-size:1rem;letter-spacing:.18em;padding:6px 5px;flex-shrink:0;align-self:stretch;display:flex;align-items:center;justify-content:center}
+  .tl-older{transform:rotate(180deg)}
+  .tl-list{flex:1 1 auto;min-width:0;flex-direction:row;flex-wrap:nowrap;overflow:visible;align-items:stretch;justify-content:center;padding:8px 2px 14px;gap:0}
+  .tl-item{flex:1 1 0;min-width:0;max-width:104px;flex-direction:column;gap:5px;text-align:center;align-items:center;padding:10px 6px}
+  .tl-item img,.tl-item .tl-ph{width:58px;height:87px}
+  .tl-name{flex:none;font-size:.72rem;line-height:1.2;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
+  .tl-yr{font-size:.95rem}
+  .tl-slot{flex:0 0 22px;width:22px;height:auto;min-height:150px;align-self:stretch}
   .tl-slot::before{left:50%;right:auto;top:14px;bottom:14px;height:auto;width:2px;transform:translateX(-50%);background:repeating-linear-gradient(180deg,rgba(232,160,0,.22) 0 7px,transparent 7px 14px)}
   .tl-slot:hover::before,.tl-slot:focus::before{background:rgba(232,160,0,.6)}
 }
 </style>
+<link rel="stylesheet" href="/fx.css">
 </head>
 <body>
 <div id="cineBackdrop" aria-hidden="true"></div>
@@ -122,9 +129,11 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     <div class="progress" id="progress"></div>
     <div class="current" id="current"></div>
     <div class="tl-hint" id="tlHint">Tap the line where the film belongs</div>
-    <div class="tl-edge" aria-hidden="true">Older</div>
-    <div class="tl-list" id="timeline"></div>
-    <div class="tl-edge" aria-hidden="true">Newer</div>
+    <div class="tl-wrap">
+      <button class="tl-edge tl-older" id="edgeOlder" type="button" aria-label="place as the oldest">Older</button>
+      <div class="tl-list" id="timeline"></div>
+      <button class="tl-edge tl-newer" id="edgeNewer" type="button" aria-label="place as the newest">Newer</button>
+    </div>
     <div class="result hidden" id="result"></div>
   </div>
 
@@ -134,6 +143,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 </div>
 <div class="toast" id="toast"></div>
 
+<script src="/fx.js"></script>
 <script src="cineline-pool.js"></script>
 <script src="/lib/timeline.js"></script>
 <script src="/lib/pool.js"></script>
@@ -159,7 +169,7 @@ let deck = [];      // [{id,title,year,poster}]
 let placed = [];    // cards on the timeline (each may carry _res)
 let pendingIdx = 0; // index into deck of the card being placed
 let results = [];   // 'correct' | 'wrong' per placement
-let finished = false, solved = false, score = 0;
+let finished = false, solved = false, score = 0, lastPlaced = null;
 
 async function loadDeck(){
   // Practice = endless deck: one recognisable film per decade from TMDB Discover
@@ -208,14 +218,19 @@ function renderTimeline(){
     h += '<button class="tl-slot' + (finished ? ' done' : '') + '" data-slot="' + i + '"' + (finished ? ' disabled' : '') + ' aria-label="place here">place here</button>';
     if(i < sorted.length){
       const c = sorted[i];
+      const flash = (c === lastPlaced) ? (c._res === 'correct' ? ' fx-bounce' : ' fx-shake') : '';
       const cls = c._anchor ? ' anchor' : (c._res ? ' ' + c._res : '');
-      h += '<div class="tl-item' + cls + '">' +
+      h += '<div class="tl-item' + cls + flash + '">' +
         (c.poster ? '<img src="' + poster(c.poster, 'w92') + '" alt="">' : '<div class="tl-ph"></div>') +
         '<span class="tl-name">' + esc(c.title) + '</span><span class="tl-yr">' + c.year + '</span></div>';
     }
   }
   const row = document.getElementById('timeline');
   row.innerHTML = h;
+  lastPlaced = null;
+  // The Older / Newer end labels are also big tap targets for the extreme placements.
+  const eo = document.getElementById('edgeOlder'), en = document.getElementById('edgeNewer');
+  if(eo && en){ eo.disabled = finished; en.disabled = finished; eo.onclick = () => { if(!finished) place(0); }; en.onclick = () => { if(!finished) place(sorted.length); }; }
   if(!finished) row.querySelectorAll('.tl-slot').forEach(b => { b.onclick = () => place(+b.dataset.slot); });
 }
 
@@ -236,6 +251,7 @@ function place(slot){
   const c = deck[pendingIdx];
   const ok = Timeline.isCorrect(sortedPlaced().map(x => x.year), c.year, slot);
   c._res = ok ? 'correct' : 'wrong';
+  lastPlaced = c;
   results.push(c._res);
   placed.push(c);
   toast(ok ? ('✓ ' + c.title + ' — ' + c.year) : ('✗ ' + c.title + ' — ' + c.year));
@@ -281,6 +297,8 @@ function renderResult(streak){
     '<div class="result-grid">' + emojiGrid().replace(/\n/g, '<br>') + '</div>' +
     streakLine +
     '<div class="result-actions">' + actions + '</div>';
+  el.classList.add('fx-in');
+  if(solved && window.Fx) setTimeout(() => Fx.confetti({count:90}), 160);
   document.getElementById('shareBtn').onclick = share;
   const again = document.getElementById('againBtn');
   if(again) again.onclick = () => { location.href = 'cineline.html?practice=1&n=' + Date.now(); };

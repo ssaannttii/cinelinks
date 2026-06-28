@@ -74,6 +74,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .cl-home:hover{color:var(--gold);border-color:rgba(232,160,0,.45)}
 @media(min-width:760px){.wrap{max-width:600px}.logo{font-size:2.5rem}.tag{font-size:1rem}.kicker{font-size:.78rem}.grid{max-width:540px;grid-template-columns:84px 1fr 1fr 1fr;gap:7px}.hdr img{width:54px;height:54px}.hdr.row img{width:50px;height:50px}.hdr .hn{font-size:.66rem;max-width:104px}.hint{font-size:.92rem}.bar{font-size:.88rem}}
 </style>
+<link rel="stylesheet" href="/fx.css">
 </head>
 <body>
 <a href="/" class="cl-home" aria-label="Back to CineLinks">← CineLinks</a>
@@ -91,6 +92,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   <div class="mfeed" id="mFeed"></div>
   <div class="mbtns"><button id="mHint">💡 Give me options</button><button id="mClose">Cancel</button></div>
 </div></div>
+<script src="/fx.js"></script>
 <script>
 (function(){
   const IMG='https://image.tmdb.org/t/p/';
@@ -108,7 +110,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   function rarityOf(v){const f=Math.min(1,Math.log10((v||0)+10)/Math.log10(40000));return Math.max(1,Math.round(100-100*f));}
   function esc(s){return (s||'').replace(/[&<>"]/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m];});}
 
-  let GRID=null, photos={}, cells=[null,null,null,null,null,null,null,null,null], checksLeft=CHECKS, over=false, openIdx=-1, busy=false, rowFb=null, creditsCache={};
+  let GRID=null, photos={}, cells=[null,null,null,null,null,null,null,null,null], checksLeft=CHECKS, over=false, openIdx=-1, busy=false, rowFb=null, creditsCache={}, flashCells={};
 
   function pickGrid(){ if(isDaily){ const i=(utcDay()%GRIDS.length+GRIDS.length)%GRIDS.length; return GRIDS[i]; } return GRIDS[Math.floor(Math.random()*GRIDS.length)]; }
   function cellPair(idx){ const r=Math.floor(idx/3), c=idx%3; return { rid:GRID[0][r], cid:GRID[1][c] }; }
@@ -137,6 +139,9 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     }
     html+='<div class="result'+(over?' show':'')+'" id="result"></div>';
     stage.innerHTML=html;
+    // play any queued cell animations (fill / correct → bounce, wrong → shake)
+    Object.keys(flashCells).forEach(function(i){ const el=stage.querySelector('.cell[data-i="'+i+'"]'); if(el&&window.Fx) Fx.play(el,'fx-'+flashCells[i],650); });
+    flashCells={};
     if(!over){
       stage.querySelectorAll('.cell[data-i]').forEach(function(el){ const i=+el.dataset.i; if(cells[i]&&cells[i].status==='correct')return; el.onclick=function(){ openCell(i); }; });
       document.getElementById('checkBtn').onclick=check;
@@ -180,7 +185,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
       mResults.innerHTML=rowItems(final); wireItems();
     }).catch(function(){ mFeed.textContent='Couldn’t load options, try again.'; });
   }
-  function choose(d){ if(openIdx<0) return; cells[openIdx]={movieId:+d.id,poster:d.p,title:d.t,votes:+d.v,status:'pending'}; closeModal(); render(); }
+  function choose(d){ if(openIdx<0) return; cells[openIdx]={movieId:+d.id,poster:d.p,title:d.t,votes:+d.v,status:'pending'}; flashCells[openIdx]='bounce'; closeModal(); render(); }
 
   // ── checking ──
   function check(){
@@ -191,7 +196,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     Promise.all(pend.map(function(idx){
       const mid=cells[idx].movieId, p=cellPair(idx);
       var prom = creditsCache[mid] ? Promise.resolve(creditsCache[mid]) : api('movie/'+mid+'/credits').then(function(cr){ const s=new Set((cr.cast||[]).map(function(c){return c.id;})); creditsCache[mid]=s; return s; });
-      return prom.then(function(ids){ cells[idx].status=(ids.has(p.rid)&&ids.has(p.cid))?'correct':'wrong'; });
+      return prom.then(function(ids){ cells[idx].status=(ids.has(p.rid)&&ids.has(p.cid))?'correct':'wrong'; flashCells[idx]=cells[idx].status==='correct'?'bounce':'shake'; });
     })).then(function(){
       checksLeft--;
       rowFb=[0,1,2].map(function(r){ let c=0; for(let k=0;k<3;k++){ const cell=cells[r*3+k]; if(cell&&cell.status==='correct')c++; } return c+'/3'; });
@@ -210,6 +215,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     const dayN=utcDay()-Math.floor(Date.UTC(2026,0,1)/864e5);
     let sq=''; for(let i=0;i<9;i++){ sq+=(cells[i]&&cells[i].status==='correct')?'🟩':'⬛'; if(i%3===2&&i<8)sq+='\n'; }
     const share='🎬 CineGrid'+(isDaily?' #'+dayN:'')+'\n'+sq+'\n'+filled+'/9 · rarity '+rar+'\nhttps://cinelinks.vercel.app/cinegrid.html';
+    if(win && window.Fx) setTimeout(function(){ Fx.confetti({count:100}); }, 200);
     document.getElementById('result').innerHTML=
       '<h2 class="'+(win?'win':'')+'">'+(win?'Perfect grid! 🎯':filled+'/9')+'</h2>'+
       '<div class="stats"><div class="stat"><b>'+filled+'/9</b>correct</div><div class="stat"><b>'+rar+'</b>rarity</div></div>'+
