@@ -24,7 +24,7 @@ function arg(flag, def) {
   const i = process.argv.indexOf(flag);
   return i >= 0 && process.argv[i + 1] ? process.argv[i + 1] : def;
 }
-const PAGES = parseInt(arg('--pages', '10'), 10);
+const PAGES = parseInt(arg('--pages', '25'), 10);
 const MIN_VOTES = parseInt(arg('--min-votes', '1200'), 10);
 
 if (!API_KEY || API_KEY === 'tu_key' || API_KEY === 'xxxxx') {
@@ -39,37 +39,41 @@ async function tmdb(p) {
   return res.json();
 }
 
-async function collect(listPath) {
+// Harvest via Discover (English-language, vote-gated) so the pool is large,
+// recognisable and reproducible with the same endpoints the live proxy allows.
+async function collect(sort, pages) {
   const seen = new Map();
-  for (let page = 1; page <= PAGES; page++) {
-    const d = await tmdb(listPath + '?language=en-US&page=' + page);
+  for (let page = 1; page <= pages; page++) {
+    const d = await tmdb('discover/movie?include_adult=false&with_original_language=en&vote_count.gte=' + MIN_VOTES + '&sort_by=' + sort + '&language=en-US&page=' + page);
     for (const m of d.results || []) {
-      if ((m.vote_count || 0) < MIN_VOTES) continue;
-      if (m.adult) continue;
-      seen.set(m.id, m.popularity || 0);
+      if ((m.vote_count || 0) < MIN_VOTES || m.adult || !m.poster_path) continue;
+      seen.set(m.id, Math.max(seen.get(m.id) || 0, m.vote_count || 0));  // quality = vote_count
     }
   }
   return seen;
 }
 
 async function main() {
-  console.log(`Building CineClue pool — ${PAGES} pages, min ${MIN_VOTES} votes...`);
+  console.log(`Building CineClue pool — discover, min ${MIN_VOTES} votes...`);
   const merged = new Map();
-  for (const list of ['movie/top_rated', 'movie/popular']) {
-    const m = await collect(list);
-    for (const [id, pop] of m) merged.set(id, Math.max(merged.get(id) || 0, pop));
-    console.log('  ' + list + ' -> running total ' + merged.size);
+  for (const [sort, pages] of [['vote_count.desc', PAGES], ['popularity.desc', Math.ceil(PAGES / 4)]]) {
+    const m = await collect(sort, pages);
+    for (const [id, v] of m) merged.set(id, Math.max(merged.get(id) || 0, v));
+    console.log('  ' + sort + ' -> running total ' + merged.size);
   }
-  // Sort by popularity desc for a stable, sensible order.
+  // Order by vote_count desc (most recognisable first).
   const ids = [...merged.entries()].sort((a, b) => b[1] - a[1]).map(([id]) => id);
 
   const rows = [];
   for (let i = 0; i < ids.length; i += 10) rows.push('  ' + ids.slice(i, i + 10).join(', '));
   // Curated TV series (tagged "tv:<id>") appended so regenerating the movie pool
   // keeps the shows. CineClue & CineFrame handle both movies and TV.
-  const TV = [1396, 1399, 66732, 2316, 1668, 1398, 1438, 87108, 82856, 65494,
-    42009, 19885, 100088, 119051, 1405, 60059, 94997, 76479, 70523, 71446,
-    60574, 46648, 63247, 4607];
+  const TV = [1399, 66732, 1396, 1402, 63174, 69050, 76479, 71712, 85271, 1418,
+    84958, 60735, 60574, 60625, 82856, 1416, 85552, 456, 119051, 75006,
+    18165, 1668, 88396, 48866, 1622, 87108, 81356, 44217, 1408, 100088,
+    77169, 71912, 60059, 19885, 1412, 94997, 42009, 63247, 1413, 2288,
+    94605, 95557, 37680, 1100, 1405, 87739, 62560, 2316, 61889, 62286,
+    82883, 4607, 2190, 1434, 70785];
   const tvRows = [];
   for (let i = 0; i < TV.length; i += 6) tvRows.push('  ' + TV.slice(i, i + 6).map(id => "'tv:" + id + "'").join(', '));
   const body =
