@@ -238,6 +238,16 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     return capped?99:count;
   }
 
+  // Weekday difficulty curve (NYT-style): Mon/Tue easy (1 trap) → Fri/Sat/Sun hard (2).
+  // Practice is randomised. trapN is capped later by how many overlap films actually exist.
+  function trapTargetFor(seed){
+    if(PRACTICE) return 1+(hash('tn'+seed)%2);
+    const wd=new Date(day*864e5).getUTCDay();   // 0=Sun … 6=Sat
+    if(wd===1||wd===2) return 1;
+    if(wd===5||wd===6||wd===0) return 2;
+    return 1+(hash('tn'+seed)%2);               // Wed/Thu: mixed
+  }
+
   // ---------- v2 generator: deliberate trap, provably unique ----------
   async function genTrap(seed){
     for(const [aid,did,aname,dname] of orderBy(COLLABS,'c'+seed).slice(0,3)){
@@ -249,7 +259,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
       const overlap=directed.filter(f=>aIds.has(f.id));        // D films starring A → traps
       const nonOverlapDir=directed.filter(f=>!aIds.has(f.id));
       if(!overlap.length || nonOverlapDir.length<2) continue;
-      const trapN=1+(hash('tn'+seed)%2);                       // 1 or 2 trap tiles
+      const trapN=trapTargetFor(seed);                         // weekday difficulty curve (1–2 trap tiles)
       const dirPick=[...overlap.slice(0,trapN), ...nonOverlapDir].slice(0,4);
       if(dirPick.length<4) continue;
       const dirSet=new Set(dirPick.map(f=>f.id));
@@ -281,7 +291,9 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
       const facts=await buildFacts(all);
       if(countPartitions(all.map(t=>t.id), buildCats(all,facts))!==1) continue;  // must be the only solution
       const trapTitles=dirPick.filter(f=>aIds.has(f.id)).map(f=>shorten(f.title));
-      return {raw, trap:{actor:aname, director:dname, films:trapTitles}};
+      // per-tile tags (famous actors + directors) so the UI can spot "real but wrong" picks
+      const tags={}; for(const t of all){ const f=facts[t.id]; tags[t.id]={a:[...f.leadIds].filter(id=>FAMOUS_ACTORS.has(id)), d:[...f.directorIds]}; }
+      return {raw, tags, trap:{actor:aname, director:dname, films:trapTitles}};
     }
     return null;
   }
@@ -330,7 +342,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   function finalize(out){
     const groups=out.raw.slice().sort((a,b)=>(DIFF[a.type]||3)-(DIFF[b.type]||3));
     groups.forEach((g,i)=>{ g.key='g'+i; g.color=COLORS[i]; g.sq=SQ[i]; });
-    return {groups, trap:out.trap};
+    return {groups, trap:out.trap, tags:out.tags||null};
   }
 
   async function generateWithRetry(seed){
@@ -428,6 +440,18 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   }
 
   function pushSolved(g){ solved.push({key:g.key,label:g.label,color:g.color,tiles:g.tiles}); }
+  // Did the (wrong) 4 share a genuine link — a famous actor, director, or title pattern?
+  function sharedConnection(ids){
+    if(ids.length<4) return false;
+    const tg=puzzle.tags;
+    if(tg){
+      const sets=ids.map(id=>tg[id]||{a:[],d:[]});
+      const common=(key)=>sets[0][key].some(x=>sets.every(s=>s[key].indexOf(x)>=0));
+      if(common('a')||common('d')) return true;
+    }
+    const titles=ids.map(id=>(tileMap[id]||{}).title||'');
+    return TITLE_FEATS.some(tf=>titles.every(t=>tf[1](t)));
+  }
   function onSubmit(){
     if(locked||selected.length!==4) return;
     const keys=selected.map(id=>tileMap[id].key);
@@ -454,6 +478,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
       mistakes++;
       const dots=document.getElementById('dots'); if(dots) dots.innerHTML=dotsHtml();
       if(max===3) toast('One away…');
+      else if(sharedConnection(selected)) toast('Real connection — but not today’s four');
       saveDaily();
       if(mistakes>=MAX_MIST){
         const have=new Set(solved.map(s=>s.key));

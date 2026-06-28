@@ -89,7 +89,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 /* Wide screens: lay the timeline out HORIZONTALLY (oldest → newest, left → right).
    Same DOM (slot,item,slot,…) just flows as a row; items become little cards and
    the placement gaps become vertical dashed lines. Mobile keeps the vertical list. */
-@media(min-width:820px){
+/* Horizontal timeline on desktop OR any wide/landscape aspect ratio (≥700px). */
+@media (min-width:820px), (min-aspect-ratio:1/1) and (min-width:700px){
   .wrap{max-width:1060px}
   /* Older | timeline | Newer laid out in one centred row that fits all cards (no scroll). */
   .tl-wrap{display:flex;align-items:stretch;justify-content:center;gap:4px}
