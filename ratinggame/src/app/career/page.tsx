@@ -231,13 +231,13 @@ export default function CareerPage() {
 
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
-        <button
-          onClick={() => window.location.href = "https://cinelinks.vercel.app"}
-          className="text-sm font-medium hover:opacity-80 transition-opacity flex items-center gap-1.5"
-          style={{ color: "#777" }}
+        <a
+          href="https://cinelinks.vercel.app"
+          className="inline-flex items-center gap-1.5 text-sm font-bold transition-colors hover:opacity-85"
+          style={{ color: "#9a9a9a", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "999px", padding: "6px 12px", textDecoration: "none" }}
         >
-          <HomeIcon /> Home
-        </button>
+          ← CineLinks
+        </a>
         <p className="text-[0.6rem] font-bold tracking-[0.18em] uppercase" style={{ color: "#e8a000" }}>
           Career Mode
         </p>

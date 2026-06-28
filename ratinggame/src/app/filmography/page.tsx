@@ -347,7 +347,7 @@ export default function FilmographyPage() {
       {/* Progress header */}
       <div className="mb-3 flex-shrink-0">
         <div className="flex justify-between items-center mb-2">
-          <button onClick={() => window.location.href = "https://cinelinks.vercel.app"} className="text-sm font-medium hover:opacity-80 transition-opacity flex items-center gap-1.5" style={{ color: "#777" }}><HomeIcon /> Home</button>
+          <a href="https://cinelinks.vercel.app" className="inline-flex items-center gap-1.5 text-sm font-bold transition-colors hover:opacity-85" style={{ color: "#9a9a9a", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "999px", padding: "6px 12px", textDecoration: "none" }}>← CineLinks</a>
           <div className="flex items-center gap-3">
             <span className="text-sm" style={{ color: "#777" }}>{round + 1} / {ROUNDS}</span>
             <span className="text-sm font-bold" style={{ color: "#e8a000" }}>{score} ✓</span>
