@@ -362,7 +362,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .hdr-clicks{--click-ring:0deg;text-align:center;flex-shrink:0;background:linear-gradient(rgba(13,13,13,.9),rgba(13,13,13,.9)) padding-box,conic-gradient(var(--gold) var(--click-ring),rgba(255,255,255,.1) 0) border-box;border:1px solid transparent;border-radius:8px;min-width:62px;padding:6px 9px;box-shadow:0 8px 18px rgba(0,0,0,.16);transition:--click-ring .32s ease}
 .clicks-n{font-size:1.45rem;font-weight:700;color:var(--gold);display:block;line-height:.95}
 .clicks-l{font-size:.58rem;color:var(--mut);text-transform:uppercase;letter-spacing:.1em;margin-top:3px;display:block}
-@keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.35)}100%{transform:scale(1)}}
+@keyframes pop{0%{transform:scale(1)}42%{transform:scale(1.45)}70%{transform:scale(.9)}100%{transform:scale(1)}}
 
 /* Home screen entrance */
 @keyframes homeIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
@@ -627,6 +627,38 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 #soundToggle.muted{opacity:.55}
 @media(prefers-reduced-motion:reduce){#goalFlash.show{animation:none}}
 
+/* ─────────────── AAA gameplay motion layer ─────────────── */
+.card{will-change:transform;transform-style:preserve-3d}
+/* Cursor glare that tracks the pointer (set via --gx/--gy in JS). */
+.card-glare{position:absolute;inset:0;z-index:1;pointer-events:none;opacity:0;transition:opacity .18s;
+  background:radial-gradient(180px circle at var(--gx,50%) var(--gy,50%),rgba(255,255,255,.16),transparent 58%);
+  mix-blend-mode:screen;border-radius:8px}
+.card:hover .card-glare{opacity:1}
+/* The chosen card flies into the current-node slot, then a ring blooms on landing. */
+.fly-clone{will-change:transform,opacity}
+.fly-clone img{width:100%;height:100%;object-fit:cover;display:block}
+.cur-land-ring{position:fixed;z-index:349;pointer-events:none;border-radius:10px;
+  border:2px solid var(--gold);box-shadow:0 0 22px rgba(232,160,0,.55);opacity:0}
+.cur-land-ring.go{animation:curLand .52s cubic-bezier(.2,1,.36,1) both}
+@keyframes curLand{0%{opacity:.95;transform:scale(.82)}100%{opacity:0;transform:scale(1.16)}}
+/* Hero (current node) sheen sweep on arrival. */
+.cur-shine{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden;border-radius:12px;opacity:0}
+.cur-shine::before{content:"";position:absolute;top:0;bottom:0;left:-45%;width:38%;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.22),transparent);transform:skewX(-16deg)}
+.g-body.nav-in .cur-shine{animation:curSheen .95s ease-out .06s both}
+.g-body.nav-in .cur-shine::before{animation:curSheenMove .95s ease-out .06s both}
+@keyframes curSheen{0%{opacity:0}14%{opacity:1}100%{opacity:0}}
+@keyframes curSheenMove{from{transform:translateX(0) skewX(-16deg)}to{transform:translateX(600%) skewX(-16deg)}}
+/* Clicks counter: ring flash on every move (the pop overshoot is in @keyframes pop). */
+.hdr-clicks.flash{animation:clicksFlash .5s ease both}
+@keyframes clicksFlash{0%{box-shadow:0 8px 18px rgba(0,0,0,.16),0 0 0 0 rgba(232,160,0,.6)}45%{box-shadow:0 8px 18px rgba(0,0,0,.16),0 0 0 7px rgba(232,160,0,0)}100%{box-shadow:0 8px 18px rgba(0,0,0,.16)}}
+@media(prefers-reduced-motion:reduce){
+  .card-glare{display:none}
+  .fly-clone,.cur-land-ring,.cur-shine{display:none!important}
+  .g-body.nav-in .cur-shine{animation:none}
+  .hdr-clicks.flash{animation:none}
+}
+
 /* Win screen: staggered path items */
 @keyframes wpEntry{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 @keyframes wpArrowEntry{from{opacity:0;transform:scaleY(0)}to{opacity:1;transform:scaleY(1)}}
@@ -839,6 +871,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
         <div class="cur-actions">
         </div>
       </div>
+      <div class="cur-shine" aria-hidden="true"></div>
     </div>
     <div id="pathRow" class="path-row"></div>
     <div id="goalBanner" class="goal-banner">
@@ -1879,6 +1912,67 @@ document.addEventListener('click', function (e) {
   try { Sfx.tap(); } catch (_) {}
 }, true);
 
+// ── AAA gameplay motion helpers ──
+function _reducedMotion() { try { return (window.Fx && Fx.reduced) ? Fx.reduced() : (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); } catch (_) { return false; } }
+// FLIP: clone the chosen card's poster and fly it into the current-node slot.
+function flyCardToCurrent(cardEl) {
+  try {
+    if (_reducedMotion() || !cardEl || !cardEl.animate) return;
+    const src = cardEl.querySelector('.card-img'); const tgt = document.getElementById('curImg');
+    if (!src || !tgt) return;
+    const s = src.getBoundingClientRect(), e = tgt.getBoundingClientRect();
+    if (!s.width || !e.width) return;
+    const clone = src.cloneNode(true); clone.className = 'fly-clone';
+    const st = clone.style;
+    st.position = 'fixed'; st.left = s.left + 'px'; st.top = s.top + 'px'; st.width = s.width + 'px'; st.height = s.height + 'px';
+    st.margin = '0'; st.zIndex = '350'; st.pointerEvents = 'none'; st.borderRadius = '8px'; st.overflow = 'hidden';
+    st.transformOrigin = 'top left'; st.boxShadow = '0 22px 60px rgba(0,0,0,.6),0 0 0 2px rgba(232,160,0,.55)';
+    document.body.appendChild(clone);
+    const dx = e.left - s.left, dy = e.top - s.top, sx = e.width / s.width, sy = e.height / s.height;
+    const a = clone.animate([
+      { transform: 'translate(0,0) scale(1)', opacity: 1, offset: 0 },
+      { transform: 'translate(' + (dx * 0.5) + 'px,' + (dy * 0.5 - 26) + 'px) scale(' + ((1 + sx) / 2) + ',' + ((1 + sy) / 2) + ') rotate(-5deg)', opacity: 1, offset: 0.5, easing: 'cubic-bezier(.3,.9,.4,1)' },
+      { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(' + sx + ',' + sy + ')', opacity: 0.16, offset: 1 }
+    ], { duration: 470, easing: 'cubic-bezier(.4,.05,.2,1)' });
+    a.onfinish = function () { clone.remove(); _landRing(e); };
+    a.oncancel = function () { clone.remove(); };
+  } catch (_) {}
+}
+function _landRing(e) {
+  try {
+    if (_reducedMotion()) return;
+    const r = document.createElement('div'); r.className = 'cur-land-ring go';
+    const st = r.style; st.left = e.left + 'px'; st.top = e.top + 'px'; st.width = e.width + 'px'; st.height = e.height + 'px';
+    document.body.appendChild(r); setTimeout(function () { r.remove(); }, 540);
+  } catch (_) {}
+}
+// Springy, staggered entrance for the connection grid.
+function animateGridIn() {
+  try {
+    if (_reducedMotion()) return;
+    const cards = document.querySelectorAll('#grid .card:not(.visited)');
+    cards.forEach(function (c, i) {
+      if (!c.animate) return;
+      c.animate([{ opacity: 0, transform: 'translateY(18px) scale(.93)' }, { opacity: 1, transform: 'none' }],
+        { duration: 440, delay: Math.min(i, 16) * 28, easing: 'cubic-bezier(.2,.9,.3,1.3)', fill: 'backwards' });
+    });
+  } catch (_) {}
+}
+// Cursor-tracking 3D tilt + glare (desktop pointers only).
+function attachCardTilt(card) {
+  card.addEventListener('pointermove', function (ev) {
+    if (ev.pointerType && ev.pointerType !== 'mouse') return;
+    const r = card.getBoundingClientRect();
+    const px = (ev.clientX - r.left) / r.width - 0.5, py = (ev.clientY - r.top) / r.height - 0.5;
+    card.style.transform = 'perspective(680px) rotateX(' + (-py * 7).toFixed(2) + 'deg) rotateY(' + (px * 9).toFixed(2) + 'deg) translateY(-3px) scale(1.025)';
+    card.style.setProperty('--gx', ((px + 0.5) * 100).toFixed(1) + '%');
+    card.style.setProperty('--gy', ((py + 0.5) * 100).toFixed(1) + '%');
+  });
+  const reset = function () { card.style.transform = ''; };
+  card.addEventListener('pointerleave', reset);
+  card.addEventListener('pointercancel', reset);
+}
+
 function celebrateStreak() {
   const ss = document.getElementById('startScreen'); if (!ss || !ss.classList.contains('active')) return false;
   const ov = document.getElementById('streakCele'); if (!ov) return false;
@@ -2840,6 +2934,8 @@ const game = window.game = {
         }
       }
 
+      animateGridIn();
+
       // When the goal is on screen, scroll it into view so it's never missed.
       if (goalItem) {
         const goalCard = grid.querySelector('.card.goal');
@@ -2946,6 +3042,8 @@ const game = window.game = {
     ctr.classList.remove('popping');
     void ctr.offsetWidth;
     ctr.classList.add('popping');
+    const _hc = document.querySelector('.hdr-clicks');
+    if (_hc) { _hc.classList.remove('flash'); void _hc.offsetWidth; _hc.classList.add('flash'); }
 
     // Transition in: card slides in
     body.classList.add('nav-in');
@@ -3187,7 +3285,8 @@ const game = window.game = {
       : item.sub.replace(/</g,'&lt;');
     div.innerHTML = '<div class="' + imgClass + '">' + imgHtml + '</div>' +
       '<div class="card-info"><div class="card-name">' + item.name.replace(/</g,'&lt;') + '</div>' +
-      '<div class="card-sub">' + subHtml + '</div></div>';
+      '<div class="card-sub">' + subHtml + '</div></div>' +
+      '<div class="card-glare" aria-hidden="true"></div>';
     if (isGoal && !isVisited) {
       const tag = document.createElement('span');
       tag.className = 'card-goal-tag';
@@ -3195,8 +3294,10 @@ const game = window.game = {
       div.appendChild(tag);
     }
     if (!isVisited) {
+      attachCardTilt(div);
       div.onclick = () => {
         div.classList.add('tapping');
+        flyCardToCurrent(div);
         this.navigateTo({name:item.name, type:item.type, id:item.id, img:item.img, yearLabel:item.yearLabel, role:isDir?'director':null});
       };
     }
@@ -3215,6 +3316,7 @@ const game = window.game = {
     grid.innerHTML = '';
     grid.style.display = 'grid';
     filtered.forEach(item => { const c = this._makeCard(item); if (c) grid.appendChild(c); });
+    animateGridIn();
   },
 
   reverseGame() {
