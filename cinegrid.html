@@ -96,7 +96,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 <script>
 (function(){
   const IMG='https://image.tmdb.org/t/p/';
-  const CHECKS=4; // how many times you can press Check
+  const CHECKS=3; // how many times you can press Check (fewer = more deliberate, harder 9/9)
   // Generation pool: well-connected leads. Grids are built live from a 3×3 biclique
   // over their co-star graph (every row×col pair shares a film), so the daily isn't
   // limited to a fixed list of boards. NAMES doubles as the name lookup for any cell.
@@ -211,8 +211,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
       function sample(arr,n){ return arr.slice().sort(function(){return Math.random()-0.5;}).slice(0,n); }
       const opts=[];
       if(shared.length) opts.push(shared[Math.floor(Math.random()*Math.min(3,shared.length))]); // the one real answer
-      sample(onlyA,2).forEach(function(o){opts.push(o);});
-      sample(onlyB,2).forEach(function(o){opts.push(o);});
+      sample(onlyA,3).forEach(function(o){opts.push(o);}); // more decoys → less of a giveaway
+      sample(onlyB,3).forEach(function(o){opts.push(o);});
       const seen=new Set(); const final=opts.filter(function(o){ if(!o||seen.has(o.id))return false; seen.add(o.id); return true; }).sort(function(){return Math.random()-0.5;});
       mFeed.textContent='Only ONE of these has both actors — pick it.';
       mResults.innerHTML=rowItems(final); wireItems();

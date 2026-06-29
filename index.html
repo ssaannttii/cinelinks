@@ -84,7 +84,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 /* Meta bar: portfolio streak + one-tap "share my whole day" (the retention/virality layer). */
 .meta-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;background:linear-gradient(110deg,rgba(232,160,0,.12),rgba(255,255,255,.04));border:1px solid rgba(232,160,0,.28);border-radius:14px;padding:11px 14px;margin:0 0 14px;text-align:left}
 .meta-info{display:flex;align-items:center;gap:14px;min-width:0;flex-wrap:wrap}
-.meta-streak{font-size:.98rem;font-weight:800;color:var(--gold);white-space:nowrap}
+.meta-streak{font-size:.98rem;font-weight:800;color:var(--gold);white-space:nowrap;cursor:pointer;border-radius:8px;padding:2px 4px;margin:-2px -4px;transition:transform .12s,background .15s}
+.meta-streak:hover{transform:scale(1.04);background:rgba(232,160,0,.12)}
 .meta-streak span{color:var(--mut);font-weight:600;font-size:.8rem}
 .meta-prog{font-size:.8rem;color:var(--mut);font-weight:600;white-space:nowrap}
 .meta-prog b{color:var(--txt);font-weight:800}
@@ -94,6 +95,40 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .meta-share:hover{opacity:.9}
 .meta-share.copied{background:transparent;color:var(--gold)}
 @media (max-width:560px){.meta-bar{flex-direction:column;align-items:stretch}.meta-share{width:100%}}
+/* ── Streak: flame calendar modal + Duolingo-style streak-up celebration ── */
+.streak-modal{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.62);backdrop-filter:blur(4px)}
+.streak-modal.open{display:flex}
+.streak-card{background:linear-gradient(180deg,#1d1a15,#141414);border:1px solid rgba(232,160,0,.3);border-radius:18px;padding:22px 20px;max-width:360px;width:100%;box-shadow:0 30px 80px rgba(0,0,0,.6);animation:streakCardIn .3s cubic-bezier(.2,.9,.3,1.2) both}
+@keyframes streakCardIn{from{opacity:0;transform:translateY(12px) scale(.96)}to{opacity:1;transform:none}}
+.streak-hd{display:flex;align-items:center;gap:12px;margin-bottom:2px}
+.streak-flame{font-size:2.6rem;line-height:1;filter:drop-shadow(0 3px 10px rgba(232,140,0,.5))}
+.streak-num{font-size:2.5rem;font-weight:900;color:var(--gold);line-height:1}
+.streak-sub{color:var(--mut);font-size:.82rem;margin-bottom:16px}
+.streak-sub b{color:var(--txt)}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.cal-nav button{background:transparent;border:1px solid var(--bdr);color:var(--txt);border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:1.1rem;line-height:1}
+.cal-nav button:disabled{opacity:.3;cursor:default}
+.cal-month{font-weight:700;font-size:.9rem;text-transform:capitalize}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-dow{font-size:.56rem;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--mut);text-align:center;padding:2px 0}
+.cal-cell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:.74rem;color:var(--mut);border-radius:9px;position:relative}
+.cal-cell.blank{visibility:hidden}
+.cal-cell.lit::before{content:"🔥";position:absolute;font-size:1.3rem;z-index:0;filter:drop-shadow(0 1px 3px rgba(232,140,0,.55))}
+.cal-cell.lit span{position:relative;z-index:1;color:#2a1c05;font-weight:800;font-size:.6rem;text-shadow:0 1px 1px rgba(255,225,160,.8)}
+.cal-cell.today{outline:2px solid var(--gold);outline-offset:-2px}
+.cal-close{margin-top:16px;width:100%;padding:11px;border-radius:11px;border:1px solid var(--bdr);background:rgba(255,255,255,.04);color:var(--txt);font:inherit;font-weight:700;cursor:pointer}
+.cal-close:hover{border-color:rgba(232,160,0,.5);color:var(--gold)}
+.streak-cele{position:fixed;inset:0;z-index:210;display:none;align-items:center;justify-content:center;flex-direction:column;background:radial-gradient(circle at 50% 38%,rgba(232,140,0,.24),rgba(0,0,0,.84) 62%);backdrop-filter:blur(3px);cursor:pointer;overflow:hidden}
+.streak-cele.show{display:flex}
+.sc-flame{font-size:6rem;line-height:1;animation:scFlame 1.05s cubic-bezier(.2,.8,.3,1) both;filter:drop-shadow(0 6px 24px rgba(232,140,0,.7))}
+@keyframes scFlame{0%{transform:scale(0) rotate(-22deg);opacity:0}55%{transform:scale(1.25) rotate(7deg);opacity:1}75%{transform:scale(.92)}100%{transform:scale(1)}}
+.sc-num{font-size:4.6rem;font-weight:900;color:#ffb02e;text-shadow:0 3px 18px rgba(232,140,0,.6);line-height:1;margin-top:6px}
+.sc-label{font-size:1.05rem;font-weight:800;color:#fff;letter-spacing:.02em;margin-top:4px}
+.sc-sub{color:rgba(255,255,255,.72);font-size:.9rem;margin-top:12px;font-weight:600}
+.sc-tap{position:absolute;bottom:38px;color:rgba(255,255,255,.5);font-size:.78rem}
+.sc-ember{position:absolute;width:9px;height:9px;border-radius:50%;pointer-events:none;opacity:0;animation:scEmber linear forwards}
+@keyframes scEmber{0%{opacity:0;transform:translate(0,0) scale(1)}12%{opacity:1}100%{opacity:0;transform:translate(var(--dx),-240px) scale(.25)}}
+@media(prefers-reduced-motion:reduce){.sc-flame,.streak-card{animation:none}.sc-ember{display:none}}
 .game-card{background:linear-gradient(150deg,rgba(var(--accent,255,255,255),.10),rgba(255,255,255,.022));border:1px solid rgba(var(--accent,255,255,255),.20);border-radius:14px;padding:14px;text-align:left;display:flex;flex-direction:column;gap:12px;transition:border-color .15s,background .15s,transform .15s}
 .game-card:hover{border-color:rgba(var(--accent,232,160,0),.5);transform:translateY(-1px)}
 .game-card.done{border-color:rgba(91,189,122,.45);background:linear-gradient(180deg,rgba(91,189,122,.09),rgba(255,255,255,.04))}
@@ -586,6 +621,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     <div id="dailyDateLbl" class="start-kicker" style="margin:2px 0 14px;opacity:.7"></div>
 
     <div id="metaBar" class="meta-bar" style="display:none"></div>
+    <div class="streak-modal" id="streakModal" aria-hidden="true"><div class="streak-card" id="streakCard"></div></div>
+    <div class="streak-cele" id="streakCele" aria-hidden="true"></div>
 
     <div class="games-section" id="sectionDaily">Daily puzzles</div>
     <div class="games">
@@ -1711,6 +1748,86 @@ function metaStreakValue(doneToday) {
   while (d != null && set.has(d)) { n++; d--; }
   return n;
 }
+// ── Streak: Duolingo-style flame calendar + streak-up celebration ────────────
+// Reuses the existing portfolio-streak signal (metaDays: array of UTC-day numbers
+// the player completed ≥1 game). The chip in the meta bar opens a flame calendar;
+// extending the streak triggers a one-shot celebratory overlay on the home.
+function _udNow() { const n = new Date(); return Math.floor(Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate()) / 86400000); }
+function streakStats() {
+  let days = []; try { days = JSON.parse(localStorage.getItem('metaDays')) || []; } catch(_) {}
+  const set = new Set(days), ud = _udNow();
+  let d = set.has(ud) ? ud : (set.has(ud - 1) ? ud - 1 : null), cur = 0;
+  while (d != null && set.has(d)) { cur++; d--; }
+  const sorted = days.slice().sort((a, b) => a - b); let best = 0, run = 0, prev = null;
+  for (const x of sorted) { run = (prev != null && x === prev + 1) ? run + 1 : 1; if (run > best) best = run; prev = x; }
+  return { set: set, cur: cur, best: Math.max(best, cur) };
+}
+function _streakLang() { return (typeof _lang !== 'undefined' && _lang) ? _lang : undefined; }
+function renderStreakCalendar(off) {
+  const card = document.getElementById('streakCard'); if (!card) return;
+  off = off || 0;
+  const s = streakStats(), todayUd = _udNow();
+  const now = new Date(), base = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + off, 1));
+  const y = base.getUTCFullYear(), m = base.getUTCMonth();
+  const monthName = base.toLocaleDateString(_streakLang(), { month: 'long', year: 'numeric', timeZone: 'UTC' });
+  const firstDow = (new Date(Date.UTC(y, m, 1)).getUTCDay() + 6) % 7; // Monday-first
+  const dim = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+  let dowHtml = ''; for (let i = 0; i < 7; i++) { const dn = new Date(Date.UTC(2024, 0, 1 + i)).toLocaleDateString(_streakLang(), { weekday: 'short', timeZone: 'UTC' }); dowHtml += '<div class="cal-dow">' + dn + '</div>'; }
+  let cells = ''; for (let i = 0; i < firstDow; i++) cells += '<div class="cal-cell blank"></div>';
+  for (let dnum = 1; dnum <= dim; dnum++) {
+    const ud = Math.floor(Date.UTC(y, m, dnum) / 86400000), lit = s.set.has(ud), isT = ud === todayUd;
+    cells += '<div class="cal-cell' + (lit ? ' lit' : '') + (isT ? ' today' : '') + '">' + (lit ? '<span>' + dnum + '</span>' : dnum) + '</div>';
+  }
+  const nextDisabled = off >= 0;
+  card.dataset.off = off;
+  card.innerHTML =
+    '<div class="streak-hd"><span class="streak-flame">🔥</span><span class="streak-num">' + s.cur + '</span></div>' +
+    '<div class="streak-sub">' + t('streakDays') + ' · ' + t('streakBest') + ' <b>' + s.best + '</b></div>' +
+    '<div class="cal-nav"><button id="calPrev" aria-label="Previous month">‹</button><span class="cal-month">' + monthName + '</span><button id="calNext" aria-label="Next month"' + (nextDisabled ? ' disabled' : '') + '>›</button></div>' +
+    '<div class="cal-grid">' + dowHtml + cells + '</div>' +
+    '<button class="cal-close" id="calClose">' + t('streakClose') + '</button>';
+  document.getElementById('calPrev').onclick = function () { renderStreakCalendar((+card.dataset.off) - 1); };
+  const cn = document.getElementById('calNext'); if (cn && !nextDisabled) cn.onclick = function () { renderStreakCalendar((+card.dataset.off) + 1); };
+  document.getElementById('calClose').onclick = closeStreakModal;
+}
+function openStreakModal() { const mo = document.getElementById('streakModal'); if (!mo) return; renderStreakCalendar(0); mo.classList.add('open'); mo.setAttribute('aria-hidden', 'false'); }
+function closeStreakModal() { const mo = document.getElementById('streakModal'); if (mo) { mo.classList.remove('open'); mo.setAttribute('aria-hidden', 'true'); } }
+document.addEventListener('click', function (e) { const mo = document.getElementById('streakModal'); if (mo && mo.classList.contains('open') && e.target === mo) closeStreakModal(); });
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeStreakModal(); });
+function _emberBurst(host) {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const colors = ['#ffb02e', '#ff7a18', '#ffd36e', '#ff5722', '#ffffff'];
+  for (let i = 0; i < 28; i++) {
+    const p = document.createElement('span'); p.className = 'sc-ember';
+    const dur = 1.2 + Math.random() * 1.3;
+    p.style.left = (50 + (Math.random() * 44 - 22)) + '%'; p.style.bottom = '40%';
+    p.style.background = colors[i % colors.length];
+    p.style.setProperty('--dx', (Math.random() * 140 - 70) + 'px');
+    p.style.animationDuration = dur + 's'; p.style.animationDelay = (Math.random() * 0.5) + 's';
+    host.appendChild(p); setTimeout(function () { p.remove(); }, (dur + 0.6) * 1000);
+  }
+}
+function celebrateStreak() {
+  const ss = document.getElementById('startScreen'); if (!ss || !ss.classList.contains('active')) return false;
+  const ov = document.getElementById('streakCele'); if (!ov) return false;
+  const s = streakStats(), ud = _udNow();
+  if (!s.set.has(ud) || s.cur < 1) return false;            // nothing completed today → no streak event
+  let last = null; try { last = localStorage.getItem('streakCeleDay'); } catch(_) {}
+  if (last === String(ud)) return false;                    // already celebrated today
+  const firstEver = localStorage.getItem('streakCeleInit') == null;
+  try { localStorage.setItem('streakCeleDay', String(ud)); localStorage.setItem('streakCeleInit', '1'); } catch(_) {}
+  if (firstEver) return false;                              // don't fire on the very first load after this ships
+  const miles = { 3:1, 7:1, 14:1, 30:1, 50:1, 100:1, 150:1, 200:1, 365:1 };
+  const sub = miles[s.cur] ? ('🎉 ' + t('streakMile')) : '';
+  ov.innerHTML = '<div class="sc-flame">🔥</div><div class="sc-num" id="scNum">0</div><div class="sc-label">' + t('streakDays') + '</div>' + (sub ? '<div class="sc-sub">' + sub + '</div>' : '') + '<div class="sc-tap">' + t('streakTap') + '</div>';
+  ov.classList.add('show'); ov.setAttribute('aria-hidden', 'false');
+  const numEl = document.getElementById('scNum'); let v = 0; const step = Math.max(1, Math.round(s.cur / 16));
+  const iv = setInterval(function () { v = Math.min(s.cur, v + step); if (numEl) numEl.textContent = v; if (v >= s.cur) clearInterval(iv); }, 50);
+  _emberBurst(ov);
+  let closed = false; const close = function () { if (closed) return; closed = true; clearInterval(iv); ov.classList.remove('show'); ov.setAttribute('aria-hidden', 'true'); ov.onclick = null; };
+  ov.onclick = close; setTimeout(close, 3400);
+  return true;
+}
 function metaDateLabel() { try { return formatDailyDate(dateFromKey(dateKey()), { weekday: 'short', day: 'numeric', month: 'short' }); } catch(_) { return ''; } }
 function shareTodayText(items, done, total, streak) {
   const lines = ['🎬 CineLinks · ' + metaDateLabel() + ' · ' + done + '/' + total];
@@ -1733,10 +1850,12 @@ function renderMetaBar() {
   const streak = metaStreakValue(done > 0);
   bar.style.display = '';
   let nextIdx = -1; for (let i = 0; i < items.length; i++) { if (!items[i].done) { nextIdx = i; break; } }
+  // Flame chip is shown whenever a streak is alive (even before today's first game),
+  // and opens the streak calendar on tap.
+  const chip = streak > 0 ? '<span class="meta-streak" id="metaStreakChip">🔥 ' + streak + ' <span>' + t('metaStreakL') + '</span></span>' : '';
   let left;
-  if (done === 0) left = '<span class="meta-prog">' + t('metaStart') + '</span>';
-  else left = '<span class="meta-streak">🔥 ' + streak + ' <span>' + t('metaStreakL') + '</span></span>' +
-    '<span class="meta-prog"><b>' + done + '/' + total + '</b> ' + t('metaDoneL') + '</span>';
+  if (done === 0) left = chip + '<span class="meta-prog">' + t('metaStart') + '</span>';
+  else left = chip + '<span class="meta-prog"><b>' + done + '/' + total + '</b> ' + t('metaDoneL') + '</span>';
   let nudge = '';
   if (nextIdx >= 0) {
     const g = META_NAV[nextIdx];
@@ -1745,6 +1864,8 @@ function renderMetaBar() {
   }
   const right = done > 0 ? '<button class="meta-share" id="metaShareBtn">' + t('metaShareBtn') + '</button>' : '';
   bar.innerHTML = '<div class="meta-info">' + left + nudge + '</div>' + right;
+  const chipEl = document.getElementById('metaStreakChip');
+  if (chipEl) chipEl.onclick = openStreakModal;
   const nb = document.getElementById('metaNextBtn');
   if (nb && nextIdx === 0) { nb.style.cursor = 'pointer'; nb.onclick = () => { try { game.startDaily(); } catch(_) {} }; }
   const sb = document.getElementById('metaShareBtn');
@@ -1852,7 +1973,11 @@ function showOnly(id) {
     markDoneBadges();
     try { renderMetaBar(); } catch (_) {}
     if (window.renderDailyGallery) { try { window.renderDailyGallery(); } catch (_) {} }
-    try { celebrateNewlyDone(); } catch (_) {}
+    // Streak celebration takes the spotlight; per-card blooms follow once it clears.
+    try {
+      if (celebrateStreak()) { setTimeout(function () { try { celebrateNewlyDone(); } catch (_) {} }, 3600); }
+      else { celebrateNewlyDone(); }
+    } catch (_) { try { celebrateNewlyDone(); } catch (__) {} }
     _clearParticles();
   }
   if (id === 'loadingScreen') _spawnParticles();

@@ -130,20 +130,28 @@
     ];
   }
 
-  // CineCast: reveal the cast obscure → famous, ending on the leads + poster.
+  // CineCast: reveal the cast obscure → famous, ending on the leads. Difficulty:
+  // start deep in the billing (supporting players) with NAMES ONLY so a famous
+  // headshot can't give it away instantly; headshots arrive on the 3rd reveal as
+  // the puzzle eases, and the final poster stays heavily blurred (a hint, not a
+  // giveaway — the clear poster shows only on the result screen).
   function cluesCast(t) {
     const yr = Media.year(t.d, t.type);
     const genres = (t.d.genres || []).map(g => g.name).join(', ');
     const pUrl = poster(t.d.poster_path, 'w342');
-    const top = (t.cr.cast || []).filter(c => c.name).slice(0, 6); // billing order: 0 = lead
+    const top = (t.cr.cast || []).filter(c => c.name).slice(0, 8); // billing order: 0 = lead
     const seq = top.slice().reverse();                              // obscure → famous
     const out = [];
     seq.slice(0, 4).forEach((c, i) => {
-      out.push({ label: i === 0 ? 'A cast member' : 'Another cast member', html: castClueHtml(c) });
+      const withPhoto = i >= 2; // first two reveals are text-only
+      out.push({
+        label: i === 0 ? 'A supporting cast member' : 'Another cast member',
+        html: withPhoto ? castClueHtml(c) : ('<span class="clue-body">' + castChar(c) + '</span>')
+      });
     });
     out.push({ label: Media.mediumLabel(t.type) + ' · Genre · Year', html: clueBody([Media.mediumLabel(t.type), genres, yr].filter(Boolean).join('  ·  ')) });
-    out.push({ label: 'Top billing' + (pUrl ? ' · Poster' : ''), html: clueBody(top.slice(0, 3).map(c => c.name).join(', ')) + posterCanvas(pUrl, 6) });
-    return out.length ? out : [{ label: 'No cast on TMDB', html: posterCanvas(pUrl, 6) }];
+    out.push({ label: 'Top billing' + (pUrl ? ' · Poster (blurred)' : ''), html: clueBody(top.slice(0, 3).map(c => c.name).join(', ')) + posterCanvas(pUrl, 14) });
+    return out.length ? out : [{ label: 'No cast on TMDB', html: posterCanvas(pUrl, 12) }];
   }
 
   // CinePlot: reveal the synopsis (title masked) growing each clue, then cast & poster.
