@@ -50,5 +50,18 @@
     el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls);
     if (ms) setTimeout(function () { el.classList.remove(cls); }, ms);
   }
-  window.Fx = { confetti: confetti, burstFrom: burstFrom, play: play, reduced: reduced };
+  // Count a number up to `to` (eases out). opts: {ms, prefix, suffix}
+  function countUp(el, to, opts) {
+    if (!el) return;
+    to = +to || 0; opts = opts || {};
+    var ms = opts.ms || 700, prefix = opts.prefix || '', suffix = opts.suffix || '';
+    if (reduced() || to <= 0) { el.textContent = prefix + to + suffix; return; }
+    var t0 = performance.now();
+    (function step(t) {
+      var p = Math.min(1, (t - t0) / ms), eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = prefix + Math.round(to * eased) + suffix;
+      if (p < 1) requestAnimationFrame(step); else el.textContent = prefix + to + suffix;
+    })(performance.now());
+  }
+  window.Fx = { confetti: confetti, burstFrom: burstFrom, play: play, reduced: reduced, countUp: countUp };
 })();

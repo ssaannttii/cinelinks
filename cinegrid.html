@@ -82,7 +82,11 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   <div class="logo">Cine<b>Grid</b></div>
   <div class="tag">A film that pairs each actor</div>
   <div class="kicker" id="modeLbl">Daily</div>
-  <div id="stage"><div class="loading">Building today's grid…</div></div>
+  <div id="stage"><div class="loading" style="padding:4px 0" aria-label="Building grid">
+    <div class="grid" style="pointer-events:none">
+      <span class="fx-skel" style="height:64px"></span><span class="fx-skel" style="height:64px"></span><span class="fx-skel" style="height:64px"></span><span class="fx-skel" style="height:64px"></span><span class="fx-skel" style="height:64px"></span><span class="fx-skel" style="height:64px"></span><span class="fx-skel" style="height:64px"></span><span class="fx-skel" style="height:64px"></span><span class="fx-skel" style="height:64px"></span><span class="fx-skel" style="height:64px"></span><span class="fx-skel" style="height:64px"></span><span class="fx-skel" style="height:64px"></span><span class="fx-skel" style="height:64px"></span><span class="fx-skel" style="height:64px"></span><span class="fx-skel" style="height:64px"></span><span class="fx-skel" style="height:64px"></span>
+    </div>
+  </div></div>
   <div class="foot">Posters &amp; data from TMDB · part of <a href="/">CineLinks</a></div>
 </div>
 <div class="modal" id="modal"><div class="sheet">
@@ -251,8 +255,9 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     if(win && window.Fx) setTimeout(function(){ Fx.confetti({count:100}); }, 200);
     document.getElementById('result').innerHTML=
       '<h2 class="'+(win?'win':'')+'">'+(win?'Perfect grid! 🎯':filled+'/9')+'</h2>'+
-      '<div class="stats"><div class="stat"><b>'+filled+'/9</b>correct</div><div class="stat"><b>'+rar+'</b>rarity</div></div>'+
+      '<div class="stats"><div class="stat"><b id="rsFilled">0/9</b>correct</div><div class="stat"><b id="rsRar">0</b>rarity</div></div>'+
       '<div class="row-btns"><button class="btn" id="shareBtn">Share</button><button class="btn gold" id="again">'+(isDaily?'Practice':'New grid')+'</button></div>';
+    if(window.Fx&&Fx.countUp){ Fx.countUp(document.getElementById('rsFilled'),filled,{suffix:'/9',ms:650}); Fx.countUp(document.getElementById('rsRar'),rar,{ms:800}); }
     document.getElementById('again').onclick=function(){ location.href='/cinegrid.html'+(isDaily?'?practice=1':'?practice=1&r='+Date.now()); };
     document.getElementById('shareBtn').onclick=function(){ if(navigator.share){navigator.share({text:share}).catch(function(){});} else { try{navigator.clipboard.writeText(share);}catch(_){ } const b=document.getElementById('shareBtn'); b.textContent='Copied ✓'; } };
   }

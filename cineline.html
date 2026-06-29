@@ -123,7 +123,12 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     <div class="subtitle">Place each film on the timeline by its release year.</div>
   </div>
 
-  <div id="loading" class="loading">Dealing today's deck…</div>
+  <div id="loading" class="loading" style="padding:8px 0" aria-label="Dealing deck">
+    <div class="fx-skel-wrap" style="gap:14px;align-items:center">
+      <span class="fx-skel" style="width:120px;height:170px;border-radius:10px"></span>
+      <div class="fx-skel-row" style="justify-content:center;gap:8px;flex-wrap:wrap"><span class="fx-skel" style="width:64px;height:92px;border-radius:8px"></span><span class="fx-skel" style="width:64px;height:92px;border-radius:8px"></span><span class="fx-skel" style="width:64px;height:92px;border-radius:8px"></span><span class="fx-skel" style="width:64px;height:92px;border-radius:8px"></span></div>
+    </div>
+  </div>
   <div id="error" class="errbox" style="display:none">Couldn't load today's deck. Please try again later.</div>
 
   <div id="game" style="display:none">
@@ -206,10 +211,15 @@ async function loadDeck(){
 function sortedPlaced(){ return placed.slice().sort((a,b)=>a.year-b.year); }
 
 function renderProgress(){
-  const placedCount = Math.min(pendingIdx - 1, deck.length - 1);
-  document.getElementById('progress').innerHTML = finished
-    ? 'Final score <b>' + score + ' / ' + (deck.length - 1) + '</b>'
-    : 'Placed <b>' + placedCount + ' / ' + (deck.length - 1) + '</b>';
+  const total = deck.length - 1;
+  const placedCount = Math.min(pendingIdx - 1, total);
+  if(finished){
+    const already = renderProgress._c; renderProgress._c = true;       // count up once
+    document.getElementById('progress').innerHTML = 'Final score <b id="lineScore">' + (already ? score : 0) + ' / ' + total + '</b>';
+    if(!already && window.Fx && Fx.countUp) Fx.countUp(document.getElementById('lineScore'), score, { suffix: ' / ' + total, ms: 700 });
+  } else {
+    document.getElementById('progress').innerHTML = 'Placed <b>' + placedCount + ' / ' + total + '</b>';
+  }
 }
 
 function renderTimeline(){

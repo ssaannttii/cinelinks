@@ -18,7 +18,17 @@
 /* gentle press feedback for any tappable control opted in with .fx-tap */
 .fx-tap{transition:transform .09s ease}
 .fx-tap:active{transform:scale(.95)}
+/* Loading skeletons: shimmer placeholders shaped like the content that's coming.
+   Apply .fx-skel to any sized box; group several inside .fx-skel-wrap. */
+@keyframes fxShimmer{0%{background-position:-150% 0}100%{background-position:150% 0}}
+.fx-skel{background:linear-gradient(100deg,rgba(255,255,255,.05) 28%,rgba(255,255,255,.13) 50%,rgba(255,255,255,.05) 72%);background-size:200% 100%;animation:fxShimmer 1.3s ease-in-out infinite;border-radius:10px}
+.fx-skel-wrap{display:flex;flex-direction:column;gap:10px;width:100%}
+.fx-skel-row{display:flex;gap:10px;align-items:center}
+/* smooth crossfade for staged image reveals (poster/frame between stages) */
+.fx-xfade{transition:opacity .45s ease, filter .45s ease, transform .45s ease}
 @media(prefers-reduced-motion:reduce){
   .fx-in,.fx-pop,.fx-shake,.fx-win,.fx-poster,.fx-glow,.fx-bounce{animation:none!important}
   .fx-confetti{display:none!important}
+  .fx-skel{animation:none}
+  .fx-xfade{transition:none}
 }

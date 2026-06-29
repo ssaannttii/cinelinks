@@ -7,6 +7,7 @@
 <meta name="description" content="Group 16 movie titles into four hidden cinematic connections — a film twist on Connections. New puzzle every day.">
 <link rel="icon" href="/logo.png">
 <link rel="manifest" href="/manifest.webmanifest">
+<link rel="stylesheet" href="/fx.css">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
 :root{--bg:#0d0d0d;--s1:#181818;--s2:#222;--bdr:rgba(255,255,255,0.10);--txt:#f0f0f0;--mut:#8d8d8d;--gold:#e8a000;--golddim:rgba(232,160,0,0.15);
@@ -83,7 +84,11 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   <div class="logo">Cine<b>Group</b></div>
   <div class="tag">Find the four hidden connections.</div>
   <div class="kicker" id="modeLbl">Daily</div>
-  <div id="stage"><div class="loading">Building today's puzzle…</div></div>
+  <div id="stage"><div class="loading" style="padding:4px 0" aria-label="Building puzzle">
+    <div class="grid" style="pointer-events:none">
+      <span class="fx-skel" style="height:74px"></span><span class="fx-skel" style="height:74px"></span><span class="fx-skel" style="height:74px"></span><span class="fx-skel" style="height:74px"></span><span class="fx-skel" style="height:74px"></span><span class="fx-skel" style="height:74px"></span><span class="fx-skel" style="height:74px"></span><span class="fx-skel" style="height:74px"></span><span class="fx-skel" style="height:74px"></span><span class="fx-skel" style="height:74px"></span><span class="fx-skel" style="height:74px"></span><span class="fx-skel" style="height:74px"></span><span class="fx-skel" style="height:74px"></span><span class="fx-skel" style="height:74px"></span><span class="fx-skel" style="height:74px"></span><span class="fx-skel" style="height:74px"></span>
+    </div>
+  </div></div>
   <div class="foot">Data from TMDB · part of <a href="/">CineLinks</a></div>
 </div>
 <div class="toast" id="toast"></div>
@@ -418,11 +423,15 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     if(finished){ renderResult(); return; }
     const solvedKeys=new Set(solved.map(s=>s.key));
     let h='';
-    if(solved.length){ h+='<div class="legend">'+puzzle.groups.filter(g=>solvedKeys.has(g.key)).map(g=>'<span class="leg" style="--lc:'+g.color+'"><i></i>'+esc(g.label)+'</span>').join('')+'</div>'; }
+    // Solved groups collapse into colored bands (Connections-style); the newest
+    // one slides in via .new, and the grid below holds only the unsolved tiles.
+    if(solved.length){
+      h+='<div class="solved-area">'+solved.map(s=>solvedRow(s, s.key===lastSolvedKey?'new':'')).join('')+'</div>';
+    }
     h+='<div class="grid'+(selected.length?' focus':'')+'" id="grid">';
-    board.forEach((id,i)=>{ const t=tileMap[id]; if(!t) return; const dl='animation-delay:'+(i*0.022).toFixed(3)+'s';
-      if(solvedKeys.has(t.key)) h+='<div class="tile done" style="background:'+groupByKey(t.key).color+';'+dl+'">'+esc(t.title)+'</div>';
-      else h+='<div class="tile" data-id="'+id+'" style="'+dl+'">'+esc(t.title)+'</div>';
+    let gi=0;
+    board.forEach((id)=>{ const t=tileMap[id]; if(!t || solvedKeys.has(t.key)) return; const dl='animation-delay:'+((gi++)*0.022).toFixed(3)+'s';
+      h+='<div class="tile" data-id="'+id+'" style="'+dl+'">'+esc(t.title)+'</div>';
     });
     h+='</div>';
     h+='<div class="mistakes">Mistakes remaining <span class="dots" id="dots">'+dotsHtml()+'</span></div>';

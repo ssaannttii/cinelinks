@@ -100,7 +100,15 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     <div class="subtitle">Guess the film from the frame. It zooms out and sharpens with each guess.</div>
   </div>
 
-  <div id="loading" class="loading">Loading today's frame…</div>
+  <div id="loading" class="loading" style="padding:6px 0" aria-label="Loading">
+    <div class="fx-skel-wrap" style="gap:14px">
+      <div class="fx-skel-row" style="justify-content:center;gap:6px">
+        <span class="fx-skel" style="width:26px;height:8px"></span><span class="fx-skel" style="width:26px;height:8px"></span><span class="fx-skel" style="width:26px;height:8px"></span><span class="fx-skel" style="width:26px;height:8px"></span><span class="fx-skel" style="width:26px;height:8px"></span><span class="fx-skel" style="width:26px;height:8px"></span>
+      </div>
+      <div class="fx-skel" style="width:100%;aspect-ratio:16/9;border-radius:12px"></div>
+      <div class="fx-skel" style="width:100%;height:46px;border-radius:12px"></div>
+    </div>
+  </div>
   <div id="error" class="errbox" style="display:none">Couldn't load today's puzzle. Please try again later.</div>
 
   <div id="game" style="display:none">
@@ -244,43 +252,58 @@ function coverFit(iw, ih, w, h, over){
 }
 // zoom (>=1) crops into the centre of the frame; blur softens it. We fold both
 // into coverFit's overscan: a bigger draw size shows a smaller, centred region.
+const _imgCache = {};
+function _drawFrame(ctx, img, w, h, blurPx, z){
+  ctx.clearRect(0, 0, w, h);
+  if(blurPx > 0.3 && typeof ctx.filter !== 'undefined'){
+    ctx.filter = 'blur(' + blurPx + 'px)';
+    const f = coverFit(img.width, img.height, w, h, z + blurPx / 30);
+    ctx.drawImage(img, f.dx, f.dy, f.dw, f.dh);
+    ctx.filter = 'none';
+  } else if(blurPx > 0.3){
+    // Fallback for browsers without canvas filter (older Safari/iOS): downscale then upscale.
+    const scale = Math.max(0.015, 1 / (blurPx * 1.3));
+    const tw = Math.max(2, Math.round(w * scale)), th = Math.max(2, Math.round(h * scale));
+    const off = document.createElement('canvas'); off.width = tw; off.height = th;
+    const octx = off.getContext('2d');
+    const fo = coverFit(img.width, img.height, tw, th, z);
+    octx.drawImage(img, fo.dx, fo.dy, fo.dw, fo.dh);
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(off, 0, 0, tw, th, 0, 0, w, h);
+  } else {
+    const f = coverFit(img.width, img.height, w, h, z);
+    ctx.drawImage(img, f.dx, f.dy, f.dw, f.dh);
+  }
+}
+// Each new frame "racks into focus": starts a touch blurrier/zoomed and eases to
+// its target blur+zoom over ~480ms, so the progression is felt, not a jump-cut.
 function drawBlurred(canvas, url, blurPx, zoom){
   const ctx = canvas.getContext('2d');
   if(!ctx) return;
-  const z = zoom || 1;
-  const img = new Image();
-  img.onload = () => {
-    const w = canvas.width, h = canvas.height;
-    ctx.clearRect(0, 0, w, h);
-    if(blurPx > 0 && typeof ctx.filter !== 'undefined'){
-      ctx.filter = 'blur(' + blurPx + 'px)';
-      const f = coverFit(img.width, img.height, w, h, z + blurPx / 30);
-      ctx.drawImage(img, f.dx, f.dy, f.dw, f.dh);
-      ctx.filter = 'none';
-    } else if(blurPx > 0){
-      // Fallback for browsers without canvas filter (older Safari/iOS): downscale then upscale.
-      const scale = Math.max(0.015, 1 / (blurPx * 1.3));
-      const tw = Math.max(2, Math.round(w * scale)), th = Math.max(2, Math.round(h * scale));
-      const off = document.createElement('canvas'); off.width = tw; off.height = th;
-      const octx = off.getContext('2d');
-      const fo = coverFit(img.width, img.height, tw, th, z);
-      octx.drawImage(img, fo.dx, fo.dy, fo.dw, fo.dh);
-      ctx.imageSmoothingEnabled = true;
-      ctx.drawImage(off, 0, 0, tw, th, 0, 0, w, h);
-    } else {
-      const f = coverFit(img.width, img.height, w, h, z);
-      ctx.drawImage(img, f.dx, f.dy, f.dw, f.dh);
-    }
-  };
-  img.onerror = () => {};
-  img.src = url;
+  const z = zoom || 1, w = canvas.width, h = canvas.height;
+  const reduced = !!(window.Fx && Fx.reduced && Fx.reduced());
+  function go(img){
+    if(!img || !img.width) return;
+    if(reduced){ _drawFrame(ctx, img, w, h, blurPx, z); return; }
+    const dur = 480, b0 = blurPx * 1.55 + 3, z0 = z * 1.05, t0 = performance.now();
+    (function step(t){
+      const p = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+      _drawFrame(ctx, img, w, h, Math.max(0, b0 + (blurPx - b0) * e), z0 + (z - z0) * e);
+      if(p < 1) requestAnimationFrame(step);
+    })(performance.now());
+  }
+  let img = _imgCache[url];
+  if(img && img.complete && img.width){ go(img); return; }
+  if(!img){ img = new Image(); _imgCache[url] = img; img.src = url; }
+  img.onload = () => go(img); img.onerror = () => {};
 }
-function renderFrame(){
+function renderFrame(reveal){
   const f = frames[stage];
   document.getElementById('frame').innerHTML =
-    '<div class="frame-cap">Frame · ' + (stage + 1) + ' / ' + MAX_GUESSES + '</div>' +
+    '<div class="frame-cap">' + (reveal ? 'Answer' : ('Frame · ' + (stage + 1) + ' / ' + MAX_GUESSES)) + '</div>' +
     '<div class="frame-wrap"><canvas class="frame-img" id="frameCanvas" width="780" height="439"></canvas></div>';
-  drawBlurred(document.getElementById('frameCanvas'), f.url, f.blur, f.zoom);
+  // On reveal, rack all the way to a crisp, full-frame image as the payoff.
+  drawBlurred(document.getElementById('frameCanvas'), f.url, reveal ? 0 : f.blur, reveal ? 1 : f.zoom);
 }
 function renderGuesses(){
   document.getElementById('guesses').innerHTML = results.map(r =>
@@ -308,7 +331,7 @@ function skip(){ if(!finished) advance('skip'); }
 function finish(win){
   finished = true; solved = win;
   document.getElementById('play').style.display = 'none';
-  stage = frames.length - 1; renderFrame(); // reveal the clearest frame
+  stage = frames.length - 1; renderFrame(true); // rack to a crisp full-frame reveal
   if(win){ results = results.concat(['win']); }
   const streak = updateStreak(win);
   renderPips();
@@ -448,7 +471,7 @@ async function init(){
   document.getElementById('loading').style.display = 'none';
   document.getElementById('game').style.display = 'block';
   if(finished) stage = frames.length - 1;
-  renderPips(); renderFrame(); renderGuesses();
+  renderPips(); renderFrame(finished); renderGuesses();
 
   if(finished){ document.getElementById('play').style.display = 'none'; renderResult(loadStreak()); }
 

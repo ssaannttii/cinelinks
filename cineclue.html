@@ -105,7 +105,13 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     <div class="subtitle">Guess the film from its synopsis &amp; clues. Fewer guesses, better.</div>
   </div>
 
-  <div id="loading" class="loading">Loading today's film…</div>
+  <div id="loading" class="loading" style="padding:6px 0" aria-label="Loading">
+    <div class="fx-skel-wrap" style="gap:12px">
+      <div class="fx-skel-row" style="justify-content:center;gap:5px"><span class="fx-skel" style="width:24px;height:7px"></span><span class="fx-skel" style="width:24px;height:7px"></span><span class="fx-skel" style="width:24px;height:7px"></span><span class="fx-skel" style="width:24px;height:7px"></span><span class="fx-skel" style="width:24px;height:7px"></span><span class="fx-skel" style="width:24px;height:7px"></span></div>
+      <div class="fx-skel" style="width:100%;height:66px"></div>
+      <div class="fx-skel" style="width:100%;height:46px;border-radius:12px"></div>
+    </div>
+  </div>
   <div id="error" class="errbox" style="display:none">Couldn't load today's puzzle. Please try again later.</div>
 
   <div id="game" style="display:none">
