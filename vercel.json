@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/rating",
+      "destination": "https://cinerating.vercel.app/rating"
+    },
+    {
       "source": "/rating/:path*",
       "destination": "https://cinerating.vercel.app/rating/:path*"
     }
