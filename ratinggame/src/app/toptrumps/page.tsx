@@ -300,28 +300,28 @@ function FlipCard({ card, faceUp, chosen, reduced, owner }: { card?: Card; faceU
   if (!card) return null;
   const rar = RARITY[card.rarity];
   const sdef = chosen ? STATS.find((s) => s.key === chosen)! : null;
+  const hidden: React.CSSProperties = { backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" };
   return (
     <div style={{ perspective: 800, minHeight: 96 }}>
       <div style={{ position: "relative", transformStyle: "preserve-3d", transition: reduced ? "none" : "transform .5s cubic-bezier(.3,.9,.3,1)", transform: faceUp ? "rotateY(0)" : "rotateY(180deg)" }}>
-        {faceUp ? (
-          <div style={{ background: "var(--s1)", border: "2px solid " + rar.ring, borderRadius: 14, padding: 12, display: "flex", alignItems: "center", gap: 12, minHeight: 96 }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={card.poster} alt="" style={{ width: 54, height: 81, objectFit: "cover", borderRadius: 7, flexShrink: 0, background: "var(--s2)" }} />
-            <div className="min-w-0 flex-1">
-              <div style={{ fontWeight: 800, fontSize: ".92rem", lineHeight: 1.2 }}>{card.title}</div>
-              <div style={{ color: "var(--mut)", fontSize: ".74rem" }}>{card.year} · {owner}&apos;s card</div>
-              {sdef && <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontWeight: 800, color: "var(--gold)", fontSize: ".95rem" }}>{sdef.icon} {sdef.fmt(card)}</span>
-                <StatBar frac={sdef.bar(card)} color="var(--gold)" />
-              </div>}
-            </div>
+        {/* front face (revealed card) */}
+        <div style={{ ...hidden, background: "var(--s1)", border: "2px solid " + rar.ring, borderRadius: 14, padding: 12, display: "flex", alignItems: "center", gap: 12, minHeight: 96 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={card.poster} alt="" style={{ width: 54, height: 81, objectFit: "cover", borderRadius: 7, flexShrink: 0, background: "var(--s2)" }} />
+          <div className="min-w-0 flex-1">
+            <div style={{ fontWeight: 800, fontSize: ".92rem", lineHeight: 1.2 }}>{card.title}</div>
+            <div style={{ color: "var(--mut)", fontSize: ".74rem" }}>{card.year} · {owner}&apos;s card</div>
+            {sdef && <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontWeight: 800, color: "var(--gold)", fontSize: ".95rem" }}>{sdef.icon} {sdef.fmt(card)}</span>
+              <StatBar frac={sdef.bar(card)} color="var(--gold)" />
+            </div>}
           </div>
-        ) : (
-          <div style={{ background: "repeating-linear-gradient(45deg,#161616,#161616 10px,#1d1d1d 10px,#1d1d1d 20px)", border: "2px solid var(--bdr)", borderRadius: 14, padding: 12, display: "flex", alignItems: "center", gap: 12, minHeight: 96 }}>
-            <div style={{ width: 54, height: 81, borderRadius: 7, flexShrink: 0, background: "rgba(232,160,0,.1)", border: "1px solid rgba(232,160,0,.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem", color: "var(--gold)" }}>🃏</div>
-            <div><div style={{ fontWeight: 800, fontSize: ".86rem" }}>{owner}&apos;s card</div><div style={{ color: "var(--mut)", fontSize: ".74rem", marginTop: 2 }}>hidden until you pick a stat</div></div>
-          </div>
-        )}
+        </div>
+        {/* back face (pre-rotated so it reads correctly when the card is down) */}
+        <div style={{ ...hidden, position: "absolute", inset: 0, transform: "rotateY(180deg)", background: "repeating-linear-gradient(45deg,#161616,#161616 10px,#1d1d1d 10px,#1d1d1d 20px)", border: "2px solid var(--bdr)", borderRadius: 14, padding: 12, display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ width: 54, height: 81, borderRadius: 7, flexShrink: 0, background: "rgba(232,160,0,.1)", border: "1px solid rgba(232,160,0,.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem", color: "var(--gold)" }}>🃏</div>
+          <div><div style={{ fontWeight: 800, fontSize: ".86rem" }}>{owner}&apos;s card</div><div style={{ color: "var(--mut)", fontSize: ".74rem", marginTop: 2 }}>hidden until you pick a stat</div></div>
+        </div>
       </div>
     </div>
   );
