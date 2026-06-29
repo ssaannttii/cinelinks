@@ -97,7 +97,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   </div>
   <div class="head">
     <div class="title">Cine<span>Frame</span></div>
-    <div class="subtitle">Guess the film from the frame. It sharpens with each guess.</div>
+    <div class="subtitle">Guess the film from the frame. It zooms out and sharpens with each guess.</div>
   </div>
 
   <div id="loading" class="loading">Loading today's frame…</div>
@@ -136,7 +136,11 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 const IMGBASE = 'https://image.tmdb.org/t/p/';
 const EPOCH = Math.floor(Date.UTC(2026, 5, 23) / 86400000); // #1 = 2026-06-23
 const MAX_GUESSES = 6;
-const BLURS = [22, 15, 10, 6, 3, 0]; // blur px per stage (sharper each guess)
+// Difficulty curve: each guess zooms OUT and sharpens. Early stages are a tight,
+// heavily-blurred crop; the final stage is the full frame at a light blur (never
+// fully crystal-clear, so the last guess still takes some recognition).
+const BLURS = [18, 13, 9, 6, 3, 1]; // blur px per stage
+const ZOOMS = [2.2, 1.8, 1.45, 1.2, 1.05, 1.0]; // crop zoom per stage (1 = full frame)
 
 function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function api(path){ return fetch('/api/tmdb?path=' + path).then(r => r.json()); }
@@ -196,14 +200,24 @@ function pickBackdrops(img){
   // Prefer textless backdrops (no title overlay) for a fair guess.
   let backs = all.filter(b => b.iso_639_1 === null);
   if(backs.length < 2) backs = all.slice();
-  return backs.slice(0, MAX_GUESSES).map(b => b.file_path);
+  // Smarter pick: TMDB's community-voted backdrops are the iconic "money shots"
+  // (key art, hero moments). Sort obscure → iconic so early frames are genuinely
+  // hard and the recognizable ones are held back for the later, easier guesses.
+  backs.sort((a, b) => ((a.vote_average || 0) - (b.vote_average || 0)) || ((a.vote_count || 0) - (b.vote_count || 0)));
+  const n = backs.length;
+  if(n <= MAX_GUESSES) return backs.map(b => b.file_path);
+  // More frames than stages: sample evenly across the sorted range so we keep the
+  // full obscure→iconic spread instead of six near-identical obscure stills.
+  const out = [];
+  for(let i = 0; i < MAX_GUESSES; i++){ out.push(backs[Math.round(i * (n - 1) / (MAX_GUESSES - 1))].file_path); }
+  return out;
 }
 
 function buildFrames(t){
   const out = [];
   for(let i = 0; i < MAX_GUESSES; i++){
     const fp = t.backs[Math.min(i, t.backs.length - 1)];
-    out.push({ url: IMGBASE + 'w780' + fp, blur: BLURS[i] });
+    out.push({ url: IMGBASE + 'w780' + fp, blur: BLURS[i], zoom: ZOOMS[i] });
   }
   return out;
 }
@@ -228,16 +242,19 @@ function coverFit(iw, ih, w, h, over){
   if(ir > cr){ dh = h * over; dw = dh * ir; } else { dw = w * over; dh = dw / ir; }
   return { dw, dh, dx: (w - dw) / 2, dy: (h - dh) / 2 };
 }
-function drawBlurred(canvas, url, blurPx){
+// zoom (>=1) crops into the centre of the frame; blur softens it. We fold both
+// into coverFit's overscan: a bigger draw size shows a smaller, centred region.
+function drawBlurred(canvas, url, blurPx, zoom){
   const ctx = canvas.getContext('2d');
   if(!ctx) return;
+  const z = zoom || 1;
   const img = new Image();
   img.onload = () => {
     const w = canvas.width, h = canvas.height;
     ctx.clearRect(0, 0, w, h);
     if(blurPx > 0 && typeof ctx.filter !== 'undefined'){
       ctx.filter = 'blur(' + blurPx + 'px)';
-      const f = coverFit(img.width, img.height, w, h, 1 + blurPx / 22);
+      const f = coverFit(img.width, img.height, w, h, z + blurPx / 30);
       ctx.drawImage(img, f.dx, f.dy, f.dw, f.dh);
       ctx.filter = 'none';
     } else if(blurPx > 0){
@@ -246,12 +263,12 @@ function drawBlurred(canvas, url, blurPx){
       const tw = Math.max(2, Math.round(w * scale)), th = Math.max(2, Math.round(h * scale));
       const off = document.createElement('canvas'); off.width = tw; off.height = th;
       const octx = off.getContext('2d');
-      const fo = coverFit(img.width, img.height, tw, th, 1);
+      const fo = coverFit(img.width, img.height, tw, th, z);
       octx.drawImage(img, fo.dx, fo.dy, fo.dw, fo.dh);
       ctx.imageSmoothingEnabled = true;
       ctx.drawImage(off, 0, 0, tw, th, 0, 0, w, h);
     } else {
-      const f = coverFit(img.width, img.height, w, h, 1);
+      const f = coverFit(img.width, img.height, w, h, z);
       ctx.drawImage(img, f.dx, f.dy, f.dw, f.dh);
     }
   };
@@ -263,7 +280,7 @@ function renderFrame(){
   document.getElementById('frame').innerHTML =
     '<div class="frame-cap">Frame · ' + (stage + 1) + ' / ' + MAX_GUESSES + '</div>' +
     '<div class="frame-wrap"><canvas class="frame-img" id="frameCanvas" width="780" height="439"></canvas></div>';
-  drawBlurred(document.getElementById('frameCanvas'), f.url, f.blur);
+  drawBlurred(document.getElementById('frameCanvas'), f.url, f.blur, f.zoom);
 }
 function renderGuesses(){
   document.getElementById('guesses').innerHTML = results.map(r =>
@@ -455,9 +472,10 @@ init();
 window.HOWTO = {
   key: 'cineframe', title: 'How to play CineFrame', icon: '🎞️',
   steps: [
-    'Guess the day’s film from a single, heavily-blurred frame.',
+    'Guess the day’s film from a tight, heavily-blurred crop of one frame.',
     'Type to search and pick a title - you have <b>6 tries</b>.',
-    'Every wrong guess or skip sharpens the image a little more.',
+    'Every wrong guess or skip <b>zooms out and sharpens</b> the frame a little more.',
+    'Early frames are obscure on purpose; the recognizable shots come later.',
     'Fewer guesses = better. <b>Daily</b> keeps your streak; <b>Practice</b> is unlimited.'
   ],
   example: '<div class="ht-row" style="gap:8px">' +
