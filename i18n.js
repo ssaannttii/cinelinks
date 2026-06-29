@@ -18,7 +18,7 @@ const I18N = {
     descCl: 'Connect actors → movies → TV in the fewest clicks', descClue: 'Guess the film from synopsis & clues', descFrame: 'Guess the film from a frame', descCast: 'Guess the film from its cast', descPlot: 'Guess the film from its synopsis', descLine: 'Place films on a timeline', descReel: 'Guess the actor from their films', descGrid: 'Name a film pairing each actor', descChain: 'Build the longest film chain', descGroup: 'Group 16 titles into 4 connections',
     howWorksTitle: 'How it works', howWorks1: 'A fresh movie & TV puzzle every day', howWorks2: 'Daily is one shared puzzle — it keeps your streak', howWorks3: 'Practice is unlimited, any time',
     moreGames: '+ More games', fewerGames: '− Fewer games',
-    streakDays: 'day streak', streakClose: 'Close', streakMile: 'New milestone!', streakTap: 'tap to continue', streakModeAny: 'Any game', streakModeCl: 'CineLinks daily',
+    streakDays: 'day streak', streakClose: 'Close', streakMile: 'New milestone!', streakTap: 'tap to continue', streakModeAny: 'Any game', streakModeCl: 'CineLinks daily', metaAllDone: 'Day complete!',
     // click singular + goal tag
     clickSingular: 'click', goalTag: 'GOAL',
     // difficulty labels (from par)
@@ -71,7 +71,7 @@ const I18N = {
     descCl: 'Conecta actores → pelis → series en los menos clics', descClue: 'Adivina la peli por sinopsis y pistas', descFrame: 'Adivina la peli por un fotograma', descCast: 'Adivina la peli por su reparto', descPlot: 'Adivina la peli por su sinopsis', descLine: 'Ordena pelis en una línea temporal', descReel: 'Adivina al actor por sus pelis', descGrid: 'Una peli que une a cada par', descChain: 'Encadena pelis lo más largo posible', descGroup: 'Agrupa 16 títulos en 4 conexiones',
     howWorksTitle: 'Cómo funciona', howWorks1: 'Un puzzle nuevo de cine y TV cada día', howWorks2: 'El Diario es un puzzle compartido — mantiene tu racha', howWorks3: 'La Práctica es ilimitada, cuando quieras',
     moreGames: '+ Más juegos', fewerGames: '− Menos juegos',
-    streakDays: 'días de racha', streakClose: 'Cerrar', streakMile: '¡Nuevo hito!', streakTap: 'toca para continuar', streakModeAny: 'Cualquier juego', streakModeCl: 'Diario CineLinks',
+    streakDays: 'días de racha', streakClose: 'Cerrar', streakMile: '¡Nuevo hito!', streakTap: 'toca para continuar', streakModeAny: 'Cualquier juego', streakModeCl: 'Diario CineLinks', metaAllDone: '¡Día completo!',
     // click singular + goal tag
     clickSingular: 'clic', goalTag: 'OBJETIVO',
     // difficulty labels (from par)
@@ -124,7 +124,7 @@ const I18N = {
     descCl: 'Conecta actores → pelis → series en los menos clics', descClue: 'Adivina la peli por sinopsis y pistas', descFrame: 'Adivina la peli por un fotograma', descCast: 'Adivina la peli por su reparto', descPlot: 'Adivina la peli por su sinopsis', descLine: 'Ordena pelis en una línea temporal', descReel: 'Adivina al actor por sus pelis', descGrid: 'Una peli que une a cada par', descChain: 'Encadena pelis lo más largo posible', descGroup: 'Agrupa 16 títulos en 4 conexiones',
     howWorksTitle: 'Cómo funciona', howWorks1: 'Un puzzle nuevo de cine y TV cada día', howWorks2: 'El Diario es un puzzle compartido — mantiene tu racha', howWorks3: 'La Práctica es ilimitada, cuando quieras',
     moreGames: '+ Más juegos', fewerGames: '− Menos juegos',
-    streakDays: 'días de racha', streakClose: 'Cerrar', streakMile: '¡Nuevo hito!', streakTap: 'toca para continuar', streakModeAny: 'Cualquier juego', streakModeCl: 'Diario CineLinks',
+    streakDays: 'días de racha', streakClose: 'Cerrar', streakMile: '¡Nuevo hito!', streakTap: 'toca para continuar', streakModeAny: 'Cualquier juego', streakModeCl: 'Diario CineLinks', metaAllDone: '¡Día completo!',
     // click singular + goal tag
     clickSingular: 'clic', goalTag: 'OBJETIVO',
     // difficulty labels (from par)
