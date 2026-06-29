@@ -621,8 +621,6 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     <div id="dailyDateLbl" class="start-kicker" style="margin:2px 0 14px;opacity:.7"></div>
 
     <div id="metaBar" class="meta-bar" style="display:none"></div>
-    <div class="streak-modal" id="streakModal" aria-hidden="true"><div class="streak-card" id="streakCard"></div></div>
-    <div class="streak-cele" id="streakCele" aria-hidden="true"></div>
 
     <div class="games-section" id="sectionDaily">Daily puzzles</div>
     <div class="games">
@@ -3548,6 +3546,10 @@ window.addEventListener('storage', function (e) {
   }
 });
 </script>
+<!-- Streak overlays live at body level so position:fixed is viewport-relative
+     (not trapped by the home's transformed .start-inner containing block). -->
+<div class="streak-modal" id="streakModal" aria-hidden="true"><div class="streak-card" id="streakCard"></div></div>
+<div class="streak-cele" id="streakCele" aria-hidden="true"></div>
 <script defer src="/ads.js"></script>
 <script defer src="/support.js"></script>
 <script defer src="/howto.js"></script>
