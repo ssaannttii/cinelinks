@@ -616,6 +616,17 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 @keyframes fadeInGrid{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 .g-body.nav-in #grid{animation:fadeInGrid .22s ease .05s both}
 
+/* Goal-reached: a single gold flash sweeps the screen the instant you land on the
+   target, right before the win screen — the peak "you did it" beat. */
+#goalFlash{position:fixed;inset:0;z-index:400;pointer-events:none;opacity:0;
+  background:radial-gradient(circle at 50% 46%,rgba(232,160,0,.42),rgba(232,160,0,.12) 38%,transparent 66%)}
+#goalFlash.show{animation:goalFlash .62s cubic-bezier(.22,1,.36,1) both}
+@keyframes goalFlash{0%{opacity:0;transform:scale(.7)}22%{opacity:1}100%{opacity:0;transform:scale(1.25)}}
+/* Sound toggle in the game header. */
+#soundToggle{font-size:.95rem;line-height:1;padding:5px 9px}
+#soundToggle.muted{opacity:.55}
+@media(prefers-reduced-motion:reduce){#goalFlash.show{animation:none}}
+
 /* Win screen: staggered path items */
 @keyframes wpEntry{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 @keyframes wpArrowEntry{from{opacity:0;transform:scaleY(0)}to{opacity:1;transform:scaleY(1)}}
@@ -795,6 +806,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     <div style="display:flex;gap:10px;align-items:center;flex-shrink:0">
       <button class="hdr-back hdr-home" onclick="game.reset()">&#8592; CineLinks</button>
       <button class="hdr-back" onclick="game.startRandom()" style="color:var(--gold)">&#8635; New</button>
+      <button class="hdr-back" id="soundToggle" type="button" aria-label="Toggle sound" title="Sound" onclick="clToggleSound()">&#128266;</button>
       <span id="hdrDateBadge" style="display:none;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);border:1px solid var(--bdr);border-radius:6px;padding:3px 7px;white-space:nowrap"></span>
     </div>
     <div class="hdr-mid">
@@ -907,6 +919,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 </div>
 
 <div id="deadEndToast"></div>
+<div id="goalFlash" aria-hidden="true"></div>
 
 <div class="creator-modal" id="creatorModal">
   <div class="creator-box">
@@ -1845,6 +1858,27 @@ function _emberBurst(host) {
     host.appendChild(p); setTimeout(function () { p.remove(); }, (dur + 0.6) * 1000);
   }
 }
+// ── Sound toggle (game header) ──
+function clToggleSound() {
+  var on = window.Sfx ? Sfx.toggle() : false;
+  var b = document.getElementById('soundToggle');
+  if (b) { b.innerHTML = on ? '🔊' : '🔇'; b.classList.toggle('muted', !on); }
+}
+function _clSyncSoundBtn() {
+  var b = document.getElementById('soundToggle'); if (!b || !window.Sfx) return;
+  var on = Sfx.enabled; b.innerHTML = on ? '🔊' : '🔇'; b.classList.toggle('muted', !on);
+}
+window.addEventListener('load', _clSyncSoundBtn);
+// Light tactile click on any button / mode control (grid cards are excluded — they
+// play the richer `select` cue via navigateTo). Capture-phase so it precedes the
+// element's own handler, and so the first tap also unlocks the AudioContext.
+document.addEventListener('click', function (e) {
+  if (!window.Sfx) return;
+  var el = e.target.closest && e.target.closest('button, a.mode, .btn, .mode, .share-opt, .lang-btn');
+  if (!el || el.id === 'soundToggle') return;
+  try { Sfx.tap(); } catch (_) {}
+}, true);
+
 function celebrateStreak() {
   const ss = document.getElementById('startScreen'); if (!ss || !ss.classList.contains('active')) return false;
   const ov = document.getElementById('streakCele'); if (!ov) return false;
@@ -1859,6 +1893,7 @@ function celebrateStreak() {
   const sub = miles[s.cur] ? ('🎉 ' + t('streakMile')) : '';
   ov.innerHTML = '<div class="sc-flame">🔥</div><div class="sc-num" id="scNum">0</div><div class="sc-label">' + t('streakDays') + '</div>' + (sub ? '<div class="sc-sub">' + sub + '</div>' : '') + '<div class="sc-tap">' + t('streakTap') + '</div>';
   ov.classList.add('show'); ov.setAttribute('aria-hidden', 'false');
+  try { if (window.Sfx) { Sfx.streak(s.cur); Sfx.haptic([12, 28, 12]); } } catch (_) {}
   const numEl = document.getElementById('scNum'); let v = 0; const step = Math.max(1, Math.round(s.cur / 16));
   const iv = setInterval(function () { v = Math.min(s.cur, v + step); if (numEl) numEl.textContent = v; if (v >= s.cur) clearInterval(iv); }, 50);
   _emberBurst(ov);
@@ -1879,6 +1914,7 @@ function celebrateAllDone() {
   if (firstEver) return false;                                     // don't fire on the first load after this ships
   try { renderMetaBar(); } catch(_) {}                             // ensure the all-done state is rendered
   bar.classList.remove('alldone-pop'); void bar.offsetWidth; bar.classList.add('alldone-pop');
+  try { if (window.Sfx) { Sfx.allDone(); Sfx.haptic([20, 40, 20, 40, 20, 60]); } } catch (_) {}
   if (window.Fx && Fx.confetti) { Fx.burstFrom ? Fx.burstFrom(bar, { count: 120, power: 1.2 }) : Fx.confetti({ count: 120 }); setTimeout(function () { Fx.confetti({ count: 70 }); }, 450); }
   return true;
 }
@@ -2811,6 +2847,7 @@ const game = window.game = {
           const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
           setTimeout(() => {
             try { goalCard.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' }); } catch(_) {}
+            try { if (window.Sfx) Sfx.goalSight(); } catch(_) {}
           }, 440);
         }
       }
@@ -2820,6 +2857,7 @@ const game = window.game = {
       if (allVisited && this.path.length > 1) {
         const nodeName = node.name;
         await new Promise(r => setTimeout(r, 320));
+        try { if (window.Sfx) { Sfx.deadEnd(); Sfx.haptic([15, 30]); } } catch (_) {}
         this._showToast(`Dead end - all connections from <strong>${nodeName}</strong> already visited. Going back…`);
         await new Promise(r => setTimeout(r, 1800));
         this._goBack();
@@ -2884,6 +2922,10 @@ const game = window.game = {
     const rb = document.getElementById('reverseBtn');
     if (rb) rb.style.display = 'none';
 
+    // Game-feel: commit sound + haptic. A move onto the goal gets the triumphant cue.
+    const _isGoalMove = node.id === this.end.id && node.type === this.end.type;
+    try { if (window.Sfx) { _isGoalMove ? Sfx.goalReach() : Sfx.select(); Sfx.haptic(_isGoalMove ? [18, 40, 24] : 12); } } catch (_) {}
+
     // Tap flash (card already has .tapping), then transition out
     await new Promise(r => setTimeout(r, 100));
     const body = document.querySelector('.g-body');
@@ -2915,6 +2957,7 @@ const game = window.game = {
     });
 
     if (node.id === this.end.id && node.type === this.end.type) {
+      try { const gf = document.getElementById('goalFlash'); if (gf) { gf.classList.remove('show'); void gf.offsetWidth; gf.classList.add('show'); } } catch (_) {}
       await new Promise(r => setTimeout(r, 300));
       await this.showWin();
       return;
@@ -3100,6 +3143,7 @@ const game = window.game = {
       wp.appendChild(d);
     });
 
+    if (!replay) { try { if (window.Sfx) { Sfx.win(); Sfx.haptic([20, 40, 20, 40, 70]); } } catch (_) {} }
     const colors = ['#e8a000','#f0f0f0','#c0392b','#27ae60','#3498db'];
     for (let i = 0; i < 50; i++) {
       const c = document.createElement('div');
@@ -3612,6 +3656,7 @@ window.addEventListener('storage', function (e) {
 <div class="streak-modal" id="streakModal" aria-hidden="true"><div class="streak-card" id="streakCard"></div></div>
 <div class="streak-cele" id="streakCele" aria-hidden="true"></div>
 <script defer src="/fx.js"></script>
+<script defer src="/sfx.js"></script>
 <script defer src="/ads.js"></script>
 <script defer src="/support.js"></script>
 <script defer src="/howto.js"></script>
