@@ -1920,7 +1920,7 @@ function renderMetaBar() {
   const chip = streak > 0 ? '<span class="meta-streak" id="metaStreakChip">🔥 ' + streak + ' <span>' + t('metaStreakL') + '</span></span>' : '';
   let left;
   if (done === 0) left = chip + '<span class="meta-prog">' + t('metaStart') + '</span>';
-  else if (allDone) left = chip + '<span class="meta-prog meta-alldone">🎉 ' + t('metaAllDone') + '</span>';
+  else if (allDone) { const adl = t('metaAllDone'); left = chip + '<span class="meta-prog meta-alldone">🎉 ' + (adl === 'metaAllDone' ? 'Day complete!' : adl) + '</span>'; }
   else left = chip + '<span class="meta-prog"><b>' + done + '/' + total + '</b> ' + t('metaDoneL') + '</span>';
   let nudge = '';
   if (nextIdx >= 0) {
