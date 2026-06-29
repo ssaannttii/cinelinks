@@ -147,8 +147,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
    {n:"Survival in the wild", f:[[281957,"The Revenant"],[8358,"Cast Away"],[44115,"127 Hours"],[5915,"Into the Wild"],[87827,"Life of Pi"]]},
    {n:"Serial killers", f:[[807,"Se7en"],[274,"The Silence of the Lambs"],[1949,"Zodiac"],[1359,"American Psycho"],[6977,"No Country for Old Men"]]}
   ];
-  const ACTORS=[[31,"Tom Hanks"],[500,"Tom Cruise"],[6193,"Leonardo DiCaprio"],[287,"Brad Pitt"],[5292,"Denzel Washington"],[1245,"Scarlett Johansson"],[234352,"Margot Robbie"],[1813,"Anne Hathaway"],[1892,"Matt Damon"],[6384,"Keanu Reeves"],[3223,"Robert Downey Jr."],[54693,"Emma Stone"],[30614,"Ryan Gosling"],[2037,"Cillian Murphy"],[6885,"Charlize Theron"],[524,"Natalie Portman"],[2231,"Samuel L. Jackson"],[505710,"Zendaya"],[18897,"Jackie Chan"],[5081,"Emily Blunt"],[1136406,"Tom Holland"],[71580,"Benedict Cumberbatch"],[10882,"Rosamund Pike"],[224513,"Ana de Armas"]];
-  const DIRECTORS=[[525,"Christopher Nolan"],[138,"Quentin Tarantino"],[488,"Steven Spielberg"],[1032,"Martin Scorsese"],[5655,"Wes Anderson"],[45400,"Greta Gerwig"],[137427,"Denis Villeneuve"],[2710,"James Cameron"],[510,"Tim Burton"],[240,"Stanley Kubrick"],[578,"Ridley Scott"],[7467,"David Fincher"],[10828,"Guillermo del Toro"],[291263,"Jordan Peele"],[21684,"Bong Joon-ho"],[1769,"Sofia Coppola"],[55934,"Taika Waititi"],[11218,"Alfonso Cuarón"]];
+  const ACTORS=[[31,"Tom Hanks"],[500,"Tom Cruise"],[6193,"Leonardo DiCaprio"],[287,"Brad Pitt"],[5292,"Denzel Washington"],[1245,"Scarlett Johansson"],[234352,"Margot Robbie"],[1813,"Anne Hathaway"],[1892,"Matt Damon"],[6384,"Keanu Reeves"],[3223,"Robert Downey Jr."],[54693,"Emma Stone"],[30614,"Ryan Gosling"],[2037,"Cillian Murphy"],[6885,"Charlize Theron"],[524,"Natalie Portman"],[2231,"Samuel L. Jackson"],[505710,"Zendaya"],[18897,"Jackie Chan"],[5081,"Emily Blunt"],[1136406,"Tom Holland"],[71580,"Benedict Cumberbatch"],[10882,"Rosamund Pike"],[224513,"Ana de Armas"],[2524,"Tom Hardy"],[73421,"Joaquin Phoenix"],[6968,"Hugh Jackman"],[2888,"Will Smith"],[10859,"Ryan Reynolds"],[16828,"Chris Evans"],[74568,"Chris Hemsworth"],[90633,"Gal Gadot"],[72129,"Jennifer Lawrence"],[1373737,"Florence Pugh"],[36592,"Saoirse Ronan"],[1190668,"Timothée Chalamet"],[1023139,"Adam Driver"],[135651,"Michael B. Jordan"],[60073,"Brie Larson"],[17605,"Idris Elba"],[8784,"Daniel Craig"],[934,"Russell Crowe"],[72466,"Colin Farrell"],[13240,"Mark Wahlberg"],[206,"Jim Carrey"],[2963,"Nicolas Cage"],[3,"Harrison Ford"],[1158,"Al Pacino"],[204,"Kate Winslet"],[1204,"Julia Roberts"],[112,"Cate Blanchett"],[19492,"Viola Davis"],[134,"Jamie Foxx"],[3291,"Hugh Grant"]];
+  const DIRECTORS=[[525,"Christopher Nolan"],[138,"Quentin Tarantino"],[488,"Steven Spielberg"],[1032,"Martin Scorsese"],[5655,"Wes Anderson"],[45400,"Greta Gerwig"],[137427,"Denis Villeneuve"],[2710,"James Cameron"],[510,"Tim Burton"],[240,"Stanley Kubrick"],[578,"Ridley Scott"],[7467,"David Fincher"],[10828,"Guillermo del Toro"],[291263,"Jordan Peele"],[21684,"Bong Joon-ho"],[1769,"Sofia Coppola"],[55934,"Taika Waititi"],[11218,"Alfonso Cuarón"],[136495,"Damien Chazelle"],[11090,"Edgar Wright"],[67367,"Rian Johnson"],[1056121,"Ryan Coogler"],[4762,"Paul Thomas Anderson"],[5281,"Spike Lee"],[190,"Clint Eastwood"],[24,"Robert Zemeckis"],[108,"Peter Jackson"],[11614,"M. Night Shyamalan"],[6431,"Darren Aronofsky"],[956,"Guy Ritchie"],[957,"Matthew Vaughn"],[6201,"Baz Luhrmann"],[122423,"Yorgos Lanthimos"],[1145520,"Ari Aster"],[2127,"James Wan"],[7623,"Sam Raimi"],[20629,"George Miller"],[6159,"Ron Howard"],[564,"Richard Linklater"],[223,"Alejandro G. Iñárritu"],[17883,"David O. Russell"],[11694,"Doug Liman"],[1704,"Gore Verbinski"]];
 
   const TYPE={ saga:{color:'var(--c-saga)',sq:'🟨'}, theme:{color:'var(--c-theme)',sq:'🟦'}, actor:{color:'var(--c-actor)',sq:'🟩'}, director:{color:'var(--c-director)',sq:'🟪'} };
   const ORDER=['saga','theme','actor','director'];
@@ -184,7 +184,22 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
    [2231,138,"Samuel L. Jackson","Quentin Tarantino"],
    [131,137427,"Jake Gyllenhaal","Denis Villeneuve"],
    [1532,5655,"Bill Murray","Wes Anderson"],
-   [1892,578,"Matt Damon","Ridley Scott"]
+   [1892,578,"Matt Damon","Ridley Scott"],
+   [6193,138,"Leonardo DiCaprio","Quentin Tarantino"],
+   [287,138,"Brad Pitt","Quentin Tarantino"],
+   [134,138,"Jamie Foxx","Quentin Tarantino"],
+   [6193,488,"Leonardo DiCaprio","Steven Spielberg"],
+   [500,488,"Tom Cruise","Steven Spielberg"],
+   [1892,1032,"Matt Damon","Martin Scorsese"],
+   [1813,525,"Anne Hathaway","Christopher Nolan"],
+   [2524,525,"Tom Hardy","Christopher Nolan"],
+   [234352,45400,"Margot Robbie","Greta Gerwig"],
+   [505710,137427,"Zendaya","Denis Villeneuve"],
+   [1190668,137427,"Timothée Chalamet","Denis Villeneuve"],
+   [1245,55934,"Scarlett Johansson","Taika Waititi"],
+   [1245,1769,"Scarlett Johansson","Sofia Coppola"],
+   [934,578,"Russell Crowe","Ridley Scott"],
+   [73421,578,"Joaquin Phoenix","Ridley Scott"]
   ];
   // Famous actors the solver is allowed to treat as a nameable category (avoids
   // flagging character actors who happen to appear in 4 tiles).
@@ -449,6 +464,29 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   }
   function dotsHtml(){ let h=''; for(let i=0;i<MAX_MIST;i++) h+='<span class="dot'+(i<mistakes?' gone':'')+'"></span>'; return h; }
   function solvedRow(g,cls){ return '<div class="solved'+(cls?' '+cls:'')+'" style="background:'+g.color+'"><div class="s-label">'+esc(g.label)+'</div><div class="s-titles">'+g.tiles.map(t=>esc(t.title)).join(' · ')+'</div></div>'; }
+  // FLIP-style payoff: the four solved tiles physically converge into the freshly
+  // formed category band at the top, which then pops in.
+  function flyTiles(rects, g){
+    if(!rects.length) return;
+    if(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const area=document.querySelector('.solved-area'); if(!area) return;
+    const band=area.lastElementChild; if(!band) return;
+    const br=band.getBoundingClientRect();
+    band.style.visibility='hidden';                       // band appears once the tiles land
+    const clones=rects.map(r=>{
+      const c=document.createElement('div');
+      c.style.cssText='position:fixed;left:'+r.left+'px;top:'+r.top+'px;width:'+r.width+'px;height:'+r.height+'px;background:'+g.color+';border-radius:10px;z-index:60;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.4);transition:transform .5s cubic-bezier(.4,.7,.3,1),opacity .5s ease';
+      document.body.appendChild(c); return {el:c,r};
+    });
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      clones.forEach(({el,r})=>{
+        const dx=(br.left+br.width/2)-(r.left+r.width/2), dy=(br.top+br.height/2)-(r.top+r.height/2);
+        el.style.transform='translate('+dx.toFixed(1)+'px,'+dy.toFixed(1)+'px) scale(.18)';
+        el.style.opacity='.12';
+      });
+    }));
+    setTimeout(()=>{ band.style.visibility=''; band.classList.remove('new'); void band.offsetWidth; band.classList.add('new'); clones.forEach(c=>c.el.remove()); }, 520);
+  }
   function syncSel(){
     document.querySelectorAll('.tile[data-id]').forEach(el=>el.classList.toggle('sel',selected.includes(el.dataset.id)));
     const grid=document.getElementById('grid'); if(grid) grid.classList.toggle('focus', selected.length>0);
@@ -490,11 +528,13 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
       lastSolvedKey=g.key;
       toast('✓ '+g.label);              // reveal the category
       setTimeout(()=>{
-        pushSolved(g);                  // tiles stay in place, become locked + dimmed via render()
+        const flyRects=selected.map(id=>{ const el=document.querySelector('.tile[data-id="'+id+'"]'); return el?el.getBoundingClientRect():null; }).filter(Boolean);
+        pushSolved(g);                  // group collapses into a colored band via render()
         selected=[]; locked=false;
         if(solved.length===4){ finished=true; won=true; statsBump(true); }
         saveDaily();                    // save AFTER finished is set, or a reload sticks on "4 solved, not finished"
         render();
+        if(!finished){ try{ flyTiles(flyRects, g); }catch(_){} }   // tiles fly into the new band
       },720);
     } else {
       const counts={}; keys.forEach(k=>counts[k]=(counts[k]||0)+1);
