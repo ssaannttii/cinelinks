@@ -116,6 +116,15 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .cal-cell.lit::before{content:"🔥";position:absolute;font-size:1.3rem;z-index:0;filter:drop-shadow(0 1px 3px rgba(232,140,0,.55))}
 .cal-cell.lit span{position:relative;z-index:1;color:#2a1c05;font-weight:800;font-size:.6rem;text-shadow:0 1px 1px rgba(255,225,160,.8)}
 .cal-cell.today{outline:2px solid var(--gold);outline-offset:-2px}
+.cal-cell.frozen::before{content:"🛡️";position:absolute;font-size:1rem;z-index:0;opacity:.85}
+.cal-cell.frozen span{position:relative;z-index:1;color:#cfe6ff;font-weight:700;font-size:.58rem}
+.streak-miles{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:14px 0 4px}
+.streak-mile{display:inline-flex;align-items:center;gap:3px;font-size:.62rem;font-weight:700;color:var(--mut);background:rgba(255,255,255,.04);border:1px solid var(--bdr);border-radius:999px;padding:3px 8px;opacity:.55}
+.streak-mile.on{opacity:1;color:var(--gold);border-color:rgba(232,160,0,.45);background:rgba(232,160,0,.1)}
+.streak-mile b{font-weight:800}
+.streak-modetog{display:flex;gap:6px;margin:14px 0 2px;background:rgba(255,255,255,.04);border:1px solid var(--bdr);border-radius:10px;padding:3px}
+.streak-modetog button{flex:1;padding:7px;border:none;border-radius:7px;background:transparent;color:var(--mut);font:inherit;font-weight:700;font-size:.74rem;cursor:pointer;transition:background .15s,color .15s}
+.streak-modetog button.on{background:rgba(232,160,0,.16);color:var(--gold)}
 .cal-close{margin-top:16px;width:100%;padding:11px;border-radius:11px;border:1px solid var(--bdr);background:rgba(255,255,255,.04);color:var(--txt);font:inherit;font-weight:700;cursor:pointer}
 .cal-close:hover{border-color:rgba(232,160,0,.5);color:var(--gold)}
 .streak-cele{position:fixed;inset:0;z-index:210;display:none;align-items:center;justify-content:center;flex-direction:column;background:radial-gradient(circle at 50% 38%,rgba(232,140,0,.24),rgba(0,0,0,.84) 62%);backdrop-filter:blur(3px);cursor:pointer;overflow:hidden}
@@ -1745,25 +1754,43 @@ function metaStreakValue(doneToday) {
   const now = new Date();
   const ud = Math.floor(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) / 86400000);
   if (doneToday && days[days.length - 1] !== ud) { days.push(ud); days = days.slice(-500); try { localStorage.setItem('metaDays', JSON.stringify(days)); } catch(_) {} }
-  const set = new Set(days);
-  let d = set.has(ud) ? ud : (set.has(ud - 1) ? ud - 1 : null), n = 0;
-  while (d != null && set.has(d)) { n++; d--; }
-  return n;
+  return streakStats().cur;   // shared computation (honours freeze + streak-mode)
 }
 // ── Streak: Duolingo-style flame calendar + streak-up celebration ────────────
 // Reuses the existing portfolio-streak signal (metaDays: array of UTC-day numbers
 // the player completed ≥1 game). The chip in the meta bar opens a flame calendar;
 // extending the streak triggers a one-shot celebratory overlay on the home.
 function _udNow() { const n = new Date(); return Math.floor(Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate()) / 86400000); }
-function streakStats() {
+function _dateKeyToUd(k) { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(k); return m ? Math.floor(Date.UTC(+m[1], +m[2] - 1, +m[3]) / 86400000) : null; }
+function streakMode() { try { return localStorage.getItem('streakMode') === 'cinelinks' ? 'cinelinks' : 'any'; } catch(_) { return 'any'; } }
+// Active-day set per mode: 'any' = completed ≥1 game (metaDays); 'cinelinks' = did the CineLinks daily.
+function streakDaySet() {
+  if (streakMode() === 'cinelinks') {
+    const s = new Set();
+    try { const p = JSON.parse(localStorage.getItem('clPlayed')) || {}; for (const k in p) { const u = _dateKeyToUd(k); if (u != null) s.add(u); } } catch(_) {}
+    try { const r = JSON.parse(localStorage.getItem('clDailyResult')); if (r && r.date) { const u = _dateKeyToUd(r.date); if (u != null) s.add(u); } } catch(_) {}
+    return s;
+  }
   let days = []; try { days = JSON.parse(localStorage.getItem('metaDays')) || []; } catch(_) {}
-  const set = new Set(days), ud = _udNow();
-  let d = set.has(ud) ? ud : (set.has(ud - 1) ? ud - 1 : null), cur = 0;
-  while (d != null && set.has(d)) { cur++; d--; }
-  const sorted = days.slice().sort((a, b) => a - b); let best = 0, run = 0, prev = null;
-  for (const x of sorted) { run = (prev != null && x === prev + 1) ? run + 1 : 1; if (run > best) best = run; prev = x; }
-  return { set: set, cur: cur, best: Math.max(best, cur) };
+  return new Set(days);
 }
+// Current streak counts consecutive active days ending today/yesterday, and a single
+// "freeze" auto-bridges ONE missed day so a lapse doesn't reset the whole run.
+function streakStats() {
+  const set = streakDaySet(), ud = _udNow();
+  let anchor = set.has(ud) ? ud : (set.has(ud - 1) ? ud - 1 : null);
+  let cur = 0, usedFreeze = false; const frozen = [];
+  let d = anchor;
+  while (d != null) {
+    if (set.has(d)) { cur++; d--; continue; }
+    if (!usedFreeze && set.has(d - 1)) { usedFreeze = true; frozen.push(d); d--; continue; } // bridge one gap
+    break;
+  }
+  const sorted = [...set].sort((a, b) => a - b); let best = 0, run = 0, prev = null;
+  for (const x of sorted) { run = (prev != null && x === prev + 1) ? run + 1 : 1; if (run > best) best = run; prev = x; }
+  return { set: set, cur: cur, best: Math.max(best, cur), frozen: new Set(frozen) };
+}
+const STREAK_MILESTONES = [3, 7, 14, 30, 50, 100, 200, 365];
 function _streakLang() { return (typeof _lang !== 'undefined' && _lang) ? _lang : undefined; }
 function renderStreakCalendar(off) {
   const card = document.getElementById('streakCard'); if (!card) return;
@@ -1777,9 +1804,16 @@ function renderStreakCalendar(off) {
   let dowHtml = ''; for (let i = 0; i < 7; i++) { const dn = new Date(Date.UTC(2024, 0, 1 + i)).toLocaleDateString(_streakLang(), { weekday: 'short', timeZone: 'UTC' }); dowHtml += '<div class="cal-dow">' + dn + '</div>'; }
   let cells = ''; for (let i = 0; i < firstDow; i++) cells += '<div class="cal-cell blank"></div>';
   for (let dnum = 1; dnum <= dim; dnum++) {
-    const ud = Math.floor(Date.UTC(y, m, dnum) / 86400000), lit = s.set.has(ud), isT = ud === todayUd;
-    cells += '<div class="cal-cell' + (lit ? ' lit' : '') + (isT ? ' today' : '') + '">' + (lit ? '<span>' + dnum + '</span>' : dnum) + '</div>';
+    const ud = Math.floor(Date.UTC(y, m, dnum) / 86400000);
+    const lit = s.set.has(ud), fz = s.frozen.has(ud), isT = ud === todayUd;
+    const cls = 'cal-cell' + (lit ? ' lit' : (fz ? ' frozen' : '')) + (isT ? ' today' : '');
+    cells += '<div class="' + cls + '">' + ((lit || fz) ? '<span>' + dnum + '</span>' : dnum) + '</div>';
   }
+  const miles = STREAK_MILESTONES.map(mm => '<span class="streak-mile' + (s.best >= mm ? ' on' : '') + '">' + (s.best >= mm ? '🔥' : '🔒') + '<b>' + mm + '</b></span>').join('');
+  const mode = streakMode();
+  const tog = '<div class="streak-modetog">' +
+    '<button class="' + (mode === 'any' ? 'on' : '') + '" data-mode="any">' + t('streakModeAny') + '</button>' +
+    '<button class="' + (mode === 'cinelinks' ? 'on' : '') + '" data-mode="cinelinks">' + t('streakModeCl') + '</button></div>';
   const nextDisabled = off >= 0;
   card.dataset.off = off;
   card.innerHTML =
@@ -1787,9 +1821,14 @@ function renderStreakCalendar(off) {
     '<div class="streak-sub">' + t('streakDays') + ' · ' + t('streakBest') + ' <b>' + s.best + '</b></div>' +
     '<div class="cal-nav"><button id="calPrev" aria-label="Previous month">‹</button><span class="cal-month">' + monthName + '</span><button id="calNext" aria-label="Next month"' + (nextDisabled ? ' disabled' : '') + '>›</button></div>' +
     '<div class="cal-grid">' + dowHtml + cells + '</div>' +
+    '<div class="streak-miles">' + miles + '</div>' +
+    tog +
     '<button class="cal-close" id="calClose">' + t('streakClose') + '</button>';
   document.getElementById('calPrev').onclick = function () { renderStreakCalendar((+card.dataset.off) - 1); };
   const cn = document.getElementById('calNext'); if (cn && !nextDisabled) cn.onclick = function () { renderStreakCalendar((+card.dataset.off) + 1); };
+  card.querySelectorAll('.streak-modetog button').forEach(function (b) {
+    b.onclick = function () { try { localStorage.setItem('streakMode', b.dataset.mode); } catch(_) {} renderStreakCalendar(+card.dataset.off); try { renderMetaBar(); } catch(_) {} };
+  });
   document.getElementById('calClose').onclick = closeStreakModal;
 }
 function openStreakModal() { const mo = document.getElementById('streakModal'); if (!mo) return; renderStreakCalendar(0); mo.classList.add('open'); mo.setAttribute('aria-hidden', 'false'); }
