@@ -45,7 +45,7 @@ export default [
   // Browser scripts loaded by index.html. LANGS/I18N/DAILY_CHALLENGE_KEYS are
   // intentionally consumed by other scripts on the page.
   {
-    files: ['i18n.js', 'daily-challenges.js', 'cineclue-pool.js', 'cineline-pool.js', 'ads.js', 'support.js', 'howto.js', 'auth.js', 'cookie.js', 'cineguess.js', 'home-art.js', 'daily-gallery.js', 'fx.js'],
+    files: ['i18n.js', 'daily-challenges.js', 'cineclue-pool.js', 'cineline-pool.js', 'ads.js', 'support.js', 'howto.js', 'auth.js', 'cookie.js', 'cineguess.js', 'home-art.js', 'daily-gallery.js', 'fx.js', 'sfx.js'],
     languageOptions: { ecmaVersion: 2022, sourceType: 'script', globals: browser },
     rules: { 'no-unused-vars': 'off', 'no-empty': ['warn', { allowEmptyCatch: true }] }
   },
