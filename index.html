@@ -1915,34 +1915,42 @@ document.addEventListener('click', function (e) {
 // ── AAA gameplay motion helpers ──
 function _reducedMotion() { try { return (window.Fx && Fx.reduced) ? Fx.reduced() : (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); } catch (_) { return false; } }
 // FLIP: clone the chosen card's poster and fly it into the current-node slot.
+// The slot is ROUND for people and RECTANGULAR for films/TV, so the clone, its
+// glow ring and the landing ring all match that shape — no rectangle dropping
+// into a circular hole.
 function flyCardToCurrent(cardEl) {
   try {
     if (_reducedMotion() || !cardEl || !cardEl.animate) return;
     const src = cardEl.querySelector('.card-img'); const tgt = document.getElementById('curImg');
     if (!src || !tgt) return;
-    const s = src.getBoundingClientRect(), e = tgt.getBoundingClientRect();
-    if (!s.width || !e.width) return;
+    const s = src.getBoundingClientRect(), box = tgt.getBoundingClientRect();
+    if (!s.width || !box.width) return;
+    const person = src.classList.contains('person');
+    // Target geometry of the node slot: people = a circle (square box, 50% radius)
+    // sitting at the top of the slot; titles = the full poster rectangle.
+    const tw = box.width, th = person ? box.width : box.height;
+    const tl = box.left, tt = box.top, radius = person ? '50%' : '8px';
     const clone = src.cloneNode(true); clone.className = 'fly-clone';
     const st = clone.style;
     st.position = 'fixed'; st.left = s.left + 'px'; st.top = s.top + 'px'; st.width = s.width + 'px'; st.height = s.height + 'px';
-    st.margin = '0'; st.zIndex = '350'; st.pointerEvents = 'none'; st.borderRadius = '8px'; st.overflow = 'hidden';
+    st.margin = '0'; st.zIndex = '350'; st.pointerEvents = 'none'; st.borderRadius = radius; st.overflow = 'hidden';
     st.transformOrigin = 'top left'; st.boxShadow = '0 22px 60px rgba(0,0,0,.6),0 0 0 2px rgba(232,160,0,.55)';
     document.body.appendChild(clone);
-    const dx = e.left - s.left, dy = e.top - s.top, sx = e.width / s.width, sy = e.height / s.height;
+    const dx = tl - s.left, dy = tt - s.top, sx = tw / s.width, sy = th / s.height;
     const a = clone.animate([
       { transform: 'translate(0,0) scale(1)', opacity: 1, offset: 0 },
-      { transform: 'translate(' + (dx * 0.5) + 'px,' + (dy * 0.5 - 26) + 'px) scale(' + ((1 + sx) / 2) + ',' + ((1 + sy) / 2) + ') rotate(-5deg)', opacity: 1, offset: 0.5, easing: 'cubic-bezier(.3,.9,.4,1)' },
+      { transform: 'translate(' + (dx * 0.5) + 'px,' + (dy * 0.5 - 26) + 'px) scale(' + ((1 + sx) / 2) + ',' + ((1 + sy) / 2) + ') rotate(' + (person ? 0 : -5) + 'deg)', opacity: 1, offset: 0.5, easing: 'cubic-bezier(.3,.9,.4,1)' },
       { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(' + sx + ',' + sy + ')', opacity: 0.16, offset: 1 }
     ], { duration: 470, easing: 'cubic-bezier(.4,.05,.2,1)' });
-    a.onfinish = function () { clone.remove(); _landRing(e); };
+    a.onfinish = function () { clone.remove(); _landRing(tl, tt, tw, th, radius); };
     a.oncancel = function () { clone.remove(); };
   } catch (_) {}
 }
-function _landRing(e) {
+function _landRing(l, t, w, h, radius) {
   try {
     if (_reducedMotion()) return;
     const r = document.createElement('div'); r.className = 'cur-land-ring go';
-    const st = r.style; st.left = e.left + 'px'; st.top = e.top + 'px'; st.width = e.width + 'px'; st.height = e.height + 'px';
+    const st = r.style; st.left = l + 'px'; st.top = t + 'px'; st.width = w + 'px'; st.height = h + 'px'; st.borderRadius = radius || '10px';
     document.body.appendChild(r); setTimeout(function () { r.remove(); }, 540);
   } catch (_) {}
 }
