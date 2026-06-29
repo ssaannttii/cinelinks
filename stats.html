@@ -109,7 +109,7 @@ function cineClue(){
   const state = getLS('cineclueState');
   const todayDone = state && state.finished ? (state.solved ? 'Solved today ✓' : 'Played today') : 'Not played today';
   return {
-    icon:'🔍', title:'CineClue', sub:'Guess the film from clues',
+    icon:'🔍', title:'CineClue', sub:'Guess the film from synopsis & clues',
     stats:[
       {n: streak.current|0, l:'Streak'},
       {n: streak.best|0, l:'Best streak'},
@@ -156,16 +156,6 @@ function cineCast(){
     extra: todayDone, daily:'/cinecast.html', practice:'/cinecast.html?practice=1'
   };
 }
-function cinePlot(){
-  const streak = getLS('cineplotStreak') || {current:0,best:0};
-  const state = getLS('cineplotState');
-  const todayDone = state && state.finished ? (state.solved ? 'Solved today ✓' : 'Played today') : 'Not played today';
-  return {
-    icon:'📖', title:'CinePlot', sub:'Guess the film from its synopsis',
-    stats:[{n: streak.current|0, l:'Streak'},{n: streak.best|0, l:'Best streak'},{n: state? '✓':'-', l:'Today'}],
-    extra: todayDone, daily:'/cineplot.html', practice:'/cineplot.html?practice=1'
-  };
-}
 
 function cineLine(){
   const streak = getLS('cinelineStreak') || {current:0,best:0};
@@ -207,7 +197,6 @@ function render(){
     cardHTML(cineClue()) +
     cardHTML(cineFrame()) +
     cardHTML(cineCast()) +
-    cardHTML(cinePlot()) +
     cardHTML(cineLine()) +
     cardHTML(cineRating());
 }

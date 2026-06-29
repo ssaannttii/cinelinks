@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CineClue - Guess the daily film from clues</title>
-<meta name="description" content="A daily film-guessing game: name the movie from progressive clues - keywords, cast, tagline and a blurred poster - in as few guesses as possible. Data from TMDB.">
+<title>CineClue - Guess the daily film from its synopsis &amp; clues</title>
+<meta name="description" content="A daily film-guessing game: name the movie from its plot synopsis and progressive clues - keywords, genre, cast and a blurred poster - in as few guesses as possible. Data from TMDB.">
 <meta name="theme-color" content="#0d0d0d">
 <link rel="icon" type="image/png" href="/logo.png">
 <link rel="canonical" href="https://cinelinks.vercel.app/cineclue.html">
@@ -102,7 +102,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   </div>
   <div class="head">
     <div class="title">Cine<span>Clue</span></div>
-    <div class="subtitle">Guess the film from the clues. Fewer guesses, better.</div>
+    <div class="subtitle">Guess the film from its synopsis &amp; clues. Fewer guesses, better.</div>
   </div>
 
   <div id="loading" class="loading">Loading today's film…</div>
@@ -151,6 +151,22 @@ function maskTitle(text, title){
   const words = title.split(/\s+/).filter(w => w.length >= 4);
   let out = text;
   for(const w of words){ out = out.replace(new RegExp(w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'gi'), '▒▒▒'); }
+  return out;
+}
+// Hide the title's words AND the main characters' names from a synopsis so the
+// plot blurb doesn't give the answer away via a recognisable character name.
+function maskSpoilers(text, title, characters){
+  if(!text) return '';
+  let terms = [];
+  String(title || '').split(/\s+/).forEach(w => { if(w.length >= 4) terms.push(w); });
+  (characters || []).forEach(ch => {
+    if(!ch || ch.length < 3) return;
+    terms.push(ch);
+    ch.split(/\s+/).forEach(w => { if(w.length >= 5) terms.push(w); });
+  });
+  terms = Array.from(new Set(terms)).sort((a, b) => b.length - a.length);
+  let out = text;
+  for(const term of terms){ out = out.replace(new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'gi'), '▒▒▒'); }
   return out;
 }
 function toast(msg){ const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('show'), 1800); }
@@ -207,6 +223,9 @@ async function loadTarget(){
   throw new Error('could not load any target');
 }
 
+// Fused "Guess the film" clues: lead with a redacted plot synopsis (the old
+// CinePlot signature), escalate through keywords / facts / a fuller synopsis /
+// director & cast, and end on a blurred poster. Six stages → six guesses.
 function buildClues(t){
   const ttl = Media.title(t.d, t.type);
   const yr = Media.year(t.d, t.type);
@@ -217,13 +236,21 @@ function buildClues(t){
   const makers = Media.makers(t.d, t.cr, t.type).join(', ');
   const tagline = t.d.tagline || '';
   const pUrl = poster(t.d.poster_path, 'w342');
+  const mediumL = Media.mediumLabel(t.type);
+  const chars = (t.cr.cast || []).slice(0, 8)
+    .map(c => c.character || (c.roles && c.roles[0] && c.roles[0].character) || '')
+    .filter(Boolean);
+  const ov = maskSpoilers(t.d.overview || '', ttl, chars);
+  const frac = p => { if(!ov) return ''; const n = Math.max(24, Math.round(ov.length * p)); return ov.slice(0, n) + (n < ov.length ? '…' : ''); };
   return [
-    { label: 'Keywords', html: kws.length ? kws.map(k => '<span class="clue-chip">' + esc(k) + '</span>').join('') : '<span class="clue-body">No keywords on TMDB - here\'s a free one 🙂</span>' },
-    { label: Media.mediumLabel(t.type) + ' · Genre · Year', html: '<span class="clue-body">' + esc([Media.mediumLabel(t.type), genres, yr, lengthL].filter(Boolean).join('  ·  ')) + '</span>' },
-    { label: makers ? (Media.makerLabel(t.type) + (tagline ? ' · Tagline' : '')) : 'Tagline', html: '<span class="clue-body">' + esc(makers) + (tagline ? ' - <em>"' + esc(maskTitle(tagline, ttl)) + '"</em>' : '') + '</span>' },
-    { label: 'Main cast', html: '<span class="clue-body">' + (cast.length ? cast.map(esc).join(', ') : '-') + '</span>' },
-    { label: 'Poster (blurred)', html: pUrl ? '<canvas class="clue-poster" width="300" height="450" data-url="' + pUrl + '" data-blur="16"></canvas>' : '<span class="clue-body">No poster</span>' },
-    { label: 'Poster', html: pUrl ? '<canvas class="clue-poster" width="300" height="450" data-url="' + pUrl + '" data-blur="5"></canvas>' : '<span class="clue-body">No poster</span>' }
+    { label: 'Synopsis (opening)', html: '<span class="clue-body">' + (ov ? esc(frac(0.3)) : 'No synopsis on TMDB - here\'s a free clue 🙂') + '</span>' },
+    { label: 'Keywords', html: kws.length ? kws.map(k => '<span class="clue-chip">' + esc(k) + '</span>').join('') : '<span class="clue-body">No keywords on TMDB</span>' },
+    { label: mediumL + ' · Genre · Year', html: '<span class="clue-body">' + esc([mediumL, genres, yr, lengthL].filter(Boolean).join('  ·  ')) + '</span>' },
+    ov
+      ? { label: 'Full synopsis', html: '<span class="clue-body">' + esc(ov) + '</span>' }
+      : { label: makers ? (Media.makerLabel(t.type) + (tagline ? ' · Tagline' : '')) : 'Tagline', html: '<span class="clue-body">' + esc(makers) + (tagline ? ' - <em>"' + esc(maskTitle(tagline, ttl)) + '"</em>' : '') + '</span>' },
+    { label: makers ? (Media.makerLabel(t.type) + ' · Cast') : 'Main cast', html: '<span class="clue-body">' + (esc([makers, cast.join(', ')].filter(Boolean).join('  ·  ')) || '-') + '</span>' },
+    { label: 'Poster (blurred)', html: pUrl ? '<canvas class="clue-poster" width="300" height="450" data-url="' + pUrl + '" data-blur="12"></canvas>' : '<span class="clue-body">No poster</span>' }
   ];
 }
 
@@ -492,16 +519,16 @@ init();
 window.HOWTO = {
   key: 'cineclue', title: 'How to play CineClue', icon: '🔍',
   steps: [
-    'Guess the day’s film. You start with one cryptic clue.',
+    'Guess the day’s film. You start with the <b>opening of its plot</b> (title hidden as ▒▒▒).',
     'Type to search and pick a title - you have <b>6 tries</b>.',
     'Every wrong guess or skip reveals a new, easier clue.',
-    'Order: keywords → genre &amp; year → tagline → cast → poster.',
+    'Order: synopsis → keywords → genre &amp; year → full synopsis → cast → poster.',
     'Fewer guesses = better. <b>Daily</b> keeps your streak; <b>Practice</b> is unlimited.'
   ],
   example: '<div style="display:flex;flex-direction:column;gap:6px">' +
+      '<span class="ht-chip">📖 “A thief who steals secrets through dream-sharing…”</span>' +
       '<span class="ht-chip">🔑 dream · heist · subconscious</span>' +
       '<span class="ht-chip">🎭 Action · Sci-Fi · 2010</span>' +
-      '<span class="ht-chip">🎬 dir. Christopher Nolan</span>' +
     '</div><p>Clues stack up until you guess: <b style="color:#f0f0f0">Inception</b> 🎉</p>'
 };
 </script>

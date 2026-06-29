@@ -26,8 +26,7 @@
       { done: clDone, tile: (clR && clR.date === today && clR.end) ? { title: clR.end.name, poster: clR.end.img, label: 'CineLinks' } : null },
       { done: clueDone('cineclueState'), tile: answerOf('cineclueState', 'CineClue') },
       { done: clueDone('cineframeState'), tile: answerOf('cineframeState', 'CineFrame') },
-      { done: clueDone('cinecastState'), tile: answerOf('cinecastState', 'CineCast') },
-      { done: clueDone('cineplotState'), tile: answerOf('cineplotState', 'CinePlot') }
+      { done: clueDone('cinecastState'), tile: answerOf('cinecastState', 'CineCast') }
     ];
 
     var allDone = games.every(function (g) { return g.done; });

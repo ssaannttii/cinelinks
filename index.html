@@ -634,15 +634,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
           <a class="mode mode-practice" href="/cinecast.html?practice=1">Practice</a>
         </div>
       </div>
-      <div class="game-card" style="--accent:122,140,255">
-        <div class="game-head"><span class="game-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h12a2 2 0 0 1 2 2v13"/><path d="M4 5v14a1 1 0 0 0 1 1h13"/><path d="M8 9h6M8 13h6"/></svg></span><span class="game-meta"><span class="game-name">CinePlot <span class="new-tag">NEW</span><span class="game-done" data-done="plot"></span></span><span class="game-desc">Guess the film from its synopsis</span></span></div>
-        <div class="game-modes">
-          <a class="mode mode-daily" href="/cineplot.html">Daily</a>
-          <a class="mode mode-practice" href="/cineplot.html?practice=1">Practice</a>
-        </div>
-      </div>
       <div class="game-card" style="--accent:77,184,216">
-        <div class="game-head"><span class="game-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span><span class="game-meta"><span class="game-name">CineClue <span class="new-tag">NEW</span><span class="game-done" data-done="clue"></span></span><span class="game-desc">Guess the film from clues</span></span></div>
+        <div class="game-head"><span class="game-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span><span class="game-meta"><span class="game-name">CineClue <span class="new-tag">NEW</span><span class="game-done" data-done="clue"></span></span><span class="game-desc">Guess the film from its synopsis &amp; clues</span></span></div>
         <div class="game-modes">
           <a class="mode mode-daily" href="/cineclue.html">Daily</a>
           <a class="mode mode-practice" href="/cineclue.html?practice=1">Practice</a>
@@ -1611,7 +1604,7 @@ function markDoneBadges() {
   }
   const state = {
     cl: linksDone(), clue: clueDone('cineclueState'), frame: clueDone('cineframeState'),
-    cast: clueDone('cinecastState'), plot: clueDone('cineplotState'), line: clueDone('cinelineState'),
+    cast: clueDone('cinecastState'), line: clueDone('cinelineState'),
     reel: clueDone('cinereelState'), grid: clueDone('cinegridState'), chain: clueDone('cinechainState'),
     grp: clueDone('cinegroupState'), rating: ratingDone()
   };
@@ -1694,7 +1687,7 @@ function metaItems() {
     else { const r = JSON.parse(localStorage.getItem('clDailyResult')); if (r && r.date === today) clicks = r.clicks; }
   } catch(_) {}
   items.push({ emoji: '🔗', done: clicks != null, text: clicks != null ? (clicks + (clicks === 1 ? ' click' : ' clicks')) : null });
-  [['🔍','cineclueState'],['🖼️','cineframeState'],['🧑','cinecastState'],['📖','cineplotState']].forEach(g => {
+  [['🔍','cineclueState'],['🖼️','cineframeState'],['🧑','cinecastState']].forEach(g => {
     const s = gs(g[1]); const done = !!(s && s.day === ud && s.finished);
     let text = null;
     if (done) { const used = Array.isArray(s.results) ? Math.min(6, s.results.length) : null; text = s.solved ? ('✅ ' + (used != null ? used + '/6' : 'solved')) : '❌'; }
@@ -1728,7 +1721,7 @@ function shareTodayText(items, done, total, streak) {
 }
 const META_NAV = [
   { n: 'CineLinks', h: null }, { n: 'CineClue', h: '/cineclue.html' }, { n: 'CineFrame', h: '/cineframe.html' },
-  { n: 'CineCast', h: '/cinecast.html' }, { n: 'CinePlot', h: '/cineplot.html' }, { n: 'CineLine', h: '/cineline.html' },
+  { n: 'CineCast', h: '/cinecast.html' }, { n: 'CineLine', h: '/cineline.html' },
   { n: 'CineReel', h: '/cinereel.html' }, { n: 'CineGrid', h: '/cinegrid.html' }, { n: 'CineChain', h: '/cinechain.html' },
   { n: 'CineGroup', h: '/cinegroup.html' },
   { n: 'Higher or Lower', h: '/rating/versus?mode=daily' }
