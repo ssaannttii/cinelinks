@@ -114,7 +114,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   function rarityOf(v){const f=Math.min(1,Math.log10((v||0)+10)/Math.log10(40000));return Math.max(1,Math.round(100-100*f));}
   function esc(s){return (s||'').replace(/[&<>"]/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m];});}
 
-  let GRID=null, photos={}, cells=[null,null,null,null,null,null,null,null,null], checksLeft=CHECKS, over=false, openIdx=-1, busy=false, rowFb=null, creditsCache={}, flashCells={};
+  let GRID=null, photos={}, cells=[null,null,null,null,null,null,null,null,null], checksLeft=CHECKS, over=false, openIdx=-1, busy=false, rowFb=null, creditsCache={}, flashCells={}, triedByCell={};
 
   // ── live grid generation (3×3 biclique over the co-star graph) ──
   function hash(s){s=''+s;let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return h>>>0;}
@@ -147,7 +147,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   function cellPair(idx){ const r=Math.floor(idx/3), c=idx%3; return { rid:GRID[0][r], cid:GRID[1][c] }; }
   function face(id){ return photos[id] ? IMG+'w185'+photos[id] : '/logo.png'; }
   function correctCount(){ return cells.filter(function(c){return c&&c.status==='correct';}).length; }
-  function pendingCount(){ return cells.filter(function(c){return c&&c.status!=='correct';}).length; }
+  function pendingCount(){ return cells.filter(function(c){return c&&c.status==='pending';}).length; }  // only unchecked placements count
 
   function render(){
     const cc=correctCount();
@@ -190,8 +190,9 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   function wireItems(){ mResults.querySelectorAll('.ritem').forEach(function(el){ el.onclick=function(){ choose(el.dataset); }; }); }
   function search(){
     const q=mInput.value.trim(); if(q.length<2){ mResults.innerHTML=''; return; }
+    const tried=triedByCell[openIdx]||new Set();
     api('search/multi&query='+encodeURIComponent(q)).then(function(r){
-      const items=(r.results||[]).filter(function(x){return x.media_type==='movie'&&x.poster_path;}).slice(0,8);
+      const items=(r.results||[]).filter(function(x){return x.media_type==='movie'&&x.poster_path&&!tried.has(x.id);}).slice(0,8);
       mResults.innerHTML=rowItems(items); wireItems();
     });
   }
@@ -199,9 +200,10 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   function hint(){
     if(openIdx<0) return;
     const p=cellPair(openIdx); mFeed.textContent='Loading options…';
+    const tried=triedByCell[openIdx]||new Set();
     Promise.all([api('person/'+p.rid+'/combined_credits'),api('person/'+p.cid+'/combined_credits')]).then(function(a){
-      const A=(a[0].cast||[]).filter(function(c){return c.media_type==='movie'&&c.poster_path&&(c.vote_count||0)>=300;});
-      const B=(a[1].cast||[]).filter(function(c){return c.media_type==='movie'&&c.poster_path&&(c.vote_count||0)>=300;});
+      const A=(a[0].cast||[]).filter(function(c){return c.media_type==='movie'&&c.poster_path&&(c.vote_count||0)>=300&&!tried.has(c.id);});
+      const B=(a[1].cast||[]).filter(function(c){return c.media_type==='movie'&&c.poster_path&&(c.vote_count||0)>=300&&!tried.has(c.id);});
       const bIds=new Set(B.map(function(c){return c.id;})), aIds=new Set(A.map(function(c){return c.id;}));
       const shared=A.filter(function(c){return bIds.has(c.id);}).sort(function(x,y){return (y.vote_count||0)-(x.vote_count||0);});
       const onlyA=A.filter(function(c){return !bIds.has(c.id);});
@@ -221,13 +223,13 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   // ── checking ──
   function check(){
     if(over||busy) return;
-    const pend=[]; for(let i=0;i<9;i++){ if(cells[i]&&cells[i].status!=='correct') pend.push(i); }
+    const pend=[]; for(let i=0;i<9;i++){ if(cells[i]&&cells[i].status==='pending') pend.push(i); }  // only re-check changed cells
     if(!pend.length) return;
     busy=true; const btn=document.getElementById('checkBtn'); if(btn){ btn.disabled=true; btn.textContent='Checking…'; }
     Promise.all(pend.map(function(idx){
       const mid=cells[idx].movieId, p=cellPair(idx);
       var prom = creditsCache[mid] ? Promise.resolve(creditsCache[mid]) : api('movie/'+mid+'/credits').then(function(cr){ const s=new Set((cr.cast||[]).map(function(c){return c.id;})); creditsCache[mid]=s; return s; });
-      return prom.then(function(ids){ cells[idx].status=(ids.has(p.rid)&&ids.has(p.cid))?'correct':'wrong'; flashCells[idx]=cells[idx].status==='correct'?'bounce':'shake'; });
+      return prom.then(function(ids){ const ok=ids.has(p.rid)&&ids.has(p.cid); cells[idx].status=ok?'correct':'wrong'; if(!ok){ (triedByCell[idx]=triedByCell[idx]||new Set()).add(mid); } flashCells[idx]=ok?'bounce':'shake'; });
     })).then(function(){
       checksLeft--;
       rowFb=[0,1,2].map(function(r){ let c=0; for(let k=0;k<3;k++){ const cell=cells[r*3+k]; if(cell&&cell.status==='correct')c++; } return c+'/3'; });

@@ -17,6 +17,7 @@ const I18N = {
     authSyncedTitle: '✓ Progress synced', authBackedAccount: 'Backed up to your Google account · ', authBackedDevices: 'Backed up across your devices', authSyncTitle: 'Cross-device sync', authSyncDesc: 'Sign in with Google to save your streaks on every device.', authSyncedPill: '✓ Synced', authSignOut: 'Sign out', authDelete: 'Delete my synced data', authPrivacy: 'Privacy', authMenuBlurb: 'Your streaks & history are backed up and synced across devices. We only store game stats and your Google ID.',
     descCl: 'Connect actors → movies → TV in the fewest clicks', descClue: 'Guess the film from clues', descFrame: 'Guess the film from a frame', descCast: 'Guess the film from its cast', descPlot: 'Guess the film from its synopsis', descLine: 'Place films on a timeline', descReel: 'Guess the actor from their films', descGrid: 'Name a film pairing each actor', descChain: 'Build the longest film chain', descGroup: 'Group 16 titles into 4 connections',
     howWorksTitle: 'How it works', howWorks1: 'A fresh movie & TV puzzle every day', howWorks2: 'Daily is one shared puzzle — it keeps your streak', howWorks3: 'Practice is unlimited, any time',
+    moreGames: '+ More games', fewerGames: '− Fewer games',
     // click singular + goal tag
     clickSingular: 'click', goalTag: 'GOAL',
     // difficulty labels (from par)
@@ -68,6 +69,7 @@ const I18N = {
     authSyncedTitle: '✓ Progreso sincronizado', authBackedAccount: 'Guardado en tu cuenta de Google · ', authBackedDevices: 'Guardado en todos tus dispositivos', authSyncTitle: 'Sincroniza entre dispositivos', authSyncDesc: 'Inicia sesión con Google para guardar tus rachas en todos tus dispositivos.', authSyncedPill: '✓ Sincronizado', authSignOut: 'Cerrar sesión', authDelete: 'Borrar mis datos sincronizados', authPrivacy: 'Privacidad', authMenuBlurb: 'Tus rachas e historial se guardan y sincronizan entre dispositivos. Solo almacenamos estadísticas de juego y tu ID de Google.',
     descCl: 'Conecta actores → pelis → series en los menos clics', descClue: 'Adivina la peli por pistas', descFrame: 'Adivina la peli por un fotograma', descCast: 'Adivina la peli por su reparto', descPlot: 'Adivina la peli por su sinopsis', descLine: 'Ordena pelis en una línea temporal', descReel: 'Adivina al actor por sus pelis', descGrid: 'Una peli que une a cada par', descChain: 'Encadena pelis lo más largo posible', descGroup: 'Agrupa 16 títulos en 4 conexiones',
     howWorksTitle: 'Cómo funciona', howWorks1: 'Un puzzle nuevo de cine y TV cada día', howWorks2: 'El Diario es un puzzle compartido — mantiene tu racha', howWorks3: 'La Práctica es ilimitada, cuando quieras',
+    moreGames: '+ Más juegos', fewerGames: '− Menos juegos',
     // click singular + goal tag
     clickSingular: 'clic', goalTag: 'OBJETIVO',
     // difficulty labels (from par)
@@ -119,6 +121,7 @@ const I18N = {
     authSyncedTitle: '✓ Progreso sincronizado', authBackedAccount: 'Guardado en tu cuenta de Google · ', authBackedDevices: 'Guardado en todos tus dispositivos', authSyncTitle: 'Sincroniza entre dispositivos', authSyncDesc: 'Inicia sesión con Google para guardar tus rachas en todos tus dispositivos.', authSyncedPill: '✓ Sincronizado', authSignOut: 'Cerrar sesión', authDelete: 'Borrar mis datos sincronizados', authPrivacy: 'Privacidad', authMenuBlurb: 'Tus rachas e historial se guardan y sincronizan entre dispositivos. Solo almacenamos estadísticas de juego y tu ID de Google.',
     descCl: 'Conecta actores → pelis → series en los menos clics', descClue: 'Adivina la peli por pistas', descFrame: 'Adivina la peli por un fotograma', descCast: 'Adivina la peli por su reparto', descPlot: 'Adivina la peli por su sinopsis', descLine: 'Ordena pelis en una línea temporal', descReel: 'Adivina al actor por sus pelis', descGrid: 'Una peli que une a cada par', descChain: 'Encadena pelis lo más largo posible', descGroup: 'Agrupa 16 títulos en 4 conexiones',
     howWorksTitle: 'Cómo funciona', howWorks1: 'Un puzzle nuevo de cine y TV cada día', howWorks2: 'El Diario es un puzzle compartido — mantiene tu racha', howWorks3: 'La Práctica es ilimitada, cuando quieras',
+    moreGames: '+ Más juegos', fewerGames: '− Menos juegos',
     // click singular + goal tag
     clickSingular: 'clic', goalTag: 'OBJETIVO',
     // difficulty labels (from par)
