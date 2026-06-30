@@ -2080,6 +2080,7 @@ function celebrateAllDone() {
   try { renderMetaBar(); } catch(_) {}                             // ensure the all-done state is rendered
   bar.classList.remove('alldone-pop'); void bar.offsetWidth; bar.classList.add('alldone-pop');
   try { if (window.Sfx) { Sfx.allDone(); Sfx.haptic([20, 40, 20, 40, 20, 60]); } } catch (_) {}
+  try { if (window.Track) Track('all_done', { total: total }); } catch (_) {}
   if (window.Fx && Fx.confetti) { Fx.burstFrom ? Fx.burstFrom(bar, { count: 120, power: 1.2 }) : Fx.confetti({ count: 120 }); setTimeout(function () { Fx.confetti({ count: 70 }); }, 450); }
   return true;
 }
@@ -2381,6 +2382,7 @@ const game = window.game = {
   _allItems: [], _tab: 'all', _debug: false,
 
   async startDaily(dateOverride) {
+    try { if (window.Track) Track('cl_start', { mode: 'daily' }); } catch (_) {}
     const key = dateOverride || dateKey();
     const isToday = key === dateKey();
 
@@ -2464,6 +2466,7 @@ const game = window.game = {
   },
 
   async startRandom() {
+    try { if (window.Track) Track('cl_start', { mode: 'practice' }); } catch (_) {}
     const badge = document.getElementById('hdrDateBadge');
     if (badge) badge.style.display = 'none';
     showOnly('loadingScreen');
@@ -3313,7 +3316,10 @@ const game = window.game = {
       wp.appendChild(d);
     });
 
-    if (!replay) { try { if (window.Sfx) { Sfx.win(); Sfx.haptic([20, 40, 20, 40, 70]); } } catch (_) {} }
+    if (!replay) {
+      try { if (window.Sfx) { Sfx.win(); Sfx.haptic([20, 40, 20, 40, 70]); } } catch (_) {}
+      try { if (window.Track) Track('cl_complete', { clicks: this.clicks, mode: this.scoreDate === dateKey() ? 'daily' : 'practice' }); } catch (_) {}
+    }
     const colors = ['#e8a000','#f0f0f0','#c0392b','#27ae60','#3498db'];
     for (let i = 0; i < 50; i++) {
       const c = document.createElement('div');
@@ -3540,6 +3546,7 @@ const game = window.game = {
   },
 
   async nativeShareCard() {
+    this._trackShare('card');
     try {
       const blob = this._cachedCardBlob || await this._captureCard().then(c => new Promise(r => c.toBlob(r, 'image/png')));
       const file = new File([blob], 'cinelinks.png', {type:'image/png'});
@@ -3559,7 +3566,18 @@ const game = window.game = {
   },
 
   _shareUrl() {
-    return location.href;
+    // Point shares at /s — a tiny serverless page that carries result-specific
+    // OG tags (so the link unfurls with a generated card) then redirects a human
+    // to the game. Falls back to the plain URL if anything is off.
+    try {
+      const p = new URLSearchParams();
+      p.set('g', 'cl');
+      if (this.start && this.end) { p.set('a', this.start.name.slice(0, 48)); p.set('b', this.end.name.slice(0, 48)); }
+      if (this.clicks != null) p.set('n', String(this.clicks));
+      if (this._streak && this._streak.current > 1) p.set('k', String(this._streak.current));
+      p.set('to', location.href);
+      return location.origin + '/s?' + p.toString();
+    } catch (_) { return location.href; }
   },
 
   toggleShareMenu() {
@@ -3601,7 +3619,10 @@ const game = window.game = {
     window.open('https://wa.me/?text=' + text, '_blank', 'noopener');
   },
 
+  _trackShare(via) { try { if (window.Track) Track('cl_share', { via: via }); } catch (_) {} },
+
   copyLink() {
+    this._trackShare('copy');
     document.getElementById('shareMenu')?.classList.remove('open');
     const label = document.getElementById('copyLinkLabel');
     if (navigator.clipboard) {
@@ -3831,6 +3852,7 @@ window.addEventListener('storage', function (e) {
 <div class="streak-cele" id="streakCele" aria-hidden="true"></div>
 <script defer src="/fx.js"></script>
 <script defer src="/sfx.js"></script>
+<script defer src="/analytics.js"></script>
 <script defer src="/ads.js"></script>
 <script defer src="/support.js"></script>
 <script defer src="/howto.js"></script>

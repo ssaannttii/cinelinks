@@ -13,6 +13,9 @@
     "clue-pool": "node scripts/build-clue-pool.js",
     "cineline-pool": "node scripts/build-cineline-pool.js"
   },
+  "dependencies": {
+    "@vercel/og": "^0.6.8"
+  },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
     "eslint": "^9.0.0"
