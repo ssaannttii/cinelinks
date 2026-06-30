@@ -21,7 +21,7 @@
   var KEY = 'cl_collection';
   var THEME_KEY = 'cl_cardTheme';
   var SCHEMA = 1;
-  var IMG = 'https://image.tmdb.org/t/p/w185';
+  var IMG = 'https://image.tmdb.org/t/p/w342';
   var XP = { common: 10, rare: 25, elite: 50, legendary: 100, dupe: 3 };
   var ORDER = { legendary: 0, elite: 1, rare: 2, common: 3 };
   var RARITY = {
@@ -572,6 +572,8 @@
     var theme = activeTheme(); injectThemeCss(theme);
     var holder = document.getElementById('clDetailCard');
     holder.innerHTML = theme.card(c, CTX, 0);
+    // the card renders at 2× here — pull a higher-res TMDB poster so it stays crisp
+    Array.prototype.forEach.call(holder.querySelectorAll('img'), function (im) { im.src = im.src.replace(/\/t\/p\/w\d+\//, '/t/p/w780/'); });
     try { if (theme.mount) theme.mount(holder); } catch (_) { /* noop */ }
     document.getElementById('clDetailInfo').innerHTML = detailInfo(c);
     document.getElementById('clCollDetail').classList.add('open');
