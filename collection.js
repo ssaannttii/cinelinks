@@ -1,18 +1,26 @@
-// CineLinks "collection" — the suite-wide retention meta-game. Every film, show
-// and person you encounter through play becomes a collectible card: rarity frames,
-// duplicates, XP and levels. Local-first (one localStorage blob, no backend, no
-// accounts), and portable: any game adds to it with one call —
+// CineLinks "collection" — the suite-wide retention meta-game, built in three
+// decoupled layers so the card *look* can change (or be reset for debugging)
+// without ever touching the engine or your saved data:
 //
-//   Collection.add([{ id, type:'movie'|'tv'|'person', name, img, rating? }])
-//       → returns the array of *newly* collected cards (for a "+N new" flourish)
-//   Collection.stats()        → { count, films, people, byRarity, xp, level, ... }
-//   Collection.openGallery()  → opens the self-contained gallery modal
+//   1. ENGINE   — storage, dedupe, rarity, XP/levels. Stable public API:
+//        Collection.add(items) → newly-collected cards   (used by every game)
+//        Collection.stats()    → { count, films, people, byRarity, xp, level, … }
+//        Collection.all()      → array of collected cards
+//        Collection.openGallery() / markSeen()
+//   2. THEMES   — pluggable card skins. Add a new design later with ONE call,
+//        no engine edits:
+//        Collection.themes.register({ name, label, gridCols, css, card(c,ctx,i), mount(grid) })
+//        Collection.themes.use('name')   list()   current()
+//   3. DEBUG    — Collection.debug() (or ?ccdebug=1): switch theme, seed test
+//        cards by rarity, grant XP/level, export/import JSON, reset.
 //
-// The gallery UI (styles + modal DOM) is injected on demand, so a page only needs
-// <script src="/collection.js"> and nothing else.
+// Local-first (one localStorage blob, no backend). Portable: a page only needs
+// <script src="/collection.js">.
 (function () {
   'use strict';
   var KEY = 'cl_collection';
+  var THEME_KEY = 'cl_cardTheme';
+  var SCHEMA = 1;
   var IMG = 'https://image.tmdb.org/t/p/w185';
   var XP = { common: 10, rare: 25, elite: 50, legendary: 100, dupe: 3 };
   var ORDER = { legendary: 0, elite: 1, rare: 2, common: 3 };
@@ -23,13 +31,15 @@
     common: { label: 'Common', ring: 'rgba(255,255,255,.22)' }
   };
 
+  // ─────────────────────────────── helpers ───────────────────────────────
   function load() { try { return JSON.parse(localStorage.getItem(KEY)) || null; } catch (_) { return null; } }
-  function blank() { return { cards: {}, xp: 0, seen: 0 }; }
-  function save(s) { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (_) { /* noop */ } }
+  function blank() { return { v: SCHEMA, cards: {}, xp: 0, seen: 0 }; }
+  function save(s) { try { s.v = SCHEMA; localStorage.setItem(KEY, JSON.stringify(s)); } catch (_) { /* noop */ } }
   function today() { return new Date().toISOString().slice(0, 10); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function posterUrl(p) { if (!p) return ''; return /^https?:/.test(p) ? p : IMG + p; }
-
+  function typeLabel(c) { return c.type === 'person' ? 'Person' : c.type === 'tv' ? 'Series' : 'Film'; }
+  function reducedMotion() { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (_) { return false; } }
   function rarityOf(it) {
     if (it.rarity && RARITY[it.rarity]) return it.rarity;
     var r = it.rating;
@@ -39,10 +49,10 @@
   function xpForLevel(l) { return 50 * (l - 1) * (l - 1); }
   function levelFromXp(xp) { return Math.floor(Math.sqrt(Math.max(0, xp) / 50)) + 1; }
 
+  // ─────────────────────────────── engine ────────────────────────────────
   function add(items) {
     if (!Array.isArray(items) || !items.length) return [];
-    var s = load() || blank();
-    if (!s.cards) s = blank();
+    var s = load(); if (!s || !s.cards) s = blank();
     var added = [], d = today();
     items.forEach(function (it) {
       if (!it || it.id == null || !it.type) return;
@@ -61,12 +71,7 @@
     save(s);
     return added;
   }
-
-  function allCards() {
-    var s = load() || blank();
-    return Object.keys(s.cards || {}).map(function (k) { return s.cards[k]; });
-  }
-
+  function allCards() { var s = load() || blank(); return Object.keys(s.cards || {}).map(function (k) { return s.cards[k]; }); }
   function stats() {
     var s = load() || blank();
     var cards = Object.keys(s.cards || {}).map(function (k) { return s.cards[k]; });
@@ -81,39 +86,72 @@
       newCount: cards.filter(function (c) { return c.isNew; }).length
     };
   }
-
   function markSeen() {
     var s = load(); if (!s || !s.cards) return;
     Object.keys(s.cards).forEach(function (k) { if (s.cards[k].isNew) delete s.cards[k].isNew; });
     save(s);
   }
 
-  // ── Gallery modal (injected on demand) ──
-  function injectStyles() {
-    if (document.getElementById('clCollStyles')) return;
-    var css = document.createElement('style'); css.id = 'clCollStyles';
-    css.textContent =
-      '#clCollModal{position:fixed;inset:0;z-index:240;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.72);backdrop-filter:blur(6px)}' +
-      '#clCollModal.open{display:flex}' +
-      '.cl-coll-box{background:#161616;border:1px solid rgba(232,160,0,.22);border-radius:16px;width:100%;max-width:560px;max-height:86vh;display:flex;flex-direction:column;box-shadow:0 28px 80px rgba(0,0,0,.55);animation:clCollIn .28s cubic-bezier(.2,.9,.3,1.1) both}' +
-      '@keyframes clCollIn{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}' +
-      '.cl-coll-hd{padding:18px 18px 12px;border-bottom:1px solid rgba(255,255,255,.08)}' +
-      '.cl-coll-hd-top{display:flex;align-items:center;justify-content:space-between;gap:10px}' +
-      '.cl-coll-title{font-size:1.1rem;font-weight:800;color:#f5f5f5}' +
-      '.cl-coll-title span{color:#e8a000}' +
-      '.cl-coll-x{background:none;border:none;color:#888;font-size:1.3rem;cursor:pointer;line-height:1;padding:2px 6px}' +
-      '.cl-coll-x:hover{color:#f5f5f5}' +
-      '.cl-coll-lvl{display:flex;align-items:center;gap:10px;margin-top:12px}' +
-      '.cl-coll-lvl-badge{flex-shrink:0;width:40px;height:40px;border-radius:50%;background:radial-gradient(circle,#e8a000,#a86f00);color:#1a1200;font-weight:900;font-size:1.05rem;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(232,160,0,.4)}' +
-      '.cl-coll-xp{flex:1;min-width:0}' +
-      '.cl-coll-xp-bar{height:7px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden;margin-top:5px}' +
-      '.cl-coll-xp-bar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#e8a000,#f5c542);transition:width .6s cubic-bezier(.3,.9,.3,1)}' +
-      '.cl-coll-xp-l{display:flex;justify-content:space-between;font-size:.66rem;color:#9a9a9a;font-weight:700}' +
-      '.cl-coll-counts{display:flex;gap:7px;flex-wrap:wrap;margin-top:13px}' +
-      '.cl-coll-chip{font-size:.66rem;font-weight:800;letter-spacing:.03em;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:#cfcfcf;border-radius:99px;padding:5px 11px;cursor:pointer;text-transform:uppercase}' +
-      '.cl-coll-chip.on{border-color:rgba(232,160,0,.6);background:rgba(232,160,0,.14);color:#e8a000}' +
-      '.cl-coll-grid{padding:16px 16px 20px;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:14px}' +
-      // ── Trading card ──
+  // ─────────────────────────── admin / debug ops ─────────────────────────
+  function reset() { try { localStorage.removeItem(KEY); } catch (_) { /* noop */ } refreshOpen(); }
+  function grant(items) { var r = add(items); refreshOpen(); return r; }
+  function addXp(n) { var s = load() || blank(); s.xp = Math.max(0, (s.xp || 0) + (+n || 0)); save(s); refreshOpen(); return s.xp; }
+  function setLevel(l) { var s = load() || blank(); s.xp = xpForLevel(Math.max(1, +l || 1)); save(s); refreshOpen(); return levelFromXp(s.xp); }
+  function markAllNew(on) { var s = load(); if (!s || !s.cards) return; Object.keys(s.cards).forEach(function (k) { if (on) s.cards[k].isNew = 1; else delete s.cards[k].isNew; }); save(s); refreshOpen(); }
+  function exportData() { try { return localStorage.getItem(KEY) || JSON.stringify(blank()); } catch (_) { return JSON.stringify(blank()); } }
+  function importData(str) {
+    try {
+      var o = JSON.parse(str);
+      if (!o || typeof o !== 'object' || typeof o.cards !== 'object') return false;
+      save(o); refreshOpen(); return true;
+    } catch (_) { return false; }
+  }
+  // Real TMDB posters + forced rarities so foils/frames preview without playing.
+  var SEED = [
+    { id: 299534, type: 'movie', name: 'Avengers: Endgame', img: '/ulzhLuWrPK07P1YkdWQLZnQh1JL.jpg', rarity: 'legendary' },
+    { id: 361743, type: 'movie', name: 'Top Gun: Maverick', img: '/n0YuM4f5lvGAP6MAW2kBIzugXnc.jpg', rarity: 'legendary' },
+    { id: 19995, type: 'movie', name: 'Avatar', img: '/gKY6q7SjCkAU6FqvqWybDYgUKIF.jpg', rarity: 'elite' },
+    { id: 597, type: 'movie', name: 'Titanic', img: '/9xjZS2rlVxm8SFx8kPC3aIGCOYQ.jpg', rarity: 'elite' },
+    { id: 24428, type: 'movie', name: 'The Avengers', img: '/RYMX2wcKCBAr24UyPD7xwmjaTn.jpg', rarity: 'elite' },
+    { id: 135397, type: 'movie', name: 'Jurassic World', img: '/rhr4y79GpxQF9IsfJItRXVaoGs4.jpg', rarity: 'rare' },
+    { id: 420818, type: 'movie', name: 'The Lion King', img: '/dzBtMocZuJbjLOXvrl4zGYigDzh.jpg', rarity: 'rare' },
+    { id: 330457, type: 'movie', name: 'Frozen II', img: '/mINJaa34MtknCYl5AjtNJzWj8cD.jpg', rarity: 'common' }
+  ];
+
+  // ─────────────────────────── theme registry ────────────────────────────
+  var THEMES = {};
+  var DEFAULT_THEME = 'trading';
+  function defineTheme(t) { if (t && t.name) THEMES[t.name] = t; return t; }
+  function activeThemeName() {
+    var n; try { n = localStorage.getItem(THEME_KEY); } catch (_) { n = null; }
+    return (n && THEMES[n]) ? n : DEFAULT_THEME;
+  }
+  function activeTheme() { return THEMES[activeThemeName()] || THEMES[DEFAULT_THEME]; }
+  function useTheme(name) {
+    if (!THEMES[name]) return false;
+    try { localStorage.setItem(THEME_KEY, name); } catch (_) { /* noop */ }
+    // swap injected theme css + re-render if the gallery is open
+    var t = THEMES[name];
+    injectThemeCss(t);
+    refreshOpen();
+    return true;
+  }
+  function injectThemeCss(theme) {
+    // remove any previously injected theme styles, then inject the active one
+    Array.prototype.forEach.call(document.querySelectorAll('style[data-cl-theme]'), function (el) { el.remove(); });
+    if (!theme || !theme.css) return;
+    var s = document.createElement('style');
+    s.setAttribute('data-cl-theme', theme.name);
+    s.textContent = theme.css;
+    document.head.appendChild(s);
+  }
+  var CTX = { RARITY: RARITY, posterUrl: posterUrl, esc: esc, typeLabel: typeLabel, IMG: IMG };
+
+  // ── Built-in theme #1: AAA "trading" card (default) ──
+  defineTheme({
+    name: 'trading', label: 'Trading card',
+    gridCols: 'minmax(118px,1fr)',
+    css:
       '.ctc{position:relative;perspective:680px;animation:clCardIn .4s cubic-bezier(.2,.9,.3,1.2) both}' +
       '@keyframes clCardIn{from{opacity:0;transform:translateY(12px) scale(.93)}to{opacity:1;transform:none}}' +
       '.ctc-inner{position:relative;border-radius:13px;transform-style:preserve-3d;transition:transform .16s ease,box-shadow .2s ease;will-change:transform}' +
@@ -128,8 +166,7 @@
       '.ctc.person .ctc-art>img{object-position:center 16%}' +
       '.ctc-foil{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:0;background-image:repeating-linear-gradient(110deg,rgba(255,119,115,.5) 0%,rgba(255,237,95,.5) 9%,rgba(168,255,95,.5) 18%,rgba(131,255,247,.5) 27%,rgba(120,148,255,.5) 36%,rgba(216,117,255,.5) 45%,rgba(255,119,115,.5) 54%);background-size:280% 280%;background-position:var(--fx,50%) var(--fy,50%);mix-blend-mode:color-dodge;filter:brightness(.82) contrast(1.2);transition:opacity .2s}' +
       '.ctc-common .ctc-foil{display:none}' +
-      '.ctc-rare .ctc-foil{opacity:.3}' +
-      '.ctc-elite .ctc-foil{opacity:.44}' +
+      '.ctc-rare .ctc-foil{opacity:.3}.ctc-elite .ctc-foil{opacity:.44}' +
       '.ctc-legendary .ctc-foil{opacity:.52;animation:ctcDrift 7s linear infinite}' +
       '@keyframes ctcDrift{0%{background-position:0% 50%}100%{background-position:280% 50%}}' +
       '.ctc-glare{position:absolute;inset:0;z-index:3;pointer-events:none;opacity:0;background:radial-gradient(circle at var(--gx,50%) var(--gy,50%),rgba(255,255,255,.4),transparent 46%);mix-blend-mode:overlay;transition:opacity .2s}' +
@@ -146,8 +183,106 @@
       '.ctc-gem-d{width:7px;height:7px;border-radius:2px;transform:rotate(45deg);background:var(--cr);box-shadow:0 0 7px var(--cr)}' +
       '.ctc-new{position:absolute;top:7px;right:7px;z-index:5;font-size:.46rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#06281a;background:#7fd49a;border-radius:5px;padding:2px 5px;box-shadow:0 2px 8px rgba(127,212,154,.4)}' +
       '.ctc-dupe{position:absolute;right:7px;bottom:7px;z-index:6;font-size:.54rem;font-weight:900;color:#1a1200;background:linear-gradient(135deg,#f5c542,#e8a000);border-radius:99px;padding:1px 7px;box-shadow:0 2px 8px rgba(0,0,0,.5)}' +
+      '@media(prefers-reduced-motion:reduce){.ctc{animation:none}.ctc-legendary .ctc-frame,.ctc-legendary .ctc-foil{animation:none}.ctc-inner{transition:none}}',
+    card: function (c, ctx, i) {
+      var rar = ctx.RARITY[c.rarity] || ctx.RARITY.common;
+      var p = ctx.posterUrl(c.img);
+      var person = c.type === 'person';
+      return '<div class="ctc ctc-' + c.rarity + (person ? ' person' : '') + '" style="--cr:' + rar.ring + ';animation-delay:' + Math.min(i, 16) * 22 + 'ms" title="' + ctx.esc(c.name) + ' · ' + rar.label + '">' +
+        '<div class="ctc-inner"><div class="ctc-frame"><div class="ctc-art">' +
+          (p ? '<img src="' + ctx.esc(p) + '" alt="" loading="lazy">' : '<div class="ctc-noimg"></div>') +
+          '<div class="ctc-foil"></div><div class="ctc-glare"></div>' +
+          '<div class="ctc-gem"><span class="ctc-gem-d"></span>' + rar.label + '</div>' +
+          (c.isNew ? '<span class="ctc-new">New</span>' : '') +
+          (c.n > 1 ? '<span class="ctc-dupe">×' + c.n + '</span>' : '') +
+          '<div class="ctc-plate"><div class="ctc-name">' + ctx.esc(c.name) + '</div><div class="ctc-type">' + ctx.typeLabel(c) + '</div></div>' +
+        '</div></div></div></div>';
+    },
+    mount: function (grid) {
+      if (reducedMotion()) return;
+      Array.prototype.forEach.call(grid.querySelectorAll('.ctc'), function (card) {
+        var inner = card.querySelector('.ctc-inner'); if (!inner) return;
+        card.addEventListener('pointermove', function (e) {
+          if (e.pointerType && e.pointerType !== 'mouse') return;
+          var r = card.getBoundingClientRect();
+          var px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
+          inner.style.transform = 'rotateY(' + ((px - 0.5) * 16).toFixed(2) + 'deg) rotateX(' + ((0.5 - py) * 20).toFixed(2) + 'deg)';
+          inner.style.setProperty('--gx', (px * 100).toFixed(1) + '%');
+          inner.style.setProperty('--gy', (py * 100).toFixed(1) + '%');
+          inner.style.setProperty('--fx', (px * 200).toFixed(1) + '%');
+          inner.style.setProperty('--fy', (py * 200).toFixed(1) + '%');
+        });
+        var reset = function () { inner.style.transform = ''; };
+        card.addEventListener('pointerleave', reset);
+        card.addEventListener('pointercancel', reset);
+      });
+    }
+  });
+
+  // ── Built-in theme #2: "classic" simple poster tile (lightweight fallback) ──
+  defineTheme({
+    name: 'classic', label: 'Classic',
+    gridCols: 'minmax(92px,1fr)',
+    css:
+      '.clc-card{position:relative;border-radius:9px;overflow:hidden;background:#222;border:2px solid var(--cr);animation:clCardIn .35s cubic-bezier(.2,.9,.3,1.2) both}' +
+      '@keyframes clCardIn{from{opacity:0;transform:translateY(10px) scale(.94)}to{opacity:1;transform:none}}' +
+      '.clc-card .clc-img{width:100%;aspect-ratio:2/3;object-fit:cover;display:block;background:#2a2a2a}' +
+      '.clc-card.person .clc-img{aspect-ratio:1/1}' +
+      '.clc-card .clc-name{font-size:.62rem;font-weight:700;color:#eee;padding:5px 6px;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}' +
+      '.clc-card .clc-dupe{position:absolute;top:5px;right:5px;font-size:.55rem;font-weight:800;color:#1a1200;background:#e8a000;border-radius:99px;padding:1px 6px}' +
+      '.clc-card .clc-new{position:absolute;top:5px;left:5px;font-size:.5rem;font-weight:800;letter-spacing:.05em;color:#1a1200;background:#7fd49a;border-radius:4px;padding:2px 5px;text-transform:uppercase}' +
+      '@media(prefers-reduced-motion:reduce){.clc-card{animation:none}}',
+    card: function (c, ctx) {
+      var rar = ctx.RARITY[c.rarity] || ctx.RARITY.common;
+      var p = ctx.posterUrl(c.img);
+      var person = c.type === 'person';
+      return '<div class="clc-card' + (person ? ' person' : '') + '" style="--cr:' + rar.ring + '" title="' + ctx.esc(c.name) + ' · ' + rar.label + '">' +
+        (c.isNew ? '<span class="clc-new">New</span>' : '') +
+        (c.n > 1 ? '<span class="clc-dupe">×' + c.n + '</span>' : '') +
+        (p ? '<img class="clc-img" src="' + ctx.esc(p) + '" alt="" loading="lazy">' : '<div class="clc-img"></div>') +
+        '<div class="clc-name">' + ctx.esc(c.name) + '</div></div>';
+    }
+  });
+
+  // ─────────────────────────── gallery shell ─────────────────────────────
+  function injectShell() {
+    if (document.getElementById('clCollStyles')) return;
+    var css = document.createElement('style'); css.id = 'clCollStyles';
+    css.textContent =
+      '#clCollModal,#clCollDebug{position:fixed;inset:0;z-index:240;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.72);backdrop-filter:blur(6px)}' +
+      '#clCollModal.open,#clCollDebug.open{display:flex}' +
+      '.cl-coll-box{background:#161616;border:1px solid rgba(232,160,0,.22);border-radius:16px;width:100%;max-width:560px;max-height:86vh;display:flex;flex-direction:column;box-shadow:0 28px 80px rgba(0,0,0,.55);animation:clCollIn .28s cubic-bezier(.2,.9,.3,1.1) both}' +
+      '@keyframes clCollIn{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}' +
+      '.cl-coll-hd{padding:18px 18px 12px;border-bottom:1px solid rgba(255,255,255,.08)}' +
+      '.cl-coll-hd-top{display:flex;align-items:center;justify-content:space-between;gap:10px}' +
+      '.cl-coll-title{font-size:1.1rem;font-weight:800;color:#f5f5f5}.cl-coll-title span{color:#e8a000}' +
+      '.cl-coll-hd-btns{display:flex;align-items:center;gap:6px}' +
+      '.cl-coll-icon{background:none;border:none;color:#888;font-size:1.1rem;cursor:pointer;line-height:1;padding:2px 6px}.cl-coll-icon:hover{color:#f5f5f5}' +
+      '.cl-coll-x{background:none;border:none;color:#888;font-size:1.3rem;cursor:pointer;line-height:1;padding:2px 6px}.cl-coll-x:hover{color:#f5f5f5}' +
+      '.cl-coll-lvl{display:flex;align-items:center;gap:10px;margin-top:12px}' +
+      '.cl-coll-lvl-badge{flex-shrink:0;width:40px;height:40px;border-radius:50%;background:radial-gradient(circle,#e8a000,#a86f00);color:#1a1200;font-weight:900;font-size:1.05rem;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(232,160,0,.4)}' +
+      '.cl-coll-xp{flex:1;min-width:0}' +
+      '.cl-coll-xp-bar{height:7px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden;margin-top:5px}' +
+      '.cl-coll-xp-bar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#e8a000,#f5c542);transition:width .6s cubic-bezier(.3,.9,.3,1)}' +
+      '.cl-coll-xp-l{display:flex;justify-content:space-between;font-size:.66rem;color:#9a9a9a;font-weight:700}' +
+      '.cl-coll-counts{display:flex;gap:7px;flex-wrap:wrap;margin-top:13px}' +
+      '.cl-coll-chip{font-size:.66rem;font-weight:800;letter-spacing:.03em;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:#cfcfcf;border-radius:99px;padding:5px 11px;cursor:pointer;text-transform:uppercase}' +
+      '.cl-coll-chip.on{border-color:rgba(232,160,0,.6);background:rgba(232,160,0,.14);color:#e8a000}' +
+      '.cl-coll-grid{padding:16px 16px 20px;overflow-y:auto;display:grid;gap:14px}' +
       '.cl-coll-empty{padding:40px 20px;text-align:center;color:#9a9a9a;font-size:.9rem;grid-column:1/-1}' +
-      '@media(prefers-reduced-motion:reduce){.cl-coll-box,.ctc{animation:none}.ctc-legendary .ctc-frame,.ctc-legendary .ctc-foil{animation:none}.cl-coll-xp-bar>i,.ctc-inner{transition:none}}';
+      // debug panel
+      '.cl-dbg{background:#141414;border:1px solid rgba(232,160,0,.3);border-radius:14px;width:100%;max-width:440px;max-height:86vh;overflow-y:auto;padding:16px;box-shadow:0 28px 80px rgba(0,0,0,.6);color:#e8e8e8;font-size:.82rem}' +
+      '.cl-dbg h3{font-size:.95rem;font-weight:800;margin:0 0 4px;display:flex;justify-content:space-between;align-items:center}' +
+      '.cl-dbg h3 span{color:#e8a000}' +
+      '.cl-dbg section{border-top:1px solid rgba(255,255,255,.08);padding:12px 0 4px;margin-top:8px}' +
+      '.cl-dbg .lbl{font-size:.62rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#9a9a9a;margin-bottom:8px}' +
+      '.cl-dbg .row{display:flex;gap:7px;flex-wrap:wrap}' +
+      '.cl-dbg button{font:inherit;font-size:.74rem;font-weight:700;cursor:pointer;border:1px solid var(--bdr,rgba(255,255,255,.18));background:rgba(255,255,255,.05);color:#e8e8e8;border-radius:8px;padding:7px 11px}' +
+      '.cl-dbg button:hover{border-color:rgba(232,160,0,.5);color:#e8a000}' +
+      '.cl-dbg button.on{border-color:#e8a000;background:rgba(232,160,0,.16);color:#e8a000}' +
+      '.cl-dbg button.danger:hover{border-color:#e8806f;color:#e8806f}' +
+      '.cl-dbg .stat{font-size:.7rem;color:#9a9a9a;margin-top:8px}.cl-dbg .stat b{color:#e8e8e8}' +
+      '.cl-dbg textarea{width:100%;height:74px;margin-top:8px;background:#0d0d0d;color:#cfcfcf;border:1px solid rgba(255,255,255,.14);border-radius:8px;font-family:monospace;font-size:.66rem;padding:7px;resize:vertical}';
     document.head.appendChild(css);
   }
 
@@ -159,7 +294,7 @@
       '<div class="cl-coll-box">' +
         '<div class="cl-coll-hd">' +
           '<div class="cl-coll-hd-top"><div class="cl-coll-title">Your <span>collection</span></div>' +
-            '<button class="cl-coll-x" aria-label="Close">&#10005;</button></div>' +
+            '<div class="cl-coll-hd-btns" id="clCollHdBtns"><button class="cl-coll-x" aria-label="Close">&#10005;</button></div></div>' +
           '<div class="cl-coll-lvl"><div class="cl-coll-lvl-badge" id="clCollLvl">1</div>' +
             '<div class="cl-coll-xp"><div class="cl-coll-xp-l"><span id="clCollXpName">Level 1</span><span id="clCollXpNum"></span></div>' +
             '<div class="cl-coll-xp-bar"><i id="clCollXpFill" style="width:0%"></i></div></div></div>' +
@@ -170,10 +305,20 @@
     document.body.appendChild(m);
     m.querySelector('.cl-coll-x').addEventListener('click', close);
     m.addEventListener('click', function (e) { if (e.target === m) close(); });
+    // optional debug gear (only when enabled)
+    if (debugEnabled()) {
+      var gear = document.createElement('button');
+      gear.className = 'cl-coll-icon'; gear.innerHTML = '⚙'; gear.title = 'Debug';
+      gear.addEventListener('click', debug);
+      document.getElementById('clCollHdBtns').insertBefore(gear, m.querySelector('.cl-coll-x'));
+    }
     return m;
   }
 
   var _filter = 'all';
+  function isOpen() { var m = document.getElementById('clCollModal'); return m && m.classList.contains('open'); }
+  function refreshOpen() { if (isOpen()) render(); if (document.getElementById('clCollDebug') && document.getElementById('clCollDebug').classList.contains('open')) renderDebug(); }
+
   function render() {
     var st = stats();
     document.getElementById('clCollLvl').textContent = st.level;
@@ -182,10 +327,8 @@
     document.getElementById('clCollXpFill').style.width = Math.max(3, Math.min(100, st.xpSpan ? (st.xpInto / st.xpSpan) * 100 : 0)) + '%';
 
     var chips = [
-      { k: 'all', label: 'All ' + st.count },
-      { k: 'film', label: 'Films ' + st.films },
-      { k: 'person', label: 'People ' + st.people },
-      { k: 'legendary', label: 'Legendary ' + st.byRarity.legendary },
+      { k: 'all', label: 'All ' + st.count }, { k: 'film', label: 'Films ' + st.films },
+      { k: 'person', label: 'People ' + st.people }, { k: 'legendary', label: 'Legendary ' + st.byRarity.legendary },
       { k: 'elite', label: 'Elite ' + st.byRarity.elite }
     ];
     document.getElementById('clCollChips').innerHTML = chips.map(function (c) {
@@ -200,69 +343,96 @@
       if (_filter === 'film') return c.type !== 'person';
       if (_filter === 'person') return c.type === 'person';
       return c.rarity === _filter;
-    }).sort(function (a, b) {
-      return (ORDER[a.rarity] - ORDER[b.rarity]) || (a.name || '').localeCompare(b.name || '');
-    });
+    }).sort(function (a, b) { return (ORDER[a.rarity] - ORDER[b.rarity]) || (a.name || '').localeCompare(b.name || ''); });
 
+    var theme = activeTheme();
+    injectThemeCss(theme);
     var grid = document.getElementById('clCollGrid');
+    grid.style.gridTemplateColumns = 'repeat(auto-fill,' + (theme.gridCols || 'minmax(110px,1fr)') + ')';
     if (!cards.length) {
-      grid.style.display = 'block';
+      grid.style.display = 'grid';
       grid.innerHTML = '<div class="cl-coll-empty">No cards yet — play a game to start collecting films, shows and people.</div>';
       return;
     }
     grid.style.display = 'grid';
-    grid.innerHTML = cards.map(function (c, i) {
-      var rar = RARITY[c.rarity] || RARITY.common;
-      var p = posterUrl(c.img);
-      var isPerson = c.type === 'person';
-      var typeLabel = isPerson ? 'Person' : (c.type === 'tv' ? 'Series' : 'Film');
-      return '<div class="ctc ctc-' + c.rarity + (isPerson ? ' person' : '') + '" style="--cr:' + rar.ring + ';animation-delay:' + Math.min(i, 16) * 22 + 'ms" title="' + esc(c.name) + ' · ' + rar.label + '">' +
-        '<div class="ctc-inner"><div class="ctc-frame"><div class="ctc-art">' +
-          (p ? '<img src="' + esc(p) + '" alt="" loading="lazy">' : '<div class="ctc-noimg"></div>') +
-          '<div class="ctc-foil"></div><div class="ctc-glare"></div>' +
-          '<div class="ctc-gem"><span class="ctc-gem-d"></span>' + rar.label + '</div>' +
-          (c.isNew ? '<span class="ctc-new">New</span>' : '') +
-          (c.n > 1 ? '<span class="ctc-dupe">×' + c.n + '</span>' : '') +
-          '<div class="ctc-plate"><div class="ctc-name">' + esc(c.name) + '</div><div class="ctc-type">' + typeLabel + '</div></div>' +
-        '</div></div></div>' +
-      '</div>';
-    }).join('');
-    Array.prototype.forEach.call(grid.querySelectorAll('.ctc'), attachFx);
-  }
-
-  // Cursor-tracking 3D tilt + holographic foil/glare shift (mouse only).
-  function _reducedMotion() { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (_) { return false; } }
-  function attachFx(card) {
-    if (_reducedMotion()) return;
-    var inner = card.querySelector('.ctc-inner'); if (!inner) return;
-    card.addEventListener('pointermove', function (e) {
-      if (e.pointerType && e.pointerType !== 'mouse') return;
-      var r = card.getBoundingClientRect();
-      var px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
-      inner.style.transform = 'rotateY(' + ((px - 0.5) * 16).toFixed(2) + 'deg) rotateX(' + ((0.5 - py) * 20).toFixed(2) + 'deg)';
-      inner.style.setProperty('--gx', (px * 100).toFixed(1) + '%');
-      inner.style.setProperty('--gy', (py * 100).toFixed(1) + '%');
-      inner.style.setProperty('--fx', (px * 200).toFixed(1) + '%');
-      inner.style.setProperty('--fy', (py * 200).toFixed(1) + '%');
-    });
-    var reset = function () { inner.style.transform = ''; };
-    card.addEventListener('pointerleave', reset);
-    card.addEventListener('pointercancel', reset);
+    grid.innerHTML = cards.map(function (c, i) { return theme.card(c, CTX, i); }).join('');
+    try { if (theme.mount) theme.mount(grid); } catch (_) { /* noop */ }
   }
 
   function openGallery() {
-    injectStyles();
-    buildModal();
-    _filter = 'all';
-    render();
+    injectShell(); buildModal(); injectThemeCss(activeTheme());
+    _filter = 'all'; render();
     document.getElementById('clCollModal').classList.add('open');
     try { if (window.Track) window.Track('collection_open', stats()); } catch (_) { /* noop */ }
-    setTimeout(markSeen, 600); // clear "new" flags shortly after they're seen
+    setTimeout(markSeen, 600);
   }
-  function close() {
-    var m = document.getElementById('clCollModal');
-    if (m) m.classList.remove('open');
+  function close() { var m = document.getElementById('clCollModal'); if (m) m.classList.remove('open'); }
+
+  // ─────────────────────────────── debug panel ───────────────────────────
+  function debugEnabled() {
+    try { if (localStorage.getItem('cl_debug') === '1') return true; } catch (_) { /* noop */ }
+    try { return /[?&]ccdebug=1\b/.test(location.search); } catch (_) { return false; }
+  }
+  function buildDebug() {
+    var d = document.getElementById('clCollDebug');
+    if (d) return d;
+    injectShell();
+    d = document.createElement('div'); d.id = 'clCollDebug'; d.setAttribute('role', 'dialog');
+    d.innerHTML = '<div class="cl-dbg" id="clDbgBox"></div>';
+    document.body.appendChild(d);
+    d.addEventListener('click', function (e) { if (e.target === d) d.classList.remove('open'); });
+    return d;
+  }
+  function renderDebug() {
+    var st = stats();
+    var themeButtons = Object.keys(THEMES).map(function (n) {
+      return '<button data-theme="' + n + '" class="' + (activeThemeName() === n ? 'on' : '') + '">' + esc(THEMES[n].label || n) + '</button>';
+    }).join('');
+    document.getElementById('clDbgBox').innerHTML =
+      '<h3>Collection <span>debug</span><button class="cl-coll-x" id="clDbgClose" style="font-size:1.2rem">&#10005;</button></h3>' +
+      '<div class="stat">Level <b>' + st.level + '</b> · <b>' + st.count + '</b> cards (' + st.films + ' films / ' + st.people + ' people) · <b>' + st.xp + '</b> XP · L' + st.byRarity.legendary + ' E' + st.byRarity.elite + ' R' + st.byRarity.rare + ' C' + st.byRarity.common + '</div>' +
+      '<section><div class="lbl">Card theme</div><div class="row" id="clDbgThemes">' + themeButtons + '</div></section>' +
+      '<section><div class="lbl">Seed test cards</div><div class="row">' +
+        '<button data-act="seed">Grant sample set</button><button data-act="seedNew">Mark all new</button><button data-act="clearNew">Clear new</button></div></section>' +
+      '<section><div class="lbl">Progress</div><div class="row">' +
+        '<button data-act="xp100">+100 XP</button><button data-act="lvlup">+1 level</button><button data-act="lvlset">Set level…</button></div></section>' +
+      '<section><div class="lbl">Data</div><div class="row">' +
+        '<button data-act="export">Export</button><button data-act="import">Import ↑</button><button data-act="reset" class="danger">Reset all</button></div>' +
+        '<textarea id="clDbgData" placeholder="Collection JSON (Export fills this; paste + Import to restore)"></textarea></div></section>';
+    var box = document.getElementById('clDbgBox');
+    box.querySelector('#clDbgClose').addEventListener('click', function () { document.getElementById('clCollDebug').classList.remove('open'); });
+    Array.prototype.forEach.call(box.querySelectorAll('#clDbgThemes button'), function (b) {
+      b.addEventListener('click', function () { useTheme(b.dataset.theme); renderDebug(); });
+    });
+    Array.prototype.forEach.call(box.querySelectorAll('[data-act]'), function (b) {
+      b.addEventListener('click', function () { debugAction(b.dataset.act); });
+    });
+  }
+  function debugAction(act) {
+    var ta = document.getElementById('clDbgData');
+    if (act === 'seed') grant(SEED.map(function (s) { return s; }));
+    else if (act === 'seedNew') markAllNew(true);
+    else if (act === 'clearNew') markAllNew(false);
+    else if (act === 'xp100') addXp(100);
+    else if (act === 'lvlup') setLevel(stats().level + 1);
+    else if (act === 'lvlset') { var v = window.prompt('Set level to:', String(stats().level)); if (v != null) setLevel(parseInt(v, 10) || 1); }
+    else if (act === 'export') { if (ta) { ta.value = exportData(); ta.select(); try { navigator.clipboard && navigator.clipboard.writeText(ta.value); } catch (_) { /* noop */ } } }
+    else if (act === 'import') { if (ta && ta.value.trim()) { if (!importData(ta.value.trim())) window.alert('Invalid collection JSON.'); } }
+    else if (act === 'reset') { if (window.confirm('Reset your whole collection? This cannot be undone.')) reset(); }
+    renderDebug();
+  }
+  function debug() {
+    buildDebug();
+    renderDebug();
+    document.getElementById('clCollDebug').classList.add('open');
   }
 
-  window.Collection = { add: add, stats: stats, all: allCards, openGallery: openGallery, markSeen: markSeen };
+  // expose + init
+  window.Collection = {
+    add: add, stats: stats, all: allCards, openGallery: openGallery, markSeen: markSeen,
+    reset: reset, grant: grant, addXp: addXp, setLevel: setLevel, exportData: exportData, importData: importData, seed: function () { return grant(SEED.map(function (s) { return s; })); },
+    debug: debug,
+    themes: { register: defineTheme, use: useTheme, list: function () { return Object.keys(THEMES).map(function (n) { return { name: n, label: THEMES[n].label || n }; }); }, current: activeThemeName }
+  };
+  if (debugEnabled()) { try { window.addEventListener('load', function () { try { debug(); } catch (_) { /* noop */ } }); } catch (_) { /* noop */ } }
 })();
