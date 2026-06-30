@@ -265,6 +265,8 @@
     renderPips();
     renderResult(streak);
     save();
+    try { if (win && window.Collection && target) window.Collection.add([{ id: target.id, type: target.type || 'movie', name: target.title, img: target.posterPath }]); } catch (_) { /* noop */ }
+    try { var _g = (CFG.stateKey || 'cineguess').replace(/State$/, ''); if (window.Track) window.Track(_g + '_complete', { win: win ? 1 : 0 }); } catch (_) { /* noop */ }
   }
 
   function emojiGrid() {

@@ -10,7 +10,8 @@ const browser = {
   URLSearchParams: 'readonly', Intl: 'readonly', console: 'readonly',
   atob: 'readonly', btoa: 'readonly', Image: 'readonly',
   matchMedia: 'readonly', performance: 'readonly',
-  CineCredits: 'readonly', MergeStats: 'readonly', Media: 'readonly', Pool: 'readonly', Fx: 'readonly'
+  CineCredits: 'readonly', MergeStats: 'readonly', Media: 'readonly', Pool: 'readonly', Fx: 'readonly',
+  Sfx: 'readonly', Collection: 'readonly', Track: 'readonly'
 };
 const node = {
   process: 'readonly', module: 'writable', require: 'readonly', __dirname: 'readonly',

@@ -337,6 +337,8 @@ function finish(win){
   renderPips();
   renderResult(streak);
   save();
+  try { if (win && window.Collection && target) window.Collection.add([{ id: target.id, type: target.type || 'movie', name: target.title, img: target.posterPath }]); } catch(_) {}
+  try { if (window.Track) window.Track('cineframe_complete', { win: win ? 1 : 0 }); } catch(_) {}
 }
 
 function emojiGrid(){
@@ -517,6 +519,8 @@ window.HOWTO = {
 <script defer src="/cookie.js"></script>
 <script defer src="/lib/merge-stats.js"></script>
 <script defer src="/auth.js"></script>
+<script defer src="/analytics.js"></script>
+<script defer src="/collection.js"></script>
 <script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>
