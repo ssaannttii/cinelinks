@@ -36,7 +36,7 @@
   // ─────────────────────────────── helpers ───────────────────────────────
   function load() {
     var s; try { s = JSON.parse(localStorage.getItem(KEY)) || null; } catch (_) { return null; }
-    if (s && (s.mv || 0) < 2) { migrate(s); save(s); }
+    if (s && (s.mv || 0) < 3) { migrate(s); save(s); }
     return s;
   }
   function blank() { return { v: SCHEMA, cards: {}, xp: 0, seen: 0 }; }
@@ -85,9 +85,18 @@
   // One-time re-tier of pre-existing cards (all stored as "common" before hash
   // rarity existed) so older collections gain variety too. Guarded by s.mv.
   function migrate(s) {
-    if (!s || (s.mv || 0) >= 2) return;
-    Object.keys(s.cards || {}).forEach(function (k) { var c = s.cards[k]; c.rarity = rarityOf({ id: c.id, type: c.type }); });
-    s.mv = 2;
+    if (!s || (s.mv || 0) >= 3) return;
+    var cards = s.cards || {};
+    // re-tier any card that somehow lacks a rarity (older blobs were all "common")
+    Object.keys(cards).forEach(function (k) { var c = cards[k]; if (!c.rarity) c.rarity = rarityOf({ id: c.id, type: c.type }); });
+    // assign stable collection numbers (#001…) in collected order to cards missing one
+    var maxNo = 0; Object.keys(cards).forEach(function (k) { if (cards[k].no > maxNo) maxNo = cards[k].no; });
+    Object.keys(cards).map(function (k) { return cards[k]; })
+      .filter(function (c) { return !c.no; })
+      .sort(function (a, b) { return (a.first || '').localeCompare(b.first || '') || (a.name || '').localeCompare(b.name || ''); })
+      .forEach(function (c) { c.no = ++maxNo; });
+    s.seq = Math.max(s.seq || 0, maxNo);
+    s.mv = 3;
   }
   function xpForLevel(l) { return 50 * (l - 1) * (l - 1); }
   function levelFromXp(xp) { return Math.floor(Math.sqrt(Math.max(0, xp) / 50)) + 1; }
@@ -105,7 +114,7 @@
         s.xp += XP.dupe;
       } else {
         var rar = rarityOf(it);
-        s.cards[k] = { id: it.id, type: it.type, name: it.name || '', img: it.img || '', rarity: rar, n: 1, first: d, isNew: 1 };
+        s.cards[k] = { id: it.id, type: it.type, name: it.name || '', img: it.img || '', rarity: rar, n: 1, first: d, no: (s.seq = (s.seq || 0) + 1), isNew: 1 };
         s.xp += XP[rar] || 10;
         added.push(s.cards[k]);
       }
@@ -278,7 +287,7 @@
       '.auth-card{position:relative;aspect-ratio:5/7;border-radius:13px;overflow:hidden;transform-style:preserve-3d;transition:transform .16s ease,box-shadow .2s ease;will-change:transform;background:#0a1830;box-shadow:0 8px 22px rgba(0,0,0,.55)}' +
       '.auth-bgimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;z-index:0}' +
       '.auth-noimg{position:absolute;inset:0;z-index:0;background:radial-gradient(120% 80% at 50% 0%,#17325e,#0a1830)}' +
-      '.auth-scrim{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(6,11,22,.12),transparent 16%,transparent 44%,rgba(6,11,22,.84) 76%,rgba(4,9,18,.97))}' +
+      '.auth-scrim{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(6,11,22,.34),transparent 20%,transparent 56%,rgba(6,11,22,.74) 78%,rgba(4,9,18,.96))}' +
       '.auth-corner{position:absolute;top:0;left:0;width:30%;height:21%;z-index:3;background:linear-gradient(135deg,var(--m1),var(--cr) 58%,transparent 60%);clip-path:polygon(0 0,100% 0,0 100%);opacity:.95;pointer-events:none}' +
       '.auth-star{position:absolute;top:4.5%;left:4.5%;width:12%;aspect-ratio:1;z-index:4;background:conic-gradient(from 0deg,#ff9a9a,#fff39a,#9affb0,#9ad9ff,#c39aff,#ff9af0,#ff9a9a);clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);filter:drop-shadow(0 1px 3px rgba(0,0,0,.6));animation:authStar 9s linear infinite}' +
       '@keyframes authStar{to{filter:hue-rotate(360deg) drop-shadow(0 1px 3px rgba(0,0,0,.6))}}' +
@@ -286,19 +295,13 @@
       '.auth-tags{position:absolute;top:7px;right:7px;z-index:9;display:flex;gap:4px}' +
       '.auth-nw{font-size:.44rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#06281a;background:#7fd49a;border-radius:5px;padding:2px 5px}' +
       '.auth-dp{font-size:.5rem;font-weight:900;color:#1a1200;background:linear-gradient(135deg,#f5c542,#e8a000);border-radius:99px;padding:1px 7px}' +
-      '.auth-text{position:absolute;left:0;right:0;bottom:0;z-index:5;padding:0 10px 9px;text-align:center}' +
-      '.auth-name{font-weight:900;font-size:1rem;line-height:1.04;letter-spacing:.01em;text-transform:uppercase;white-space:normal;max-height:2.1em;overflow:hidden;background:linear-gradient(180deg,var(--m1),var(--cr) 52%,var(--m1));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;filter:drop-shadow(0 1px 2px rgba(0,0,0,.75));margin-bottom:3px}' +
-      '.auth-sub{font-size:.45rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--cr);margin-bottom:7px}' +
-      '.auth-foot{position:relative;display:flex;justify-content:space-between;align-items:flex-end;gap:6px;padding-top:6px;text-align:left}' +
-      '.auth-foot::before{content:"";position:absolute;left:4%;right:4%;top:0;height:1px;background:linear-gradient(90deg,transparent,var(--cr),transparent)}' +
-      '.auth-foot-l{display:flex;align-items:center;gap:5px;min-width:0}' +
-      '.auth-foot-star{width:14px;height:14px;flex-shrink:0;background:conic-gradient(from 0deg,#ff9a9a,#fff39a,#9affb0,#9ad9ff,#c39aff,#ff9af0,#ff9a9a);clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}' +
-      '.auth-ed{min-width:0;line-height:1.15}' +
-      '.auth-ed b{display:block;font-size:.45rem;color:#fff;font-weight:800}' +
-      '.auth-ed span{display:block;font-size:.4rem;color:rgba(255,255,255,.62);font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:74px}' +
-      '.auth-foot-r{text-align:right;flex-shrink:0}' +
-      '.auth-brand{font-size:.4rem;font-weight:900;letter-spacing:.06em;color:var(--cr);line-height:1.1}' +
-      '.auth-serial{font-family:ui-monospace,Menlo,monospace;font-size:.4rem;color:rgba(255,255,255,.55);margin-top:2px}' +
+      '.auth-text{position:absolute;left:0;right:0;bottom:0;z-index:5;padding:0 11px 10px;text-align:center}' +
+      '.auth-name{font-weight:900;font-size:1.02rem;line-height:1.02;letter-spacing:.01em;text-transform:uppercase;white-space:normal;max-height:2.05em;overflow:hidden;background:linear-gradient(180deg,var(--m1),var(--cr) 52%,var(--m1));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;filter:drop-shadow(0 1px 2px rgba(0,0,0,.9));margin-bottom:5px}' +
+      '.auth-meta{display:flex;align-items:center;justify-content:center;gap:6px;font-size:.5rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase}' +
+      '.auth-gem{width:7px;height:7px;flex-shrink:0;border-radius:2px;transform:rotate(45deg);background:var(--cr);box-shadow:0 0 6px var(--cr)}' +
+      '.auth-rar{color:var(--cr)}' +
+      '.auth-meta .sep{color:rgba(255,255,255,.32)}' +
+      '.auth-no{color:rgba(255,255,255,.82);font-family:ui-monospace,Menlo,monospace;letter-spacing:.03em}' +
       '.auth-frame{position:absolute;inset:0;z-index:6;border-radius:13px;pointer-events:none;box-shadow:inset 0 0 0 1px rgba(0,0,0,.55),inset 0 0 0 3px var(--cr),inset 0 0 0 4px rgba(0,0,0,.45)}' +
       '.auth-foil{position:absolute;inset:0;z-index:7;pointer-events:none;opacity:0;background:repeating-linear-gradient(115deg,rgba(255,119,115,.35),rgba(255,237,95,.35) 12%,rgba(131,255,247,.35) 24%,rgba(120,148,255,.35) 36%,rgba(216,117,255,.35) 48%,rgba(255,119,115,.35) 60%);background-size:260% 260%;background-position:var(--fx,50%) var(--fy,50%);mix-blend-mode:color-dodge;transition:opacity .2s}' +
       '.auth-rare .auth-foil{opacity:.14}.auth-elite .auth-foil{opacity:.2}.auth-legendary .auth-foil{opacity:.28;animation:authDrift 7s linear infinite}' +
@@ -313,25 +316,17 @@
       var rar = ctx.RARITY[c.rarity] || ctx.RARITY.common;
       var p = ctx.posterUrl(c.img);
       var person = c.type === 'person';
-      var year = (c.first && /^\d{4}/.test(c.first)) ? c.first.slice(0, 4) : String(new Date().getFullYear());
-      var ini = (c.name || '').split(/\s+/).slice(0, 2).map(function (w) { return w.charAt(0); }).join('').toUpperCase().replace(/[^A-Z0-9]/g, '') || 'CL';
-      var rl = c.rarity === 'legendary' ? 'L' : c.rarity === 'elite' ? 'E' : c.rarity === 'rare' ? 'R' : 'C';
-      var serial = ini + ('0' + (Math.abs(c.id) % 100)).slice(-2) + '-' + year + rl;
-      var typeUp = person ? 'ACTOR' : (c.type === 'tv' ? 'SERIES' : 'FILM');
-      var sub = typeUp + ' · ' + rar.label.toUpperCase() + ' · ' + year;
+      var typeUp = person ? 'Actor' : (c.type === 'tv' ? 'Series' : 'Film');
+      var no = '#' + ('00' + (c.no || 0)).slice(-3);
       var nm = ctx.esc(c.name);
-      return '<div class="auth auth-' + c.rarity + (person ? ' person' : '') + '" style="--cr:' + rar.ring + ';--m1:' + (METAL[c.rarity] || '#fff') + ';animation-delay:' + Math.min(i, 16) * 22 + 'ms" title="' + nm + ' · ' + rar.label + '">' +
+      return '<div class="auth auth-' + c.rarity + (person ? ' person' : '') + '" style="--cr:' + rar.ring + ';--m1:' + (METAL[c.rarity] || '#fff') + ';animation-delay:' + Math.min(i, 16) * 22 + 'ms" title="' + nm + ' · ' + rar.label + ' · ' + no + '">' +
         '<div class="auth-card">' +
           (p ? '<img class="auth-bgimg" src="' + ctx.esc(p) + '" alt="" loading="lazy">' : '<div class="auth-noimg"></div>') +
           '<div class="auth-scrim"></div><div class="auth-corner"></div><div class="auth-star"></div>' +
           '<div class="auth-tags">' + (c.n > 1 ? '<span class="auth-dp">×' + c.n + '</span>' : '') + (c.isNew ? '<span class="auth-nw">New</span>' : '') + '</div>' +
           '<div class="auth-text">' +
             '<div class="auth-name">' + nm + '</div>' +
-            '<div class="auth-sub">' + ctx.esc(sub) + '</div>' +
-            '<div class="auth-foot">' +
-              '<div class="auth-foot-l"><span class="auth-foot-star"></span><div class="auth-ed"><b>' + year + '</b><span>' + nm + '</span></div></div>' +
-              '<div class="auth-foot-r"><div class="auth-brand">CINELINKS<br>AUTHENTIC</div><div class="auth-serial">' + serial + '</div></div>' +
-            '</div>' +
+            '<div class="auth-meta"><span class="auth-gem"></span><span class="auth-rar">' + rar.label + '</span><span class="sep">·</span><span>' + typeUp + '</span><span class="sep">·</span><span class="auth-no">' + no + '</span></div>' +
           '</div>' +
           '<div class="auth-frame"></div><div class="auth-foil"></div><div class="auth-glare"></div>' +
         '</div>' +
