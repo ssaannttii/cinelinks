@@ -68,13 +68,17 @@
       var rx = 0, ry = 0, sc = 1, px = 0.5, py = 0.5;            // current
       var vx = 0, vy = 0, vs = 0;                                 // velocity
       var trx = 0, try_ = 0, tsc = 1, tpx = 0.5, tpy = 0.5;       // target
-      var STIFF = 0.16, DAMP = 0.74;
+      var STIFF = 0.18, DAMP = 0.8;
+      // hard caps so the spring's overshoot can never push the card past the safe
+      // envelope its container reserves — otherwise a corner of the card clips.
+      function cap(v, m) { return v > m ? m : v < -m ? -m : v; }
       function frame() {
         vx = (vx + (trx - rx) * STIFF) * DAMP; rx += vx;
         vy = (vy + (try_ - ry) * STIFF) * DAMP; ry += vy;
         vs = (vs + (tsc - sc) * STIFF) * DAMP; sc += vs;
         px += (tpx - px) * 0.22; py += (tpy - py) * 0.22;
-        inner.style.transform = 'perspective(760px) rotateX(' + rx.toFixed(2) + 'deg) rotateY(' + ry.toFixed(2) + 'deg) scale(' + sc.toFixed(3) + ')';
+        var scc = sc > 1.02 ? 1.02 : sc;
+        inner.style.transform = 'perspective(760px) rotateX(' + cap(rx, 13).toFixed(2) + 'deg) rotateY(' + cap(ry, 13).toFixed(2) + 'deg) scale(' + scc.toFixed(3) + ')';
         inner.style.setProperty('--gx', (px * 100).toFixed(1) + '%');
         inner.style.setProperty('--gy', (py * 100).toFixed(1) + '%');
         inner.style.setProperty('--fx', (px * 200).toFixed(1) + '%');
@@ -92,9 +96,9 @@
         if (e.pointerType && e.pointerType !== 'mouse') return;
         var r = card.getBoundingClientRect();
         tpx = (e.clientX - r.left) / r.width; tpy = (e.clientY - r.top) / r.height;
-        try_ = (tpx - 0.5) * 15;     // rotateY
-        trx = (0.5 - tpy) * 15;      // rotateX
-        tsc = 1.02; active = true; inner.classList.add('tilted'); kick();
+        try_ = (tpx - 0.5) * 12;     // rotateY
+        trx = (0.5 - tpy) * 12;      // rotateX
+        tsc = 1.018; active = true; inner.classList.add('tilted'); kick();
       });
       var reset = function () { active = false; trx = 0; try_ = 0; tsc = 1; tpx = 0.5; tpy = 0.5; kick(); };
       card.addEventListener('pointerleave', reset);
@@ -707,7 +711,7 @@
       '#clCollDetail{position:fixed;inset:0;z-index:250;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.82);backdrop-filter:blur(7px)}' +
       '#clCollDetail.open{display:flex;animation:clCollIn .26s cubic-bezier(.2,.9,.3,1.1) both}' +
       '.cl-detail-box{position:relative;display:flex;flex-direction:column;align-items:center;gap:18px;max-height:92vh;overflow:auto;padding:4px}' +
-      '.cl-detail-stage{width:300px;height:420px;display:flex;align-items:center;justify-content:center;flex-shrink:0}' +
+      '.cl-detail-stage{width:340px;height:476px;max-width:94vw;display:flex;align-items:center;justify-content:center;flex-shrink:0}' +
       '.cl-detail-card{width:300px;max-width:86vw}' +
       '.cl-detail-x{position:fixed;top:16px;right:18px;background:rgba(20,20,20,.65);border:1px solid rgba(255,255,255,.16);color:#ddd;font-size:1.1rem;cursor:pointer;border-radius:999px;width:38px;height:38px;line-height:1;z-index:1}' +
       '.cl-di{width:300px;max-width:90vw}' +
