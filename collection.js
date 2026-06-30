@@ -297,6 +297,7 @@
       '.auth-dp{font-size:.5rem;font-weight:900;color:#1a1200;background:linear-gradient(135deg,#f5c542,#e8a000);border-radius:99px;padding:1px 7px}' +
       '.auth-text{position:absolute;left:0;right:0;bottom:0;z-index:5;padding:0 11px 10px;text-align:center}' +
       '.auth-name{font-weight:900;font-size:1.02rem;line-height:1.02;letter-spacing:.01em;text-transform:uppercase;white-space:normal;max-height:2.05em;overflow:hidden;background:linear-gradient(180deg,var(--m1),var(--cr) 52%,var(--m1));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;filter:drop-shadow(0 1px 2px rgba(0,0,0,.9));margin-bottom:5px}' +
+      '.auth-name--md{font-size:.84rem}.auth-name--sm{font-size:.7rem;letter-spacing:0}' +
       '.auth-meta{display:flex;align-items:center;justify-content:center;gap:6px;font-size:.5rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase}' +
       '.auth-gem{width:7px;height:7px;flex-shrink:0;border-radius:2px;transform:rotate(45deg);background:var(--cr);box-shadow:0 0 6px var(--cr)}' +
       '.auth-rar{color:var(--cr)}' +
@@ -318,6 +319,8 @@
       var person = c.type === 'person';
       var typeUp = person ? 'Actor' : (c.type === 'tv' ? 'Series' : 'Film');
       var no = '#' + ('00' + (c.no || 0)).slice(-3);
+      var nlen = (c.name || '').length;
+      var nmCls = nlen > 22 ? ' auth-name--sm' : nlen > 14 ? ' auth-name--md' : '';
       var nm = ctx.esc(c.name);
       return '<div class="auth auth-' + c.rarity + (person ? ' person' : '') + '" style="--cr:' + rar.ring + ';--m1:' + (METAL[c.rarity] || '#fff') + ';animation-delay:' + Math.min(i, 16) * 22 + 'ms" title="' + nm + ' · ' + rar.label + ' · ' + no + '">' +
         '<div class="auth-card">' +
@@ -325,7 +328,7 @@
           '<div class="auth-scrim"></div><div class="auth-corner"></div><div class="auth-star"></div>' +
           '<div class="auth-tags">' + (c.n > 1 ? '<span class="auth-dp">×' + c.n + '</span>' : '') + (c.isNew ? '<span class="auth-nw">New</span>' : '') + '</div>' +
           '<div class="auth-text">' +
-            '<div class="auth-name">' + nm + '</div>' +
+            '<div class="auth-name' + nmCls + '">' + nm + '</div>' +
             '<div class="auth-meta"><span class="auth-gem"></span><span class="auth-rar">' + rar.label + '</span><span class="sep">·</span><span>' + typeUp + '</span><span class="sep">·</span><span class="auth-no">' + no + '</span></div>' +
           '</div>' +
           '<div class="auth-frame"></div><div class="auth-foil"></div><div class="auth-glare"></div>' +
@@ -373,7 +376,19 @@
       '.cl-dbg button.on{border-color:#e8a000;background:rgba(232,160,0,.16);color:#e8a000}' +
       '.cl-dbg button.danger:hover{border-color:#e8806f;color:#e8806f}' +
       '.cl-dbg .stat{font-size:.7rem;color:#9a9a9a;margin-top:8px}.cl-dbg .stat b{color:#e8e8e8}' +
-      '.cl-dbg textarea{width:100%;height:74px;margin-top:8px;background:#0d0d0d;color:#cfcfcf;border:1px solid rgba(255,255,255,.14);border-radius:8px;font-family:monospace;font-size:.66rem;padding:7px;resize:vertical}';
+      '.cl-dbg textarea{width:100%;height:74px;margin-top:8px;background:#0d0d0d;color:#cfcfcf;border:1px solid rgba(255,255,255,.14);border-radius:8px;font-family:monospace;font-size:.66rem;padding:7px;resize:vertical}' +
+      // card detail view
+      '#clCollDetail{position:fixed;inset:0;z-index:250;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.82);backdrop-filter:blur(7px)}' +
+      '#clCollDetail.open{display:flex;animation:clCollIn .26s cubic-bezier(.2,.9,.3,1.1) both}' +
+      '.cl-detail-box{position:relative;display:flex;flex-direction:column;align-items:center;gap:18px;max-height:92vh;overflow:auto;padding:4px}' +
+      '.cl-detail-stage{width:300px;height:420px;display:flex;align-items:center;justify-content:center;flex-shrink:0}' +
+      '.cl-detail-card{width:150px;transform:scale(2);transform-origin:center}' +
+      '.cl-detail-x{position:fixed;top:16px;right:18px;background:rgba(20,20,20,.65);border:1px solid rgba(255,255,255,.16);color:#ddd;font-size:1.1rem;cursor:pointer;border-radius:999px;width:38px;height:38px;line-height:1;z-index:1}' +
+      '.cl-di{width:300px;max-width:90vw}' +
+      '.cl-di-name{font-size:1.15rem;font-weight:800;color:#f5f5f5;text-align:center;margin-bottom:11px}' +
+      '.cl-di-rows{display:flex;flex-direction:column;gap:1px;border-radius:11px;overflow:hidden;border:1px solid rgba(255,255,255,.09)}' +
+      '.cl-di-row{display:flex;justify-content:space-between;padding:10px 14px;background:#181818;font-size:.84rem}' +
+      '.cl-di-row span{color:#9a9a9a}.cl-di-row b{color:#f0f0f0;font-weight:700}';
     document.head.appendChild(css);
   }
 
@@ -448,6 +463,10 @@
     grid.style.display = 'grid';
     grid.innerHTML = cards.map(function (c, i) { return theme.card(c, CTX, i); }).join('');
     try { if (theme.mount) theme.mount(grid); } catch (_) { /* noop */ }
+    Array.prototype.forEach.call(grid.children, function (el, idx) {
+      el.style.cursor = 'pointer';
+      el.addEventListener('click', function () { openDetail(cards[idx]); });
+    });
   }
 
   function openGallery() {
@@ -517,6 +536,48 @@
     renderDebug();
     document.getElementById('clCollDebug').classList.add('open');
   }
+
+  // ── Card detail view (click a card → large, legible, with full info) ──
+  function buildDetail() {
+    var d = document.getElementById('clCollDetail');
+    if (d) return d;
+    injectShell();
+    d = document.createElement('div'); d.id = 'clCollDetail'; d.setAttribute('role', 'dialog');
+    d.innerHTML = '<button class="cl-detail-x" aria-label="Close">&#10005;</button>' +
+      '<div class="cl-detail-box"><div class="cl-detail-stage"><div class="cl-detail-card" id="clDetailCard"></div></div>' +
+      '<div class="cl-di" id="clDetailInfo"></div></div>';
+    document.body.appendChild(d);
+    d.querySelector('.cl-detail-x').addEventListener('click', closeDetail);
+    d.addEventListener('click', function (e) { if (e.target === d) closeDetail(); });
+    return d;
+  }
+  function detailInfo(c) {
+    var rar = RARITY[c.rarity] || RARITY.common;
+    var dt = null; try { dt = c.first ? new Date(c.first + 'T00:00:00') : null; } catch (_) { dt = null; }
+    var dateStr = (dt && !isNaN(dt.getTime())) ? dt.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
+    var rows = [
+      ['Rarity', rar.label, rar.ring],
+      ['Type', typeLabel(c), ''],
+      ['Number', '#' + ('00' + (c.no || 0)).slice(-3), ''],
+      ['Collected', dateStr, ''],
+      ['Copies', '×' + (c.n || 1), '']
+    ];
+    return '<div class="cl-di-name">' + esc(c.name) + '</div><div class="cl-di-rows">' +
+      rows.map(function (r) { return '<div class="cl-di-row"><span>' + r[0] + '</span><b' + (r[2] ? ' style="color:' + r[2] + '"' : '') + '>' + esc(r[1]) + '</b></div>'; }).join('') +
+      '</div>';
+  }
+  function openDetail(c) {
+    if (!c) return;
+    buildDetail();
+    var theme = activeTheme(); injectThemeCss(theme);
+    var holder = document.getElementById('clDetailCard');
+    holder.innerHTML = theme.card(c, CTX, 0);
+    try { if (theme.mount) theme.mount(holder); } catch (_) { /* noop */ }
+    document.getElementById('clDetailInfo').innerHTML = detailInfo(c);
+    document.getElementById('clCollDetail').classList.add('open');
+    try { if (window.Track) window.Track('collection_card', { rarity: c.rarity, type: c.type }); } catch (_) { /* noop */ }
+  }
+  function closeDetail() { var d = document.getElementById('clCollDetail'); if (d) d.classList.remove('open'); }
 
   // expose + init
   window.Collection = {
