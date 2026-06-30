@@ -198,6 +198,33 @@
     });
   }
   function setsState() { return setsStateFrom(load() || blank()); }
+
+  // ── Card backs: unlock by level, selectable. The reward for leveling up. ──
+  var CARDBACKS = [
+    { id: 'classic', name: 'Classic', level: 1, css: '' },
+    { id: 'gold', name: 'Gold Foil', level: 3, css: 'cb-gold' },
+    { id: 'holo', name: 'Holographic', level: 6, css: 'cb-holo' },
+    { id: 'midnight', name: 'Midnight', level: 10, css: 'cb-midnight' },
+    { id: 'crimson', name: 'Crimson', level: 15, css: 'cb-crimson' }
+  ];
+  function activeCardbackId() {
+    var id = null; try { id = localStorage.getItem('cl_cardback'); } catch (_) {}
+    var cb = CARDBACKS.filter(function (c) { return c.id === id; })[0];
+    return (cb && stats().level >= cb.level) ? cb.id : 'classic';
+  }
+  function activeCardbackClass() { var cb = CARDBACKS.filter(function (c) { return c.id === activeCardbackId(); })[0]; return cb ? cb.css : ''; }
+  function cardbacksState() {
+    var lvl = stats().level, active = activeCardbackId();
+    return CARDBACKS.map(function (cb) { return { id: cb.id, name: cb.name, level: cb.level, css: cb.css, unlocked: lvl >= cb.level, active: cb.id === active }; });
+  }
+  function useCardback(id) {
+    var cb = CARDBACKS.filter(function (c) { return c.id === id; })[0];
+    if (!cb || stats().level < cb.level) return false;
+    try { localStorage.setItem('cl_cardback', id); } catch (_) {}
+    return true;
+  }
+  // card backs newly unlocked crossing from lvA to lvB (for the level-up message)
+  function cardbacksUnlockedBetween(lvA, lvB) { return CARDBACKS.filter(function (cb) { return cb.level > lvA && cb.level <= lvB; }); }
   // One-time award + record for newly-completed sets. Returns the newly claimed.
   function claimSets() {
     var s = load() || blank();
@@ -507,7 +534,29 @@
       '.cl-set-htitle{font-weight:800;font-size:.9rem;color:#f0f0f0}' +
       '.cl-slot{position:relative;aspect-ratio:5/7;border-radius:13px;border:1.5px dashed rgba(255,255,255,.16);background:repeating-linear-gradient(45deg,#141414,#141414 9px,#181818 9px,#181818 18px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:8px}' +
       '.cl-slot-q{font-size:1.8rem;font-weight:900;color:rgba(255,255,255,.22)}' +
-      '.cl-slot-nm{font-size:.64rem;font-weight:700;color:rgba(255,255,255,.45);line-height:1.2}';
+      '.cl-slot-nm{font-size:.64rem;font-weight:700;color:rgba(255,255,255,.45);line-height:1.2}' +
+      // ── card backs ──
+      '.clr-back.cb-gold,.cb-swatch.cb-gold{background:linear-gradient(160deg,#3a2c0f,#150f04);border-color:rgba(232,194,74,.6);box-shadow:inset 0 0 0 3px rgba(232,194,74,.28)}' +
+      '.clr-back.cb-gold .clr-mono,.cb-swatch.cb-gold .clr-mono{color:#f5d97a;text-shadow:0 2px 14px rgba(232,194,74,.5)}' +
+      '.clr-back.cb-holo,.cb-swatch.cb-holo{background:conic-gradient(from 0deg,#3a2a4a,#243a5a,#244a44,#4a3a24,#3a2a4a);border-color:rgba(255,255,255,.42);box-shadow:inset 0 0 0 3px rgba(255,255,255,.18)}' +
+      '.clr-back.cb-holo .clr-mono,.cb-swatch.cb-holo .clr-mono{color:#fff}' +
+      '.clr-back.cb-midnight,.cb-swatch.cb-midnight{background:radial-gradient(circle at 30% 20%,#1a2238,#080c16);border-color:rgba(122,166,232,.42);box-shadow:inset 0 0 0 3px rgba(122,166,232,.18)}' +
+      '.clr-back.cb-midnight .clr-mono,.cb-swatch.cb-midnight .clr-mono{color:#9ab8e8}' +
+      '.clr-back.cb-crimson,.cb-swatch.cb-crimson{background:linear-gradient(160deg,#3a1218,#16080a);border-color:rgba(216,90,90,.5);box-shadow:inset 0 0 0 3px rgba(216,90,90,.22)}' +
+      '.clr-back.cb-crimson .clr-mono,.cb-swatch.cb-crimson .clr-mono{color:#e88080}' +
+      '#clCardbacks{position:fixed;inset:0;z-index:255;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.78);backdrop-filter:blur(7px)}' +
+      '#clCardbacks.open{display:flex}' +
+      '.cb-box{background:#161616;border:1px solid rgba(232,160,0,.22);border-radius:16px;width:100%;max-width:460px;max-height:86vh;overflow-y:auto;padding:18px;box-shadow:0 28px 80px rgba(0,0,0,.55)}' +
+      '.cb-box h3{display:flex;justify-content:space-between;align-items:center;font-size:1.05rem;font-weight:800;margin:0 0 6px;color:#f5f5f5}.cb-box h3 span{color:#e8a000}' +
+      '.cb-sub{font-size:.74rem;color:#9a9a9a;margin-bottom:14px}' +
+      '.cb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:12px}' +
+      '.cb-item{cursor:pointer;text-align:center}.cb-item.locked{cursor:default}' +
+      '.cb-swatch{position:relative;aspect-ratio:5/7;border-radius:11px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:repeating-linear-gradient(45deg,#101a30,#101a30 9px,#13203a 9px,#13203a 18px);border:1px solid rgba(232,160,0,.32);box-shadow:inset 0 0 0 3px rgba(232,160,0,.16)}' +
+      '.cb-swatch .clr-mono{font-size:1.6rem}' +
+      '.cb-item.active .cb-swatch{outline:2px solid #e8a000;outline-offset:2px}' +
+      '.cb-item.locked .cb-swatch{filter:grayscale(.7) brightness(.5)}' +
+      '.cb-item.locked .cb-swatch::after{content:"🔒 Lvl " attr(data-lvl);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.68rem;font-weight:800;background:rgba(0,0,0,.5)}' +
+      '.cb-nm{font-size:.7rem;font-weight:700;color:#cfcfcf;margin-top:6px}.cb-item.locked .cb-nm{color:#777}';
     document.head.appendChild(css);
   }
 
@@ -530,6 +579,11 @@
     document.body.appendChild(m);
     m.querySelector('.cl-coll-x').addEventListener('click', close);
     m.addEventListener('click', function (e) { if (e.target === m) close(); });
+    // card-back picker
+    var cbBtn = document.createElement('button');
+    cbBtn.className = 'cl-coll-icon'; cbBtn.innerHTML = '🎴'; cbBtn.title = 'Card backs';
+    cbBtn.addEventListener('click', openCardbacks);
+    document.getElementById('clCollHdBtns').insertBefore(cbBtn, m.querySelector('.cl-coll-x'));
     // optional debug gear (only when enabled)
     if (debugEnabled()) {
       var gear = document.createElement('button');
@@ -779,7 +833,7 @@
         var tier = c.rarity, rl = RARITY[tier];
         document.getElementById('clrBody').innerHTML =
           '<div class="clr-stage"><div class="clr-flip in" id="clrFlip" style="--halo:' + rl.ring + '">' +
-          '<div class="clr-back"><div class="clr-halo"></div><div class="clr-mono">CL</div></div>' +
+          '<div class="clr-back ' + activeCardbackClass() + '"><div class="clr-halo"></div><div class="clr-mono">CL</div></div>' +
           '<div class="clr-face" id="clrFace"></div></div></div>' +
           '<div class="clr-cap" id="clrCap"></div>' +
           '<div class="clr-hint">' + (idx < queue.length - 1 ? 'tap for next' : 'tap to finish') + '</div>';
@@ -817,9 +871,11 @@
         else if (newSets.length) { try { if (window.Sfx) window.Sfx.allDone(); } catch (_) { /* noop */ } }
         var setLines = newSets.map(function (st) { return '<div class="clr-sum-lvl">⭐ Set complete: ' + esc(st.name) + ' &middot; +' + st.bonus + ' XP</div>'; }).join('');
         var lvlLine = lvlNow > lvlBefore ? '<div class="clr-sum-lvl">Level up &mdash; level ' + lvlNow + '! 🎉</div>' : '';
+        var newBacks = lvlNow > lvlBefore ? cardbacksUnlockedBetween(lvlBefore, lvlNow) : [];
+        var backLine = newBacks.map(function (cb) { return '<div class="clr-sum-lvl">🎴 Card back unlocked: ' + esc(cb.name) + '</div>'; }).join('');
         document.getElementById('clrBody').innerHTML =
           '<div class="clr-sum"><div class="clr-sum-h">+' + queue.length + (queue.length === 1 ? ' card' : ' cards') + '</div>' +
-          '<div class="clr-sum-x">+' + gained + ' XP</div>' + setLines + lvlLine +
+          '<div class="clr-sum-x">+' + gained + ' XP</div>' + setLines + lvlLine + backLine +
           '<div class="clr-sum-btns"><button class="clr-btn" id="clrAgain">Continue</button><button class="clr-btn gold" id="clrView">View collection</button></div></div>';
         var sk = document.getElementById('clrSkip'); if (sk) sk.style.display = 'none';
         ov.onclick = null;
@@ -836,9 +892,39 @@
     } catch (_) { /* noop */ }
   }
 
+  // ── Card-back picker ──
+  function buildCardbacks() {
+    var d = document.getElementById('clCardbacks');
+    if (d) return d;
+    injectShell();
+    d = document.createElement('div'); d.id = 'clCardbacks'; d.setAttribute('role', 'dialog');
+    d.innerHTML = '<div class="cb-box"><h3>Card <span>backs</span><button class="cl-coll-x" id="cbClose" style="font-size:1.2rem">&#10005;</button></h3>' +
+      '<div class="cb-sub">Unlock new card backs by leveling up. Tap to equip.</div><div class="cb-grid" id="cbGrid"></div></div>';
+    document.body.appendChild(d);
+    d.querySelector('#cbClose').addEventListener('click', function () { d.classList.remove('open'); });
+    d.addEventListener('click', function (e) { if (e.target === d) d.classList.remove('open'); });
+    return d;
+  }
+  function renderCardbacks() {
+    var grid = document.getElementById('cbGrid'); if (!grid) return;
+    grid.innerHTML = cardbacksState().map(function (cb) {
+      return '<div class="cb-item' + (cb.active ? ' active' : '') + (cb.unlocked ? '' : ' locked') + '" data-id="' + cb.id + '">' +
+        '<div class="cb-swatch ' + cb.css + '" data-lvl="' + cb.level + '"><div class="clr-mono">CL</div></div>' +
+        '<div class="cb-nm">' + esc(cb.name) + '</div></div>';
+    }).join('');
+    Array.prototype.forEach.call(grid.querySelectorAll('.cb-item'), function (el) {
+      el.addEventListener('click', function () {
+        if (el.classList.contains('locked')) return;
+        if (useCardback(el.getAttribute('data-id'))) { renderCardbacks(); try { if (window.Sfx) window.Sfx.tap(); } catch (_) { /* noop */ } }
+      });
+    });
+  }
+  function openCardbacks() { buildCardbacks(); renderCardbacks(); document.getElementById('clCardbacks').classList.add('open'); }
+
   // expose + init
   window.Collection = {
     add: add, stats: stats, all: allCards, openGallery: openGallery, markSeen: markSeen, reveal: reveal, sets: setsState,
+    cardbacks: cardbacksState, useCardback: useCardback, openCardbacks: openCardbacks,
     reset: reset, grant: grant, addXp: addXp, setLevel: setLevel, exportData: exportData, importData: importData, seed: function () { return grant(SEED.map(function (s) { return s; })); },
     debug: debug,
     themes: { register: defineTheme, use: useTheme, list: function () { return Object.keys(THEMES).map(function (n) { return { name: n, label: THEMES[n].label || n }; }); }, current: activeThemeName }
