@@ -207,32 +207,41 @@
   }
   function setsState() { return setsStateFrom(load() || blank()); }
 
-  // ── Card backs: unlock by level, selectable. The reward for leveling up. ──
+  // ── Card backs: most unlock by level; "Mastery" is gated on the trophy case
+  //   (achievements) so it can't be reached by level-grinding alone. ──
   var CARDBACKS = [
     { id: 'classic', name: 'Classic', level: 1, css: '' },
     { id: 'gold', name: 'Gold Foil', level: 3, css: 'cb-gold' },
     { id: 'holo', name: 'Holographic', level: 6, css: 'cb-holo' },
     { id: 'midnight', name: 'Midnight', level: 10, css: 'cb-midnight' },
-    { id: 'crimson', name: 'Crimson', level: 15, css: 'cb-crimson' }
+    { id: 'crimson', name: 'Crimson', level: 15, css: 'cb-crimson' },
+    { id: 'mastery', name: 'Mastery', achv: 12, css: 'cb-mastery' }
   ];
+  // Met trophy count (matches the trophy case). Safe from recursion because achievement
+  // evaluation uses rawCardbackId(), not activeCardbackId() (see achCtx).
+  function achvCount() { return achievementsState().filter(function (a) { return a.unlocked; }).length; }
+  function cbUnlocked(cb) { return cb.achv ? achvCount() >= cb.achv : stats().level >= (cb.level || 1); }
+  function cbReq(cb) { return cb.achv ? { type: 'achv', need: cb.achv } : { type: 'level', need: cb.level || 1 }; }
   function activeCardbackId() {
     var id = null; try { id = localStorage.getItem('cl_cardback'); } catch (_) {}
     var cb = CARDBACKS.filter(function (c) { return c.id === id; })[0];
-    return (cb && stats().level >= cb.level) ? cb.id : 'classic';
+    return (cb && cbUnlocked(cb)) ? cb.id : 'classic';
   }
   function activeCardbackClass() { var cb = CARDBACKS.filter(function (c) { return c.id === activeCardbackId(); })[0]; return cb ? cb.css : ''; }
   function cardbacksState() {
-    var lvl = stats().level, active = activeCardbackId();
-    return CARDBACKS.map(function (cb) { return { id: cb.id, name: cb.name, level: cb.level, css: cb.css, unlocked: lvl >= cb.level, active: cb.id === active }; });
+    var active = activeCardbackId();
+    return CARDBACKS.map(function (cb) { return { id: cb.id, name: cb.name, css: cb.css, unlocked: cbUnlocked(cb), active: cb.id === active, req: cbReq(cb) }; });
   }
   function useCardback(id) {
     var cb = CARDBACKS.filter(function (c) { return c.id === id; })[0];
-    if (!cb || stats().level < cb.level) return false;
+    if (!cb || !cbUnlocked(cb)) return false;
     try { localStorage.setItem('cl_cardback', id); } catch (_) {}
     return true;
   }
-  // card backs newly unlocked crossing from lvA to lvB (for the level-up message)
-  function cardbacksUnlockedBetween(lvA, lvB) { return CARDBACKS.filter(function (cb) { return cb.level > lvA && cb.level <= lvB; }); }
+  // level-gated card backs newly unlocked crossing from lvA to lvB (for the level-up message)
+  function cardbacksUnlockedBetween(lvA, lvB) { return CARDBACKS.filter(function (cb) { return cb.level && cb.level > lvA && cb.level <= lvB; }); }
+  // achievement-gated card backs newly unlocked crossing from count cA to cB (after earning trophies)
+  function cardbacksUnlockedByAchv(cA, cB) { return CARDBACKS.filter(function (cb) { return cb.achv && cb.achv > cA && cb.achv <= cB; }); }
   // One-time award + record for newly-completed sets. Returns the newly claimed.
   function claimSets() {
     var s = load() || blank();
@@ -265,9 +274,13 @@
     { id: 'lvl10', icon: '🎖️', name: 'Veteran', desc: 'Reach level 10', goal: function (c) { return [c.st.level, 10]; } },
     { id: 'style', icon: '🎴', name: 'Style Icon', desc: 'Equip a non-default card back', goal: function (c) { return [c.cb !== 'classic' ? 1 : 0, 1]; } }
   ];
+  // Raw equipped card-back id (no unlock validation) — used for the 'style' achievement so
+  // achievement evaluation never calls activeCardbackId()→cbUnlocked()→achvCount() (would recurse).
+  // useCardback() only ever stores an unlocked id, so the raw value is safe to trust here.
+  function rawCardbackId() { var id = null; try { id = localStorage.getItem('cl_cardback'); } catch (_) {} return id || 'classic'; }
   function achCtx() {
     var st = stats(), s = load() || blank();
-    return { st: st, sd: s.setsDone ? Object.keys(s.setsDone).length : 0, cb: activeCardbackId() };
+    return { st: st, sd: s.setsDone ? Object.keys(s.setsDone).length : 0, cb: rawCardbackId() };
   }
   function achMet(a, ctx) { var g = a.goal(ctx); return g[0] >= g[1]; }
   // Record newly-satisfied achievements; returns the list newly unlocked this call.
@@ -622,6 +635,8 @@
       '.clr-back.cb-midnight .clr-mono,.cb-swatch.cb-midnight .clr-mono{color:#9ab8e8}' +
       '.clr-back.cb-crimson,.cb-swatch.cb-crimson{background:linear-gradient(160deg,#3a1218,#16080a);border-color:rgba(216,90,90,.5);box-shadow:inset 0 0 0 3px rgba(216,90,90,.22)}' +
       '.clr-back.cb-crimson .clr-mono,.cb-swatch.cb-crimson .clr-mono{color:#e88080}' +
+      '.clr-back.cb-mastery,.cb-swatch.cb-mastery{background:conic-gradient(from 45deg,#0b0b0b,#3a2a10,#e8c24a,#3a2a10,#0b0b0b,#1a1206,#0b0b0b);border-color:rgba(232,194,74,.7);box-shadow:inset 0 0 0 3px rgba(232,194,74,.38),0 0 22px rgba(232,194,74,.32)}' +
+      '.clr-back.cb-mastery .clr-mono,.cb-swatch.cb-mastery .clr-mono{color:#fff;text-shadow:0 2px 18px rgba(232,194,74,.85)}' +
       '#clCardbacks{position:fixed;inset:0;z-index:255;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.78);backdrop-filter:blur(7px)}' +
       '#clCardbacks.open{display:flex}' +
       '.cb-box{background:#161616;border:1px solid rgba(232,160,0,.22);border-radius:16px;width:100%;max-width:460px;max-height:86vh;overflow-y:auto;padding:18px;box-shadow:0 28px 80px rgba(0,0,0,.55)}' +
@@ -633,7 +648,7 @@
       '.cb-swatch .clr-mono{font-size:1.6rem}' +
       '.cb-item.active .cb-swatch{outline:2px solid #e8a000;outline-offset:2px}' +
       '.cb-item.locked .cb-swatch{filter:grayscale(.7) brightness(.5)}' +
-      '.cb-item.locked .cb-swatch::after{content:"🔒 Lvl " attr(data-lvl);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.68rem;font-weight:800;background:rgba(0,0,0,.5)}' +
+      '.cb-item.locked .cb-swatch::after{content:attr(data-req);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:6px;color:#fff;font-size:.66rem;font-weight:800;background:rgba(0,0,0,.55)}' +
       '.cb-nm{font-size:.7rem;font-weight:700;color:#cfcfcf;margin-top:6px}.cb-item.locked .cb-nm{color:#777}' +
       '#clAchv{position:fixed;inset:0;z-index:255;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.78);backdrop-filter:blur(7px)}' +
       '#clAchv.open{display:flex}' +
@@ -991,6 +1006,8 @@
         if (newAchv.length) { try { if (window.Sfx) window.Sfx.allDone(); } catch (_) { /* noop */ } }
         var achLine = newAchv.slice(0, 3).map(function (a) { return '<div class="clr-sum-lvl">' + a.icon + ' Achievement: ' + esc(a.name) + '</div>'; }).join('') +
           (newAchv.length > 3 ? '<div class="clr-sum-lvl">🏅 +' + (newAchv.length - 3) + ' more achievements</div>' : '');
+        // achievement-gated card backs (e.g. Mastery) newly crossed this win
+        if (newAchv.length) { var ac2 = achvCount(); backLine += cardbacksUnlockedByAchv(ac2 - newAchv.length, ac2).map(function (cb) { return '<div class="clr-sum-lvl">🎴 Card back unlocked: ' + esc(cb.name) + '</div>'; }).join(''); }
         var dustLine = _pendingDust > 0 ? '<div class="clr-sum-lvl">&#10024; +' + _pendingDust + ' dust from duplicates</div>' : '';
         _pendingDust = 0;
         document.getElementById('clrBody').innerHTML =
@@ -1019,7 +1036,7 @@
     injectShell();
     d = document.createElement('div'); d.id = 'clCardbacks'; d.setAttribute('role', 'dialog');
     d.innerHTML = '<div class="cb-box"><h3>Card <span>backs</span><button class="cl-coll-x" id="cbClose" style="font-size:1.2rem">&#10005;</button></h3>' +
-      '<div class="cb-sub">Unlock new card backs by leveling up. Tap to equip.</div><div class="cb-grid" id="cbGrid"></div></div>';
+      '<div class="cb-sub">Unlock card backs by leveling up — or earn Mastery in the trophy case. Tap to equip.</div><div class="cb-grid" id="cbGrid"></div></div>';
     document.body.appendChild(d);
     d.querySelector('#cbClose').addEventListener('click', function () { d.classList.remove('open'); });
     d.addEventListener('click', function (e) { if (e.target === d) d.classList.remove('open'); });
@@ -1028,8 +1045,9 @@
   function renderCardbacks() {
     var grid = document.getElementById('cbGrid'); if (!grid) return;
     grid.innerHTML = cardbacksState().map(function (cb) {
+      var lock = cb.req.type === 'achv' ? ('🔒 ' + cb.req.need + ' trophies') : ('🔒 Lvl ' + cb.req.need);
       return '<div class="cb-item' + (cb.active ? ' active' : '') + (cb.unlocked ? '' : ' locked') + '" data-id="' + cb.id + '">' +
-        '<div class="cb-swatch ' + cb.css + '" data-lvl="' + cb.level + '"><div class="clr-mono">CL</div></div>' +
+        '<div class="cb-swatch ' + cb.css + '" data-req="' + lock + '"><div class="clr-mono">CL</div></div>' +
         '<div class="cb-nm">' + esc(cb.name) + '</div></div>';
     }).join('');
     Array.prototype.forEach.call(grid.querySelectorAll('.cb-item'), function (el) {
