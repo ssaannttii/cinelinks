@@ -2061,8 +2061,8 @@ function renderCollectionCard() {
   var subEl = document.getElementById('collectionCardSub');
   var dot = document.getElementById('collectionCardDot');
   if (st.count > 0) {
-    titleEl.innerHTML = 'Your collection · <span style="color:var(--gold)">Lv ' + st.level + '</span>';
-    subEl.textContent = st.count + ' cards · ' + st.films + ' films · ' + st.people + ' people' + (st.newCount ? ' · ' + st.newCount + ' new' : '');
+    titleEl.textContent = 'Your collection';
+    subEl.innerHTML = '<span style="color:var(--gold);font-weight:800">Lv ' + st.level + '</span> · ' + st.count + ' cards · ' + st.films + ' films · ' + st.people + ' people' + (st.newCount ? ' · <span style="color:#7fd49a;font-weight:800">' + st.newCount + ' new</span>' : '');
   } else {
     titleEl.textContent = 'Your collection';
     subEl.textContent = 'Play a game to start collecting films, shows & people';
