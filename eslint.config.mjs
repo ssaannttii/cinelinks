@@ -6,7 +6,7 @@ const browser = {
   window: 'readonly', document: 'readonly', navigator: 'readonly', location: 'readonly',
   fetch: 'readonly', localStorage: 'readonly', sessionStorage: 'readonly',
   setTimeout: 'readonly', clearTimeout: 'readonly', setInterval: 'readonly', clearInterval: 'readonly',
-  requestAnimationFrame: 'readonly', history: 'readonly', URL: 'readonly',
+  requestAnimationFrame: 'readonly', cancelAnimationFrame: 'readonly', history: 'readonly', URL: 'readonly',
   URLSearchParams: 'readonly', Intl: 'readonly', console: 'readonly',
   atob: 'readonly', btoa: 'readonly', Image: 'readonly',
   matchMedia: 'readonly', performance: 'readonly',
