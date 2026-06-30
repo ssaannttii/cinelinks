@@ -53,43 +53,155 @@
   function typeLabel(c) { return c.type === 'person' ? 'Person' : c.type === 'tv' ? 'Series' : 'Film'; }
   function reducedMotion() { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (_) { return false; } }
   // Shared cursor-tracking 3D tilt + glare/foil shift (mouse only). Used by themes.
-  // Real fake-3D tilt: a per-element perspective rotation (modest ±8°) plus a "lift",
-  // with cursor-following CSS vars that drive layered parallax (bg recedes, frame/text/
-  // star pop forward) and a specular glare — so the card tilts in space instead of the
-  // photo spinning flat on its axis. rAF-batched so pointermove stays cheap.
+  // Real fake-3D tilt: a per-element perspective rotation plus a "lift", with
+  // cursor-following CSS vars that drive layered parallax (bg recedes, frame/text/
+  // star pop forward) and a specular glare — so the card tilts in space instead of
+  // the photo spinning flat on its axis. The motion runs on a SPRING (stiffness +
+  // damping) so it has weight: it accelerates toward the cursor and overshoots back
+  // to rest on leave, the way a real object would. Only the hovered card animates;
+  // the loop stops itself once settled, so a big grid stays cheap.
   function tiltMount(grid, sel, innerSel) {
     if (reducedMotion()) return;
     Array.prototype.forEach.call(grid.querySelectorAll(sel), function (card) {
       var inner = card.querySelector(innerSel); if (!inner) return;
-      var raf = 0, rx = 0, ry = 0, px = 0.5, py = 0.5;
-      function apply() {
-        raf = 0;
-        inner.style.transform = 'perspective(700px) rotateX(' + rx.toFixed(2) + 'deg) rotateY(' + ry.toFixed(2) + 'deg) scale(1.018)';
+      var raf = 0, active = false;
+      var rx = 0, ry = 0, sc = 1, px = 0.5, py = 0.5;            // current
+      var vx = 0, vy = 0, vs = 0;                                 // velocity
+      var trx = 0, try_ = 0, tsc = 1, tpx = 0.5, tpy = 0.5;       // target
+      var STIFF = 0.16, DAMP = 0.74;
+      function frame() {
+        vx = (vx + (trx - rx) * STIFF) * DAMP; rx += vx;
+        vy = (vy + (try_ - ry) * STIFF) * DAMP; ry += vy;
+        vs = (vs + (tsc - sc) * STIFF) * DAMP; sc += vs;
+        px += (tpx - px) * 0.22; py += (tpy - py) * 0.22;
+        inner.style.transform = 'perspective(760px) rotateX(' + rx.toFixed(2) + 'deg) rotateY(' + ry.toFixed(2) + 'deg) scale(' + sc.toFixed(3) + ')';
         inner.style.setProperty('--gx', (px * 100).toFixed(1) + '%');
         inner.style.setProperty('--gy', (py * 100).toFixed(1) + '%');
         inner.style.setProperty('--fx', (px * 200).toFixed(1) + '%');
         inner.style.setProperty('--fy', (py * 200).toFixed(1) + '%');
         inner.style.setProperty('--px', (px - 0.5).toFixed(3));
         inner.style.setProperty('--py', (py - 0.5).toFixed(3));
+        var rest = !active &&
+          Math.abs(vx) < 0.01 && Math.abs(vy) < 0.01 && Math.abs(vs) < 0.002 &&
+          Math.abs(trx - rx) < 0.02 && Math.abs(try_ - ry) < 0.02 && Math.abs(tsc - sc) < 0.003;
+        if (rest) { raf = 0; inner.style.transform = ''; inner.classList.remove('tilted'); return; }
+        raf = requestAnimationFrame(frame);
       }
+      function kick() { if (!raf) raf = requestAnimationFrame(frame); }
       card.addEventListener('pointermove', function (e) {
         if (e.pointerType && e.pointerType !== 'mouse') return;
         var r = card.getBoundingClientRect();
-        px = (e.clientX - r.left) / r.width; py = (e.clientY - r.top) / r.height;
-        ry = (px - 0.5) * 13;      // rotateY: ±6.5°
-        rx = (0.5 - py) * 13;      // rotateX: ±6.5°
-        inner.classList.add('tilted');
-        if (!raf) raf = requestAnimationFrame(apply);
+        tpx = (e.clientX - r.left) / r.width; tpy = (e.clientY - r.top) / r.height;
+        try_ = (tpx - 0.5) * 15;     // rotateY
+        trx = (0.5 - tpy) * 15;      // rotateX
+        tsc = 1.02; active = true; inner.classList.add('tilted'); kick();
       });
-      var reset = function () {
-        if (raf) { cancelAnimationFrame(raf); raf = 0; }
-        inner.style.transform = '';
-        inner.style.removeProperty('--px'); inner.style.removeProperty('--py');
-        inner.classList.remove('tilted');
-      };
+      var reset = function () { active = false; trx = 0; try_ = 0; tsc = 1; tpx = 0.5; tpy = 0.5; kick(); };
       card.addEventListener('pointerleave', reset);
       card.addEventListener('pointercancel', reset);
     });
+  }
+  // Gyroscope tilt for a single hero card (detail / reveal) on touch devices: the
+  // card shimmers and leans as you physically tilt the phone — the Pokémon-TCG-Pocket
+  // feel. Drives the same CSS vars as the pointer tilt. Returns a teardown fn (or
+  // null) so the caller can detach the global listener when the view closes.
+  function gyroMount(container) {
+    try {
+      if (reducedMotion()) return null;
+      if (!container || !window.DeviceOrientationEvent) return null;
+      if (!(window.matchMedia && matchMedia('(pointer: coarse)').matches)) return null;
+      var inner = container.querySelector('.auth-card,.ctc-inner,.clc-card'); if (!inner) return null;
+      var raf = 0, rx = 0, ry = 0, px = 0.5, py = 0.5, trx = 0, try_ = 0, tpx = 0.5, tpy = 0.5;
+      function clamp(v) { return v < -1 ? -1 : v > 1 ? 1 : v; }
+      function frame() {
+        rx += (trx - rx) * 0.12; ry += (try_ - ry) * 0.12;
+        px += (tpx - px) * 0.12; py += (tpy - py) * 0.12;
+        inner.style.transform = 'perspective(760px) rotateX(' + rx.toFixed(2) + 'deg) rotateY(' + ry.toFixed(2) + 'deg)';
+        inner.style.setProperty('--gx', (px * 100).toFixed(1) + '%');
+        inner.style.setProperty('--gy', (py * 100).toFixed(1) + '%');
+        inner.style.setProperty('--fx', (px * 200).toFixed(1) + '%');
+        inner.style.setProperty('--fy', (py * 200).toFixed(1) + '%');
+        inner.style.setProperty('--px', (px - 0.5).toFixed(3));
+        inner.style.setProperty('--py', (py - 0.5).toFixed(3));
+        inner.classList.add('tilted');
+        raf = requestAnimationFrame(frame);
+      }
+      function onOrient(e) {
+        var g = clamp((e.gamma || 0) / 32), b = clamp(((e.beta || 0) - 38) / 32);
+        tpx = 0.5 + g * 0.5; tpy = 0.5 + b * 0.5; try_ = g * 13; trx = -b * 13;
+        if (!raf) raf = requestAnimationFrame(frame);
+      }
+      var bound = false;
+      function bind() { if (bound) return; bound = true; window.addEventListener('deviceorientation', onOrient); }
+      if (typeof window.DeviceOrientationEvent.requestPermission === 'function') {
+        window.DeviceOrientationEvent.requestPermission().then(function (s) { if (s === 'granted') bind(); }).catch(function () { /* denied */ });
+      } else { bind(); }
+      return function () {
+        window.removeEventListener('deviceorientation', onOrient);
+        if (raf) { cancelAnimationFrame(raf); raf = 0; }
+        inner.style.transform = ''; inner.classList.remove('tilted');
+      };
+    } catch (_) { return null; }
+  }
+  var _gyroOff = null;
+  function stopGyro() { if (_gyroOff) { try { _gyroOff(); } catch (_) { /* noop */ } _gyroOff = null; } }
+
+  // Legendary reveal shader: a lightweight raw-WebGL fragment shader (no Three.js)
+  // that paints animated prismatic godrays radiating behind the card — the "this one
+  // is special" hero beat. Self-contained, feature-detected (silent fallback to the
+  // existing gold flash if WebGL is unavailable), and skipped under reduced-motion.
+  var _shaderRAF = 0, _shaderEl = null;
+  function stopShader() {
+    if (_shaderRAF) { cancelAnimationFrame(_shaderRAF); _shaderRAF = 0; }
+    if (_shaderEl) _shaderEl.classList.remove('on');
+  }
+  function startShader() {
+    try {
+      if (reducedMotion()) return;
+      var ov = document.getElementById('clCollReveal'); if (!ov) return;
+      var cv = _shaderEl;
+      if (!cv) { cv = document.createElement('canvas'); cv.className = 'clr-shader'; ov.insertBefore(cv, ov.firstChild); _shaderEl = cv; }
+      var gl = cv._gl || cv.getContext('webgl', { alpha: true, antialias: true, premultipliedAlpha: false });
+      if (!gl) return; cv._gl = gl;
+      if (!cv._prog) {
+        var vs = 'attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
+        var fs = 'precision highp float;uniform vec2 r;uniform float t;uniform float a;' +
+          'vec3 hue(float h){return .55+.45*cos(6.2831*(h+vec3(0.,.33,.67)));}' +
+          'void main(){vec2 uv=(gl_FragCoord.xy-.5*r)/r.y;float d=length(uv);float ang=atan(uv.y,uv.x);' +
+          'float rays=.5+.5*sin(ang*16.+t*1.3)*sin(ang*7.-t*.6);' +
+          'float beam=pow(max(0.,rays),2.2);' +
+          'float fall=smoothstep(1.05,.05,d)*smoothstep(0.,.16,d);' +
+          'float core=smoothstep(.36,0.,d);' +
+          'vec3 col=hue(ang/6.2831+t*.04)*beam*fall+vec3(1.,.86,.5)*core;' +
+          'float al=clamp(beam*fall*.6+core,0.,1.)*a;' +
+          'gl_FragColor=vec4(col,al);}';
+        var mk = function (type, src) { var s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; };
+        var prog = gl.createProgram();
+        gl.attachShader(prog, mk(gl.VERTEX_SHADER, vs)); gl.attachShader(prog, mk(gl.FRAGMENT_SHADER, fs)); gl.linkProgram(prog);
+        var buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+        var loc = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+        cv._prog = prog; cv._u = { r: gl.getUniformLocation(prog, 'r'), t: gl.getUniformLocation(prog, 't'), a: gl.getUniformLocation(prog, 'a') };
+        gl.useProgram(prog); gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+      }
+      var dpr = Math.min(2, window.devicePixelRatio || 1);
+      var w = ov.clientWidth || window.innerWidth, h = ov.clientHeight || window.innerHeight;
+      cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+      gl.viewport(0, 0, cv.width, cv.height);
+      cv.classList.add('on');
+      var t0 = performance.now(), amp = 0;
+      if (_shaderRAF) cancelAnimationFrame(_shaderRAF);
+      (function loop(now) {
+        amp += (1 - amp) * 0.05;
+        gl.useProgram(cv._prog);
+        gl.uniform2f(cv._u.r, cv.width, cv.height);
+        gl.uniform1f(cv._u.t, (now - t0) / 1000);
+        gl.uniform1f(cv._u.a, amp * 0.9);
+        gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+        _shaderRAF = requestAnimationFrame(loop);
+      })(t0);
+    } catch (_) { stopShader(); }
   }
   // Deterministic per-card rarity when there's no rating (most game-collected
   // cards): a weighted hash of type:id so a collection has a natural spread and a
@@ -498,8 +610,23 @@
       '.auth-meta .sep{color:rgba(255,255,255,.32)}' +
       '.auth-no{color:rgba(255,255,255,.82);font-family:ui-monospace,Menlo,monospace;letter-spacing:.03em}' +
       '.auth-frame{position:absolute;inset:0;z-index:6;border-radius:13px;pointer-events:none;box-shadow:inset 0 0 0 .7cqw rgba(0,0,0,.55),inset 0 0 0 2cqw var(--cr),inset 0 0 0 2.7cqw rgba(0,0,0,.45)}' +
-      '.auth-foil{position:absolute;inset:0;z-index:7;pointer-events:none;opacity:0;background:repeating-linear-gradient(115deg,rgba(255,119,115,.35),rgba(255,237,95,.35) 12%,rgba(131,255,247,.35) 24%,rgba(120,148,255,.35) 36%,rgba(216,117,255,.35) 48%,rgba(255,119,115,.35) 60%);background-size:260% 260%;background-position:var(--fx,50%) var(--fy,50%);mix-blend-mode:color-dodge;transition:opacity .2s}' +
-      '.auth-rare .auth-foil{opacity:.14}.auth-elite .auth-foil{opacity:.2}.auth-legendary .auth-foil{opacity:.28;animation:authDrift 7s linear infinite}' +
+      '.auth-foil{position:absolute;inset:0;z-index:7;pointer-events:none;opacity:0;background:repeating-linear-gradient(115deg,rgba(255,119,115,.4),rgba(255,237,95,.4) 11%,rgba(168,255,150,.4) 21%,rgba(131,255,247,.4) 31%,rgba(120,148,255,.4) 42%,rgba(216,117,255,.4) 52%,rgba(255,119,115,.4) 62%);background-size:280% 280%;background-position:var(--fx,50%) var(--fy,50%);mix-blend-mode:color-dodge;filter:brightness(.92) contrast(1.12);transition:opacity .22s}' +
+      '.auth-rare .auth-foil{opacity:.16}.auth-elite .auth-foil{opacity:.24}.auth-legendary .auth-foil{opacity:.34;animation:authDrift 7s linear infinite}' +
+      // glitter layer: fine specular dots that travel with the cursor/tilt and read as metallic foil grain. Elite+ only, on hover/tilt.
+      '.auth-glit{position:absolute;inset:0;z-index:7;pointer-events:none;opacity:0;background-image:radial-gradient(rgba(255,255,255,.95) 0 13%,transparent 15%),radial-gradient(rgba(255,255,255,.6) 0 11%,transparent 13%);background-size:5.2cqw 5.2cqw,3.3cqw 3.3cqw;background-position:var(--fx,50%) var(--fy,50%),calc(var(--fx,50%) + 1.7cqw) calc(var(--fy,50%) + 1.1cqw);mix-blend-mode:screen;filter:brightness(1.15);transition:opacity .25s}' +
+      '.auth-elite .auth-card:hover .auth-glit,.auth-elite .auth-card.tilted .auth-glit{opacity:.5}' +
+      '.auth-legendary .auth-card:hover .auth-glit,.auth-legendary .auth-card.tilted .auth-glit{opacity:.85}' +
+      // one-shot diagonal light sweep when the pointer enters a card
+      '.auth-sheen{position:absolute;inset:0;z-index:8;pointer-events:none;border-radius:13px;opacity:0;background:linear-gradient(105deg,transparent 36%,rgba(255,255,255,.55) 50%,transparent 64%)}' +
+      '.auth-card:hover .auth-sheen{animation:authSheen .7s ease-out}' +
+      '@keyframes authSheen{0%{opacity:0;transform:translateX(-65%)}28%{opacity:.85}100%{opacity:0;transform:translateX(65%)}}' +
+      // in-card depth parallax: while tilted the poster recedes (moves against the cursor) and the star/badges/title pop forward (move with it)
+      '.auth-bgimg,.auth-star,.auth-corner,.auth-tags,.auth-text{transition:transform .28s cubic-bezier(.2,.8,.2,1)}' +
+      '.auth-card.tilted .auth-bgimg{transform:translate(calc(var(--px,0) * -2.4cqw),calc(var(--py,0) * -2.4cqw)) scale(1.06)}' +
+      '.auth-card.tilted .auth-star{transform:translate(calc(var(--px,0) * 3.6cqw),calc(var(--py,0) * 3.6cqw))}' +
+      '.auth-card.tilted .auth-corner{transform:translate(calc(var(--px,0) * 2.6cqw),calc(var(--py,0) * 2.6cqw))}' +
+      '.auth-card.tilted .auth-tags{transform:translate(calc(var(--px,0) * 3cqw),calc(var(--py,0) * 3cqw))}' +
+      '.auth-card.tilted .auth-text{transform:translate(calc(var(--px,0) * 2.2cqw),calc(var(--py,0) * 2.2cqw))}' +
       '.auth-glare{position:absolute;inset:0;z-index:8;pointer-events:none;opacity:0;background:radial-gradient(circle at var(--gx,50%) var(--gy,50%),rgba(255,255,255,.42),rgba(255,255,255,.08) 30%,transparent 52%);mix-blend-mode:overlay;transition:opacity .2s}' +
       '.auth-card:hover .auth-glare,.auth-card.tilted .auth-glare{opacity:1}' +
       // the WHOLE card tilts as one plane (no independent photo zoom); a moving inner
@@ -510,7 +637,7 @@
       '.auth-rare .auth-card:hover,.auth-rare .auth-card.tilted{box-shadow:0 20px 44px rgba(0,0,0,.64),0 0 26px rgba(122,166,232,.5)}' +
       '.auth-elite .auth-card:hover,.auth-elite .auth-card.tilted{box-shadow:0 20px 44px rgba(0,0,0,.64),0 0 26px rgba(181,138,214,.55)}' +
       '.auth-legendary .auth-card:hover,.auth-legendary .auth-card.tilted{box-shadow:0 20px 44px rgba(0,0,0,.64),0 0 30px rgba(232,194,74,.6)}' +
-      '@media(prefers-reduced-motion:reduce){.auth{animation:none}.auth-star,.auth-legendary .auth-foil{animation:none}.auth-card{transition:none}}',
+      '@media(prefers-reduced-motion:reduce){.auth{animation:none}.auth-star,.auth-legendary .auth-foil{animation:none}.auth-card{transition:none}.auth-sheen{animation:none;display:none}.auth-glit{display:none}.auth-bgimg,.auth-star,.auth-corner,.auth-tags,.auth-text{transition:none}}',
     card: function (c, ctx, i) {
       var rar = ctx.RARITY[c.rarity] || ctx.RARITY.common;
       var p = ctx.posterUrl(c.img);
@@ -529,7 +656,7 @@
             '<div class="auth-name' + nmCls + '">' + nm + '</div>' +
             '<div class="auth-meta"><span class="auth-gem"></span><span class="auth-rar">' + rar.label + '</span><span class="sep">·</span><span>' + typeUp + '</span><span class="sep">·</span><span class="auth-no">' + no + '</span></div>' +
           '</div>' +
-          '<div class="auth-frame"></div><div class="auth-foil"></div><div class="auth-shade"></div><div class="auth-glare"></div>' +
+          '<div class="auth-frame"></div><div class="auth-foil"></div><div class="auth-glit"></div><div class="auth-shade"></div><div class="auth-sheen"></div><div class="auth-glare"></div>' +
         '</div>' +
       '</div>';
     },
@@ -698,12 +825,24 @@
       // Shine (foil) cosmetic — forces the holo overlay on regardless of rarity, plus a cool glow + sparkle tag.
       '@keyframes clShineDrift{0%{background-position:0% 50%}100%{background-position:260% 50%}}' +
       '.cl-shine .auth-foil,.cl-shine .ctc-foil{display:block;opacity:.62;animation:clShineDrift 5.5s linear infinite}' +
+      '.cl-shine .auth-glit{opacity:.7}' +
       '.cl-shine .auth-card{box-shadow:0 8px 22px rgba(0,0,0,.55),0 0 0 1px rgba(190,225,255,.35),0 0 26px rgba(150,205,255,.4)}' +
       '.cl-shine .ctc-inner{box-shadow:0 6px 18px rgba(0,0,0,.5),0 0 0 1px rgba(190,225,255,.35),0 0 22px rgba(150,205,255,.4)}' +
       '.cl-shine-t{position:absolute;z-index:10;font-size:.86rem;line-height:1;filter:drop-shadow(0 1px 5px rgba(150,205,255,.95));animation:clSpark 2.4s ease-in-out infinite}' +
       '.ctc-art .cl-shine-t{top:6px;left:6px}' +
       '@keyframes clSpark{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.18);opacity:1}}' +
-      '@media(prefers-reduced-motion:reduce){.cl-shine .auth-foil,.cl-shine .ctc-foil,.cl-shine-t{animation:none}}';
+      '@media(prefers-reduced-motion:reduce){.cl-shine .auth-foil,.cl-shine .ctc-foil,.cl-shine-t{animation:none}}' +
+      // ── scroll-in entrance (cards past the first screen rise as they scroll into view) ──
+      '.cl-pre{opacity:0!important;transform:translateY(20px) scale(.95)!important;animation:none!important}' +
+      '.cl-rise{animation:clRise .52s cubic-bezier(.2,.9,.3,1.25) both}' +
+      '@keyframes clRise{from{opacity:0;transform:translateY(20px) scale(.95)}to{opacity:1;transform:none}}' +
+      // ── shared-element morph: a tapped card grows into the detail view (View Transitions API) ──
+      '::view-transition-group(cl-card-morph){animation-duration:.42s;animation-timing-function:cubic-bezier(.2,.8,.2,1)}' +
+      '::view-transition-old(cl-card-morph),::view-transition-new(cl-card-morph){mix-blend-mode:normal}' +
+      // ── WebGL godray canvas behind the legendary reveal ──
+      '.clr-shader{position:absolute;inset:0;z-index:4;pointer-events:none;opacity:0;transition:opacity .5s ease}' +
+      '.clr-shader.on{opacity:1}' +
+      '@media(prefers-reduced-motion:reduce){.cl-pre{opacity:1!important;transform:none!important}.cl-rise{animation:none}.clr-shader{display:none}}';
     document.head.appendChild(css);
   }
 
@@ -792,8 +931,29 @@
     try { if (theme.mount) theme.mount(grid); } catch (_) { /* noop */ }
     Array.prototype.forEach.call(grid.children, function (el, idx) {
       el.style.cursor = 'pointer';
-      el.addEventListener('click', function () { openDetail(cards[idx]); });
+      el.addEventListener('click', function () { openDetail(cards[idx], el); });
     });
+    scrollReveal(grid);
+  }
+
+  // Cards past the first screen start hidden and rise as they scroll into view —
+  // the staggered Apple/Linear entrance. Progressive enhancement: a safety timer
+  // reveals everything if IntersectionObserver misfires, and reduced-motion opts out.
+  function scrollReveal(grid) {
+    try {
+      if (reducedMotion() || !window.IntersectionObserver) return;
+      var kids = grid.children; if (kids.length <= 8) return;
+      Array.prototype.forEach.call(kids, function (el, i) { if (i >= 8) el.classList.add('cl-pre'); });
+      var io = new window.IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (en.isIntersecting) { en.target.classList.remove('cl-pre'); en.target.classList.add('cl-rise'); io.unobserve(en.target); }
+        });
+      }, { root: grid, rootMargin: '0px 0px -6% 0px', threshold: 0.06 });
+      Array.prototype.forEach.call(kids, function (el, i) { if (i >= 8) io.observe(el); });
+      setTimeout(function () {
+        try { Array.prototype.forEach.call(grid.querySelectorAll('.cl-pre'), function (el) { el.classList.remove('cl-pre'); el.classList.add('cl-rise'); }); } catch (_) { /* noop */ }
+      }, 2600);
+    } catch (_) { /* noop */ }
   }
 
   function renderSets() {
@@ -817,7 +977,7 @@
       var oi = 0;
       Array.prototype.forEach.call(grid.querySelectorAll('.auth,.ctc,.clc-card'), function (el) {
         var card = owned[oi++]; if (!card) return;
-        el.style.cursor = 'pointer'; el.addEventListener('click', function () { openDetail(card); });
+        el.style.cursor = 'pointer'; el.addEventListener('click', function () { openDetail(card, el); });
       });
       return;
     }
@@ -939,26 +1099,46 @@
       rows.map(function (r) { return '<div class="cl-di-row"><span>' + r[0] + '</span><b' + (r[2] ? ' style="color:' + r[2] + '"' : '') + '>' + esc(r[1]) + '</b></div>'; }).join('') +
       '</div><div class="cl-shine-wrap">' + shineBlock + '</div>';
   }
-  function openDetail(c) {
+  var DETAIL_SEL = '#clDetailCard .auth-card,#clDetailCard .ctc-inner,#clDetailCard .clc-card';
+  function openDetail(c, srcEl) {
     if (!c) return;
-    buildDetail();
-    var theme = activeTheme(); injectThemeCss(theme);
-    var holder = document.getElementById('clDetailCard');
-    holder.innerHTML = theme.card(c, CTX, 0);
-    // the card renders at 2× here — pull a higher-res TMDB poster so it stays crisp
-    Array.prototype.forEach.call(holder.querySelectorAll('img'), function (im) { im.src = im.src.replace(/\/t\/p\/w\d+\//, '/t/p/w780/'); });
-    try { if (theme.mount) theme.mount(holder); } catch (_) { /* noop */ }
-    document.getElementById('clDetailInfo').innerHTML = detailInfo(c);
-    var sb = document.getElementById('clShineBtn');
-    if (sb) sb.addEventListener('click', function () {
-      var r = shineCard(c);
-      if (r.ok) { c.shine = 1; try { if (window.Sfx) { window.Sfx.reveal('elite'); window.Sfx.haptic([12, 24]); } } catch (_) { /* noop */ } openDetail(c); }
-      else { try { if (window.Sfx) window.Sfx.tap(); } catch (_) { /* noop */ } if (r.reason === 'dust') { sb.classList.add('shake'); setTimeout(function () { sb.classList.remove('shake'); }, 420); } }
-    });
-    document.getElementById('clCollDetail').classList.add('open');
-    try { if (window.Track) window.Track('collection_card', { rarity: c.rarity, type: c.type }); } catch (_) { /* noop */ }
+    function fill() {
+      buildDetail();
+      var theme = activeTheme(); injectThemeCss(theme);
+      var holder = document.getElementById('clDetailCard');
+      holder.innerHTML = theme.card(c, CTX, 0);
+      // the card renders at 2× here — pull a higher-res TMDB poster so it stays crisp
+      Array.prototype.forEach.call(holder.querySelectorAll('img'), function (im) { im.src = im.src.replace(/\/t\/p\/w\d+\//, '/t/p/w780/'); });
+      try { if (theme.mount) theme.mount(holder); } catch (_) { /* noop */ }
+      document.getElementById('clDetailInfo').innerHTML = detailInfo(c);
+      var sb = document.getElementById('clShineBtn');
+      if (sb) sb.addEventListener('click', function () {
+        var r = shineCard(c);
+        if (r.ok) { c.shine = 1; try { if (window.Sfx) { window.Sfx.reveal('elite'); window.Sfx.haptic([12, 24]); } } catch (_) { /* noop */ } openDetail(c); }
+        else { try { if (window.Sfx) window.Sfx.tap(); } catch (_) { /* noop */ } if (r.reason === 'dust') { sb.classList.add('shake'); setTimeout(function () { sb.classList.remove('shake'); }, 420); } }
+      });
+      document.getElementById('clCollDetail').classList.add('open');
+      stopGyro(); _gyroOff = gyroMount(holder);   // tilt-to-shimmer on touch devices
+      try { if (window.Track) window.Track('collection_card', { rarity: c.rarity, type: c.type }); } catch (_) { /* noop */ }
+    }
+    // Shared-element morph: the tapped grid card grows seamlessly into the detail card.
+    var srcCard = (srcEl && srcEl.querySelector) ? srcEl.querySelector('.auth-card,.ctc-inner,.clc-card') : null;
+    if (srcCard && document.startViewTransition && !reducedMotion()) {
+      try {
+        srcCard.style.viewTransitionName = 'cl-card-morph';
+        var t = document.startViewTransition(function () {
+          srcCard.style.viewTransitionName = '';                 // hand the name to the detail card
+          fill();
+          var tgt = document.querySelector(DETAIL_SEL);
+          if (tgt) tgt.style.viewTransitionName = 'cl-card-morph';
+        });
+        t.finished.then(function () { var tgt = document.querySelector(DETAIL_SEL); if (tgt) tgt.style.viewTransitionName = ''; }).catch(function () { /* noop */ });
+        return;
+      } catch (_) { try { srcCard.style.viewTransitionName = ''; } catch (_) { /* noop */ } }
+    }
+    fill();
   }
-  function closeDetail() { var d = document.getElementById('clCollDetail'); if (d) d.classList.remove('open'); }
+  function closeDetail() { stopGyro(); var d = document.getElementById('clCollDetail'); if (d) d.classList.remove('open'); }
 
   // ── Reveal sequence: the "earn" moment. reveal(newCards) plays a per-card
   // flip with rarity-scaled flair (sound + haptics + legendary flash), then a
@@ -973,7 +1153,7 @@
     document.body.appendChild(ov);
     return ov;
   }
-  function closeReveal() { var ov = document.getElementById('clCollReveal'); if (ov) ov.classList.remove('open'); }
+  function closeReveal() { stopShader(); stopGyro(); var ov = document.getElementById('clCollReveal'); if (ov) ov.classList.remove('open'); }
   function reveal(cards) {
     try {
       if (!Array.isArray(cards)) return;
@@ -1013,10 +1193,13 @@
             var fl = document.getElementById('clrFlash'); if (fl) { fl.classList.remove('go'); void fl.offsetWidth; fl.classList.add('go'); }
             try { if (window.Sfx) window.Sfx.haptic([20, 40, 20, 40, 90]); } catch (_) { /* noop */ }
             try { if (window.Fx && window.Fx.confetti) window.Fx.confetti({ count: 130, power: 1.25 }); } catch (_) { /* noop */ }
+            startShader();                                                       // prismatic godrays behind the legendary card
           }
         });
         later(1420, function () {                                               // flip settled: mount tilt + idle + cap
-          try { if (theme.mount) theme.mount(document.getElementById('clrFace')); } catch (_) { /* noop */ }
+          var face = document.getElementById('clrFace');
+          try { if (theme.mount) theme.mount(face); } catch (_) { /* noop */ }
+          stopGyro(); _gyroOff = gyroMount(face);                                // tilt-to-shimmer on touch devices
           var f = document.getElementById('clrFlip'); if (f) f.classList.add('live');
           showCap(c); state = 'ready';
         });
@@ -1028,9 +1211,9 @@
         cap.innerHTML = '<span class="clr-tag new">New</span><span class="clr-rare-lbl" style="color:' + rl.ring + '">' + rl.label + '</span><span class="clr-xp">+' + (XP[c.rarity] || 10) + ' XP</span>';
         try { if (window.Sfx) window.Sfx.haptic(c.rarity === 'legendary' ? [20, 40, 60] : c.rarity === 'elite' ? [15, 30] : 10); } catch (_) { /* noop */ }
       }
-      function next() { clearT(); idx++; if (idx >= queue.length) summary(); else card(queue[idx]); }
+      function next() { clearT(); stopShader(); stopGyro(); idx++; if (idx >= queue.length) summary(); else card(queue[idx]); }
       function summary() {
-        state = 'sum';
+        state = 'sum'; stopShader(); stopGyro();
         var newSets = []; try { newSets = claimSets(); } catch (_) { /* noop */ }
         var finalXp = (load() || blank()).xp || 0, lvlNow = levelFromXp(finalXp);
         if (lvlNow > lvlBefore) { try { if (window.Sfx) window.Sfx.levelUp(); } catch (_) { /* noop */ } }
