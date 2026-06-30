@@ -416,11 +416,6 @@
       '@keyframes ctcDrift{0%{background-position:0% 50%}100%{background-position:280% 50%}}' +
       '.ctc-glare{position:absolute;inset:0;z-index:3;pointer-events:none;opacity:0;background:radial-gradient(circle at var(--gx,50%) var(--gy,50%),rgba(255,255,255,.5),rgba(255,255,255,.08) 30%,transparent 52%);mix-blend-mode:overlay;transition:opacity .2s}' +
       '.ctc-inner:hover .ctc-glare,.ctc-inner.tilted .ctc-glare{opacity:1}' +
-      // layered parallax for the trading card
-      '.ctc-art>img,.ctc-plate,.ctc-gem,.ctc-new{transition:transform .18s cubic-bezier(.2,.7,.3,1)}' +
-      '.ctc-inner.tilted .ctc-art>img{transform:scale(1.09) translate(calc(var(--px,0) * 8px),calc(var(--py,0) * 8px))}' +
-      '.ctc-inner.tilted .ctc-plate{transform:translate(calc(var(--px,0) * -12px),calc(var(--py,0) * -12px))}' +
-      '.ctc-inner.tilted .ctc-gem,.ctc-inner.tilted .ctc-new{transform:translate(calc(var(--px,0) * -9px),calc(var(--py,0) * -9px))}' +
       '.ctc-common .ctc-inner:hover,.ctc-common .ctc-inner.tilted{box-shadow:0 16px 36px rgba(0,0,0,.58)}' +
       '.ctc-rare .ctc-inner:hover,.ctc-rare .ctc-inner.tilted{box-shadow:0 16px 36px rgba(0,0,0,.58),0 0 24px rgba(122,166,232,.5)}' +
       '.ctc-elite .ctc-inner:hover,.ctc-elite .ctc-inner.tilted{box-shadow:0 16px 36px rgba(0,0,0,.58),0 0 24px rgba(181,138,214,.55)}' +
@@ -433,7 +428,7 @@
       '.ctc-gem-d{width:7px;height:7px;border-radius:2px;transform:rotate(45deg);background:var(--cr);box-shadow:0 0 7px var(--cr)}' +
       '.ctc-new{position:absolute;top:7px;right:7px;z-index:5;font-size:.46rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#06281a;background:#7fd49a;border-radius:5px;padding:2px 5px;box-shadow:0 2px 8px rgba(127,212,154,.4)}' +
       '.ctc-dupe{position:absolute;right:7px;bottom:7px;z-index:6;font-size:.54rem;font-weight:900;color:#1a1200;background:linear-gradient(135deg,#f5c542,#e8a000);border-radius:99px;padding:1px 7px;box-shadow:0 2px 8px rgba(0,0,0,.5)}' +
-      '@media(prefers-reduced-motion:reduce){.ctc{animation:none}.ctc-legendary .ctc-frame,.ctc-legendary .ctc-foil{animation:none}.ctc-inner,.ctc-art>img,.ctc-plate,.ctc-gem,.ctc-new{transition:none}}',
+      '@media(prefers-reduced-motion:reduce){.ctc{animation:none}.ctc-legendary .ctc-frame,.ctc-legendary .ctc-foil{animation:none}.ctc-inner{transition:none}}',
     card: function (c, ctx, i) {
       var rar = ctx.RARITY[c.rarity] || ctx.RARITY.common;
       var p = ctx.posterUrl(c.img);
@@ -507,17 +502,15 @@
       '.auth-rare .auth-foil{opacity:.14}.auth-elite .auth-foil{opacity:.2}.auth-legendary .auth-foil{opacity:.28;animation:authDrift 7s linear infinite}' +
       '.auth-glare{position:absolute;inset:0;z-index:8;pointer-events:none;opacity:0;background:radial-gradient(circle at var(--gx,50%) var(--gy,50%),rgba(255,255,255,.42),rgba(255,255,255,.08) 30%,transparent 52%);mix-blend-mode:overlay;transition:opacity .2s}' +
       '.auth-card:hover .auth-glare,.auth-card.tilted .auth-glare{opacity:1}' +
-      // layered parallax: foreground pops toward viewer, the photo recedes — sells real depth
-      '.auth-bgimg,.auth-corner,.auth-star,.auth-text,.auth-frame{transition:transform .18s cubic-bezier(.2,.7,.3,1)}' +
-      '.auth-card.tilted .auth-bgimg{transform:scale(1.09) translate(calc(var(--px,0) * 9px),calc(var(--py,0) * 9px))}' +
-      '.auth-card.tilted .auth-frame{transform:translateZ(0) translate(calc(var(--px,0) * -7px),calc(var(--py,0) * -7px))}' +
-      '.auth-card.tilted .auth-text{transform:translate(calc(var(--px,0) * -15px),calc(var(--py,0) * -15px))}' +
-      '.auth-card.tilted .auth-corner,.auth-card.tilted .auth-star{transform:translate(calc(var(--px,0) * -12px),calc(var(--py,0) * -12px))}' +
-      '.auth-card:hover,.auth-card.tilted{box-shadow:0 18px 40px rgba(0,0,0,.62)}' +
-      '.auth-rare .auth-card:hover,.auth-rare .auth-card.tilted{box-shadow:0 18px 40px rgba(0,0,0,.62),0 0 26px rgba(122,166,232,.5)}' +
-      '.auth-elite .auth-card:hover,.auth-elite .auth-card.tilted{box-shadow:0 18px 40px rgba(0,0,0,.62),0 0 26px rgba(181,138,214,.55)}' +
-      '.auth-legendary .auth-card:hover,.auth-legendary .auth-card.tilted{box-shadow:0 18px 40px rgba(0,0,0,.62),0 0 30px rgba(232,194,74,.6)}' +
-      '@media(prefers-reduced-motion:reduce){.auth{animation:none}.auth-star,.auth-legendary .auth-foil{animation:none}.auth-card,.auth-bgimg,.auth-text,.auth-frame,.auth-corner,.auth-star{transition:none}}',
+      // the WHOLE card tilts as one plane (no independent photo zoom); a moving inner
+      // shade darkens the side that turns away, so it reads as a lit 3D surface.
+      '.auth-shade{position:absolute;inset:0;z-index:8;pointer-events:none;opacity:0;border-radius:13px;background:linear-gradient(var(--shang,105deg),rgba(0,0,0,.5),transparent 42%,transparent 58%,rgba(255,255,255,.14));transition:opacity .2s}' +
+      '.auth-card.tilted .auth-shade{opacity:1}' +
+      '.auth-card:hover,.auth-card.tilted{box-shadow:0 20px 44px rgba(0,0,0,.64)}' +
+      '.auth-rare .auth-card:hover,.auth-rare .auth-card.tilted{box-shadow:0 20px 44px rgba(0,0,0,.64),0 0 26px rgba(122,166,232,.5)}' +
+      '.auth-elite .auth-card:hover,.auth-elite .auth-card.tilted{box-shadow:0 20px 44px rgba(0,0,0,.64),0 0 26px rgba(181,138,214,.55)}' +
+      '.auth-legendary .auth-card:hover,.auth-legendary .auth-card.tilted{box-shadow:0 20px 44px rgba(0,0,0,.64),0 0 30px rgba(232,194,74,.6)}' +
+      '@media(prefers-reduced-motion:reduce){.auth{animation:none}.auth-star,.auth-legendary .auth-foil{animation:none}.auth-card{transition:none}}',
     card: function (c, ctx, i) {
       var rar = ctx.RARITY[c.rarity] || ctx.RARITY.common;
       var p = ctx.posterUrl(c.img);
@@ -536,7 +529,7 @@
             '<div class="auth-name' + nmCls + '">' + nm + '</div>' +
             '<div class="auth-meta"><span class="auth-gem"></span><span class="auth-rar">' + rar.label + '</span><span class="sep">·</span><span>' + typeUp + '</span><span class="sep">·</span><span class="auth-no">' + no + '</span></div>' +
           '</div>' +
-          '<div class="auth-frame"></div><div class="auth-foil"></div><div class="auth-glare"></div>' +
+          '<div class="auth-frame"></div><div class="auth-foil"></div><div class="auth-shade"></div><div class="auth-glare"></div>' +
         '</div>' +
       '</div>';
     },
@@ -614,20 +607,27 @@
       '.clr-dot.on{background:#e8a000}' +
       '.clr-skip{position:absolute;top:18px;right:20px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#ccc;font:inherit;font-size:.74rem;font-weight:700;padding:6px 13px;border-radius:999px;cursor:pointer;z-index:8}' +
       '.clr-skip:hover{color:#fff}' +
-      '.clr-stage{position:relative;width:300px;max-width:82vw;z-index:6;perspective:900px}' +
-      '.clr-flip{position:relative;width:100%;aspect-ratio:5/7;transform-style:preserve-3d;transition:transform .52s cubic-bezier(.34,1.28,.4,1);transform:rotateY(180deg)}' +
-      '.clr-flip.flipped{transform:rotateY(0)}' +
-      '.clr-flip.live{animation:clrLive 5s ease-in-out infinite}' +
-      '@keyframes clrLive{0%,100%{transform:rotateY(0) rotateX(0)}25%{transform:rotateY(5.5deg) rotateX(-2.5deg)}50%{transform:rotateY(0) rotateX(0)}75%{transform:rotateY(-5.5deg) rotateX(2.5deg)}}' +
-      '.clr-flip.in{animation:clrIn .42s cubic-bezier(.2,.9,.3,1.2)}' +
-      '@keyframes clrIn{from{opacity:0;transform:rotateY(180deg) translateY(16px) scale(.9)}to{opacity:1}}' +
-      '.clr-sheen{position:absolute;inset:0;z-index:9;pointer-events:none;border-radius:13px;background:linear-gradient(115deg,transparent 32%,rgba(255,255,255,.6) 48%,transparent 64%);background-size:300% 100%;mix-blend-mode:overlay;animation:clrSheen .9s ease-out forwards}' +
-      '@keyframes clrSheen{from{background-position:130% 0}to{background-position:-130% 0}}' +
+      '.clr-stage{position:relative;width:300px;max-width:82vw;z-index:6;perspective:1200px;animation:clrStageIn .45s cubic-bezier(.2,.9,.3,1.2) both}' +
+      '@keyframes clrStageIn{from{opacity:0;transform:translateY(16px) scale(.93)}to{opacity:1;transform:none}}' +
+      '.clr-stage::after{content:"";position:absolute;left:50%;bottom:-22px;width:60%;height:24px;transform:translateX(-50%);background:radial-gradient(ellipse at center,rgba(0,0,0,.6),transparent 72%);filter:blur(5px);z-index:-1}' +
+      '.clr-flip{position:relative;width:100%;aspect-ratio:5/7;transform-style:preserve-3d;transform:rotateY(180deg);will-change:transform}' +
+      '.clr-flip.flipped{transform:rotateY(0)}' +                       // static (reduced-motion) reveal
+      '.clr-flip.flip-go{animation:clrFlip 1.05s cubic-bezier(.42,.04,.24,1) forwards}' +
+      '@keyframes clrFlip{0%{transform:rotateY(180deg) scale(.84)}46%{transform:rotateY(94deg) scale(.95)}72%{transform:rotateY(-11deg) scale(1.05)}100%{transform:rotateY(0) scale(1)}}' +
+      '.clr-flip.flip-go.live{animation:clrLive 5s ease-in-out infinite}' +
+      '@keyframes clrLive{0%,100%{transform:rotateY(0) rotateX(0)}25%{transform:rotateY(6deg) rotateX(-2.5deg)}50%{transform:rotateY(0) rotateX(0)}75%{transform:rotateY(-6deg) rotateX(2.5deg)}}' +
       '.clr-face,.clr-back{position:absolute;inset:0;-webkit-backface-visibility:hidden;backface-visibility:hidden;border-radius:13px;overflow:hidden}' +
+      // light + shade that fire as the front face swings into view — makes the card a lit surface, not a flat plane
+      '.clr-face::before{content:"";position:absolute;inset:0;z-index:29;pointer-events:none;border-radius:13px;opacity:0;background:linear-gradient(106deg,rgba(0,0,0,.45),transparent 46%,transparent 60%,rgba(255,255,255,.12))}' +
+      '.clr-face::after{content:"";position:absolute;inset:0;z-index:30;pointer-events:none;border-radius:13px;opacity:0;background:linear-gradient(118deg,transparent 34%,rgba(255,255,255,.92) 50%,transparent 66%)}' +
+      '.clr-flip.flip-go .clr-face::before{animation:clrShade 1.05s ease-out}' +
+      '.clr-flip.flip-go .clr-face::after{animation:clrLightPass 1.05s ease-in-out}' +
+      '@keyframes clrShade{0%,46%{opacity:0}68%{opacity:1}100%{opacity:0}}' +
+      '@keyframes clrLightPass{0%,40%{opacity:0}55%{opacity:.95}76%{opacity:.22}100%{opacity:0}}' +
       '.clr-back{transform:rotateY(180deg);background:repeating-linear-gradient(45deg,#101a30,#101a30 9px,#13203a 9px,#13203a 18px);border:1px solid rgba(232,160,0,.32);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 3px rgba(232,160,0,.16)}' +
       '.clr-mono{font-size:3rem;font-weight:900;color:#e8a000;letter-spacing:-.05em;text-shadow:0 2px 14px rgba(232,140,0,.5)}' +
       '.clr-halo{position:absolute;inset:0;border-radius:13px;box-shadow:0 0 0 0 var(--halo,transparent)}' +
-      '.clr-flip:not(.flipped) .clr-halo{animation:clrHalo 1s ease-in-out infinite}' +
+      '.clr-flip:not(.flip-go):not(.flipped) .clr-halo{animation:clrHalo 1s ease-in-out infinite}' +
       '@keyframes clrHalo{0%,100%{box-shadow:0 0 10px 1px var(--halo,transparent),inset 0 0 12px var(--halo,transparent)}50%{box-shadow:0 0 30px 7px var(--halo,transparent),inset 0 0 22px var(--halo,transparent)}}' +
       '.clr-cap{margin-top:20px;text-align:center;z-index:6;min-height:54px}' +
       '.clr-tag{display:inline-block;font-size:.72rem;font-weight:900;letter-spacing:.14em;text-transform:uppercase;border-radius:6px;padding:4px 11px;animation:clrPop .42s cubic-bezier(.2,1.7,.4,1) both}' +
@@ -641,7 +641,7 @@
       '.clr-sum-h{font-size:1.5rem;font-weight:900;color:#f5f5f5}.clr-sum-x{color:#e8a000;font-weight:800}.clr-sum-lvl{color:#7fd49a;font-weight:800;font-size:.95rem}' +
       '.clr-sum-btns{display:flex;gap:10px;margin-top:6px}' +
       '.clr-btn{padding:11px 20px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:#f0f0f0;font:inherit;font-weight:800;cursor:pointer}.clr-btn.gold{background:linear-gradient(135deg,#f5c542,#e8a000);color:#111;border:none}' +
-      '@media(prefers-reduced-motion:reduce){.clr-flip,.clr-flip.in,.clr-flip.live{transition:none;animation:none}.clr-flash.go,.clr-flip:not(.flipped) .clr-halo,.clr-sheen{animation:none}.clr-sheen{display:none}}' +
+      '@media(prefers-reduced-motion:reduce){.clr-stage,.clr-flip.flip-go,.clr-flip.live{animation:none}.clr-flash.go,.clr-flip .clr-halo,.clr-face::before,.clr-face::after{animation:none}.clr-face::before,.clr-face::after{display:none}}' +
       // ── sets view ──
       '.cl-set{width:100%;display:flex;align-items:center;gap:12px;padding:13px 14px;margin-bottom:10px;border-radius:12px;background:#1c1c1c;border:1px solid rgba(255,255,255,.09);cursor:pointer;text-align:left;font:inherit;color:#f0f0f0}' +
       '.cl-set:hover{border-color:rgba(232,160,0,.4)}' +
@@ -995,7 +995,7 @@
       function card(c) {
         var tier = c.rarity, rl = RARITY[tier];
         document.getElementById('clrBody').innerHTML =
-          '<div class="clr-stage"><div class="clr-flip in" id="clrFlip" style="--halo:' + rl.ring + '">' +
+          '<div class="clr-stage"><div class="clr-flip" id="clrFlip" style="--halo:' + rl.ring + '">' +
           '<div class="clr-back ' + activeCardbackClass() + '"><div class="clr-halo"></div><div class="clr-mono">CL</div></div>' +
           '<div class="clr-face" id="clrFace"></div></div></div>' +
           '<div class="clr-cap" id="clrCap"></div>' +
@@ -1006,20 +1006,21 @@
         state = 'anim';
         if (reduced) { flip.classList.add('flipped'); showCap(c); state = 'ready'; return; }
         try { if (window.Sfx) { window.Sfx.cardFlip(); window.Sfx.haptic(tier === 'legendary' ? [10, 30] : 8); } } catch (_) { /* noop */ }
-        later(420, function () { flip.classList.add('flipped'); });
-        later(625, function () {
+        later(360, function () { flip.classList.add('flip-go'); });            // keyframe flip (1.05s)
+        later(900, function () {                                                // ~crossover: front swings into view
           try { if (window.Sfx) window.Sfx.reveal(tier); } catch (_) { /* noop */ }
           if (tier === 'legendary') {
             var fl = document.getElementById('clrFlash'); if (fl) { fl.classList.remove('go'); void fl.offsetWidth; fl.classList.add('go'); }
             try { if (window.Sfx) window.Sfx.haptic([20, 40, 20, 40, 90]); } catch (_) { /* noop */ }
             try { if (window.Fx && window.Fx.confetti) window.Fx.confetti({ count: 130, power: 1.25 }); } catch (_) { /* noop */ }
           }
-          try { if (theme.mount) theme.mount(document.getElementById('clrFace')); } catch (_) { /* noop */ }
-          var face = document.getElementById('clrFace');
-          if (face) { var sh = document.createElement('div'); sh.className = 'clr-sheen'; face.appendChild(sh); later(900, function () { if (sh.parentNode) sh.parentNode.removeChild(sh); }); }
         });
-        later(920, function () { var f = document.getElementById('clrFlip'); if (f) f.classList.add('live'); showCap(c); state = 'ready'; });
-        later(3400, function () { if (state === 'ready') next(); });
+        later(1420, function () {                                               // flip settled: mount tilt + idle + cap
+          try { if (theme.mount) theme.mount(document.getElementById('clrFace')); } catch (_) { /* noop */ }
+          var f = document.getElementById('clrFlip'); if (f) f.classList.add('live');
+          showCap(c); state = 'ready';
+        });
+        later(3600, function () { if (state === 'ready') next(); });
       }
       function showCap(c) {
         var cap = document.getElementById('clrCap'); if (!cap) return;
