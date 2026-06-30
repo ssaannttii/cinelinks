@@ -64,7 +64,7 @@
       var raf = 0, rx = 0, ry = 0, px = 0.5, py = 0.5;
       function apply() {
         raf = 0;
-        inner.style.transform = 'perspective(640px) rotateX(' + rx.toFixed(2) + 'deg) rotateY(' + ry.toFixed(2) + 'deg) scale(1.045)';
+        inner.style.transform = 'perspective(700px) rotateX(' + rx.toFixed(2) + 'deg) rotateY(' + ry.toFixed(2) + 'deg) scale(1.018)';
         inner.style.setProperty('--gx', (px * 100).toFixed(1) + '%');
         inner.style.setProperty('--gy', (py * 100).toFixed(1) + '%');
         inner.style.setProperty('--fx', (px * 200).toFixed(1) + '%');
@@ -76,8 +76,8 @@
         if (e.pointerType && e.pointerType !== 'mouse') return;
         var r = card.getBoundingClientRect();
         px = (e.clientX - r.left) / r.width; py = (e.clientY - r.top) / r.height;
-        ry = (px - 0.5) * 16;      // rotateY: ±8°
-        rx = (0.5 - py) * 16;      // rotateX: ±8°
+        ry = (px - 0.5) * 13;      // rotateY: ±6.5°
+        rx = (0.5 - py) * 13;      // rotateX: ±6.5°
         inner.classList.add('tilted');
         if (!raf) raf = requestAnimationFrame(apply);
       });
@@ -479,7 +479,7 @@
     css:
       '.auth{position:relative;perspective:800px;animation:clCardIn .4s cubic-bezier(.2,.9,.3,1.2) both}' +
       '.auth-card{position:relative;container-type:inline-size;aspect-ratio:5/7;border-radius:13px;overflow:hidden;transition:transform .16s ease,box-shadow .2s ease;background:#0a1830;box-shadow:0 8px 22px rgba(0,0,0,.55);backface-visibility:hidden}' +
-      '.auth-bgimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;z-index:0}' +
+      '.auth-bgimg{position:absolute;inset:-1px;width:calc(100% + 2px);height:calc(100% + 2px);object-fit:cover;object-position:center top;z-index:0}' +
       '.auth-noimg{position:absolute;inset:0;z-index:0;background:radial-gradient(120% 80% at 50% 0%,#17325e,#0a1830)}' +
       '.auth-scrim{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(6,11,22,.34),transparent 20%,transparent 56%,rgba(6,11,22,.74) 78%,rgba(4,9,18,.96))}' +
       '.auth-corner{position:absolute;top:0;left:0;width:30%;height:21%;z-index:3;background:linear-gradient(135deg,var(--m1),var(--cr) 58%,transparent 60%);clip-path:polygon(0 0,100% 0,0 100%);opacity:.95;pointer-events:none}' +
