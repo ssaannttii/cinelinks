@@ -617,9 +617,9 @@
       '.auth-foil{position:absolute;inset:0;z-index:7;pointer-events:none;opacity:0;background:repeating-linear-gradient(115deg,rgba(255,119,115,.4),rgba(255,237,95,.4) 11%,rgba(168,255,150,.4) 21%,rgba(131,255,247,.4) 31%,rgba(120,148,255,.4) 42%,rgba(216,117,255,.4) 52%,rgba(255,119,115,.4) 62%);background-size:280% 280%;background-position:var(--fx,50%) var(--fy,50%);mix-blend-mode:color-dodge;filter:brightness(.92) contrast(1.12);transition:opacity .22s}' +
       '.auth-rare .auth-foil{opacity:.16}.auth-elite .auth-foil{opacity:.24}.auth-legendary .auth-foil{opacity:.34;animation:authDrift 7s linear infinite}' +
       // glitter layer: fine specular dots that travel with the cursor/tilt and read as metallic foil grain. Elite+ only, on hover/tilt.
-      '.auth-glit{position:absolute;inset:0;z-index:7;pointer-events:none;opacity:0;background-image:radial-gradient(rgba(255,255,255,.95) 0 13%,transparent 15%),radial-gradient(rgba(255,255,255,.6) 0 11%,transparent 13%);background-size:5.2cqw 5.2cqw,3.3cqw 3.3cqw;background-position:var(--fx,50%) var(--fy,50%),calc(var(--fx,50%) + 1.7cqw) calc(var(--fy,50%) + 1.1cqw);mix-blend-mode:screen;filter:brightness(1.15);transition:opacity .25s}' +
-      '.auth-elite .auth-card:hover .auth-glit,.auth-elite .auth-card.tilted .auth-glit{opacity:.5}' +
-      '.auth-legendary .auth-card:hover .auth-glit,.auth-legendary .auth-card.tilted .auth-glit{opacity:.85}' +
+      '.auth-glit{position:absolute;inset:0;z-index:7;pointer-events:none;opacity:0;background-image:radial-gradient(rgba(255,255,255,.85) 0 5%,transparent 8%),radial-gradient(rgba(255,255,255,.5) 0 4%,transparent 7%);background-size:7cqw 7cqw,4.6cqw 4.6cqw;background-position:var(--fx,50%) var(--fy,50%),calc(var(--fx,50%) + 2.3cqw) calc(var(--fy,50%) + 1.4cqw);-webkit-mask:radial-gradient(circle at var(--gx,50%) var(--gy,50%),#000,rgba(0,0,0,.3) 24%,transparent 54%);mask:radial-gradient(circle at var(--gx,50%) var(--gy,50%),#000,rgba(0,0,0,.3) 24%,transparent 54%);mix-blend-mode:screen;filter:brightness(1.1);transition:opacity .25s}' +
+      '.auth-elite .auth-card:hover .auth-glit,.auth-elite .auth-card.tilted .auth-glit{opacity:.42}' +
+      '.auth-legendary .auth-card:hover .auth-glit,.auth-legendary .auth-card.tilted .auth-glit{opacity:.6}' +
       // one-shot diagonal light sweep when the pointer enters a card
       '.auth-sheen{position:absolute;inset:0;z-index:8;pointer-events:none;border-radius:13px;opacity:0;background:linear-gradient(105deg,transparent 36%,rgba(255,255,255,.55) 50%,transparent 64%)}' +
       '.auth-card:hover .auth-sheen{animation:authSheen .7s ease-out}' +
@@ -708,9 +708,12 @@
       '.cl-dbg .stat{font-size:.7rem;color:#9a9a9a;margin-top:8px}.cl-dbg .stat b{color:#e8e8e8}' +
       '.cl-dbg textarea{width:100%;height:74px;margin-top:8px;background:#0d0d0d;color:#cfcfcf;border:1px solid rgba(255,255,255,.14);border-radius:8px;font-family:monospace;font-size:.66rem;padding:7px;resize:vertical}' +
       // card detail view
-      '#clCollDetail{position:fixed;inset:0;z-index:250;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.82);backdrop-filter:blur(7px)}' +
+      // Scroll lives on the MODAL, not the box — so the box can stay overflow:visible
+      // and never clip the 3D-tilted card against a rectangle. margin:auto centres the
+      // box when it fits and lets it scroll from the top when it doesn't.
+      '#clCollDetail{position:fixed;inset:0;z-index:250;display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:18px;background:rgba(0,0,0,.82);backdrop-filter:blur(7px)}' +
       '#clCollDetail.open{display:flex;animation:clCollIn .26s cubic-bezier(.2,.9,.3,1.1) both}' +
-      '.cl-detail-box{position:relative;display:flex;flex-direction:column;align-items:center;gap:18px;max-height:92vh;overflow:auto;padding:4px}' +
+      '.cl-detail-box{position:relative;display:flex;flex-direction:column;align-items:center;gap:18px;margin:auto;overflow:visible;padding:4px}' +
       '.cl-detail-stage{width:340px;height:476px;max-width:94vw;display:flex;align-items:center;justify-content:center;flex-shrink:0}' +
       '.cl-detail-card{width:300px;max-width:86vw}' +
       '.cl-detail-x{position:fixed;top:16px;right:18px;background:rgba(20,20,20,.65);border:1px solid rgba(255,255,255,.16);color:#ddd;font-size:1.1rem;cursor:pointer;border-radius:999px;width:38px;height:38px;line-height:1;z-index:1}' +
@@ -829,7 +832,7 @@
       // Shine (foil) cosmetic — forces the holo overlay on regardless of rarity, plus a cool glow + sparkle tag.
       '@keyframes clShineDrift{0%{background-position:0% 50%}100%{background-position:260% 50%}}' +
       '.cl-shine .auth-foil,.cl-shine .ctc-foil{display:block;opacity:.62;animation:clShineDrift 5.5s linear infinite}' +
-      '.cl-shine .auth-glit{opacity:.7}' +
+      '.cl-shine .auth-glit{opacity:.5}' +
       '.cl-shine .auth-card{box-shadow:0 8px 22px rgba(0,0,0,.55),0 0 0 1px rgba(190,225,255,.35),0 0 26px rgba(150,205,255,.4)}' +
       '.cl-shine .ctc-inner{box-shadow:0 6px 18px rgba(0,0,0,.5),0 0 0 1px rgba(190,225,255,.35),0 0 22px rgba(150,205,255,.4)}' +
       '.cl-shine-t{position:absolute;z-index:10;font-size:.86rem;line-height:1;filter:drop-shadow(0 1px 5px rgba(150,205,255,.95));animation:clSpark 2.4s ease-in-out infinite}' +
