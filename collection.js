@@ -76,11 +76,18 @@
     var r = h % 1000;
     return r < 25 ? 'legendary' : r < 110 ? 'elite' : r < 330 ? 'rare' : 'common';
   }
+  var TIERS = ['common', 'rare', 'elite', 'legendary'];
+  // Rarity is EARNED: a base tier (rating, else hash) is then raised by merit the
+  // game passes in — it.rarityFloor (minimum, e.g. the goal/answer card) and
+  // it.bump (+N tiers for a fast / under-par solve). Explicit it.rarity wins (seed).
   function rarityOf(it) {
     if (it.rarity && RARITY[it.rarity]) return it.rarity;
-    var r = it.rating;
-    if (typeof r === 'number' && r > 0) return r >= 8.3 ? 'legendary' : r >= 7.8 ? 'elite' : r >= 7 ? 'rare' : 'common';
-    return hashRarity(it.id, it.type);
+    var idx, r = it.rating;
+    if (typeof r === 'number' && r > 0) idx = r >= 8.3 ? 3 : r >= 7.8 ? 2 : r >= 7 ? 1 : 0;
+    else idx = TIERS.indexOf(hashRarity(it.id, it.type));
+    if (it.rarityFloor && TIERS.indexOf(it.rarityFloor) > idx) idx = TIERS.indexOf(it.rarityFloor);
+    if (it.bump) idx += it.bump;
+    return TIERS[Math.max(0, Math.min(3, idx))];
   }
   // One-time re-tier of pre-existing cards (all stored as "common" before hash
   // rarity existed) so older collections gain variety too. Guarded by s.mv.

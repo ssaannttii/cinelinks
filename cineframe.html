@@ -337,7 +337,7 @@ function finish(win){
   renderPips();
   renderResult(streak);
   save();
-  try { if (win && window.Collection && target) { var _nc = window.Collection.add([{ id: target.id, type: target.type || 'movie', name: target.title, img: target.posterPath }]); if (_nc && _nc.length && window.Collection.reveal) setTimeout(function () { window.Collection.reveal(_nc); }, 500); } } catch(_) {}
+  try { if (win && window.Collection && target) { var _wi = results.indexOf('win'); var _nc = window.Collection.add([{ id: target.id, type: target.type || 'movie', name: target.title, img: target.posterPath, rarityFloor: 'rare', bump: _wi === 0 ? 2 : _wi === 1 ? 1 : 0 }]); if (_nc && _nc.length && window.Collection.reveal) setTimeout(function () { window.Collection.reveal(_nc); }, 500); } } catch(_) {}
   try { if (window.Track) window.Track('cineframe_complete', { win: win ? 1 : 0 }); } catch(_) {}
 }
 

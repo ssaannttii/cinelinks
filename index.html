@@ -3219,7 +3219,16 @@ const game = window.game = {
     try { this._renderVersus(); } catch (_) {}
     let _collNewCards = [];
     if (!replay) {
-      try { if (window.Collection && Array.isArray(this.path)) _collNewCards = Collection.add(this.path.map(n => ({ id: n.id, type: n.type, name: n.name, img: n.img }))); } catch (_) {}
+      try {
+        if (window.Collection && Array.isArray(this.path)) {
+          const _tight = this.clicks > 0 && this.clicks <= 4;        // a sharp solve earns rarer cards
+          _collNewCards = Collection.add(this.path.map(n => {
+            const it = { id: n.id, type: n.type, name: n.name, img: n.img };
+            if (this.end && n.id === this.end.id && n.type === this.end.type) { it.rarityFloor = 'rare'; if (_tight) it.bump = 1; } // the goal card is the prize
+            return it;
+          }));
+        }
+      } catch (_) {}
     }
     try { this._showCollNew(replay ? 0 : _collNewCards.length); } catch (_) {}
     try { if (!replay && _collNewCards.length && window.Collection && Collection.reveal) setTimeout(function () { Collection.reveal(_collNewCards); }, 650); } catch (_) {}
