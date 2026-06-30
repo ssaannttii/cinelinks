@@ -388,7 +388,42 @@
       '.cl-di-name{font-size:1.15rem;font-weight:800;color:#f5f5f5;text-align:center;margin-bottom:11px}' +
       '.cl-di-rows{display:flex;flex-direction:column;gap:1px;border-radius:11px;overflow:hidden;border:1px solid rgba(255,255,255,.09)}' +
       '.cl-di-row{display:flex;justify-content:space-between;padding:10px 14px;background:#181818;font-size:.84rem}' +
-      '.cl-di-row span{color:#9a9a9a}.cl-di-row b{color:#f0f0f0;font-weight:700}';
+      '.cl-di-row span{color:#9a9a9a}.cl-di-row b{color:#f0f0f0;font-weight:700}' +
+      // ── reveal sequence ──
+      '#clCollReveal{position:fixed;inset:0;z-index:260;display:none;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 42%,rgba(18,20,30,.72),rgba(0,0,0,.92) 70%);backdrop-filter:blur(8px);overflow:hidden;cursor:pointer}' +
+      '#clCollReveal.open{display:flex}' +
+      '.clr-flash{position:absolute;inset:0;z-index:5;pointer-events:none;opacity:0;background:radial-gradient(circle at 50% 45%,rgba(232,160,0,.5),rgba(232,160,0,.12) 38%,transparent 66%)}' +
+      '.clr-flash.go{animation:clrFlash .62s cubic-bezier(.22,1,.36,1)}' +
+      '@keyframes clrFlash{0%{opacity:0;transform:scale(.7)}22%{opacity:1}100%{opacity:0;transform:scale(1.3)}}' +
+      '.clr-progress{position:absolute;top:22px;display:flex;gap:6px;z-index:7}' +
+      '.clr-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.22);transition:background .2s}' +
+      '.clr-dot.on{background:#e8a000}' +
+      '.clr-skip{position:absolute;top:18px;right:20px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#ccc;font:inherit;font-size:.74rem;font-weight:700;padding:6px 13px;border-radius:999px;cursor:pointer;z-index:8}' +
+      '.clr-skip:hover{color:#fff}' +
+      '.clr-stage{position:relative;width:300px;max-width:82vw;z-index:6;perspective:1100px}' +
+      '.clr-flip{position:relative;width:100%;aspect-ratio:5/7;transform-style:preserve-3d;transition:transform .44s cubic-bezier(.2,.8,.2,1);transform:rotateY(180deg)}' +
+      '.clr-flip.flipped{transform:rotateY(0)}' +
+      '.clr-flip.in{animation:clrIn .42s cubic-bezier(.2,.9,.3,1.2)}' +
+      '@keyframes clrIn{from{opacity:0;transform:rotateY(180deg) translateY(16px) scale(.9)}to{opacity:1}}' +
+      '.clr-face,.clr-back{position:absolute;inset:0;-webkit-backface-visibility:hidden;backface-visibility:hidden;border-radius:13px;overflow:hidden}' +
+      '.clr-back{transform:rotateY(180deg);background:repeating-linear-gradient(45deg,#101a30,#101a30 9px,#13203a 9px,#13203a 18px);border:1px solid rgba(232,160,0,.32);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 3px rgba(232,160,0,.16)}' +
+      '.clr-mono{font-size:3rem;font-weight:900;color:#e8a000;letter-spacing:-.05em;text-shadow:0 2px 14px rgba(232,140,0,.5)}' +
+      '.clr-halo{position:absolute;inset:0;border-radius:13px;box-shadow:0 0 0 0 var(--halo,transparent)}' +
+      '.clr-flip:not(.flipped) .clr-halo{animation:clrHalo 1s ease-in-out infinite}' +
+      '@keyframes clrHalo{0%,100%{box-shadow:0 0 10px 1px var(--halo,transparent),inset 0 0 12px var(--halo,transparent)}50%{box-shadow:0 0 30px 7px var(--halo,transparent),inset 0 0 22px var(--halo,transparent)}}' +
+      '.clr-cap{margin-top:20px;text-align:center;z-index:6;min-height:54px}' +
+      '.clr-tag{display:inline-block;font-size:.72rem;font-weight:900;letter-spacing:.14em;text-transform:uppercase;border-radius:6px;padding:4px 11px;animation:clrPop .42s cubic-bezier(.2,1.7,.4,1) both}' +
+      '.clr-tag.new{color:#06281a;background:#7fd49a}.clr-tag.dupe{color:#1a1200;background:linear-gradient(135deg,#f5c542,#e8a000)}' +
+      '@keyframes clrPop{0%{opacity:0;transform:scale(.4)}100%{opacity:1;transform:scale(1)}}' +
+      '.clr-rare-lbl{display:block;margin-top:5px;font-size:.66rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}' +
+      '.clr-xp{display:block;margin-top:8px;color:#e8a000;font-weight:800;font-size:.92rem;letter-spacing:.02em}' +
+      '.clr-hint{position:absolute;bottom:24px;color:rgba(255,255,255,.5);font-size:.78rem;z-index:6}' +
+      '.clr-sum{display:flex;flex-direction:column;align-items:center;gap:13px;z-index:6;text-align:center;animation:clrIn2 .4s ease both}' +
+      '@keyframes clrIn2{from{opacity:0;transform:translateY(12px)}to{opacity:1}}' +
+      '.clr-sum-h{font-size:1.5rem;font-weight:900;color:#f5f5f5}.clr-sum-x{color:#e8a000;font-weight:800}.clr-sum-lvl{color:#7fd49a;font-weight:800;font-size:.95rem}' +
+      '.clr-sum-btns{display:flex;gap:10px;margin-top:6px}' +
+      '.clr-btn{padding:11px 20px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:#f0f0f0;font:inherit;font-weight:800;cursor:pointer}.clr-btn.gold{background:linear-gradient(135deg,#f5c542,#e8a000);color:#111;border:none}' +
+      '@media(prefers-reduced-motion:reduce){.clr-flip,.clr-flip.in{transition:none;animation:none}.clr-flash.go,.clr-flip:not(.flipped) .clr-halo{animation:none}}';
     document.head.appendChild(css);
   }
 
@@ -581,9 +616,98 @@
   }
   function closeDetail() { var d = document.getElementById('clCollDetail'); if (d) d.classList.remove('open'); }
 
+  // ── Reveal sequence: the "earn" moment. reveal(newCards) plays a per-card
+  // flip with rarity-scaled flair (sound + haptics + legendary flash), then a
+  // summary with XP and any level-up. Auto-plays after a win; skippable. ──
+  function buildReveal() {
+    var ov = document.getElementById('clCollReveal');
+    if (ov) return ov;
+    injectShell();
+    ov = document.createElement('div'); ov.id = 'clCollReveal'; ov.setAttribute('role', 'dialog');
+    ov.innerHTML = '<div class="clr-flash" id="clrFlash"></div><div class="clr-progress" id="clrDots"></div>' +
+      '<button class="clr-skip" id="clrSkip">Skip &#9197;</button><div id="clrBody"></div>';
+    document.body.appendChild(ov);
+    return ov;
+  }
+  function closeReveal() { var ov = document.getElementById('clCollReveal'); if (ov) ov.classList.remove('open'); }
+  function reveal(cards) {
+    try {
+      if (!Array.isArray(cards)) return;
+      var queue = cards.filter(function (c) { return c && c.rarity && RARITY[c.rarity]; });
+      if (!queue.length) return;
+      queue.sort(function (a, b) { return ORDER[b.rarity] - ORDER[a.rarity]; }); // climax (rarest) last
+      injectShell();
+      var theme = activeTheme(); injectThemeCss(theme);
+      var ov = buildReveal();
+      var gained = queue.reduce(function (s, c) { return s + (XP[c.rarity] || 10); }, 0);
+      var afterXp = (load() || blank()).xp || 0, beforeXp = afterXp - gained;
+      var lvlAfter = levelFromXp(afterXp), lvlBefore = levelFromXp(beforeXp);
+      var reduced = reducedMotion();
+      var timers = []; function clearT() { timers.forEach(clearTimeout); timers = []; }
+      function later(ms, fn) { timers.push(setTimeout(fn, ms)); }
+      var idx = 0, state = '';
+      document.getElementById('clrDots').innerHTML = queue.map(function () { return '<span class="clr-dot"></span>'; }).join('');
+      function setDots() { Array.prototype.forEach.call(ov.querySelectorAll('.clr-dot'), function (x, i) { x.classList.toggle('on', i <= idx); }); }
+      function card(c) {
+        var tier = c.rarity, rl = RARITY[tier];
+        document.getElementById('clrBody').innerHTML =
+          '<div class="clr-stage"><div class="clr-flip in" id="clrFlip" style="--halo:' + rl.ring + '">' +
+          '<div class="clr-back"><div class="clr-halo"></div><div class="clr-mono">CL</div></div>' +
+          '<div class="clr-face" id="clrFace"></div></div></div>' +
+          '<div class="clr-cap" id="clrCap"></div>' +
+          '<div class="clr-hint">' + (idx < queue.length - 1 ? 'tap for next' : 'tap to finish') + '</div>';
+        document.getElementById('clrFace').innerHTML = theme.card(c, CTX, 0);
+        setDots();
+        var flip = document.getElementById('clrFlip');
+        state = 'anim';
+        if (reduced) { flip.classList.add('flipped'); showCap(c); state = 'ready'; return; }
+        try { if (window.Sfx) { window.Sfx.cardFlip(); window.Sfx.haptic(tier === 'legendary' ? [10, 30] : 8); } } catch (_) { /* noop */ }
+        later(420, function () { flip.classList.add('flipped'); });
+        later(625, function () {
+          try { if (window.Sfx) window.Sfx.reveal(tier); } catch (_) { /* noop */ }
+          if (tier === 'legendary') {
+            var fl = document.getElementById('clrFlash'); if (fl) { fl.classList.remove('go'); void fl.offsetWidth; fl.classList.add('go'); }
+            try { if (window.Sfx) window.Sfx.haptic([20, 40, 20, 40, 90]); } catch (_) { /* noop */ }
+            try { if (window.Fx && window.Fx.confetti) window.Fx.confetti({ count: 130, power: 1.25 }); } catch (_) { /* noop */ }
+          }
+          try { if (theme.mount) theme.mount(document.getElementById('clrFace')); } catch (_) { /* noop */ }
+        });
+        later(920, function () { showCap(c); state = 'ready'; });
+        later(3400, function () { if (state === 'ready') next(); });
+      }
+      function showCap(c) {
+        var cap = document.getElementById('clrCap'); if (!cap) return;
+        var rl = RARITY[c.rarity];
+        cap.innerHTML = '<span class="clr-tag new">New</span><span class="clr-rare-lbl" style="color:' + rl.ring + '">' + rl.label + '</span><span class="clr-xp">+' + (XP[c.rarity] || 10) + ' XP</span>';
+        try { if (window.Sfx) window.Sfx.haptic(c.rarity === 'legendary' ? [20, 40, 60] : c.rarity === 'elite' ? [15, 30] : 10); } catch (_) { /* noop */ }
+      }
+      function next() { clearT(); idx++; if (idx >= queue.length) summary(); else card(queue[idx]); }
+      function summary() {
+        state = 'sum';
+        if (lvlAfter > lvlBefore) { try { if (window.Sfx) window.Sfx.levelUp(); } catch (_) { /* noop */ } }
+        var lvlLine = lvlAfter > lvlBefore ? '<div class="clr-sum-lvl">Level up &mdash; you reached level ' + lvlAfter + '! 🎉</div>' : '';
+        document.getElementById('clrBody').innerHTML =
+          '<div class="clr-sum"><div class="clr-sum-h">+' + queue.length + (queue.length === 1 ? ' card' : ' cards') + '</div>' +
+          '<div class="clr-sum-x">+' + gained + ' XP</div>' + lvlLine +
+          '<div class="clr-sum-btns"><button class="clr-btn" id="clrAgain">Continue</button><button class="clr-btn gold" id="clrView">View collection</button></div></div>';
+        var sk = document.getElementById('clrSkip'); if (sk) sk.style.display = 'none';
+        ov.onclick = null;
+        document.getElementById('clrView').onclick = function (e) { e.stopPropagation(); closeReveal(); openGallery(); };
+        document.getElementById('clrAgain').onclick = function (e) { e.stopPropagation(); closeReveal(); };
+      }
+      var skip = document.getElementById('clrSkip');
+      skip.style.display = ''; skip.onclick = function (e) { e.stopPropagation(); clearT(); summary(); };
+      ov.onclick = function () { if (state === 'ready') next(); };
+      ov.classList.add('open');
+      try { if (window.Sfx) window.Sfx.cardDeal(); } catch (_) { /* noop */ }
+      try { if (window.Track) window.Track('card_revealed', { n: queue.length, top: queue[queue.length - 1].rarity }); } catch (_) { /* noop */ }
+      card(queue[0]);
+    } catch (_) { /* noop */ }
+  }
+
   // expose + init
   window.Collection = {
-    add: add, stats: stats, all: allCards, openGallery: openGallery, markSeen: markSeen,
+    add: add, stats: stats, all: allCards, openGallery: openGallery, markSeen: markSeen, reveal: reveal,
     reset: reset, grant: grant, addXp: addXp, setLevel: setLevel, exportData: exportData, importData: importData, seed: function () { return grant(SEED.map(function (s) { return s; })); },
     debug: debug,
     themes: { register: defineTheme, use: useTheme, list: function () { return Object.keys(THEMES).map(function (n) { return { name: n, label: THEMES[n].label || n }; }); }, current: activeThemeName }

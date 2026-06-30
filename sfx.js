@@ -148,7 +148,50 @@
         note(1047, t + 0.66, 0.9, { type: 'sine', gain: 0.13 });
         noise(t, 0.3, { gain: 0.1, freq: 3200, sweepTo: 5400 });
       });
-    }
+    },
+
+    // ── card collection: reveal cues ──
+    // cards appear (deal/whoosh)
+    cardDeal: function () { go(function (t) { noise(t, 0.26, { gain: 0.12, freq: 1600, sweepTo: 420 }); note(280, t, 0.2, { type: 'sine', gain: 0.06, slideTo: 150 }); }); },
+    // a card flips over
+    cardFlip: function () { go(function (t) { noise(t, 0.14, { gain: 0.1, freq: 2200, sweepTo: 700 }); note(520, t, 0.08, { type: 'triangle', gain: 0.08, slideTo: 380 }); }); },
+    // rarity stinger when a card is revealed — escalates with tier
+    reveal: function (tier) {
+      if (tier === 'legendary') { Sfx.legendary(); return; }
+      go(function (t) {
+        if (tier === 'elite') {
+          [784, 1047, 1319].forEach(function (f, i) { note(f, t + i * 0.06, 0.26, { type: 'triangle', gain: 0.15 }); });
+          noise(t, 0.16, { gain: 0.07, freq: 3400, sweepTo: 5200 });
+        } else if (tier === 'rare') {
+          note(659, t, 0.16, { type: 'triangle', gain: 0.15 });
+          note(988, t + 0.07, 0.22, { type: 'triangle', gain: 0.14 });
+          noise(t, 0.1, { gain: 0.05, freq: 3000, sweepTo: 4600 });
+        } else {
+          note(523, t, 0.16, { type: 'triangle', gain: 0.12 });
+          note(659, t + 0.06, 0.16, { type: 'sine', gain: 0.1 });
+        }
+      });
+    },
+    // legendary pull — the big one
+    legendary: function () {
+      go(function (t) {
+        [523, 659, 784, 1047, 1319, 1568, 2093].forEach(function (f, i) { note(f, t + i * 0.085, 0.6, { type: 'triangle', gain: 0.17 }); });
+        note(1047, t + 0.6, 0.95, { type: 'sine', gain: 0.13 });
+        note(1568, t + 0.6, 0.95, { type: 'sine', gain: 0.1 });
+        noise(t, 0.3, { gain: 0.11, freq: 3200, sweepTo: 6000 });
+        noise(t + 0.5, 0.4, { gain: 0.06, freq: 5000, sweepTo: 8000 });
+      });
+    },
+    // level up
+    levelUp: function () {
+      go(function (t) {
+        [523, 784, 1047, 1568].forEach(function (f, i) { note(f, t + i * 0.09, 0.4, { type: 'triangle', gain: 0.16 }); });
+        note(1047, t + 0.36, 0.6, { type: 'sine', gain: 0.12 });
+        noise(t, 0.18, { gain: 0.07, freq: 3600, sweepTo: 5400 });
+      });
+    },
+    // duplicate → dust
+    dust: function () { go(function (t) { note(1175, t, 0.05, { type: 'triangle', gain: 0.08 }); note(1568, t + 0.04, 0.08, { type: 'triangle', gain: 0.07 }); }); }
   };
 
   window.Sfx = Sfx;

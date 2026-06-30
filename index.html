@@ -3217,11 +3217,12 @@ const game = window.game = {
     this.renderStreak();
     this.renderPar();
     try { this._renderVersus(); } catch (_) {}
-    let _collNew = 0;
+    let _collNewCards = [];
     if (!replay) {
-      try { if (window.Collection && Array.isArray(this.path)) _collNew = Collection.add(this.path.map(n => ({ id: n.id, type: n.type, name: n.name, img: n.img }))).length; } catch (_) {}
+      try { if (window.Collection && Array.isArray(this.path)) _collNewCards = Collection.add(this.path.map(n => ({ id: n.id, type: n.type, name: n.name, img: n.img }))); } catch (_) {}
     }
-    try { this._showCollNew(replay ? 0 : _collNew); } catch (_) {}
+    try { this._showCollNew(replay ? 0 : _collNewCards.length); } catch (_) {}
+    try { if (!replay && _collNewCards.length && window.Collection && Collection.reveal) setTimeout(function () { Collection.reveal(_collNewCards); }, 650); } catch (_) {}
     const winSub = document.querySelector('.win-sub');
     if (winSub) winSub.textContent = replay ? '✓ You already solved today’s challenge' : t('winSub');
 
