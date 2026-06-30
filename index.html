@@ -688,6 +688,21 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   .game-card:hover{transform:none}
 }
 
+/* ─────────────── Friend challenge (async head-to-head) ─────────────── */
+.win-versus{display:none;flex-direction:column;align-items:center;gap:7px;margin:0 0 16px;padding:15px;border-radius:12px;background:linear-gradient(180deg,rgba(232,160,0,.1),rgba(255,255,255,.03));border:1px solid rgba(232,160,0,.28)}
+.win-versus .wv-row{display:flex;align-items:center;gap:20px}
+.win-versus .wv-side{display:flex;flex-direction:column;align-items:center}
+.win-versus .wv-side b{font-size:2rem;font-weight:900;line-height:1}
+.win-versus .wv-side.you b{color:var(--gold)}
+.win-versus .wv-side.them b{color:#bdbdbd}
+.win-versus .wv-side span{font-size:.62rem;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);margin-top:4px}
+.win-versus .wv-vs{font-size:.78rem;font-weight:800;color:var(--mut)}
+.win-versus .wv-verdict{font-size:1rem;font-weight:900;letter-spacing:.01em}
+#challengeRow{display:none;margin-bottom:12px}
+#challengeRow .btn{display:flex;align-items:center;justify-content:center;gap:7px}
+#challengeBadge{display:none;align-items:center;gap:4px;font-size:.6rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#e8a06f;border:1px solid rgba(232,128,111,.45);background:rgba(232,128,111,.12);border-radius:6px;padding:3px 7px;white-space:nowrap}
+#challengeBadge b{color:#f0b48a}
+
 /* Win screen: staggered path items */
 @keyframes wpEntry{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 @keyframes wpArrowEntry{from{opacity:0;transform:scaleY(0)}to{opacity:1;transform:scaleY(1)}}
@@ -870,6 +885,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
       <button class="hdr-back" onclick="game.startRandom()" style="color:var(--gold)">&#8635; New</button>
       <button class="hdr-back" id="soundToggle" type="button" aria-label="Toggle sound" title="Sound" onclick="clToggleSound()">&#128266;</button>
       <span id="hdrDateBadge" style="display:none;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);border:1px solid var(--bdr);border-radius:6px;padding:3px 7px;white-space:nowrap"></span>
+      <span id="challengeBadge" aria-hidden="true"></span>
     </div>
     <div class="hdr-mid">
       <div class="hdr-node">
@@ -942,8 +958,12 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     <div id="winStreak" class="win-streak" style="display:none"></div>
     <div id="winPar" class="win-par" style="display:none"></div>
     <div id="winAvg" class="win-avg"></div>
+    <div id="winVersus" class="win-versus"></div>
     <div class="win-route-lbl">Winning route</div>
     <div id="winPath" class="win-path"></div>
+    <div id="challengeRow">
+      <button class="btn btn-gold" style="margin:0;width:100%" onclick="game.challengeFriend()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="m13 19 6-6"/><path d="m16 16 4 4"/><path d="m19 21 2-2"/><path d="M14.5 6.5 18 3h3v3l-3.5 3.5"/></svg>Challenge a friend to beat your score</button>
+    </div>
     <div class="win-btns">
       <button class="btn btn-ghost" id="winHomeBtn" style="margin:0" onclick="game.reset()"><svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;margin-right:5px"><path d="M1.5 7L7 1.5L12.5 7V13H9V9.5H5V13H1.5Z"/></svg>Home</button>
       <div class="share-wrap">
@@ -2650,6 +2670,7 @@ const game = window.game = {
     this.renderCurrentPrompt();
     const debugBtn = document.getElementById('debugBtn');
     if (debugBtn) debugBtn.textContent = 'Debug link';
+    try { this._syncChallengeBadge(); } catch (_) {}
   },
 
   renderCurrentPrompt() {
@@ -3150,6 +3171,7 @@ const game = window.game = {
     }
     this.renderStreak();
     this.renderPar();
+    try { this._renderVersus(); } catch (_) {}
     const winSub = document.querySelector('.win-sub');
     if (winSub) winSub.textContent = replay ? '✓ You already solved today’s challenge' : t('winSub');
 
@@ -3580,6 +3602,67 @@ const game = window.game = {
     } catch (_) { return location.href; }
   },
 
+  // ── Friend challenge: async head-to-head on today's daily, no accounts needed ──
+  _challengeUrl() {
+    try {
+      const to = location.origin + '/?chal=' + encodeURIComponent(this.clicks) + '&cd=' + encodeURIComponent(dateKey());
+      const p = new URLSearchParams();
+      p.set('g', 'cl');
+      if (this.start && this.end) { p.set('a', this.start.name.slice(0, 48)); p.set('b', this.end.name.slice(0, 48)); }
+      p.set('n', String(this.clicks));
+      p.set('title', 'Beat my ' + this.clicks + ' click' + (this.clicks === 1 ? '' : 's'));
+      p.set('sub', "Today's CineLinks — can you do better?");
+      p.set('to', to);
+      return location.origin + '/s?' + p.toString();
+    } catch (_) { return location.href; }
+  },
+
+  async challengeFriend() {
+    try { if (window.Track) Track('challenge_create', { clicks: this.clicks }); } catch (_) {}
+    const url = this._challengeUrl();
+    const text = "I solved today's CineLinks in " + this.clicks + (this.clicks === 1 ? ' click' : ' clicks') + ' — can you beat me?';
+    try { if (navigator.share) { await navigator.share({ title: 'CineLinks challenge', text: text, url: url }); return; } } catch (_) { return; }
+    try { if (navigator.clipboard) { await navigator.clipboard.writeText(url); this._showToast('⚔ Challenge link copied — send it to a friend!'); return; } } catch (_) {}
+    try { prompt('Copy this challenge link:', url); } catch (_) {}
+  },
+
+  _activeChallenge() {
+    try {
+      const ch = JSON.parse(localStorage.getItem('clChallenge') || 'null');
+      if (ch && ch.date === dateKey() && Number.isFinite(ch.clicks)) return ch;
+    } catch (_) {}
+    return null;
+  },
+
+  _syncChallengeBadge() {
+    const el = document.getElementById('challengeBadge');
+    if (!el) return;
+    const ch = this._activeChallenge();
+    const show = !!ch && this.scoreDate === dateKey();
+    el.style.display = show ? 'inline-flex' : 'none';
+    if (show) el.innerHTML = '⚔ beat <b>' + ch.clicks + '</b>';
+  },
+
+  _renderVersus() {
+    const el = document.getElementById('winVersus');
+    const row = document.getElementById('challengeRow');
+    const isDaily = this.scoreDate === dateKey();
+    if (row) row.style.display = isDaily ? 'block' : 'none';
+    if (!el) return;
+    const ch = this._activeChallenge();
+    if (!isDaily || !ch) { el.style.display = 'none'; return; }
+    const me = this.clicks, friend = ch.clicks;
+    const won = me < friend, tie = me === friend;
+    const verdict = won ? '🏆 You win!' : tie ? '🤝 Dead heat' : '😤 They win — rematch?';
+    const color = won ? '#7fd49a' : tie ? 'var(--gold)' : '#e8806f';
+    el.innerHTML =
+      '<div class="wv-row"><span class="wv-side you"><b>' + me + '</b><span>You</span></span>' +
+      '<span class="wv-vs">vs</span><span class="wv-side them"><b>' + friend + '</b><span>Friend</span></span></div>' +
+      '<div class="wv-verdict" style="color:' + color + '">' + verdict + '</div>';
+    el.style.display = 'flex';
+    try { if (window.Track) Track('challenge_result', { won: won ? 1 : 0, tie: tie ? 1 : 0, me: me, friend: friend }); } catch (_) {}
+  },
+
   toggleShareMenu() {
     const menu = document.getElementById('shareMenu');
     if (!menu) return;
@@ -3790,9 +3873,17 @@ document.getElementById('shareCard').addEventListener('click', function(e) {
 });
 
 if (!loadGameFromUrl()) {
-  // Deep-links: /?daily=1 jumps straight into today's challenge, /?practice=1 a random one.
+  // Deep-links: /?chal=N&cd=DATE accepts a friend's challenge on today's daily;
+  // /?daily=1 jumps straight into today's challenge, /?practice=1 a random one.
   const _entry = new URLSearchParams(location.search);
-  if (_entry.get('daily') === '1') game.startDaily();
+  const _chalN = _entry.get('chal') != null ? parseInt(_entry.get('chal'), 10) : NaN;
+  const _cd = _entry.get('cd');
+  if (Number.isFinite(_chalN) && _chalN >= 0 && _cd === dateKey()) {
+    try { localStorage.setItem('clChallenge', JSON.stringify({ date: _cd, clicks: _chalN })); } catch (_) {}
+    try { if (window.Track) Track('challenge_accept', { clicks: _chalN }); } catch (_) {}
+    game.startDaily();
+  }
+  else if (_entry.get('daily') === '1') game.startDaily();
   else if (_entry.get('practice') === '1') game.startRandom();
   else showOnly('startScreen');
 }
