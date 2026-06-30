@@ -23,6 +23,12 @@
   var SCHEMA = 1;
   var IMG = 'https://image.tmdb.org/t/p/w342';
   var XP = { common: 10, rare: 25, elite: 50, legendary: 100, dupe: 3 };
+  // Duplicates economy: a dupe yields "dust" (by the dupe's rarity); dust is spent
+  // to "Shine" an owned card — a permanent holographic foil. Purely cosmetic: it
+  // never changes a card's rarity, number, or stats, so the rarity economy stays honest.
+  var DUST = { common: 5, rare: 15, elite: 40, legendary: 100 };
+  var SHINE_COST = { common: 40, rare: 80, elite: 160, legendary: 320 };
+  var _pendingDust = 0; // dust earned since the last reveal summary (for the "+N dust" line)
   var ORDER = { legendary: 0, elite: 1, rare: 2, common: 3 };
   var RARITY = {
     legendary: { label: 'Legendary', ring: '#e8c24a' },
@@ -119,6 +125,8 @@
       if (s.cards[k]) {
         s.cards[k].n = (s.cards[k].n || 1) + 1;
         s.xp += XP.dupe;
+        var gd = DUST[s.cards[k].rarity] || 5;
+        s.dust = (s.dust || 0) + gd; _pendingDust += gd;
       } else {
         var rar = rarityOf(it);
         s.cards[k] = { id: it.id, type: it.type, name: it.name || '', img: it.img || '', rarity: rar, n: 1, first: d, no: (s.seq = (s.seq || 0) + 1), isNew: 1 };
@@ -279,6 +287,24 @@
     });
   }
 
+  // ── Dust economy (spend duplicate dust to "Shine" owned cards) ──
+  function dustBalance() { return (load() || blank()).dust || 0; }
+  function shineCost(c) { return SHINE_COST[c && c.rarity] || 80; }
+  function cardRecord(c) { var s = load(); return (c && s && s.cards) ? s.cards[c.type + ':' + c.id] : null; }
+  function isShined(c) { var r = cardRecord(c); return !!(r && r.shine); }
+  // Returns {ok, reason?, need?, have?, dust?}. Reasons: 'notowned','already','dust'.
+  function shineCard(c) {
+    var s = load() || blank();
+    if (!c || !s.cards) return { ok: false, reason: 'notowned' };
+    var rec = s.cards[c.type + ':' + c.id];
+    if (!rec) return { ok: false, reason: 'notowned' };
+    if (rec.shine) return { ok: false, reason: 'already' };
+    var cost = SHINE_COST[rec.rarity] || 80, have = s.dust || 0;
+    if (have < cost) return { ok: false, reason: 'dust', need: cost, have: have };
+    s.dust = have - cost; rec.shine = 1; save(s); refreshOpen();
+    return { ok: true, dust: s.dust };
+  }
+
   // ─────────────────────────── admin / debug ops ─────────────────────────
   function reset() { try { localStorage.removeItem(KEY); } catch (_) { /* noop */ } refreshOpen(); }
   function grant(items) { var r = add(items); refreshOpen(); return r; }
@@ -375,10 +401,11 @@
       var rar = ctx.RARITY[c.rarity] || ctx.RARITY.common;
       var p = ctx.posterUrl(c.img);
       var person = c.type === 'person';
-      return '<div class="ctc ctc-' + c.rarity + (person ? ' person' : '') + '" style="--cr:' + rar.ring + ';animation-delay:' + Math.min(i, 16) * 22 + 'ms" title="' + ctx.esc(c.name) + ' · ' + rar.label + '">' +
+      return '<div class="ctc ctc-' + c.rarity + (person ? ' person' : '') + (c.shine ? ' cl-shine' : '') + '" style="--cr:' + rar.ring + ';animation-delay:' + Math.min(i, 16) * 22 + 'ms" title="' + ctx.esc(c.name) + ' · ' + rar.label + (c.shine ? ' · Shined' : '') + '">' +
         '<div class="ctc-inner"><div class="ctc-frame"><div class="ctc-art">' +
           (p ? '<img src="' + ctx.esc(p) + '" alt="" loading="lazy">' : '<div class="ctc-noimg"></div>') +
           '<div class="ctc-foil"></div><div class="ctc-glare"></div>' +
+          (c.shine ? '<span class="cl-shine-t">&#10024;</span>' : '') +
           '<div class="ctc-gem"><span class="ctc-gem-d"></span>' + rar.label + '</div>' +
           (c.isNew ? '<span class="ctc-new">New</span>' : '') +
           (c.n > 1 ? '<span class="ctc-dupe">×' + c.n + '</span>' : '') +
@@ -457,11 +484,11 @@
       var nlen = (c.name || '').length;
       var nmCls = nlen > 22 ? ' auth-name--sm' : nlen > 14 ? ' auth-name--md' : '';
       var nm = ctx.esc(c.name);
-      return '<div class="auth auth-' + c.rarity + (person ? ' person' : '') + '" style="--cr:' + rar.ring + ';--m1:' + (METAL[c.rarity] || '#fff') + ';animation-delay:' + Math.min(i, 16) * 22 + 'ms" title="' + nm + ' · ' + rar.label + ' · ' + no + '">' +
+      return '<div class="auth auth-' + c.rarity + (person ? ' person' : '') + (c.shine ? ' cl-shine' : '') + '" style="--cr:' + rar.ring + ';--m1:' + (METAL[c.rarity] || '#fff') + ';animation-delay:' + Math.min(i, 16) * 22 + 'ms" title="' + nm + ' · ' + rar.label + ' · ' + no + (c.shine ? ' · Shined' : '') + '">' +
         '<div class="auth-card">' +
           (p ? '<img class="auth-bgimg" src="' + ctx.esc(p) + '" alt="" loading="lazy">' : '<div class="auth-noimg"></div>') +
           '<div class="auth-scrim"></div><div class="auth-corner"></div><div class="auth-star"></div>' +
-          '<div class="auth-tags">' + (c.n > 1 ? '<span class="auth-dp">×' + c.n + '</span>' : '') + (c.isNew ? '<span class="auth-nw">New</span>' : '') + '</div>' +
+          '<div class="auth-tags">' + (c.shine ? '<span class="cl-shine-t">&#10024;</span>' : '') + (c.n > 1 ? '<span class="auth-dp">×' + c.n + '</span>' : '') + (c.isNew ? '<span class="auth-nw">New</span>' : '') + '</div>' +
           '<div class="auth-text">' +
             '<div class="auth-name' + nmCls + '">' + nm + '</div>' +
             '<div class="auth-meta"><span class="auth-gem"></span><span class="auth-rar">' + rar.label + '</span><span class="sep">·</span><span>' + typeUp + '</span><span class="sep">·</span><span class="auth-no">' + no + '</span></div>' +
@@ -487,6 +514,7 @@
       '.cl-coll-title{font-size:1.1rem;font-weight:800;color:#f5f5f5}.cl-coll-title span{color:#e8a000}' +
       '.cl-coll-hd-btns{display:flex;align-items:center;gap:6px}' +
       '.cl-coll-icon{background:none;border:none;color:#888;font-size:1.1rem;cursor:pointer;line-height:1;padding:2px 6px}.cl-coll-icon:hover{color:#f5f5f5}' +
+      '.cl-coll-dust{display:inline-flex;align-items:center;font-size:.78rem;font-weight:800;color:#bfe6ff;background:rgba(120,184,255,.12);border:1px solid rgba(150,205,255,.3);border-radius:99px;padding:3px 9px;margin-right:2px;white-space:nowrap}' +
       '.cl-coll-x{background:none;border:none;color:#888;font-size:1.3rem;cursor:pointer;line-height:1;padding:2px 6px}.cl-coll-x:hover{color:#f5f5f5}' +
       '.cl-coll-lvl{display:flex;align-items:center;gap:10px;margin-top:12px}' +
       '.cl-coll-lvl-badge{flex-shrink:0;width:40px;height:40px;border-radius:50%;background:radial-gradient(circle,#e8a000,#a86f00);color:#1a1200;font-weight:900;font-size:1.05rem;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(232,160,0,.4)}' +
@@ -524,6 +552,14 @@
       '.cl-di-rows{display:flex;flex-direction:column;gap:1px;border-radius:11px;overflow:hidden;border:1px solid rgba(255,255,255,.09)}' +
       '.cl-di-row{display:flex;justify-content:space-between;padding:10px 14px;background:#181818;font-size:.84rem}' +
       '.cl-di-row span{color:#9a9a9a}.cl-di-row b{color:#f0f0f0;font-weight:700}' +
+      '.cl-shine-wrap{width:100%;margin-top:13px;text-align:center}' +
+      '.cl-shine-btn{width:100%;border:none;border-radius:11px;padding:12px 14px;font-size:.92rem;font-weight:800;cursor:pointer;color:#06121f;background:linear-gradient(135deg,#bfe6ff,#7ab8ff);box-shadow:0 6px 18px rgba(120,184,255,.32);transition:transform .12s ease,box-shadow .2s ease}' +
+      '.cl-shine-btn:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(120,184,255,.45)}' +
+      '.cl-shine-btn.off{background:#2a2a2a;color:#8a8a8a;box-shadow:none;cursor:not-allowed}' +
+      '.cl-shine-btn.shake{animation:clShake .4s}' +
+      '@keyframes clShake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}' +
+      '.cl-shine-hint{font-size:.72rem;color:#9a9a9a;margin-top:7px;font-weight:600}' +
+      '.cl-shine-done{width:100%;border-radius:11px;padding:12px 14px;font-size:.92rem;font-weight:800;color:#bfe6ff;background:linear-gradient(135deg,rgba(120,184,255,.16),rgba(120,184,255,.06));border:1px solid rgba(150,205,255,.4);text-shadow:0 1px 6px rgba(150,205,255,.6)}' +
       // ── reveal sequence ──
       '#clCollReveal{position:fixed;inset:0;z-index:260;display:none;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 42%,rgba(18,20,30,.72),rgba(0,0,0,.92) 70%);backdrop-filter:blur(8px);overflow:hidden;cursor:pointer}' +
       '#clCollReveal.open{display:flex}' +
@@ -609,7 +645,16 @@
       '.ac-nm{font-size:.78rem;font-weight:800;color:#777;margin-top:7px}.ac-item.got .ac-nm{color:#f5d97a}' +
       '.ac-ds{font-size:.64rem;color:#777;margin-top:3px;line-height:1.25}.ac-item.got .ac-ds{color:#b9b9b9}' +
       '.ac-bar{height:5px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:8px}.ac-bar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#e8a000,#f5c542)}' +
-      '.ac-pg{font-size:.6rem;color:#888;font-weight:700;margin-top:4px}';
+      '.ac-pg{font-size:.6rem;color:#888;font-weight:700;margin-top:4px}' +
+      // Shine (foil) cosmetic — forces the holo overlay on regardless of rarity, plus a cool glow + sparkle tag.
+      '@keyframes clShineDrift{0%{background-position:0% 50%}100%{background-position:260% 50%}}' +
+      '.cl-shine .auth-foil,.cl-shine .ctc-foil{display:block;opacity:.62;animation:clShineDrift 5.5s linear infinite}' +
+      '.cl-shine .auth-card{box-shadow:0 8px 22px rgba(0,0,0,.55),0 0 0 1px rgba(190,225,255,.35),0 0 26px rgba(150,205,255,.4)}' +
+      '.cl-shine .ctc-inner{box-shadow:0 6px 18px rgba(0,0,0,.5),0 0 0 1px rgba(190,225,255,.35),0 0 22px rgba(150,205,255,.4)}' +
+      '.cl-shine-t{position:absolute;z-index:10;font-size:.86rem;line-height:1;filter:drop-shadow(0 1px 5px rgba(150,205,255,.95));animation:clSpark 2.4s ease-in-out infinite}' +
+      '.ctc-art .cl-shine-t{top:6px;left:6px}' +
+      '@keyframes clSpark{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.18);opacity:1}}' +
+      '@media(prefers-reduced-motion:reduce){.cl-shine .auth-foil,.cl-shine .ctc-foil,.cl-shine-t{animation:none}}';
     document.head.appendChild(css);
   }
 
@@ -621,7 +666,7 @@
       '<div class="cl-coll-box">' +
         '<div class="cl-coll-hd">' +
           '<div class="cl-coll-hd-top"><div class="cl-coll-title">Your <span>collection</span></div>' +
-            '<div class="cl-coll-hd-btns" id="clCollHdBtns"><button class="cl-coll-x" aria-label="Close">&#10005;</button></div></div>' +
+            '<div class="cl-coll-hd-btns" id="clCollHdBtns"><span class="cl-coll-dust" id="clCollDust" title="Dust — earned from duplicates, spent to Shine cards">&#10024; 0</span><button class="cl-coll-x" aria-label="Close">&#10005;</button></div></div>' +
           '<div class="cl-coll-lvl"><div class="cl-coll-lvl-badge" id="clCollLvl">1</div>' +
             '<div class="cl-coll-xp"><div class="cl-coll-xp-l"><span id="clCollXpName">Level 1</span><span id="clCollXpNum"></span></div>' +
             '<div class="cl-coll-xp-bar"><i id="clCollXpFill" style="width:0%"></i></div></div></div>' +
@@ -661,6 +706,7 @@
     document.getElementById('clCollXpName').textContent = 'Level ' + st.level;
     document.getElementById('clCollXpNum').textContent = st.xpInto + ' / ' + st.xpSpan + ' XP';
     document.getElementById('clCollXpFill').style.width = Math.max(3, Math.min(100, st.xpSpan ? (st.xpInto / st.xpSpan) * 100 : 0)) + '%';
+    var du = document.getElementById('clCollDust'); if (du) du.innerHTML = '&#10024; ' + dustBalance();
 
     var chips = [
       { k: 'all', label: 'All ' + st.count }, { k: 'film', label: 'Films ' + st.films },
@@ -835,9 +881,14 @@
       ['Collected', dateStr, ''],
       ['Copies', '×' + (c.n || 1), '']
     ];
+    var shined = isShined(c), cost = shineCost(c), bal = dustBalance(), afford = bal >= cost;
+    var shineBlock = shined
+      ? '<div class="cl-shine-done">&#10024; Shined</div>'
+      : '<button class="cl-shine-btn' + (afford ? '' : ' off') + '" id="clShineBtn">&#10024; Shine &middot; ' + cost + ' dust</button>' +
+        '<div class="cl-shine-hint">You have ' + bal + ' dust' + (afford ? '' : ' &middot; need ' + (cost - bal) + ' more') + '</div>';
     return '<div class="cl-di-name">' + esc(c.name) + '</div><div class="cl-di-rows">' +
       rows.map(function (r) { return '<div class="cl-di-row"><span>' + r[0] + '</span><b' + (r[2] ? ' style="color:' + r[2] + '"' : '') + '>' + esc(r[1]) + '</b></div>'; }).join('') +
-      '</div>';
+      '</div><div class="cl-shine-wrap">' + shineBlock + '</div>';
   }
   function openDetail(c) {
     if (!c) return;
@@ -849,6 +900,12 @@
     Array.prototype.forEach.call(holder.querySelectorAll('img'), function (im) { im.src = im.src.replace(/\/t\/p\/w\d+\//, '/t/p/w780/'); });
     try { if (theme.mount) theme.mount(holder); } catch (_) { /* noop */ }
     document.getElementById('clDetailInfo').innerHTML = detailInfo(c);
+    var sb = document.getElementById('clShineBtn');
+    if (sb) sb.addEventListener('click', function () {
+      var r = shineCard(c);
+      if (r.ok) { c.shine = 1; try { if (window.Sfx) { window.Sfx.reveal('elite'); window.Sfx.haptic([12, 24]); } } catch (_) { /* noop */ } openDetail(c); }
+      else { try { if (window.Sfx) window.Sfx.tap(); } catch (_) { /* noop */ } if (r.reason === 'dust') { sb.classList.add('shake'); setTimeout(function () { sb.classList.remove('shake'); }, 420); } }
+    });
     document.getElementById('clCollDetail').classList.add('open');
     try { if (window.Track) window.Track('collection_card', { rarity: c.rarity, type: c.type }); } catch (_) { /* noop */ }
   }
@@ -934,9 +991,11 @@
         if (newAchv.length) { try { if (window.Sfx) window.Sfx.allDone(); } catch (_) { /* noop */ } }
         var achLine = newAchv.slice(0, 3).map(function (a) { return '<div class="clr-sum-lvl">' + a.icon + ' Achievement: ' + esc(a.name) + '</div>'; }).join('') +
           (newAchv.length > 3 ? '<div class="clr-sum-lvl">🏅 +' + (newAchv.length - 3) + ' more achievements</div>' : '');
+        var dustLine = _pendingDust > 0 ? '<div class="clr-sum-lvl">&#10024; +' + _pendingDust + ' dust from duplicates</div>' : '';
+        _pendingDust = 0;
         document.getElementById('clrBody').innerHTML =
           '<div class="clr-sum"><div class="clr-sum-h">+' + queue.length + (queue.length === 1 ? ' card' : ' cards') + '</div>' +
-          '<div class="clr-sum-x">+' + gained + ' XP</div>' + setLines + lvlLine + backLine + achLine +
+          '<div class="clr-sum-x">+' + gained + ' XP</div>' + setLines + lvlLine + backLine + achLine + dustLine +
           '<div class="clr-sum-btns"><button class="clr-btn" id="clrAgain">Continue</button><button class="clr-btn gold" id="clrView">View collection</button></div></div>';
         var sk = document.getElementById('clrSkip'); if (sk) sk.style.display = 'none';
         ov.onclick = null;
@@ -1013,6 +1072,8 @@
     add: add, stats: stats, all: allCards, openGallery: openGallery, markSeen: markSeen, reveal: reveal, sets: setsState,
     cardbacks: cardbacksState, useCardback: useCardback, openCardbacks: openCardbacks,
     achievements: achievementsState, openAchievements: openAchievements,
+    dust: dustBalance, shine: shineCard, shineCost: shineCost, isShined: isShined,
+    addDust: function (n) { var s = load() || blank(); s.dust = Math.max(0, (s.dust || 0) + (+n || 0)); save(s); refreshOpen(); return s.dust; },
     reset: reset, grant: grant, addXp: addXp, setLevel: setLevel, exportData: exportData, importData: importData, seed: function () { return grant(SEED.map(function (s) { return s; })); },
     debug: debug,
     themes: { register: defineTheme, use: useTheme, list: function () { return Object.keys(THEMES).map(function (n) { return { name: n, label: THEMES[n].label || n }; }); }, current: activeThemeName }
