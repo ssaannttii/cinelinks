@@ -1125,7 +1125,7 @@
         else { try { if (window.Sfx) window.Sfx.tap(); } catch (_) { /* noop */ } if (r.reason === 'dust') { sb.classList.add('shake'); setTimeout(function () { sb.classList.remove('shake'); }, 420); } }
       });
       document.getElementById('clCollDetail').classList.add('open');
-      stopGyro(); _gyroOff = gyroMount(holder);   // tilt-to-shimmer on touch devices
+      stopGyro();   // gyro paused for now — testing mobile first (re-enable: _gyroOff = gyroMount(holder))
       try { if (window.Track) window.Track('collection_card', { rarity: c.rarity, type: c.type }); } catch (_) { /* noop */ }
     }
     // Shared-element morph: the tapped grid card grows seamlessly into the detail card.
@@ -1206,7 +1206,7 @@
         later(1420, function () {                                               // flip settled: mount tilt + idle + cap
           var face = document.getElementById('clrFace');
           try { if (theme.mount) theme.mount(face); } catch (_) { /* noop */ }
-          stopGyro(); _gyroOff = gyroMount(face);                                // tilt-to-shimmer on touch devices
+          stopGyro();                                                           // gyro paused for now (re-enable: _gyroOff = gyroMount(face))
           var f = document.getElementById('clrFlip'); if (f) f.classList.add('live');
           showCap(c); state = 'ready';
         });
