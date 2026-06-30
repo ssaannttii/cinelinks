@@ -265,7 +265,7 @@
     renderPips();
     renderResult(streak);
     save();
-    try { if (win && window.Collection && target) { var _wi = results.indexOf('win'); var _nc = window.Collection.add([{ id: target.id, type: target.type || 'movie', name: target.title, img: target.posterPath, rarityFloor: 'rare', bump: _wi === 0 ? 2 : _wi === 1 ? 1 : 0 }]); if (_nc && _nc.length && window.Collection.reveal) setTimeout(function () { window.Collection.reveal(_nc); }, 500); } } catch (_) { /* noop */ }
+    try { if (win && window.Collection && target) { var _wi = results.indexOf('win'); var _nc = window.Collection.add([{ id: target.id, type: target.type || 'movie', name: target.title, img: target.posterPath, rarityFloor: 'rare', bump: _wi === 0 ? 2 : _wi === 1 ? 1 : 0 }]); if (_nc && _nc.length) { try { var _w = JSON.parse(localStorage.getItem('clCardWins') || '[]'); if (_w.indexOf('cast') < 0) { _w.push('cast'); localStorage.setItem('clCardWins', JSON.stringify(_w)); } } catch (_e) { /* noop */ } if (window.Collection.reveal) setTimeout(function () { window.Collection.reveal(_nc); }, 500); } } } catch (_) { /* noop */ }
     try { var _g = (CFG.stateKey || 'cineguess').replace(/State$/, ''); if (window.Track) window.Track(_g + '_complete', { win: win ? 1 : 0 }); } catch (_) { /* noop */ }
   }
 

@@ -186,6 +186,14 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .cele-sweep::before{content:"";position:absolute;top:0;bottom:0;left:0;width:42%;background:linear-gradient(100deg,transparent,rgba(232,224,180,.5),transparent);animation:celeSweep 1.05s .06s ease-out both}
 .cele-part{position:absolute;width:7px;height:7px;border-radius:50%;pointer-events:none;z-index:4;animation:celePart .82s ease-out forwards}
 @media(prefers-reduced-motion:reduce){.game-card.celebrate{animation:none}.game-card.celebrate .game-done.on{animation:none}.game-card.celebrate .game-modes{animation:none}.cele-sweep,.cele-part{display:none}}
+/* Won-cards pulse: a gold shimmer + floating chip on a game's container when you
+   return having collected card(s) there. Distinct (gold) from the green ✓DONE bloom. */
+@keyframes cardWinPulse{0%{box-shadow:0 0 0 0 rgba(232,160,0,0)}18%{transform:scale(1.04);box-shadow:0 0 0 2px rgba(245,197,66,.72),0 18px 54px rgba(232,160,0,.42)}100%{transform:scale(1);box-shadow:0 0 0 0 rgba(232,160,0,0)}}
+@keyframes cardWinChip{0%{transform:translateY(10px) scale(.7);opacity:0}22%{transform:translateY(0) scale(1);opacity:1}72%{opacity:1}100%{transform:translateY(-28px) scale(.96);opacity:0}}
+.game-card.cardwin{animation:cardWinPulse 1.2s cubic-bezier(.2,.85,.25,1);z-index:3}
+.cele-sweep.cardwin-sweep::before{background:linear-gradient(100deg,transparent,rgba(255,236,170,.62),transparent)}
+.cardwin-chip{position:absolute;top:8px;right:10px;z-index:5;font-size:.7rem;font-weight:800;color:#1a1200;background:linear-gradient(135deg,#f5c542,#e8a000);border-radius:99px;padding:3px 9px;box-shadow:0 4px 14px rgba(232,160,0,.5);pointer-events:none;white-space:nowrap;animation:cardWinChip 1.7s ease-out forwards}
+@media(prefers-reduced-motion:reduce){.game-card.cardwin{animation:none}.cardwin-chip{animation:none}}
 /* Once done, drop the redundant NEW tag so "✓ DONE" never gets clipped. */
 .game-card.done .new-tag{display:none}
 .game-modes{display:flex;gap:8px;margin-top:auto}
@@ -1798,8 +1806,48 @@ function celebrateNewlyDone() {
   let seen = []; try { seen = JSON.parse(localStorage.getItem('clHomeSeenDone')) || []; } catch (_) {}
   const newly = doneKeys.filter(k => !seen.includes(k));
   try { localStorage.setItem('clHomeSeenDone', JSON.stringify(doneKeys)); } catch (_) {}
+  window._newlyDoneKeys = firstRun ? [] : newly;   // shared with celebrateCardWins for sequencing
   if (firstRun || !newly.length) return;           // never replay pre-existing dones
   newly.forEach((key, i) => setTimeout(() => celebrateCard(key, i === 0), 260 + i * 520));
+}
+// Award sites call this when ≥1 new card was collected, tagging the game's hub key.
+function recordCardWin(key) {
+  try { let w = JSON.parse(localStorage.getItem('clCardWins') || '[]'); if (!Array.isArray(w)) w = []; if (w.indexOf(key) < 0) { w.push(key); localStorage.setItem('clCardWins', JSON.stringify(w)); } } catch (_) {}
+}
+// Won-cards reward: when the user lands on the hub having collected card(s) in a game,
+// pulse that game's container. If the same game ALSO just earned its ✓DONE bloom, wait
+// for that to finish first; otherwise play promptly. Award sites record keys in clCardWins.
+function celebrateCardWins() {
+  const ss = document.getElementById('startScreen');
+  if (!ss || !ss.classList.contains('active')) return;
+  let wins = []; try { wins = JSON.parse(localStorage.getItem('clCardWins') || '[]'); } catch (_) {}
+  try { localStorage.removeItem('clCardWins'); } catch (_) {}
+  if (!Array.isArray(wins) || !wins.length) return;
+  const newly = window._newlyDoneKeys || [];
+  let plain = 0;
+  wins.forEach(key => {
+    const j = newly.indexOf(key);
+    let delay, scroll = false;
+    if (j >= 0) { delay = 260 + j * 520 + 1500; }       // after that game's DONE bloom
+    else { delay = 240 + plain * 460; scroll = plain === 0; plain++; }
+    setTimeout(() => cardWinPulse(key, scroll), delay);
+  });
+}
+function cardWinPulse(key, doScroll) {
+  const badge = document.querySelector('.game-done[data-done="' + key + '"]');
+  const card = badge && badge.closest('.game-card');
+  if (!card) return;
+  if (card.closest('.more-games') && window._openMore) { try { window._openMore(); } catch (_) {} }
+  if (doScroll) { try { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (_) {} }
+  const run = () => {
+    card.classList.remove('cardwin'); void card.offsetWidth; card.classList.add('cardwin');
+    const sweep = document.createElement('div'); sweep.className = 'cele-sweep cardwin-sweep';
+    card.appendChild(sweep); setTimeout(() => sweep.remove(), 1200);
+    const chip = document.createElement('div'); chip.className = 'cardwin-chip'; chip.innerHTML = '🎴 New card';
+    card.appendChild(chip); setTimeout(() => chip.remove(), 1750);
+    setTimeout(() => card.classList.remove('cardwin'), 1300);
+  };
+  doScroll ? setTimeout(run, 320) : run();
 }
 function celebrateCard(key, doScroll) {
   const badge = document.querySelector('.game-done[data-done="' + key + '"]');
@@ -2302,9 +2350,9 @@ function showOnly(id) {
     try {
       const _sk = celebrateStreak();
       const _after = _sk ? 3700 : 0;
-      setTimeout(function () { try { celebrateNewlyDone(); } catch (_) {} }, _after);
+      setTimeout(function () { try { celebrateNewlyDone(); } catch (_) {} try { celebrateCardWins(); } catch (_) {} }, _after);
       setTimeout(function () { try { celebrateAllDone(); } catch (_) {} }, _after + 800);
-    } catch (_) { try { celebrateNewlyDone(); } catch (__) {} }
+    } catch (_) { try { celebrateNewlyDone(); } catch (__) {} try { celebrateCardWins(); } catch (__) {} }
     _clearParticles();
   }
   if (id === 'loadingScreen') _spawnParticles();
@@ -3231,6 +3279,7 @@ const game = window.game = {
       } catch (_) {}
     }
     try { this._showCollNew(replay ? 0 : _collNewCards.length); } catch (_) {}
+    try { if (!replay && _collNewCards.length) recordCardWin('cl'); } catch (_) {}
     try { if (!replay && _collNewCards.length && window.Collection && Collection.reveal) setTimeout(function () { Collection.reveal(_collNewCards); }, 650); } catch (_) {}
     const winSub = document.querySelector('.win-sub');
     if (winSub) winSub.textContent = replay ? '✓ You already solved today’s challenge' : t('winSub');
