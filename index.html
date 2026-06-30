@@ -2071,6 +2071,9 @@ function renderCollectionCard() {
   card.style.display = 'flex';
   card.onclick = function () { try { Collection.openGallery(); } catch (_) {} };
 }
+// collection.js is deferred, so it isn't ready when the home first renders during
+// parsing — re-run once it (and everything else) has loaded.
+window.addEventListener('load', function () { try { renderCollectionCard(); } catch (_) {} });
 
 // Home: spawn drifting film motes once, then cascade the panel content in.
 function homeAmbience() {
