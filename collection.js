@@ -237,6 +237,48 @@
     return newly;
   }
 
+  // ── Achievements / Mastery (trophy case — prestige badges, no XP so the
+  //    rarity/XP economy stays honest and an existing save isn't retro-inflated) ──
+  var ACHV = [
+    { id: 'first', icon: '🎬', name: 'First Frame', desc: 'Collect your first card', goal: function (c) { return [c.st.count, 1]; } },
+    { id: 'coll25', icon: '📚', name: 'Collector', desc: 'Collect 25 cards', goal: function (c) { return [c.st.count, 25]; } },
+    { id: 'coll50', icon: '🗃️', name: 'Curator', desc: 'Collect 50 cards', goal: function (c) { return [c.st.count, 50]; } },
+    { id: 'coll100', icon: '🏛️', name: 'Archivist', desc: 'Collect 100 cards', goal: function (c) { return [c.st.count, 100]; } },
+    { id: 'people10', icon: '⭐', name: 'Star Power', desc: 'Collect 10 people', goal: function (c) { return [c.st.people, 10]; } },
+    { id: 'films25', icon: '🍿', name: 'Cinephile', desc: 'Collect 25 films', goal: function (c) { return [c.st.films, 25]; } },
+    { id: 'rare1', icon: '🔷', name: 'Rare Find', desc: 'Own a Rare card', goal: function (c) { return [c.st.byRarity.rare, 1]; } },
+    { id: 'elite1', icon: '💠', name: 'Elite', desc: 'Own an Elite card', goal: function (c) { return [c.st.byRarity.elite, 1]; } },
+    { id: 'leg1', icon: '👑', name: 'Legend', desc: 'Own a Legendary card', goal: function (c) { return [c.st.byRarity.legendary, 1]; } },
+    { id: 'leg5', icon: '🌟', name: 'Hall of Fame', desc: 'Own 5 Legendaries', goal: function (c) { return [c.st.byRarity.legendary, 5]; } },
+    { id: 'spectrum', icon: '🌈', name: 'Full Spectrum', desc: 'Own every rarity tier', goal: function (c) { var b = c.st.byRarity; var n = ['common', 'rare', 'elite', 'legendary'].filter(function (r) { return b[r] > 0; }).length; return [n, 4]; } },
+    { id: 'set1', icon: '🧩', name: 'Set Theorist', desc: 'Complete your first set', goal: function (c) { return [c.sd, 1]; } },
+    { id: 'set3', icon: '🏆', name: 'Completionist', desc: 'Complete 3 sets', goal: function (c) { return [c.sd, 3]; } },
+    { id: 'lvl5', icon: '📈', name: 'Rising Star', desc: 'Reach level 5', goal: function (c) { return [c.st.level, 5]; } },
+    { id: 'lvl10', icon: '🎖️', name: 'Veteran', desc: 'Reach level 10', goal: function (c) { return [c.st.level, 10]; } },
+    { id: 'style', icon: '🎴', name: 'Style Icon', desc: 'Equip a non-default card back', goal: function (c) { return [c.cb !== 'classic' ? 1 : 0, 1]; } }
+  ];
+  function achCtx() {
+    var st = stats(), s = load() || blank();
+    return { st: st, sd: s.setsDone ? Object.keys(s.setsDone).length : 0, cb: activeCardbackId() };
+  }
+  function achMet(a, ctx) { var g = a.goal(ctx); return g[0] >= g[1]; }
+  // Record newly-satisfied achievements; returns the list newly unlocked this call.
+  function syncAchievements() {
+    var s = load() || blank();
+    if (!s.achievements) s.achievements = {};
+    var ctx = achCtx(), newly = [];
+    ACHV.forEach(function (a) { if (!s.achievements[a.id] && achMet(a, ctx)) { s.achievements[a.id] = today(); newly.push({ id: a.id, name: a.name, icon: a.icon }); } });
+    if (newly.length) save(s);
+    return newly;
+  }
+  function achievementsState() {
+    var s = load() || blank(), un = s.achievements || {}, ctx = achCtx();
+    return ACHV.map(function (a) {
+      var g = a.goal(ctx);
+      return { id: a.id, icon: a.icon, name: a.name, desc: a.desc, unlocked: !!un[a.id] || achMet(a, ctx), date: un[a.id] || null, have: Math.min(g[0], g[1]), need: g[1] };
+    });
+  }
+
   // ─────────────────────────── admin / debug ops ─────────────────────────
   function reset() { try { localStorage.removeItem(KEY); } catch (_) { /* noop */ } refreshOpen(); }
   function grant(items) { var r = add(items); refreshOpen(); return r; }
@@ -556,7 +598,18 @@
       '.cb-item.active .cb-swatch{outline:2px solid #e8a000;outline-offset:2px}' +
       '.cb-item.locked .cb-swatch{filter:grayscale(.7) brightness(.5)}' +
       '.cb-item.locked .cb-swatch::after{content:"🔒 Lvl " attr(data-lvl);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.68rem;font-weight:800;background:rgba(0,0,0,.5)}' +
-      '.cb-nm{font-size:.7rem;font-weight:700;color:#cfcfcf;margin-top:6px}.cb-item.locked .cb-nm{color:#777}';
+      '.cb-nm{font-size:.7rem;font-weight:700;color:#cfcfcf;margin-top:6px}.cb-item.locked .cb-nm{color:#777}' +
+      '#clAchv{position:fixed;inset:0;z-index:255;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.78);backdrop-filter:blur(7px)}' +
+      '#clAchv.open{display:flex}' +
+      '.ac-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:11px}' +
+      '.ac-item{position:relative;border-radius:13px;padding:13px 11px 12px;text-align:center;background:#1d1d1d;border:1px solid rgba(255,255,255,.06)}' +
+      '.ac-item.got{background:linear-gradient(165deg,#2a2410,#161204);border-color:rgba(232,194,74,.4);box-shadow:0 0 0 1px rgba(232,194,74,.12),0 10px 26px rgba(0,0,0,.4)}' +
+      '.ac-ic{font-size:1.9rem;line-height:1;filter:grayscale(1) opacity(.4)}' +
+      '.ac-item.got .ac-ic{filter:none;text-shadow:0 3px 14px rgba(232,194,74,.45)}' +
+      '.ac-nm{font-size:.78rem;font-weight:800;color:#777;margin-top:7px}.ac-item.got .ac-nm{color:#f5d97a}' +
+      '.ac-ds{font-size:.64rem;color:#777;margin-top:3px;line-height:1.25}.ac-item.got .ac-ds{color:#b9b9b9}' +
+      '.ac-bar{height:5px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:8px}.ac-bar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#e8a000,#f5c542)}' +
+      '.ac-pg{font-size:.6rem;color:#888;font-weight:700;margin-top:4px}';
     document.head.appendChild(css);
   }
 
@@ -579,7 +632,11 @@
     document.body.appendChild(m);
     m.querySelector('.cl-coll-x').addEventListener('click', close);
     m.addEventListener('click', function (e) { if (e.target === m) close(); });
-    // card-back picker
+    // trophy case + card-back picker
+    var acBtn = document.createElement('button');
+    acBtn.className = 'cl-coll-icon'; acBtn.innerHTML = '🏅'; acBtn.title = 'Trophy case';
+    acBtn.addEventListener('click', openAchievements);
+    document.getElementById('clCollHdBtns').insertBefore(acBtn, m.querySelector('.cl-coll-x'));
     var cbBtn = document.createElement('button');
     cbBtn.className = 'cl-coll-icon'; cbBtn.innerHTML = '🎴'; cbBtn.title = 'Card backs';
     cbBtn.addEventListener('click', openCardbacks);
@@ -873,9 +930,13 @@
         var lvlLine = lvlNow > lvlBefore ? '<div class="clr-sum-lvl">Level up &mdash; level ' + lvlNow + '! 🎉</div>' : '';
         var newBacks = lvlNow > lvlBefore ? cardbacksUnlockedBetween(lvlBefore, lvlNow) : [];
         var backLine = newBacks.map(function (cb) { return '<div class="clr-sum-lvl">🎴 Card back unlocked: ' + esc(cb.name) + '</div>'; }).join('');
+        var newAchv = []; try { newAchv = syncAchievements(); } catch (_) { /* noop */ }
+        if (newAchv.length) { try { if (window.Sfx) window.Sfx.allDone(); } catch (_) { /* noop */ } }
+        var achLine = newAchv.slice(0, 3).map(function (a) { return '<div class="clr-sum-lvl">' + a.icon + ' Achievement: ' + esc(a.name) + '</div>'; }).join('') +
+          (newAchv.length > 3 ? '<div class="clr-sum-lvl">🏅 +' + (newAchv.length - 3) + ' more achievements</div>' : '');
         document.getElementById('clrBody').innerHTML =
           '<div class="clr-sum"><div class="clr-sum-h">+' + queue.length + (queue.length === 1 ? ' card' : ' cards') + '</div>' +
-          '<div class="clr-sum-x">+' + gained + ' XP</div>' + setLines + lvlLine + backLine +
+          '<div class="clr-sum-x">+' + gained + ' XP</div>' + setLines + lvlLine + backLine + achLine +
           '<div class="clr-sum-btns"><button class="clr-btn" id="clrAgain">Continue</button><button class="clr-btn gold" id="clrView">View collection</button></div></div>';
         var sk = document.getElementById('clrSkip'); if (sk) sk.style.display = 'none';
         ov.onclick = null;
@@ -921,13 +982,42 @@
   }
   function openCardbacks() { buildCardbacks(); renderCardbacks(); document.getElementById('clCardbacks').classList.add('open'); }
 
+  // ── Achievements trophy case ──
+  function buildAchv() {
+    var d = document.getElementById('clAchv');
+    if (d) return d;
+    injectShell();
+    d = document.createElement('div'); d.id = 'clAchv'; d.setAttribute('role', 'dialog');
+    d.innerHTML = '<div class="cb-box"><h3>Trophy <span>case</span><button class="cl-coll-x" id="acClose" style="font-size:1.2rem">&#10005;</button></h3>' +
+      '<div class="cb-sub" id="acSub"></div><div class="ac-grid" id="acGrid"></div></div>';
+    document.body.appendChild(d);
+    d.querySelector('#acClose').addEventListener('click', function () { d.classList.remove('open'); });
+    d.addEventListener('click', function (e) { if (e.target === d) d.classList.remove('open'); });
+    return d;
+  }
+  function renderAchv() {
+    var grid = document.getElementById('acGrid'); if (!grid) return;
+    var st = achievementsState(), got = st.filter(function (a) { return a.unlocked; }).length;
+    var sub = document.getElementById('acSub'); if (sub) sub.innerHTML = got + ' / ' + st.length + ' unlocked';
+    grid.innerHTML = st.map(function (a) {
+      var pct = Math.max(0, Math.min(100, Math.round(a.have / a.need * 100)));
+      var bar = a.unlocked ? '' : '<div class="ac-bar"><i style="width:' + pct + '%"></i></div><div class="ac-pg">' + a.have + ' / ' + a.need + '</div>';
+      return '<div class="ac-item' + (a.unlocked ? ' got' : '') + '"><div class="ac-ic">' + a.icon + '</div>' +
+        '<div class="ac-nm">' + esc(a.name) + '</div><div class="ac-ds">' + esc(a.desc) + '</div>' + bar + '</div>';
+    }).join('');
+  }
+  function openAchievements() { syncAchievements(); buildAchv(); renderAchv(); document.getElementById('clAchv').classList.add('open'); }
+
   // expose + init
   window.Collection = {
     add: add, stats: stats, all: allCards, openGallery: openGallery, markSeen: markSeen, reveal: reveal, sets: setsState,
     cardbacks: cardbacksState, useCardback: useCardback, openCardbacks: openCardbacks,
+    achievements: achievementsState, openAchievements: openAchievements,
     reset: reset, grant: grant, addXp: addXp, setLevel: setLevel, exportData: exportData, importData: importData, seed: function () { return grant(SEED.map(function (s) { return s; })); },
     debug: debug,
     themes: { register: defineTheme, use: useTheme, list: function () { return Object.keys(THEMES).map(function (n) { return { name: n, label: THEMES[n].label || n }; }); }, current: activeThemeName }
   };
+  // Record already-earned achievements once on load (silent — no reveal spam for an existing save).
+  try { window.addEventListener('load', function () { try { syncAchievements(); } catch (_) { /* noop */ } }); } catch (_) { /* noop */ }
   if (debugEnabled()) { try { window.addEventListener('load', function () { try { debug(); } catch (_) { /* noop */ } }); } catch (_) { /* noop */ } }
 })();
