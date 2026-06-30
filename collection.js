@@ -144,6 +144,65 @@
     save(s);
   }
 
+  // ── Sets / collections (the "catch 'em all" retention loop) ──
+  // Two kinds: curated (explicit TMDB members → silhouette slots for the missing)
+  // and milestone (computed from your stats). Member ids are real TMDB ids so a
+  // set fills as you win those titles in the daily games.
+  var SETS = [
+    { id: 'avengers', name: 'Marvel Blockbusters', members: [
+      { id: 24428, type: 'movie', name: 'The Avengers' }, { id: 299536, type: 'movie', name: 'Avengers: Infinity War' },
+      { id: 299534, type: 'movie', name: 'Avengers: Endgame' }, { id: 634649, type: 'movie', name: 'Spider-Man: No Way Home' }
+    ] },
+    { id: 'pandora', name: 'Pandora · Avatar', members: [
+      { id: 19995, type: 'movie', name: 'Avatar' }, { id: 76600, type: 'movie', name: 'Avatar: The Way of Water' }, { id: 83533, type: 'movie', name: 'Avatar: Fire and Ash' }
+    ] },
+    { id: 'titans', name: 'Box-Office Titans', members: [
+      { id: 597, type: 'movie', name: 'Titanic' }, { id: 19995, type: 'movie', name: 'Avatar' },
+      { id: 299534, type: 'movie', name: 'Avengers: Endgame' }, { id: 361743, type: 'movie', name: 'Top Gun: Maverick' }
+    ] },
+    { id: 'cinephile', name: 'Cinephile', goal: { kind: 'films', target: 25 } },
+    { id: 'starstruck', name: 'Star-studded', goal: { kind: 'people', target: 15 } },
+    { id: 'spectrum', name: 'Full Spectrum', goal: { kind: 'rarityAll' } },
+    { id: 'legends', name: 'Legend Hunter', goal: { kind: 'rarity', rarity: 'legendary', target: 5 } }
+  ];
+
+  function setsStateFrom(s) {
+    var cards = (s && s.cards) || {};
+    var arr = Object.keys(cards).map(function (k) { return cards[k]; });
+    var films = arr.filter(function (c) { return c.type !== 'person'; }).length;
+    var people = arr.filter(function (c) { return c.type === 'person'; }).length;
+    var byR = { common: 0, rare: 0, elite: 0, legendary: 0 };
+    arr.forEach(function (c) { byR[c.rarity] = (byR[c.rarity] || 0) + 1; });
+    return SETS.map(function (set) {
+      if (set.members) {
+        var owned = 0;
+        var members = set.members.map(function (m) {
+          var card = cards[m.type + ':' + m.id] || null; if (card) owned++;
+          return { id: m.id, type: m.type, name: m.name, owned: !!card, card: card };
+        });
+        return { id: set.id, name: set.name, kind: 'curated', owned: owned, total: set.members.length, pct: owned / set.members.length, complete: owned >= set.members.length, members: members, bonus: 50 * set.members.length };
+      }
+      var g = set.goal, cur = 0, tot = g.target || 1;
+      if (g.kind === 'films') cur = films;
+      else if (g.kind === 'people') cur = people;
+      else if (g.kind === 'rarity') cur = byR[g.rarity] || 0;
+      else if (g.kind === 'rarityAll') { cur = ['common', 'rare', 'elite', 'legendary'].filter(function (r) { return byR[r] > 0; }).length; tot = 4; }
+      return { id: set.id, name: set.name, kind: 'milestone', goal: g, owned: Math.min(cur, tot), total: tot, pct: Math.min(1, cur / tot), complete: cur >= tot, bonus: 75 };
+    });
+  }
+  function setsState() { return setsStateFrom(load() || blank()); }
+  // One-time award + record for newly-completed sets. Returns the newly claimed.
+  function claimSets() {
+    var s = load() || blank();
+    if (!s.setsDone) s.setsDone = {};
+    var newly = [];
+    setsStateFrom(s).forEach(function (st) {
+      if (st.complete && !s.setsDone[st.id]) { s.setsDone[st.id] = today(); s.xp = (s.xp || 0) + (st.bonus || 75); newly.push(st); }
+    });
+    if (newly.length) save(s);
+    return newly;
+  }
+
   // ─────────────────────────── admin / debug ops ─────────────────────────
   function reset() { try { localStorage.removeItem(KEY); } catch (_) { /* noop */ } refreshOpen(); }
   function grant(items) { var r = add(items); refreshOpen(); return r; }
@@ -423,7 +482,25 @@
       '.clr-sum-h{font-size:1.5rem;font-weight:900;color:#f5f5f5}.clr-sum-x{color:#e8a000;font-weight:800}.clr-sum-lvl{color:#7fd49a;font-weight:800;font-size:.95rem}' +
       '.clr-sum-btns{display:flex;gap:10px;margin-top:6px}' +
       '.clr-btn{padding:11px 20px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:#f0f0f0;font:inherit;font-weight:800;cursor:pointer}.clr-btn.gold{background:linear-gradient(135deg,#f5c542,#e8a000);color:#111;border:none}' +
-      '@media(prefers-reduced-motion:reduce){.clr-flip,.clr-flip.in{transition:none;animation:none}.clr-flash.go,.clr-flip:not(.flipped) .clr-halo{animation:none}}';
+      '@media(prefers-reduced-motion:reduce){.clr-flip,.clr-flip.in{transition:none;animation:none}.clr-flash.go,.clr-flip:not(.flipped) .clr-halo{animation:none}}' +
+      // ── sets view ──
+      '.cl-set{width:100%;display:flex;align-items:center;gap:12px;padding:13px 14px;margin-bottom:10px;border-radius:12px;background:#1c1c1c;border:1px solid rgba(255,255,255,.09);cursor:pointer;text-align:left;font:inherit;color:#f0f0f0}' +
+      '.cl-set:hover{border-color:rgba(232,160,0,.4)}' +
+      '.cl-set.done{border-color:rgba(232,160,0,.5);background:linear-gradient(180deg,rgba(232,160,0,.1),#1c1c1c)}' +
+      '.cl-set-tx{flex:1;min-width:0}' +
+      '.cl-set-nm{font-weight:800;font-size:.92rem;display:flex;align-items:center;gap:8px}' +
+      '.cl-set-done{font-size:.58rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#e8a000;border:1px solid rgba(232,160,0,.5);border-radius:999px;padding:2px 8px}' +
+      '.cl-set-bar{height:6px;border-radius:99px;background:rgba(255,255,255,.1);margin-top:8px;overflow:hidden}' +
+      '.cl-set-bar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#e8a000,#f5c542);transition:width .5s cubic-bezier(.3,.9,.3,1)}' +
+      '.cl-set-ct{font-size:.74rem;color:#9a9a9a;font-weight:800;flex-shrink:0;font-family:ui-monospace,Menlo,monospace}' +
+      '.cl-set-arrow{color:#888;font-size:1.2rem;flex-shrink:0}' +
+      '.cl-set-head{grid-column:1/-1;display:flex;align-items:center;gap:12px;margin-bottom:4px}' +
+      '.cl-back-btn{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);color:#ccc;font:inherit;font-weight:700;font-size:.78rem;border-radius:999px;padding:6px 13px;cursor:pointer}' +
+      '.cl-back-btn:hover{color:#fff}' +
+      '.cl-set-htitle{font-weight:800;font-size:.9rem;color:#f0f0f0}' +
+      '.cl-slot{position:relative;aspect-ratio:5/7;border-radius:13px;border:1.5px dashed rgba(255,255,255,.16);background:repeating-linear-gradient(45deg,#141414,#141414 9px,#181818 9px,#181818 18px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:8px}' +
+      '.cl-slot-q{font-size:1.8rem;font-weight:900;color:rgba(255,255,255,.22)}' +
+      '.cl-slot-nm{font-size:.64rem;font-weight:700;color:rgba(255,255,255,.45);line-height:1.2}';
     document.head.appendChild(css);
   }
 
@@ -456,7 +533,7 @@
     return m;
   }
 
-  var _filter = 'all';
+  var _filter = 'all', _setOpen = null;
   function isOpen() { var m = document.getElementById('clCollModal'); return m && m.classList.contains('open'); }
   function refreshOpen() { if (isOpen()) render(); if (document.getElementById('clCollDebug') && document.getElementById('clCollDebug').classList.contains('open')) renderDebug(); }
 
@@ -469,15 +546,17 @@
 
     var chips = [
       { k: 'all', label: 'All ' + st.count }, { k: 'film', label: 'Films ' + st.films },
-      { k: 'person', label: 'People ' + st.people }, { k: 'legendary', label: 'Legendary ' + st.byRarity.legendary },
-      { k: 'elite', label: 'Elite ' + st.byRarity.elite }
+      { k: 'person', label: 'People ' + st.people }, { k: 'sets', label: 'Sets' },
+      { k: 'legendary', label: 'Legendary ' + st.byRarity.legendary }, { k: 'elite', label: 'Elite ' + st.byRarity.elite }
     ];
     document.getElementById('clCollChips').innerHTML = chips.map(function (c) {
       return '<button class="cl-coll-chip' + (_filter === c.k ? ' on' : '') + '" data-k="' + c.k + '">' + esc(c.label) + '</button>';
     }).join('');
     Array.prototype.forEach.call(document.querySelectorAll('#clCollChips .cl-coll-chip'), function (b) {
-      b.addEventListener('click', function () { _filter = b.dataset.k; render(); });
+      b.addEventListener('click', function () { _filter = b.dataset.k; _setOpen = null; render(); });
     });
+
+    if (_filter === 'sets') { renderSets(); return; }
 
     var cards = allCards().filter(function (c) {
       if (_filter === 'all') return true;
@@ -501,6 +580,47 @@
     Array.prototype.forEach.call(grid.children, function (el, idx) {
       el.style.cursor = 'pointer';
       el.addEventListener('click', function () { openDetail(cards[idx]); });
+    });
+  }
+
+  function renderSets() {
+    var grid = document.getElementById('clCollGrid');
+    try { claimSets(); } catch (_) { /* claim passively-completed (milestone) sets */ }
+    var states = setsState();
+    if (_setOpen) {
+      var set = null; states.forEach(function (s) { if (s.id === _setOpen) set = s; });
+      if (!set || set.kind !== 'curated') { _setOpen = null; renderSets(); return; }
+      var theme = activeTheme(); injectThemeCss(theme);
+      grid.style.display = 'grid';
+      grid.style.gridTemplateColumns = 'repeat(auto-fill,' + (theme.gridCols || 'minmax(110px,1fr)') + ')';
+      var owned = [];
+      grid.innerHTML = '<div class="cl-set-head"><button class="cl-back-btn" id="clSetBack">&#8249; Sets</button><span class="cl-set-htitle">' + esc(set.name) + ' &middot; ' + set.owned + '/' + set.total + (set.complete ? ' &#10003;' : '') + '</span></div>' +
+        set.members.map(function (m, i) {
+          if (m.owned) { owned.push(m.card); return theme.card(m.card, CTX, i); }
+          return '<div class="cl-slot"><div class="cl-slot-q">?</div><div class="cl-slot-nm">' + esc(m.name) + '</div></div>';
+        }).join('');
+      document.getElementById('clSetBack').addEventListener('click', function () { _setOpen = null; render(); });
+      try { if (theme.mount) theme.mount(grid); } catch (_) { /* noop */ }
+      var oi = 0;
+      Array.prototype.forEach.call(grid.querySelectorAll('.auth,.ctc,.clc-card'), function (el) {
+        var card = owned[oi++]; if (!card) return;
+        el.style.cursor = 'pointer'; el.addEventListener('click', function () { openDetail(card); });
+      });
+      return;
+    }
+    grid.style.display = 'block';
+    grid.innerHTML = states.map(function (s) {
+      return '<button class="cl-set' + (s.complete ? ' done' : '') + '" data-set="' + s.id + '">' +
+        '<div class="cl-set-tx"><div class="cl-set-nm">' + esc(s.name) + (s.complete ? '<span class="cl-set-done">&#10003; Complete</span>' : '') + '</div>' +
+        '<div class="cl-set-bar"><i style="width:' + Math.round(s.pct * 100) + '%"></i></div></div>' +
+        '<div class="cl-set-ct">' + s.owned + '/' + s.total + '</div>' +
+        (s.kind === 'curated' ? '<div class="cl-set-arrow">&#8250;</div>' : '') + '</button>';
+    }).join('');
+    Array.prototype.forEach.call(grid.querySelectorAll('.cl-set'), function (el) {
+      el.addEventListener('click', function () {
+        var sid = el.getAttribute('data-set'), s = null; states.forEach(function (x) { if (x.id === sid) s = x; });
+        if (s && s.kind === 'curated') { _setOpen = sid; render(); }
+      });
     });
   }
 
@@ -684,11 +804,15 @@
       function next() { clearT(); idx++; if (idx >= queue.length) summary(); else card(queue[idx]); }
       function summary() {
         state = 'sum';
-        if (lvlAfter > lvlBefore) { try { if (window.Sfx) window.Sfx.levelUp(); } catch (_) { /* noop */ } }
-        var lvlLine = lvlAfter > lvlBefore ? '<div class="clr-sum-lvl">Level up &mdash; you reached level ' + lvlAfter + '! 🎉</div>' : '';
+        var newSets = []; try { newSets = claimSets(); } catch (_) { /* noop */ }
+        var finalXp = (load() || blank()).xp || 0, lvlNow = levelFromXp(finalXp);
+        if (lvlNow > lvlBefore) { try { if (window.Sfx) window.Sfx.levelUp(); } catch (_) { /* noop */ } }
+        else if (newSets.length) { try { if (window.Sfx) window.Sfx.allDone(); } catch (_) { /* noop */ } }
+        var setLines = newSets.map(function (st) { return '<div class="clr-sum-lvl">⭐ Set complete: ' + esc(st.name) + ' &middot; +' + st.bonus + ' XP</div>'; }).join('');
+        var lvlLine = lvlNow > lvlBefore ? '<div class="clr-sum-lvl">Level up &mdash; level ' + lvlNow + '! 🎉</div>' : '';
         document.getElementById('clrBody').innerHTML =
           '<div class="clr-sum"><div class="clr-sum-h">+' + queue.length + (queue.length === 1 ? ' card' : ' cards') + '</div>' +
-          '<div class="clr-sum-x">+' + gained + ' XP</div>' + lvlLine +
+          '<div class="clr-sum-x">+' + gained + ' XP</div>' + setLines + lvlLine +
           '<div class="clr-sum-btns"><button class="clr-btn" id="clrAgain">Continue</button><button class="clr-btn gold" id="clrView">View collection</button></div></div>';
         var sk = document.getElementById('clrSkip'); if (sk) sk.style.display = 'none';
         ov.onclick = null;
@@ -707,7 +831,7 @@
 
   // expose + init
   window.Collection = {
-    add: add, stats: stats, all: allCards, openGallery: openGallery, markSeen: markSeen, reveal: reveal,
+    add: add, stats: stats, all: allCards, openGallery: openGallery, markSeen: markSeen, reveal: reveal, sets: setsState,
     reset: reset, grant: grant, addXp: addXp, setLevel: setLevel, exportData: exportData, importData: importData, seed: function () { return grant(SEED.map(function (s) { return s; })); },
     debug: debug,
     themes: { register: defineTheme, use: useTheme, list: function () { return Object.keys(THEMES).map(function (n) { return { name: n, label: THEMES[n].label || n }; }); }, current: activeThemeName }
