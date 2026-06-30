@@ -34,7 +34,11 @@
   var METAL = { legendary: '#fff3c4', elite: '#f0e2ff', rare: '#dcebff', common: '#ffffff' };
 
   // ─────────────────────────────── helpers ───────────────────────────────
-  function load() { try { return JSON.parse(localStorage.getItem(KEY)) || null; } catch (_) { return null; } }
+  function load() {
+    var s; try { s = JSON.parse(localStorage.getItem(KEY)) || null; } catch (_) { return null; }
+    if (s && (s.mv || 0) < 2) { migrate(s); save(s); }
+    return s;
+  }
   function blank() { return { v: SCHEMA, cards: {}, xp: 0, seen: 0 }; }
   function save(s) { try { s.v = SCHEMA; localStorage.setItem(KEY, JSON.stringify(s)); } catch (_) { /* noop */ } }
   function today() { return new Date().toISOString().slice(0, 10); }
@@ -62,11 +66,28 @@
       card.addEventListener('pointercancel', reset);
     });
   }
+  // Deterministic per-card rarity when there's no rating (most game-collected
+  // cards): a weighted hash of type:id so a collection has a natural spread and a
+  // chase, instead of everything being "common". ~67% common / 22% rare / 8.5%
+  // elite / 2.5% legendary.
+  function hashRarity(id, type) {
+    var s = String(type) + ':' + String(id), h = 0;
+    for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    var r = h % 1000;
+    return r < 25 ? 'legendary' : r < 110 ? 'elite' : r < 330 ? 'rare' : 'common';
+  }
   function rarityOf(it) {
     if (it.rarity && RARITY[it.rarity]) return it.rarity;
     var r = it.rating;
     if (typeof r === 'number' && r > 0) return r >= 8.3 ? 'legendary' : r >= 7.8 ? 'elite' : r >= 7 ? 'rare' : 'common';
-    return 'common';
+    return hashRarity(it.id, it.type);
+  }
+  // One-time re-tier of pre-existing cards (all stored as "common" before hash
+  // rarity existed) so older collections gain variety too. Guarded by s.mv.
+  function migrate(s) {
+    if (!s || (s.mv || 0) >= 2) return;
+    Object.keys(s.cards || {}).forEach(function (k) { var c = s.cards[k]; c.rarity = rarityOf({ id: c.id, type: c.type }); });
+    s.mv = 2;
   }
   function xpForLevel(l) { return 50 * (l - 1) * (l - 1); }
   function levelFromXp(xp) { return Math.floor(Math.sqrt(Math.max(0, xp) / 50)) + 1; }
@@ -251,40 +272,42 @@
   // ── Built-in theme #3: "authentic" — premium licensed-card look (navy + foil) ──
   defineTheme({
     name: 'authentic', label: 'Authentic',
-    gridCols: 'minmax(156px,1fr)',
+    gridCols: 'minmax(150px,1fr)',
     css:
-      '.auth{position:relative;perspective:780px;animation:clCardIn .4s cubic-bezier(.2,.9,.3,1.2) both}' +
-      '.auth-card{position:relative;aspect-ratio:5/7;border-radius:13px;overflow:hidden;transform-style:preserve-3d;transition:transform .16s ease,box-shadow .2s ease;will-change:transform;background:radial-gradient(120% 80% at 50% 0%,#17325e,#0a1830 46%,#060f1f);box-shadow:0 8px 22px rgba(0,0,0,.55)}' +
-      '.auth-bg{position:absolute;inset:0;z-index:0;background:repeating-linear-gradient(125deg,rgba(255,255,255,.025) 0 2px,transparent 2px 9px);pointer-events:none}' +
-      '.auth-art{position:absolute;top:6.5%;left:7%;right:7%;height:56.5%;border-radius:6px;overflow:hidden;background:#0a1420;box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 0 2px var(--cr),0 6px 16px rgba(0,0,0,.5);z-index:1}' +
-      '.auth-art img,.auth-noimg{width:100%;height:100%;object-fit:cover;display:block}' +
-      '.auth.person .auth-art img{object-position:center 12%}' +
-      '.auth-dupe{position:absolute;right:5px;bottom:5px;z-index:3;font-size:.5rem;font-weight:900;color:#1a1200;background:linear-gradient(135deg,#f5c542,#e8a000);border-radius:99px;padding:1px 7px;box-shadow:0 2px 8px rgba(0,0,0,.5)}' +
-      '.auth-corner{position:absolute;top:0;left:0;width:33%;height:23%;z-index:3;background:linear-gradient(135deg,var(--m1),var(--cr) 58%,transparent 60%);clip-path:polygon(0 0,100% 0,0 100%);opacity:.92;pointer-events:none}' +
-      '.auth-star{position:absolute;top:4.5%;left:4.5%;width:13%;aspect-ratio:1;z-index:4;background:conic-gradient(from 0deg,#ff9a9a,#fff39a,#9affb0,#9ad9ff,#c39aff,#ff9af0,#ff9a9a);clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);filter:drop-shadow(0 1px 3px rgba(0,0,0,.6));animation:authStar 9s linear infinite}' +
+      '.auth{position:relative;perspective:800px;animation:clCardIn .4s cubic-bezier(.2,.9,.3,1.2) both}' +
+      '.auth-card{position:relative;aspect-ratio:5/7;border-radius:13px;overflow:hidden;transform-style:preserve-3d;transition:transform .16s ease,box-shadow .2s ease;will-change:transform;background:#0a1830;box-shadow:0 8px 22px rgba(0,0,0,.55)}' +
+      '.auth-bgimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;z-index:0}' +
+      '.auth-noimg{position:absolute;inset:0;z-index:0;background:radial-gradient(120% 80% at 50% 0%,#17325e,#0a1830)}' +
+      '.auth-scrim{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(6,11,22,.12),transparent 16%,transparent 44%,rgba(6,11,22,.84) 76%,rgba(4,9,18,.97))}' +
+      '.auth-corner{position:absolute;top:0;left:0;width:30%;height:21%;z-index:3;background:linear-gradient(135deg,var(--m1),var(--cr) 58%,transparent 60%);clip-path:polygon(0 0,100% 0,0 100%);opacity:.95;pointer-events:none}' +
+      '.auth-star{position:absolute;top:4.5%;left:4.5%;width:12%;aspect-ratio:1;z-index:4;background:conic-gradient(from 0deg,#ff9a9a,#fff39a,#9affb0,#9ad9ff,#c39aff,#ff9af0,#ff9a9a);clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);filter:drop-shadow(0 1px 3px rgba(0,0,0,.6));animation:authStar 9s linear infinite}' +
       '@keyframes authStar{to{filter:hue-rotate(360deg) drop-shadow(0 1px 3px rgba(0,0,0,.6))}}' +
-      '.auth-name{position:absolute;left:5%;right:5%;top:64%;z-index:5;text-align:center;font-weight:900;font-size:1.12rem;letter-spacing:.005em;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:linear-gradient(180deg,var(--m1),var(--cr) 52%,var(--m1));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;filter:drop-shadow(0 1px 1px rgba(0,0,0,.55))}' +
-      '.auth-sub{position:absolute;left:6%;right:6%;top:72.4%;z-index:5;text-align:center;font-size:.46rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--cr)}' +
-      '.auth-foot{position:absolute;left:0;right:0;bottom:0;z-index:5;display:flex;justify-content:space-between;align-items:flex-end;gap:6px;padding:8px 9px 9px;background:linear-gradient(transparent,rgba(4,9,18,.92) 38%)}' +
-      '.auth-foot::before{content:"";position:absolute;left:7%;right:7%;top:0;height:1px;background:linear-gradient(90deg,transparent,var(--cr),transparent)}' +
+      '@keyframes authDrift{0%{background-position:0% 50%}100%{background-position:280% 50%}}' +
+      '.auth-tags{position:absolute;top:7px;right:7px;z-index:9;display:flex;gap:4px}' +
+      '.auth-nw{font-size:.44rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#06281a;background:#7fd49a;border-radius:5px;padding:2px 5px}' +
+      '.auth-dp{font-size:.5rem;font-weight:900;color:#1a1200;background:linear-gradient(135deg,#f5c542,#e8a000);border-radius:99px;padding:1px 7px}' +
+      '.auth-text{position:absolute;left:0;right:0;bottom:0;z-index:5;padding:0 10px 9px;text-align:center}' +
+      '.auth-name{font-weight:900;font-size:1rem;line-height:1.04;letter-spacing:.01em;text-transform:uppercase;white-space:normal;max-height:2.1em;overflow:hidden;background:linear-gradient(180deg,var(--m1),var(--cr) 52%,var(--m1));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;filter:drop-shadow(0 1px 2px rgba(0,0,0,.75));margin-bottom:3px}' +
+      '.auth-sub{font-size:.45rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--cr);margin-bottom:7px}' +
+      '.auth-foot{position:relative;display:flex;justify-content:space-between;align-items:flex-end;gap:6px;padding-top:6px;text-align:left}' +
+      '.auth-foot::before{content:"";position:absolute;left:4%;right:4%;top:0;height:1px;background:linear-gradient(90deg,transparent,var(--cr),transparent)}' +
       '.auth-foot-l{display:flex;align-items:center;gap:5px;min-width:0}' +
-      '.auth-foot-star{width:15px;height:15px;flex-shrink:0;background:conic-gradient(from 0deg,#ff9a9a,#fff39a,#9affb0,#9ad9ff,#c39aff,#ff9af0,#ff9a9a);clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}' +
-      '.auth-ed{min-width:0;line-height:1.16}' +
-      '.auth-ed b{display:block;font-size:.46rem;color:#fff;font-weight:800}' +
-      '.auth-ed span{display:block;font-size:.4rem;color:rgba(255,255,255,.6);font-weight:700;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:72px}' +
+      '.auth-foot-star{width:14px;height:14px;flex-shrink:0;background:conic-gradient(from 0deg,#ff9a9a,#fff39a,#9affb0,#9ad9ff,#c39aff,#ff9af0,#ff9a9a);clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}' +
+      '.auth-ed{min-width:0;line-height:1.15}' +
+      '.auth-ed b{display:block;font-size:.45rem;color:#fff;font-weight:800}' +
+      '.auth-ed span{display:block;font-size:.4rem;color:rgba(255,255,255,.62);font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:74px}' +
       '.auth-foot-r{text-align:right;flex-shrink:0}' +
-      '.auth-brand{font-size:.4rem;font-weight:900;letter-spacing:.07em;color:var(--cr);line-height:1.12}' +
+      '.auth-brand{font-size:.4rem;font-weight:900;letter-spacing:.06em;color:var(--cr);line-height:1.1}' +
       '.auth-serial{font-family:ui-monospace,Menlo,monospace;font-size:.4rem;color:rgba(255,255,255,.55);margin-top:2px}' +
       '.auth-frame{position:absolute;inset:0;z-index:6;border-radius:13px;pointer-events:none;box-shadow:inset 0 0 0 1px rgba(0,0,0,.55),inset 0 0 0 3px var(--cr),inset 0 0 0 4px rgba(0,0,0,.45)}' +
-      '.auth-foil{position:absolute;inset:0;z-index:7;pointer-events:none;opacity:0;background:repeating-linear-gradient(115deg,rgba(255,119,115,.4),rgba(255,237,95,.4) 12%,rgba(131,255,247,.4) 24%,rgba(120,148,255,.4) 36%,rgba(216,117,255,.4) 48%,rgba(255,119,115,.4) 60%);background-size:260% 260%;background-position:var(--fx,50%) var(--fy,50%);mix-blend-mode:color-dodge;transition:opacity .2s}' +
-      '.auth-rare .auth-foil{opacity:.16}.auth-elite .auth-foil{opacity:.24}.auth-legendary .auth-foil{opacity:.32;animation:ctcDrift 7s linear infinite}' +
+      '.auth-foil{position:absolute;inset:0;z-index:7;pointer-events:none;opacity:0;background:repeating-linear-gradient(115deg,rgba(255,119,115,.35),rgba(255,237,95,.35) 12%,rgba(131,255,247,.35) 24%,rgba(120,148,255,.35) 36%,rgba(216,117,255,.35) 48%,rgba(255,119,115,.35) 60%);background-size:260% 260%;background-position:var(--fx,50%) var(--fy,50%);mix-blend-mode:color-dodge;transition:opacity .2s}' +
+      '.auth-rare .auth-foil{opacity:.14}.auth-elite .auth-foil{opacity:.2}.auth-legendary .auth-foil{opacity:.28;animation:authDrift 7s linear infinite}' +
       '.auth-glare{position:absolute;inset:0;z-index:8;pointer-events:none;opacity:0;background:radial-gradient(circle at var(--gx,50%) var(--gy,50%),rgba(255,255,255,.3),transparent 45%);mix-blend-mode:overlay;transition:opacity .2s}' +
       '.auth-card:hover .auth-glare{opacity:1}' +
       '.auth-common .auth-card:hover{box-shadow:0 16px 36px rgba(0,0,0,.6)}' +
       '.auth-rare .auth-card:hover{box-shadow:0 16px 36px rgba(0,0,0,.6),0 0 24px rgba(122,166,232,.5)}' +
       '.auth-elite .auth-card:hover{box-shadow:0 16px 36px rgba(0,0,0,.6),0 0 24px rgba(181,138,214,.55)}' +
       '.auth-legendary .auth-card:hover{box-shadow:0 16px 36px rgba(0,0,0,.6),0 0 28px rgba(232,194,74,.6)}' +
-      '.auth-new{position:absolute;top:6px;right:6px;z-index:9;font-size:.44rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#06281a;background:#7fd49a;border-radius:5px;padding:2px 5px;box-shadow:0 2px 8px rgba(127,212,154,.4)}' +
       '@media(prefers-reduced-motion:reduce){.auth{animation:none}.auth-star,.auth-legendary .auth-foil{animation:none}.auth-card{transition:none}}',
     card: function (c, ctx, i) {
       var rar = ctx.RARITY[c.rarity] || ctx.RARITY.common;
@@ -295,18 +318,20 @@
       var rl = c.rarity === 'legendary' ? 'L' : c.rarity === 'elite' ? 'E' : c.rarity === 'rare' ? 'R' : 'C';
       var serial = ini + ('0' + (Math.abs(c.id) % 100)).slice(-2) + '-' + year + rl;
       var typeUp = person ? 'ACTOR' : (c.type === 'tv' ? 'SERIES' : 'FILM');
-      var sub = typeUp + ' · ' + rar.label.toUpperCase() + ' · ' + year + ' EDITION';
-      return '<div class="auth auth-' + c.rarity + (person ? ' person' : '') + '" style="--cr:' + rar.ring + ';--m1:' + (METAL[c.rarity] || '#fff') + ';animation-delay:' + Math.min(i, 16) * 22 + 'ms" title="' + ctx.esc(c.name) + ' · ' + rar.label + '">' +
+      var sub = typeUp + ' · ' + rar.label.toUpperCase() + ' · ' + year;
+      var nm = ctx.esc(c.name);
+      return '<div class="auth auth-' + c.rarity + (person ? ' person' : '') + '" style="--cr:' + rar.ring + ';--m1:' + (METAL[c.rarity] || '#fff') + ';animation-delay:' + Math.min(i, 16) * 22 + 'ms" title="' + nm + ' · ' + rar.label + '">' +
         '<div class="auth-card">' +
-          '<div class="auth-bg"></div>' +
-          '<div class="auth-art">' + (p ? '<img src="' + ctx.esc(p) + '" alt="" loading="lazy">' : '<div class="auth-noimg"></div>') + (c.n > 1 ? '<span class="auth-dupe">×' + c.n + '</span>' : '') + '</div>' +
-          '<div class="auth-corner"></div><div class="auth-star"></div>' +
-          (c.isNew ? '<span class="auth-new">New</span>' : '') +
-          '<div class="auth-name">' + ctx.esc(c.name) + '</div>' +
-          '<div class="auth-sub">' + ctx.esc(sub) + '</div>' +
-          '<div class="auth-foot">' +
-            '<div class="auth-foot-l"><span class="auth-foot-star"></span><div class="auth-ed"><b>' + year + '</b><span>' + ctx.esc(c.name) + '</span><span>Collection</span></div></div>' +
-            '<div class="auth-foot-r"><div class="auth-brand">CINELINKS<br>AUTHENTIC</div><div class="auth-serial">' + serial + '</div></div>' +
+          (p ? '<img class="auth-bgimg" src="' + ctx.esc(p) + '" alt="" loading="lazy">' : '<div class="auth-noimg"></div>') +
+          '<div class="auth-scrim"></div><div class="auth-corner"></div><div class="auth-star"></div>' +
+          '<div class="auth-tags">' + (c.n > 1 ? '<span class="auth-dp">×' + c.n + '</span>' : '') + (c.isNew ? '<span class="auth-nw">New</span>' : '') + '</div>' +
+          '<div class="auth-text">' +
+            '<div class="auth-name">' + nm + '</div>' +
+            '<div class="auth-sub">' + ctx.esc(sub) + '</div>' +
+            '<div class="auth-foot">' +
+              '<div class="auth-foot-l"><span class="auth-foot-star"></span><div class="auth-ed"><b>' + year + '</b><span>' + nm + '</span></div></div>' +
+              '<div class="auth-foot-r"><div class="auth-brand">CINELINKS<br>AUTHENTIC</div><div class="auth-serial">' + serial + '</div></div>' +
+            '</div>' +
           '</div>' +
           '<div class="auth-frame"></div><div class="auth-foil"></div><div class="auth-glare"></div>' +
         '</div>' +
