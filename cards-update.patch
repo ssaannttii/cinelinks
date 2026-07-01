@@ -1,0 +1,230 @@
+diff --git a/collection.js b/collection.js
+index 28290bc..9a6c489 100644
+--- a/collection.js
++++ b/collection.js
+@@ -324,7 +324,7 @@
+         s.dust = (s.dust || 0) + gd; _pendingDust += gd;
+       } else {
+         var rar = rarityOf(it);
+-        s.cards[k] = { id: it.id, type: it.type, name: it.name || '', img: it.img || '', rarity: rar, n: 1, first: d, no: (s.seq = (s.seq || 0) + 1), isNew: 1 };
++        s.cards[k] = { id: it.id, type: it.type, name: it.name || '', img: it.img || '', rarity: rar, n: 1, first: d, no: (s.seq = (s.seq || 0) + 1), isNew: 1, i18n: (function () { var o = {}; o[currentLang()] = it.name || ''; return o; })() };
+         s.xp += XP[rar] || 10;
+         added.push(s.cards[k]);
+       }
+@@ -334,6 +334,67 @@
+     return added;
+   }
+   function allCards() { var s = load() || blank(); return Object.keys(s.cards || {}).map(function (k) { return s.cards[k]; }); }
++
++  // ─── Title localisation ───
++  // A card stores its title in whatever language it was collected in, plus a per-language
++  // cache (card.i18n = { 'es-ES': '…', 'en-US': '…' }). The card is shown in the CURRENT
++  // UI language (localStorage.clLang, which is already a TMDB code); any rendered movie/TV
++  // card missing that language is fetched from TMDB once and cached. Person names are stable
++  // across our locales, so they keep the snapshot. Offline / API-down → snapshot is shown.
++  var _uiLang = 'en-US';
++  function currentLang() { try { var l = localStorage.getItem('clLang'); return (l && /^[a-z]{2}-[A-Z]{2}$/.test(l)) ? l : 'en-US'; } catch (_) { return 'en-US'; } }
++  function locName(c) { return (c && c.i18n && c.i18n[_uiLang]) ? c.i18n[_uiLang] : (c ? (c.name || '') : ''); }
++  function locCard(c) { var n = locName(c); return (n === c.name) ? c : Object.assign({}, c, { name: n }); }
++  function tmdbTitle(type, id, lang) {
++    var tp = type === 'person' ? 'person' : (type === 'tv' ? 'tv' : 'movie');
++    return fetch('/api/tmdb?path=' + encodeURIComponent(tp + '/' + id) + '&language=' + encodeURIComponent(lang))
++      .then(function (r) { return r && r.ok ? r.json() : null; })
++      .then(function (j) { return (j && (j.title || j.name)) || null; })
++      .catch(function () { return null; });
++  }
++  var _locUpd = {}, _locT = 0;
++  function _locFlush() {
++    _locT = 0; var keys = Object.keys(_locUpd); if (!keys.length) return;
++    var s = load(); if (!s || !s.cards) { _locUpd = {}; return; }
++    keys.forEach(function (k) { var card = s.cards[k]; if (!card) return; card.i18n = card.i18n || {}; var u = _locUpd[k]; Object.keys(u).forEach(function (l) { card.i18n[l] = u[l]; }); });
++    save(s); _locUpd = {};
++  }
++  function _locQueue(key, lang, title) { (_locUpd[key] = _locUpd[key] || {})[lang] = title; if (!_locT) _locT = setTimeout(_locFlush, 900); }
++  // Fetch+swap localised titles for rendered cards missing the current language (max 4 in
++  // flight). `els` (optional) are the matching DOM nodes whose name is updated in place.
++  function localizeCards(cards, els, lang) {
++    try {
++      if (!lang) return;
++      var pend = [];
++      for (var i = 0; i < cards.length; i++) {
++        var c = cards[i]; if (!c || c.type === 'person') continue;
++        if (c.i18n && c.i18n[lang]) continue;
++        pend.push({ c: c, el: els ? els[i] : null });
++      }
++      if (!pend.length) return;
++      var qi = 0, active = 0, MAX = 4;
++      function pump() {
++        while (active < MAX && qi < pend.length) {
++          (function (it) {
++            active++;
++            tmdbTitle(it.c.type, it.c.id, lang).then(function (title) {
++              active--;
++              if (title) {
++                it.c.i18n = it.c.i18n || {}; it.c.i18n[lang] = title;
++                _locQueue(it.c.type + ':' + it.c.id, lang, title);
++                if (it.el) {
++                  var nm = it.el.querySelector('.auth-name,.ctc-name,.clc-name'); if (nm) nm.textContent = title;
++                  try { it.el.setAttribute('title', title); } catch (_) { /* noop */ }
++                }
++              }
++              pump();
++            });
++          })(pend[qi++]);
++        }
++      }
++      pump();
++    } catch (_) { /* noop */ }
++  }
+   function stats() {
+     var s = load() || blank();
+     var cards = Object.keys(s.cards || {}).map(function (k) { return s.cards[k]; });
+@@ -1050,6 +1111,7 @@
+ 
+   function render() {
+     stopHolo();
++    _uiLang = currentLang();
+     var st = stats();
+     document.getElementById('clCollLvl').textContent = st.level;
+     document.getElementById('clCollXpName').textContent = 'Level ' + st.level;
+@@ -1088,7 +1150,7 @@
+       return;
+     }
+     grid.style.display = 'grid';
+-    grid.innerHTML = cards.map(function (c, i) { return theme.card(c, CTX, i); }).join('');
++    grid.innerHTML = cards.map(function (c, i) { return theme.card(locCard(c), CTX, i); }).join('');
+     try { if (theme.mount) theme.mount(grid); } catch (_) { /* noop */ }
+     Array.prototype.forEach.call(grid.children, function (el, idx) {
+       el.style.cursor = 'pointer';
+@@ -1096,6 +1158,7 @@
+     });
+     scrollReveal(grid);
+     mobileScrollHolo(grid);
++    localizeCards(cards, grid.children, _uiLang);
+   }
+ 
+   // Cards past the first screen start hidden and rise as they scroll into view —
+@@ -1131,16 +1194,18 @@
+       var owned = [];
+       grid.innerHTML = '<div class="cl-set-head"><button class="cl-back-btn" id="clSetBack">&#8249; Sets</button><span class="cl-set-htitle">' + esc(set.name) + ' &middot; ' + set.owned + '/' + set.total + (set.complete ? ' &#10003;' : '') + '</span></div>' +
+         set.members.map(function (m, i) {
+-          if (m.owned) { owned.push(m.card); return theme.card(m.card, CTX, i); }
++          if (m.owned) { owned.push(m.card); return theme.card(locCard(m.card), CTX, i); }
+           return '<div class="cl-slot"><div class="cl-slot-q">?</div><div class="cl-slot-nm">' + esc(m.name) + '</div></div>';
+         }).join('');
+       document.getElementById('clSetBack').addEventListener('click', function () { _setOpen = null; render(); });
+       try { if (theme.mount) theme.mount(grid); } catch (_) { /* noop */ }
+-      var oi = 0;
++      var oi = 0, ownedEls = [];
+       Array.prototype.forEach.call(grid.querySelectorAll('.auth,.ctc,.clc-card'), function (el) {
+         var card = owned[oi++]; if (!card) return;
++        ownedEls.push(el);
+         el.style.cursor = 'pointer'; el.addEventListener('click', function () { openDetail(card, el); });
+       });
++      localizeCards(owned, ownedEls, _uiLang);
+       return;
+     }
+     grid.style.display = 'block';
+@@ -1257,7 +1322,7 @@
+       ? '<div class="cl-shine-done">&#10024; Shined</div>'
+       : '<button class="cl-shine-btn' + (afford ? '' : ' off') + '" id="clShineBtn">&#10024; Shine &middot; ' + cost + ' dust</button>' +
+         '<div class="cl-shine-hint">You have ' + bal + ' dust' + (afford ? '' : ' &middot; need ' + (cost - bal) + ' more') + '</div>';
+-    return '<div class="cl-di-name">' + esc(c.name) + '</div><div class="cl-di-rows">' +
++    return '<div class="cl-di-name">' + esc(locName(c)) + '</div><div class="cl-di-rows">' +
+       rows.map(function (r) { return '<div class="cl-di-row"><span>' + r[0] + '</span><b' + (r[2] ? ' style="color:' + r[2] + '"' : '') + '>' + esc(r[1]) + '</b></div>'; }).join('') +
+       '</div><div class="cl-shine-wrap">' + shineBlock + '</div>' +
+       '<button class="cl-share-btn" id="clShareBtn">&#8599; Share card</button>';
+@@ -1267,13 +1332,25 @@
+     if (!c) return;
+     function fill() {
+       buildDetail();
++      _uiLang = currentLang();
+       var theme = activeTheme(); injectThemeCss(theme);
+       var holder = document.getElementById('clDetailCard');
+-      holder.innerHTML = theme.card(c, CTX, 0);
++      holder.innerHTML = theme.card(locCard(c), CTX, 0);
+       // the card renders at 2× here — pull a higher-res TMDB poster so it stays crisp
+       Array.prototype.forEach.call(holder.querySelectorAll('img'), function (im) { im.src = im.src.replace(/\/t\/p\/w\d+\//, '/t/p/w780/'); });
+       try { if (theme.mount) theme.mount(holder); } catch (_) { /* noop */ }
+       document.getElementById('clDetailInfo').innerHTML = detailInfo(c);
++      // localise this card's title if we don't have the current language yet
++      if (c.type !== 'person' && !(c.i18n && c.i18n[_uiLang])) {
++        var wantLang = _uiLang;
++        tmdbTitle(c.type, c.id, wantLang).then(function (title) {
++          if (!title) return;
++          c.i18n = c.i18n || {}; c.i18n[wantLang] = title; _locQueue(c.type + ':' + c.id, wantLang, title);
++          if (_uiLang !== wantLang) return;
++          var h = document.getElementById('clDetailCard'); var nm = h && h.querySelector('.auth-name,.ctc-name,.clc-name'); if (nm) nm.textContent = title;
++          var dn = document.getElementById('clDetailInfo'); var t = dn && dn.querySelector('.cl-di-name'); if (t) t.textContent = title;
++        });
++      }
+       var sb = document.getElementById('clShineBtn');
+       if (sb) sb.addEventListener('click', function () {
+         var r = shineCard(c);
+@@ -1317,10 +1394,11 @@
+       var no = ('00' + (c.no || 0)).slice(-3);
+       var ty = c.type === 'person' ? 'Actor' : (c.type === 'tv' ? 'Series' : 'Film');
+       var rlabel = (RARITY[c.rarity] || RARITY.common).label;
+-      var qs = 'g=card&title=' + encodeURIComponent(c.name || '') + '&r=' + encodeURIComponent(c.rarity || 'common') +
++      var nm = locName(c) || c.name || '';
++      var qs = 'g=card&title=' + encodeURIComponent(nm) + '&r=' + encodeURIComponent(c.rarity || 'common') +
+         '&n=' + encodeURIComponent(no) + '&sub=' + encodeURIComponent(ty) + '&im=' + encodeURIComponent(c.img || '') + '&to=/';
+       var url = location.origin + '/s?' + qs;
+-      var text = 'I just collected the ' + rlabel + ' card of ' + (c.name || '') + ' #' + no + ' on CineLinks!';
++      var text = 'I just collected the ' + rlabel + ' card of ' + nm + ' #' + no + ' on CineLinks!';
+       try { if (window.Sfx) window.Sfx.tap(); } catch (_) { /* noop */ }
+       try { if (window.Track) window.Track('card_shared', { rarity: c.rarity, type: c.type }); } catch (_) { /* noop */ }
+       if (navigator.share) { navigator.share({ title: 'CineLinks', text: text, url: url }).catch(function () { /* cancelled */ }); return; }
+diff --git a/lib/merge-stats.js b/lib/merge-stats.js
+index 37aed43..a31d3a0 100644
+--- a/lib/merge-stats.js
++++ b/lib/merge-stats.js
+@@ -53,7 +53,7 @@
+     var no = Math.min(x.no || Infinity, y.no || Infinity);
+     if (!isFinite(no)) no = x.no || y.no || 0;
+     var first = (x.first && y.first) ? (x.first < y.first ? x.first : y.first) : (x.first || y.first || '');
+-    return {
++    var out = {
+       id: x.id != null ? x.id : y.id,
+       type: x.type || y.type,
+       name: x.name || y.name || '',
+@@ -65,6 +65,11 @@
+       isNew: (x.isNew || y.isNew) ? 1 : 0,
+       shine: (x.shine || y.shine) ? 1 : 0
+     };
++    // Union the per-language title cache (i18n) so a device that fetched a localised
++    // title doesn't lose it when reconciling with one that hasn't.
++    var im = Object.assign({}, x.i18n, y.i18n);
++    if (Object.keys(im).length) out.i18n = im;
++    return out;
+   }
+   function mergeCollection(a, b) {
+     if (!a || typeof a !== 'object') return b || null;
+diff --git a/sw.js b/sw.js
+index 8a0b00a..c1c162c 100644
+--- a/sw.js
++++ b/sw.js
+@@ -5,7 +5,7 @@
+  *   - other same-origin GETs (logo, icons, daily-challenges.js, i18n.js): stale-while-revalidate.
+  * Bump CACHE_VERSION to invalidate old caches on deploy.
+  */
+-const CACHE_VERSION = 'cinelinks-v99';
++const CACHE_VERSION = 'cinelinks-v100';
+ const SHELL = [
+   '/',
+   '/index.html',
+diff --git a/test/merge-stats.test.js b/test/merge-stats.test.js
+index 8c341c2..d6fb1c3 100644
+--- a/test/merge-stats.test.js
++++ b/test/merge-stats.test.js
+@@ -105,3 +105,10 @@ test('mergeCollection is order-independent and handles nulls', () => {
+   assert.strictEqual(M.mergeCollection(null, b), b);
+   assert.strictEqual(M.mergeCollection(null, null), null);
+ });
++
++test('mergeCollection unions the per-language title cache (i18n)', () => {
++  const a = { v: 1, cards: { 'movie:1': { id: 1, type: 'movie', rarity: 'rare', n: 1, no: 1, name: 'Endgame', i18n: { 'en-US': 'Endgame' } } } };
++  const b = { v: 1, cards: { 'movie:1': { id: 1, type: 'movie', rarity: 'rare', n: 1, no: 1, name: 'Endgame', i18n: { 'es-ES': 'Endgame (ES)' } } } };
++  const out = M.mergeCollection(a, b);
++  assert.deepStrictEqual(out.cards['movie:1'].i18n, { 'en-US': 'Endgame', 'es-ES': 'Endgame (ES)' });
++});

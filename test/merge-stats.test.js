@@ -105,3 +105,10 @@ test('mergeCollection is order-independent and handles nulls', () => {
   assert.strictEqual(M.mergeCollection(null, b), b);
   assert.strictEqual(M.mergeCollection(null, null), null);
 });
+
+test('mergeCollection unions the per-language title cache (i18n)', () => {
+  const a = { v: 1, cards: { 'movie:1': { id: 1, type: 'movie', rarity: 'rare', n: 1, no: 1, name: 'Endgame', i18n: { 'en-US': 'Endgame' } } } };
+  const b = { v: 1, cards: { 'movie:1': { id: 1, type: 'movie', rarity: 'rare', n: 1, no: 1, name: 'Endgame', i18n: { 'es-ES': 'Endgame (ES)' } } } };
+  const out = M.mergeCollection(a, b);
+  assert.deepStrictEqual(out.cards['movie:1'].i18n, { 'en-US': 'Endgame', 'es-ES': 'Endgame (ES)' });
+});
