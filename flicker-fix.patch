@@ -1,0 +1,44 @@
+diff --git a/collection.js b/collection.js
+index 0dcb680..28290bc 100644
+--- a/collection.js
++++ b/collection.js
+@@ -655,8 +655,12 @@
+     gridCols: 'minmax(150px,1fr)',
+     css:
+       '.auth{position:relative;perspective:800px;animation:clCardIn .4s cubic-bezier(.2,.9,.3,1.2) both}' +
+-      '.auth-card{position:relative;container-type:inline-size;aspect-ratio:5/7;border-radius:13px;overflow:hidden;transition:transform .16s ease,box-shadow .2s ease;background:#0a1830;box-shadow:0 8px 22px rgba(0,0,0,.55);backface-visibility:hidden}' +
+-      '.auth-bgimg{position:absolute;inset:-1px;width:calc(100% + 2px);height:calc(100% + 2px);object-fit:cover;object-position:center top;z-index:0}' +
++      // isolation:isolate gives the card its own compositing context so the mix-blend-mode
++      // layers (foil/glit/glare/shade) blend WITHIN the card instead of re-compositing
++      // against the page every frame — the canonical fix for the transform+blend+radius
++      // flicker in Chrome/Blink & Safari (they'd otherwise flash the card bg to black).
++      '.auth-card{position:relative;container-type:inline-size;aspect-ratio:5/7;border-radius:13px;overflow:hidden;isolation:isolate;transition:transform .16s ease,box-shadow .2s ease;background:#0a1830;box-shadow:0 8px 22px rgba(0,0,0,.55);-webkit-backface-visibility:hidden;backface-visibility:hidden}' +
++      '.auth-bgimg{position:absolute;inset:-1px;width:calc(100% + 2px);height:calc(100% + 2px);object-fit:cover;object-position:center top;z-index:0;transform:translateZ(0);-webkit-backface-visibility:hidden;backface-visibility:hidden}' +
+       '.auth-noimg{position:absolute;inset:0;z-index:0;background:radial-gradient(120% 80% at 50% 0%,#17325e,#0a1830)}' +
+       '.auth-scrim{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(6,11,22,.34),transparent 20%,transparent 56%,rgba(6,11,22,.74) 78%,rgba(4,9,18,.96))}' +
+       '.auth-corner{position:absolute;top:0;left:0;width:30%;height:21%;z-index:3;background:linear-gradient(135deg,var(--m1),var(--cr) 58%,transparent 60%);clip-path:polygon(0 0,100% 0,0 100%);opacity:.95;pointer-events:none}' +
+@@ -703,7 +707,10 @@
+       // .28s transition only applies on release (class removed) for a smooth settle.
+       '.auth-card.tilted .auth-bgimg,.auth-card.tilted .auth-star,.auth-card.tilted .auth-corner,.auth-card.tilted .auth-tags,.auth-card.tilted .auth-text{transition:none}' +
+       '.auth-card.tilted{will-change:transform}' +
+-      '.auth-card.tilted .auth-bgimg{transform:translate(calc(var(--px,0) * -2.4cqw),calc(var(--py,0) * -2.4cqw)) scale(1.06)}' +
++      // Poster parallax ONLY on fine pointers (desktop). On touch the photo stays put on
++      // its stable GPU layer — transforming it every frame under the blend layers is what
++      // re-rasterised it and flashed the card background through ("petardeo" to black).
++      '@media(pointer:fine){.auth-card.tilted .auth-bgimg{transform:translate3d(calc(var(--px,0) * -2.4cqw),calc(var(--py,0) * -2.4cqw),0) scale(1.06)}}' +
+       '.auth-card.tilted .auth-star{transform:translate(calc(var(--px,0) * 3.6cqw),calc(var(--py,0) * 3.6cqw))}' +
+       '.auth-card.tilted .auth-corner{transform:translate(calc(var(--px,0) * 2.6cqw),calc(var(--py,0) * 2.6cqw))}' +
+       '.auth-card.tilted .auth-tags{transform:translate(calc(var(--px,0) * 3cqw),calc(var(--py,0) * 3cqw))}' +
+diff --git a/sw.js b/sw.js
+index bd8f5bd..8a0b00a 100644
+--- a/sw.js
++++ b/sw.js
+@@ -5,7 +5,7 @@
+  *   - other same-origin GETs (logo, icons, daily-challenges.js, i18n.js): stale-while-revalidate.
+  * Bump CACHE_VERSION to invalidate old caches on deploy.
+  */
+-const CACHE_VERSION = 'cinelinks-v98';
++const CACHE_VERSION = 'cinelinks-v99';
+ const SHELL = [
+   '/',
+   '/index.html',
