@@ -1,0 +1,165 @@
+diff --git a/collection.js b/collection.js
+index a0bf8af..49f215b 100644
+--- a/collection.js
++++ b/collection.js
+@@ -176,26 +176,37 @@
+         raf = requestAnimationFrame(frame);
+       }
+       function kick() { if (!raf) raf = requestAnimationFrame(frame); }
+-      function track(e) {
++      function track(cx, cy) {
+         var r = inner.getBoundingClientRect();
+-        tpx = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+-        tpy = Math.max(0, Math.min(1, (e.clientY - r.top) / r.height));
++        tpx = Math.max(0, Math.min(1, (cx - r.left) / r.width));
++        tpy = Math.max(0, Math.min(1, (cy - r.top) / r.height));
+         try_ = (tpx - 0.5) * 16; trx = (0.5 - tpy) * 16;
+       }
+-      inner.addEventListener('pointerdown', function (e) {
+-        if (e.pointerType === 'mouse') return;              // mouse keeps the hover tilt
+-        dragging = true; inner.classList.add('tilted');
+-        try { inner.setPointerCapture(e.pointerId); } catch (_) { /* noop */ }
+-        track(e); kick();
+-      });
+-      inner.addEventListener('pointermove', function (e) {
+-        if (!dragging || e.pointerType === 'mouse') return;
++      // Touch events with a NON-passive touchmove + preventDefault reliably tilt the card
++      // instead of scrolling the modal — pointer-events + touch-action:none alone did not
++      // stop the scroll on iOS. Mouse is left untouched (keeps the hover tilt from tiltMount).
++      inner.addEventListener('touchstart', function (e) {
++        var t = e.touches && e.touches[0]; if (!t) return;
++        dragging = true; track(t.clientX, t.clientY);
++        // snap the glare/foil under the finger AND write the vars synchronously BEFORE
++        // .tilted is added, so the first painted frame is already correct — no flash.
++        px = tpx; py = tpy;
++        inner.style.setProperty('--gx', (px * 100).toFixed(1) + '%');
++        inner.style.setProperty('--gy', (py * 100).toFixed(1) + '%');
++        inner.style.setProperty('--fx', (px * 200).toFixed(1) + '%');
++        inner.style.setProperty('--fy', (py * 200).toFixed(1) + '%');
++        inner.style.setProperty('--px', (px - 0.5).toFixed(3));
++        inner.style.setProperty('--py', (py - 0.5).toFixed(3));
++        inner.classList.add('tilted'); kick();
++      }, { passive: true });
++      inner.addEventListener('touchmove', function (e) {
++        var t = e.touches && e.touches[0]; if (!dragging || !t) return;
+         if (e.cancelable) e.preventDefault();
+-        track(e); kick();
+-      });
+-      var end = function (e) { if (e.pointerType === 'mouse') return; dragging = false; trx = 0; try_ = 0; tpx = 0.5; tpy = 0.5; kick(); };
+-      inner.addEventListener('pointerup', end);
+-      inner.addEventListener('pointercancel', end);
++        track(t.clientX, t.clientY); kick();
++      }, { passive: false });
++      var end = function () { dragging = false; trx = 0; try_ = 0; tpx = 0.5; tpy = 0.5; kick(); };
++      inner.addEventListener('touchend', end);
++      inner.addEventListener('touchcancel', end);
+     } catch (_) { /* noop */ }
+   }
+ 
+@@ -765,7 +776,7 @@
+       '.cl-detail-box{position:relative;display:flex;flex-direction:column;align-items:center;gap:18px;margin:auto;overflow:visible;padding:4px}' +
+       '.cl-detail-stage{width:340px;height:476px;max-width:94vw;display:flex;align-items:center;justify-content:center;flex-shrink:0}' +
+       '.cl-detail-card{width:300px;max-width:86vw}' +
+-      '#clDetailCard .auth-card,#clDetailCard .ctc-inner,#clDetailCard .clc-card{touch-action:none}' +
++      '#clDetailCard{touch-action:none;-webkit-user-select:none;user-select:none}' +
+       '.cl-detail-x{position:fixed;top:16px;right:18px;background:rgba(20,20,20,.65);border:1px solid rgba(255,255,255,.16);color:#ddd;font-size:1.1rem;cursor:pointer;border-radius:999px;width:38px;height:38px;line-height:1;z-index:1}' +
+       '.cl-di{width:300px;max-width:90vw}' +
+       '.cl-di-name{font-size:1.15rem;font-weight:800;color:#f5f5f5;text-align:center;margin-bottom:11px}' +
+@@ -945,7 +956,67 @@
+   function isOpen() { var m = document.getElementById('clCollModal'); return m && m.classList.contains('open'); }
+   function refreshOpen() { if (isOpen()) render(); if (document.getElementById('clCollDebug') && document.getElementById('clCollDebug').classList.contains('open')) renderDebug(); }
+ 
++  var _holoStop = null;
++  function stopHolo() { if (_holoStop) { try { _holoStop(); } catch (_) { /* noop */ } _holoStop = null; } }
++  // On touch devices the grid can't hover, so the card nearest the scroll centre comes
++  // alive: a gentle oscillator drifts its glare/foil and micro-tilts it (the TCG-Pocket
++  // "card in focus" feel). Only one card animates at a time and it follows the scroll;
++  // desktop is left to the hover tilt. Cheap: a single rAF driving one element.
++  function mobileScrollHolo(grid) {
++    try {
++      if (reducedMotion()) return;
++      if (!(window.matchMedia && matchMedia('(pointer: coarse)').matches)) return;
++      var cards = Array.prototype.slice.call(grid.querySelectorAll('.auth,.ctc'));
++      if (!cards.length) return;
++      var active = null, inner = null, raf = 0, sraf = 0, t = Math.random() * 6;
++      var VARS = ['--gx', '--gy', '--fx', '--fy', '--px', '--py'];
++      function innerOf(el) { return el.querySelector('.auth-card,.ctc-inner') || el; }
++      function clearActive() {
++        if (inner) { inner.classList.remove('tilted'); inner.style.transform = ''; VARS.forEach(function (v) { inner.style.removeProperty(v); }); }
++        active = null; inner = null;
++      }
++      function setActive(el) {
++        if (el === active) return;
++        clearActive(); active = el; inner = innerOf(el);
++        if (inner) inner.classList.add('tilted');
++      }
++      function nearest() {
++        var r = grid.getBoundingClientRect(), cy = r.top + r.height / 2, best = null, bd = 1e9;
++        cards.forEach(function (el) {
++          var b = el.getBoundingClientRect();
++          if (b.bottom < r.top + 4 || b.top > r.bottom - 4) return;   // off-screen
++          var d = Math.abs((b.top + b.height / 2) - cy);
++          if (d < bd) { bd = d; best = el; }
++        });
++        return best;
++      }
++      function osc() {
++        t += 0.02;
++        if (inner) {
++          var gx = 50 + 22 * Math.sin(t), gy = 50 + 15 * Math.cos(t * 0.8);
++          inner.style.transform = 'perspective(760px) rotateX(' + (2 * Math.cos(t * 0.8)).toFixed(2) + 'deg) rotateY(' + (3 * Math.sin(t)).toFixed(2) + 'deg)';
++          inner.style.setProperty('--gx', gx.toFixed(1) + '%');
++          inner.style.setProperty('--gy', gy.toFixed(1) + '%');
++          inner.style.setProperty('--fx', (gx * 2).toFixed(1) + '%');
++          inner.style.setProperty('--fy', (gy * 2).toFixed(1) + '%');
++          inner.style.setProperty('--px', (gx / 100 - 0.5).toFixed(3));
++          inner.style.setProperty('--py', (gy / 100 - 0.5).toFixed(3));
++        }
++        raf = requestAnimationFrame(osc);
++      }
++      function onScroll() { if (sraf) return; sraf = requestAnimationFrame(function () { sraf = 0; var n = nearest(); if (n) setActive(n); }); }
++      grid.addEventListener('scroll', onScroll, { passive: true });
++      setActive(nearest() || cards[0]); raf = requestAnimationFrame(osc);
++      _holoStop = function () {
++        grid.removeEventListener('scroll', onScroll);
++        if (raf) cancelAnimationFrame(raf); if (sraf) cancelAnimationFrame(sraf);
++        clearActive();
++      };
++    } catch (_) { /* noop */ }
++  }
++
+   function render() {
++    stopHolo();
+     var st = stats();
+     document.getElementById('clCollLvl').textContent = st.level;
+     document.getElementById('clCollXpName').textContent = 'Level ' + st.level;
+@@ -991,6 +1062,7 @@
+       el.addEventListener('click', function () { openDetail(cards[idx], el); });
+     });
+     scrollReveal(grid);
++    mobileScrollHolo(grid);
+   }
+ 
+   // Cards past the first screen start hidden and rise as they scroll into view —
+@@ -1061,7 +1133,7 @@
+     try { if (window.Track) window.Track('collection_open', stats()); } catch (_) { /* noop */ }
+     setTimeout(markSeen, 600);
+   }
+-  function close() { var m = document.getElementById('clCollModal'); if (m) m.classList.remove('open'); }
++  function close() { stopHolo(); var m = document.getElementById('clCollModal'); if (m) m.classList.remove('open'); }
+ 
+   // ─────────────────────────────── debug panel ───────────────────────────
+   function debugEnabled() {
+diff --git a/sw.js b/sw.js
+index beb2c1e..25d5d4a 100644
+--- a/sw.js
++++ b/sw.js
+@@ -5,7 +5,7 @@
+  *   - other same-origin GETs (logo, icons, daily-challenges.js, i18n.js): stale-while-revalidate.
+  * Bump CACHE_VERSION to invalidate old caches on deploy.
+  */
+-const CACHE_VERSION = 'cinelinks-v95';
++const CACHE_VERSION = 'cinelinks-v96';
+ const SHELL = [
+   '/',
+   '/index.html',
