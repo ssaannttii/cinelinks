@@ -686,7 +686,10 @@
       '.auth-foil{position:absolute;inset:0;z-index:7;pointer-events:none;opacity:0;background:repeating-linear-gradient(115deg,rgba(255,119,115,.4),rgba(255,237,95,.4) 11%,rgba(168,255,150,.4) 21%,rgba(131,255,247,.4) 31%,rgba(120,148,255,.4) 42%,rgba(216,117,255,.4) 52%,rgba(255,119,115,.4) 62%);background-size:280% 280%;background-position:var(--fx,50%) var(--fy,50%);mix-blend-mode:color-dodge;filter:brightness(.92) contrast(1.12);transition:opacity .22s}' +
       '.auth-rare .auth-foil{opacity:.16}.auth-elite .auth-foil{opacity:.24}.auth-legendary .auth-foil{opacity:.34;animation:authDrift 7s linear infinite}' +
       // glitter layer: fine specular dots that travel with the cursor/tilt and read as metallic foil grain. Elite+ only, on hover/tilt.
-      '.auth-glit{position:absolute;inset:0;z-index:7;pointer-events:none;opacity:0;background-image:radial-gradient(rgba(255,255,255,.85) 0 5%,transparent 8%),radial-gradient(rgba(255,255,255,.5) 0 4%,transparent 7%);background-size:7cqw 7cqw,4.6cqw 4.6cqw;background-position:var(--fx,50%) var(--fy,50%),calc(var(--fx,50%) + 2.3cqw) calc(var(--fy,50%) + 1.4cqw);-webkit-mask:radial-gradient(circle at var(--gx,50%) var(--gy,50%),#000,rgba(0,0,0,.3) 24%,transparent 54%);mask:radial-gradient(circle at var(--gx,50%) var(--gy,50%),#000,rgba(0,0,0,.3) 24%,transparent 54%);mix-blend-mode:screen;filter:brightness(1.1);transition:opacity .25s}' +
+      // Mask is STATIC (centred) on purpose: following --gx/--gy every frame forces a
+      // per-frame mask recomposite that stutters on mobile. The sparkle still travels via
+      // the background-position (--fx/--fy), which is cheap.
+      '.auth-glit{position:absolute;inset:0;z-index:7;pointer-events:none;opacity:0;background-image:radial-gradient(rgba(255,255,255,.85) 0 5%,transparent 8%),radial-gradient(rgba(255,255,255,.5) 0 4%,transparent 7%);background-size:7cqw 7cqw,4.6cqw 4.6cqw;background-position:var(--fx,50%) var(--fy,50%),calc(var(--fx,50%) + 2.3cqw) calc(var(--fy,50%) + 1.4cqw);-webkit-mask:radial-gradient(circle at 50% 46%,#000,rgba(0,0,0,.3) 30%,transparent 62%);mask:radial-gradient(circle at 50% 46%,#000,rgba(0,0,0,.3) 30%,transparent 62%);mix-blend-mode:screen;filter:brightness(1.1);transition:opacity .25s}' +
       '.auth-elite .auth-card:hover .auth-glit,.auth-elite .auth-card.tilted .auth-glit{opacity:.42}' +
       '.auth-legendary .auth-card:hover .auth-glit,.auth-legendary .auth-card.tilted .auth-glit{opacity:.6}' +
       // one-shot diagonal light sweep when the pointer enters a card
@@ -695,6 +698,11 @@
       '@keyframes authSheen{0%{opacity:0;transform:translateX(-65%)}28%{opacity:.85}100%{opacity:0;transform:translateX(65%)}}' +
       // in-card depth parallax: while tilted the poster recedes (moves against the cursor) and the star/badges/title pop forward (move with it)
       '.auth-bgimg,.auth-star,.auth-corner,.auth-tags,.auth-text{transition:transform .28s cubic-bezier(.2,.8,.2,1)}' +
+      // While actively tilting, the layers track the finger every frame — a CSS transition
+      // there re-interpolates each frame and stutters, so kill it and promote to GPU. The
+      // .28s transition only applies on release (class removed) for a smooth settle.
+      '.auth-card.tilted .auth-bgimg,.auth-card.tilted .auth-star,.auth-card.tilted .auth-corner,.auth-card.tilted .auth-tags,.auth-card.tilted .auth-text{transition:none}' +
+      '.auth-card.tilted{will-change:transform}' +
       '.auth-card.tilted .auth-bgimg{transform:translate(calc(var(--px,0) * -2.4cqw),calc(var(--py,0) * -2.4cqw)) scale(1.06)}' +
       '.auth-card.tilted .auth-star{transform:translate(calc(var(--px,0) * 3.6cqw),calc(var(--py,0) * 3.6cqw))}' +
       '.auth-card.tilted .auth-corner{transform:translate(calc(var(--px,0) * 2.6cqw),calc(var(--py,0) * 2.6cqw))}' +
@@ -762,6 +770,10 @@
       '.cl-coll-chip{font-size:.66rem;font-weight:800;letter-spacing:.03em;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:#cfcfcf;border-radius:99px;padding:5px 11px;cursor:pointer;text-transform:uppercase}' +
       '.cl-coll-chip.on{border-color:rgba(232,160,0,.6);background:rgba(232,160,0,.14);color:#e8a000}' +
       '.cl-coll-grid{padding:16px 16px 20px;overflow-y:auto;display:grid;gap:14px}' +
+      // Protect card art from casual extraction (open-image-in-new-tab / long-press save /
+      // drag out) on desktop and mobile. pointer-events:none also means the tap/tilt lands
+      // on the card itself, not the <img>, so there is no image context menu at all.
+      '.cl-coll-grid img,#clDetailCard img,#clrBody img,.cl-detail-card img{pointer-events:none;-webkit-user-drag:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}' +
       '.cl-coll-empty{padding:40px 20px;text-align:center;color:#9a9a9a;font-size:.9rem;grid-column:1/-1}' +
       // debug panel
       '.cl-dbg{background:#141414;border:1px solid rgba(232,160,0,.3);border-radius:14px;width:100%;max-width:440px;max-height:86vh;overflow-y:auto;padding:16px;box-shadow:0 28px 80px rgba(0,0,0,.6);color:#e8e8e8;font-size:.82rem}' +
@@ -800,6 +812,9 @@
       '@keyframes clShake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}' +
       '.cl-shine-hint{font-size:.72rem;color:#9a9a9a;margin-top:7px;font-weight:600}' +
       '.cl-shine-done{width:100%;border-radius:11px;padding:12px 14px;font-size:.92rem;font-weight:800;color:#bfe6ff;background:linear-gradient(135deg,rgba(120,184,255,.16),rgba(120,184,255,.06));border:1px solid rgba(150,205,255,.4);text-shadow:0 1px 6px rgba(150,205,255,.6)}' +
+      '.cl-share-btn{width:100%;margin-top:9px;border:1px solid rgba(232,160,0,.55);border-radius:11px;padding:11px 14px;font-size:.9rem;font-weight:800;cursor:pointer;color:#e8a000;background:rgba(232,160,0,.1);transition:transform .12s ease,background .2s ease}' +
+      '.cl-share-btn:hover{background:rgba(232,160,0,.18);transform:translateY(-1px)}' +
+      '.cl-share-btn:disabled{opacity:.85;cursor:default;transform:none}' +
       // ── reveal sequence ──
       '#clCollReveal{position:fixed;inset:0;z-index:260;display:none;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 42%,rgba(18,20,30,.72),rgba(0,0,0,.92) 70%);backdrop-filter:blur(8px);overflow:hidden;cursor:pointer}' +
       '#clCollReveal.open{display:flex}' +
@@ -1237,7 +1252,8 @@
         '<div class="cl-shine-hint">You have ' + bal + ' dust' + (afford ? '' : ' &middot; need ' + (cost - bal) + ' more') + '</div>';
     return '<div class="cl-di-name">' + esc(c.name) + '</div><div class="cl-di-rows">' +
       rows.map(function (r) { return '<div class="cl-di-row"><span>' + r[0] + '</span><b' + (r[2] ? ' style="color:' + r[2] + '"' : '') + '>' + esc(r[1]) + '</b></div>'; }).join('') +
-      '</div><div class="cl-shine-wrap">' + shineBlock + '</div>';
+      '</div><div class="cl-shine-wrap">' + shineBlock + '</div>' +
+      '<button class="cl-share-btn" id="clShareBtn">&#8599; Share card</button>';
   }
   var DETAIL_SEL = '#clDetailCard .auth-card,#clDetailCard .ctc-inner,#clDetailCard .clc-card';
   function openDetail(c, srcEl) {
@@ -1257,6 +1273,8 @@
         if (r.ok) { c.shine = 1; try { if (window.Sfx) { window.Sfx.reveal('elite'); window.Sfx.haptic([12, 24]); } } catch (_) { /* noop */ } openDetail(c); }
         else { try { if (window.Sfx) window.Sfx.tap(); } catch (_) { /* noop */ } if (r.reason === 'dust') { sb.classList.add('shake'); setTimeout(function () { sb.classList.remove('shake'); }, 420); } }
       });
+      var shb = document.getElementById('clShareBtn');
+      if (shb) shb.addEventListener('click', function () { shareCard(c, shb); });
       document.getElementById('clCollDetail').classList.add('open');
       stopGyro();                        // gyro paused for now (re-enable: _gyroOff = gyroMount(holder))
       dragTiltMount(holder);             // touch: drag a finger on the card to tilt it
@@ -1283,6 +1301,32 @@
     fill();
   }
   function closeDetail() { stopGyro(); var d = document.getElementById('clCollDetail'); if (d) d.classList.remove('open'); }
+
+  // Share a single card: opens a /s link that unfurls to a dynamic OG image of the
+  // card (poster + rarity + number). Uses the native share sheet on mobile, and
+  // falls back to copying the link on desktop.
+  function shareCard(c, btn) {
+    try {
+      var no = ('00' + (c.no || 0)).slice(-3);
+      var ty = c.type === 'person' ? 'Actor' : (c.type === 'tv' ? 'Series' : 'Film');
+      var rlabel = (RARITY[c.rarity] || RARITY.common).label;
+      var qs = 'g=card&title=' + encodeURIComponent(c.name || '') + '&r=' + encodeURIComponent(c.rarity || 'common') +
+        '&n=' + encodeURIComponent(no) + '&sub=' + encodeURIComponent(ty) + '&im=' + encodeURIComponent(c.img || '') + '&to=/';
+      var url = location.origin + '/s?' + qs;
+      var text = 'I just collected the ' + rlabel + ' card of ' + (c.name || '') + ' #' + no + ' on CineLinks!';
+      try { if (window.Sfx) window.Sfx.tap(); } catch (_) { /* noop */ }
+      try { if (window.Track) window.Track('card_shared', { rarity: c.rarity, type: c.type }); } catch (_) { /* noop */ }
+      if (navigator.share) { navigator.share({ title: 'CineLinks', text: text, url: url }).catch(function () { /* cancelled */ }); return; }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(function () { flashShare(btn, 'Link copied ✓'); }).catch(function () { window.prompt('Copy this link', url); });
+      } else { window.prompt('Copy this link', url); }
+    } catch (_) { /* noop */ }
+  }
+  function flashShare(btn, msg) {
+    if (!btn) return;
+    var old = btn.innerHTML; btn.innerHTML = msg; btn.disabled = true;
+    setTimeout(function () { try { btn.innerHTML = old; btn.disabled = false; } catch (_) { /* noop */ } }, 1600);
+  }
 
   // ── Reveal sequence: the "earn" moment. reveal(newCards) plays a per-card
   // flip with rarity-scaled flair (sound + haptics + legendary flash), then a

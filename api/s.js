@@ -3,7 +3,7 @@
 //   /s?g=cl&a=..&b=..&n=..&k=..&to=<game-url>
 // gets result-specific Open Graph / Twitter meta (image = /api/og?...), while a
 // human is immediately redirected to `to` (the real game). Pure Node, no deps.
-const OG_KEYS = ['g', 'a', 'b', 'n', 'nl', 'k', 'w', 'l', 'title', 'sub'];
+const OG_KEYS = ['g', 'a', 'b', 'n', 'nl', 'k', 'w', 'l', 'title', 'sub', 'r', 'im'];
 
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
@@ -36,14 +36,18 @@ module.exports = function handler(req, res) {
     }
   } catch (_) { to = '/'; }
 
-  const title = q.title
-    ? String(q.title)
-    : (q.g === 'trumps'
-        ? 'Top Trumps ' + (q.w || '0') + '–' + (q.l || '0') + ' vs CPU'
-        : (q.a && q.b
-            ? q.a + ' → ' + q.b + ' in ' + (q.n || '?') + ' clicks'
-            : 'CineLinks — a daily film puzzle'));
-  const desc = 'A daily film-connection puzzle. Think you can beat it?';
+  const title = q.g === 'card'
+    ? 'I collected ' + (q.title || 'a card') + (q.n ? ' #' + String(q.n).replace(/^#/, '') : '') + ' · CineLinks'
+    : (q.title
+        ? String(q.title)
+        : (q.g === 'trumps'
+            ? 'Top Trumps ' + (q.w || '0') + '–' + (q.l || '0') + ' vs CPU'
+            : (q.a && q.b
+                ? q.a + ' → ' + q.b + ' in ' + (q.n || '?') + ' clicks'
+                : 'CineLinks — a daily film puzzle')));
+  const desc = q.g === 'card'
+    ? 'Win games to collect film & star cards. Can you complete the set?'
+    : 'A daily film-connection puzzle. Think you can beat it?';
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=300');

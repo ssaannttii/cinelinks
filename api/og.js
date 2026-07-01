@@ -21,12 +21,65 @@ function h(type, props, ...children) {
   return { type, props: { ...(props || {}), children: children.length <= 1 ? children[0] : children } };
 }
 function clamp(s, n) { s = String(s == null ? '' : s); return s.length > n ? s.slice(0, n - 1) + '…' : s; }
+function hexA(hex, a) {
+  const h2 = String(hex).replace('#', '');
+  const r = parseInt(h2.slice(0, 2), 16), g = parseInt(h2.slice(2, 4), 16), b = parseInt(h2.slice(4, 6), 16);
+  return 'rgba(' + (r || 0) + ',' + (g || 0) + ',' + (b || 0) + ',' + a + ')';
+}
+const RARITY_C = { legendary: '#e8c24a', elite: '#b58ad6', rare: '#7aa6e8', common: '#cfcfcf' };
 
 export default function handler(req) {
   const p = new URL(req.url).searchParams;
   const g = p.get('g') || 'cl';
   const n = p.get('n'), k = p.get('k');
   const a = p.get('a'), b = p.get('b');
+
+  // Collectible-card share: /api/og?g=card&title=Name&r=legendary&n=74&sub=Film&im=/poster.jpg
+  if (g === 'card') {
+    const rarity = String(p.get('r') || 'common').toLowerCase();
+    const rc = RARITY_C[rarity] || RARITY_C.common;
+    const name = clamp(p.get('title') || 'CineLinks', 40);
+    const no = p.get('n') ? ('#' + String(p.get('n')).replace(/^#/, '')) : '';
+    const ty = clamp(p.get('sub') || 'Film', 16);
+    const rlabel = rarity.charAt(0).toUpperCase() + rarity.slice(1);
+    const imRaw = p.get('im') || '';
+    const poster = imRaw ? (/^https?:/i.test(imRaw) ? imRaw : 'https://image.tmdb.org/t/p/w500' + (imRaw.charAt(0) === '/' ? '' : '/') + imRaw) : '';
+
+    const metaRow = [
+      h('div', { style: { width: 34, height: 34, background: rc, transform: 'rotate(45deg)', borderRadius: 6 } }),
+      h('div', { style: { display: 'flex', color: rc, fontSize: 40, fontWeight: 600, letterSpacing: '0.02em', textTransform: 'uppercase' } }, rlabel),
+      h('div', { style: { display: 'flex', color: '#8a8a8a', fontSize: 34 } }, '·'),
+      h('div', { style: { display: 'flex', color: '#c8c8c8', fontSize: 36 } }, ty)
+    ];
+    if (no) { metaRow.push(h('div', { style: { display: 'flex', color: '#8a8a8a', fontSize: 34 } }, '·')); metaRow.push(h('div', { style: { display: 'flex', color: '#c8c8c8', fontSize: 36 } }, no)); }
+
+    const posterBox = h('div', {
+      style: { display: 'flex', width: 360, height: 504, borderRadius: 22, overflow: 'hidden', border: '6px solid ' + rc, boxShadow: '0 20px 60px rgba(0,0,0,0.55)', backgroundColor: '#0a1830', flexShrink: 0 }
+    }, poster
+      ? h('img', { src: poster, width: 360, height: 504, style: { width: 360, height: 504, objectFit: 'cover' } })
+      : h('div', { style: { display: 'flex', width: 360, height: 504, backgroundImage: 'radial-gradient(120% 80% at 50% 0%, ' + hexA(rc, 0.5) + ', #0a1830)' } }));
+
+    const cardImg = h('div', {
+      style: {
+        width: '1200px', height: '630px', display: 'flex', alignItems: 'center', padding: '72px',
+        backgroundColor: BG, color: '#f5f5f5', backgroundImage: 'radial-gradient(900px circle at 82% -12%, ' + hexA(rc, 0.22) + ', transparent 55%)'
+      }
+    },
+      posterBox,
+      h('div', { style: { display: 'flex', flexDirection: 'column', flexGrow: 1, marginLeft: 64 } },
+        h('div', { style: { display: 'flex', alignItems: 'center', fontSize: 32, fontWeight: 600, letterSpacing: '0.04em', marginBottom: 22 } },
+          h('span', { style: { color: '#f5f5f5' } }, 'CINE'), h('span', { style: { color: GOLD } }, 'LINKS')),
+        h('div', { style: { display: 'flex', color: '#9a9a9a', fontSize: 26, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 14 } }, 'Just collected'),
+        h('div', { style: { display: 'flex', color: '#ffffff', fontSize: 74, fontWeight: 600, lineHeight: 1.03 } }, name),
+        h('div', { style: { display: 'flex', alignItems: 'center', marginTop: 26, gap: 16 } }, ...metaRow),
+        h('div', { style: { display: 'flex', marginTop: 40, alignItems: 'center', alignSelf: 'flex-start', background: GOLD, color: '#111', fontSize: 28, fontWeight: 600, padding: '14px 28px', borderRadius: 14 } }, 'Start your collection →')
+      )
+    );
+    return new ImageResponse(cardImg, {
+      width: 1200, height: 630,
+      headers: { 'Cache-Control': 'public, max-age=86400, s-maxage=86400, immutable' }
+    });
+  }
 
   let kicker = "Today's link", main = 'CineLinks', route = '', sub = 'A daily film-connection puzzle';
   if (g === 'trumps') {
