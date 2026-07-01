@@ -150,6 +150,55 @@
   var _gyroOff = null;
   function stopGyro() { if (_gyroOff) { try { _gyroOff(); } catch (_) { /* noop */ } _gyroOff = null; } }
 
+  // Touch drag-to-tilt for a single hero card (detail view): drag a finger across the
+  // card and it leans + the foil/glare/parallax track the finger — the tactile
+  // equivalent of the desktop hover tilt, no permissions needed. Mouse is left to the
+  // hover tilt (tiltMount), so this only handles touch/pen. The card gets
+  // touch-action:none (via CSS) so the drag tilts instead of scrolling the modal.
+  function dragTiltMount(container) {
+    try {
+      if (reducedMotion() || !container) return;
+      var inner = container.querySelector('.auth-card,.ctc-inner,.clc-card'); if (!inner) return;
+      var raf = 0, dragging = false;
+      var rx = 0, ry = 0, px = 0.5, py = 0.5, trx = 0, try_ = 0, tpx = 0.5, tpy = 0.5;
+      function frame() {
+        rx += (trx - rx) * 0.18; ry += (try_ - ry) * 0.18;
+        px += (tpx - px) * 0.2; py += (tpy - py) * 0.2;
+        inner.style.transform = 'perspective(760px) rotateX(' + rx.toFixed(2) + 'deg) rotateY(' + ry.toFixed(2) + 'deg)' + (dragging ? ' scale(1.015)' : '');
+        inner.style.setProperty('--gx', (px * 100).toFixed(1) + '%');
+        inner.style.setProperty('--gy', (py * 100).toFixed(1) + '%');
+        inner.style.setProperty('--fx', (px * 200).toFixed(1) + '%');
+        inner.style.setProperty('--fy', (py * 200).toFixed(1) + '%');
+        inner.style.setProperty('--px', (px - 0.5).toFixed(3));
+        inner.style.setProperty('--py', (py - 0.5).toFixed(3));
+        var rest = !dragging && Math.abs(rx) < 0.05 && Math.abs(ry) < 0.05 && Math.abs(px - 0.5) < 0.004 && Math.abs(py - 0.5) < 0.004;
+        if (rest) { raf = 0; inner.style.transform = ''; inner.classList.remove('tilted'); return; }
+        raf = requestAnimationFrame(frame);
+      }
+      function kick() { if (!raf) raf = requestAnimationFrame(frame); }
+      function track(e) {
+        var r = inner.getBoundingClientRect();
+        tpx = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+        tpy = Math.max(0, Math.min(1, (e.clientY - r.top) / r.height));
+        try_ = (tpx - 0.5) * 16; trx = (0.5 - tpy) * 16;
+      }
+      inner.addEventListener('pointerdown', function (e) {
+        if (e.pointerType === 'mouse') return;              // mouse keeps the hover tilt
+        dragging = true; inner.classList.add('tilted');
+        try { inner.setPointerCapture(e.pointerId); } catch (_) { /* noop */ }
+        track(e); kick();
+      });
+      inner.addEventListener('pointermove', function (e) {
+        if (!dragging || e.pointerType === 'mouse') return;
+        if (e.cancelable) e.preventDefault();
+        track(e); kick();
+      });
+      var end = function (e) { if (e.pointerType === 'mouse') return; dragging = false; trx = 0; try_ = 0; tpx = 0.5; tpy = 0.5; kick(); };
+      inner.addEventListener('pointerup', end);
+      inner.addEventListener('pointercancel', end);
+    } catch (_) { /* noop */ }
+  }
+
   // Legendary reveal shader: a lightweight raw-WebGL fragment shader (no Three.js)
   // that paints animated prismatic godrays radiating behind the card — the "this one
   // is special" hero beat. Self-contained, feature-detected (silent fallback to the
@@ -622,7 +671,7 @@
       '.auth-legendary .auth-card:hover .auth-glit,.auth-legendary .auth-card.tilted .auth-glit{opacity:.6}' +
       // one-shot diagonal light sweep when the pointer enters a card
       '.auth-sheen{position:absolute;inset:0;z-index:8;pointer-events:none;border-radius:13px;opacity:0;background:linear-gradient(105deg,transparent 36%,rgba(255,255,255,.55) 50%,transparent 64%)}' +
-      '.auth-card:hover .auth-sheen{animation:authSheen .7s ease-out}' +
+      '.auth-card:hover .auth-sheen,.auth-card.sheen-go .auth-sheen{animation:authSheen .7s ease-out}' +
       '@keyframes authSheen{0%{opacity:0;transform:translateX(-65%)}28%{opacity:.85}100%{opacity:0;transform:translateX(65%)}}' +
       // in-card depth parallax: while tilted the poster recedes (moves against the cursor) and the star/badges/title pop forward (move with it)
       '.auth-bgimg,.auth-star,.auth-corner,.auth-tags,.auth-text{transition:transform .28s cubic-bezier(.2,.8,.2,1)}' +
@@ -716,6 +765,7 @@
       '.cl-detail-box{position:relative;display:flex;flex-direction:column;align-items:center;gap:18px;margin:auto;overflow:visible;padding:4px}' +
       '.cl-detail-stage{width:340px;height:476px;max-width:94vw;display:flex;align-items:center;justify-content:center;flex-shrink:0}' +
       '.cl-detail-card{width:300px;max-width:86vw}' +
+      '#clDetailCard .auth-card,#clDetailCard .ctc-inner,#clDetailCard .clc-card{touch-action:none}' +
       '.cl-detail-x{position:fixed;top:16px;right:18px;background:rgba(20,20,20,.65);border:1px solid rgba(255,255,255,.16);color:#ddd;font-size:1.1rem;cursor:pointer;border-radius:999px;width:38px;height:38px;line-height:1;z-index:1}' +
       '.cl-di{width:300px;max-width:90vw}' +
       '.cl-di-name{font-size:1.15rem;font-weight:800;color:#f5f5f5;text-align:center;margin-bottom:11px}' +
@@ -1125,7 +1175,11 @@
         else { try { if (window.Sfx) window.Sfx.tap(); } catch (_) { /* noop */ } if (r.reason === 'dust') { sb.classList.add('shake'); setTimeout(function () { sb.classList.remove('shake'); }, 420); } }
       });
       document.getElementById('clCollDetail').classList.add('open');
-      stopGyro();   // gyro paused for now — testing mobile first (re-enable: _gyroOff = gyroMount(holder))
+      stopGyro();                        // gyro paused for now (re-enable: _gyroOff = gyroMount(holder))
+      dragTiltMount(holder);             // touch: drag a finger on the card to tilt it
+      // tap-to-open shimmer: a light sweep across the card as it appears
+      var ac = holder.querySelector('.auth-card');
+      if (ac && window.Fx && window.Fx.play) window.Fx.play(ac, 'sheen-go', 800);
       try { if (window.Track) window.Track('collection_card', { rarity: c.rarity, type: c.type }); } catch (_) { /* noop */ }
     }
     // Shared-element morph: the tapped grid card grows seamlessly into the detail card.
