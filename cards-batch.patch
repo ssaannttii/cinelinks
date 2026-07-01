@@ -1,0 +1,360 @@
+diff --git a/auth.js b/auth.js
+index c90e145..d1efb32 100644
+--- a/auth.js
++++ b/auth.js
+@@ -21,7 +21,7 @@
+   window.refreshAuthCard = function () { try { setCardText(_lastCard.signedIn, _lastCard.name); } catch (_) {} };
+ 
+   var SYNC_KEYS = (window.MergeStats && window.MergeStats.SYNC_KEYS) ||
+-    ['clStreak', 'cineclueStreak', 'cineframeStreak', 'cineclueState', 'cineframeState', 'clPlayed'];
++    ['clStreak', 'cineclueStreak', 'cineframeStreak', 'cineclueState', 'cineframeState', 'clPlayed', 'cl_collection'];
+   var lastToken = '';
+ 
+   function readLocal() {
+diff --git a/collection.js b/collection.js
+index 49f215b..3cb75e2 100644
+--- a/collection.js
++++ b/collection.js
+@@ -408,6 +408,7 @@
+     { id: 'classic', name: 'Classic', level: 1, css: '' },
+     { id: 'gold', name: 'Gold Foil', level: 3, css: 'cb-gold' },
+     { id: 'holo', name: 'Holographic', level: 6, css: 'cb-holo' },
++    { id: 'aurora', name: 'Aurora', level: 8, css: 'cb-aurora' },
+     { id: 'midnight', name: 'Midnight', level: 10, css: 'cb-midnight' },
+     { id: 'crimson', name: 'Crimson', level: 15, css: 'cb-crimson' },
+     { id: 'mastery', name: 'Mastery', achv: 12, css: 'cb-mastery' }
+@@ -674,6 +675,14 @@
+       '.auth-meta .sep{color:rgba(255,255,255,.32)}' +
+       '.auth-no{color:rgba(255,255,255,.82);font-family:ui-monospace,Menlo,monospace;letter-spacing:.03em}' +
+       '.auth-frame{position:absolute;inset:0;z-index:6;border-radius:13px;pointer-events:none;box-shadow:inset 0 0 0 .7cqw rgba(0,0,0,.55),inset 0 0 0 2cqw var(--cr),inset 0 0 0 2.7cqw rgba(0,0,0,.45)}' +
++      // Material rail: a gradient "metal" ring on the frame (light top-left → dark bottom-right = bevel/relief),
++      // tuned per rarity so the surface reads as matte / satin / metallic / gold at a glance.
++      '.auth-frame::after{content:"";position:absolute;inset:0;border-radius:13px;padding:1.9cqw;background:linear-gradient(140deg,rgba(255,255,255,.5),transparent 36%,transparent 60%,rgba(255,255,255,.3));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;mix-blend-mode:overlay;opacity:.5}' +
++      '.auth-common .auth-frame::after{opacity:.26;background:linear-gradient(140deg,rgba(255,255,255,.32),transparent 42%,transparent 58%,rgba(0,0,0,.28))}' +                                   // matte
++      '.auth-rare .auth-frame::after{opacity:.5;background:linear-gradient(140deg,rgba(222,236,255,.72),transparent 38%,transparent 60%,rgba(110,146,200,.4))}' +                                    // satin
++      '.auth-elite .auth-frame::after{opacity:.62;background:linear-gradient(140deg,rgba(242,228,255,.9),rgba(181,138,214,.25) 40%,transparent 56%,rgba(96,64,140,.5))}' +                            // metallic grain
++      '.auth-legendary .auth-frame::after{opacity:.85;background:linear-gradient(140deg,rgba(255,246,205,.98),rgba(232,194,74,.4) 36%,rgba(120,88,20,.42) 60%,rgba(255,240,190,.9));animation:authMetal 6s ease-in-out infinite}' +  // gold relief
++      '@keyframes authMetal{0%,100%{filter:brightness(1)}50%{filter:brightness(1.28)}}' +
+       '.auth-foil{position:absolute;inset:0;z-index:7;pointer-events:none;opacity:0;background:repeating-linear-gradient(115deg,rgba(255,119,115,.4),rgba(255,237,95,.4) 11%,rgba(168,255,150,.4) 21%,rgba(131,255,247,.4) 31%,rgba(120,148,255,.4) 42%,rgba(216,117,255,.4) 52%,rgba(255,119,115,.4) 62%);background-size:280% 280%;background-position:var(--fx,50%) var(--fy,50%);mix-blend-mode:color-dodge;filter:brightness(.92) contrast(1.12);transition:opacity .22s}' +
+       '.auth-rare .auth-foil{opacity:.16}.auth-elite .auth-foil{opacity:.24}.auth-legendary .auth-foil{opacity:.34;animation:authDrift 7s linear infinite}' +
+       // glitter layer: fine specular dots that travel with the cursor/tilt and read as metallic foil grain. Elite+ only, on hover/tilt.
+@@ -701,7 +710,7 @@
+       '.auth-rare .auth-card:hover,.auth-rare .auth-card.tilted{box-shadow:0 20px 44px rgba(0,0,0,.64),0 0 26px rgba(122,166,232,.5)}' +
+       '.auth-elite .auth-card:hover,.auth-elite .auth-card.tilted{box-shadow:0 20px 44px rgba(0,0,0,.64),0 0 26px rgba(181,138,214,.55)}' +
+       '.auth-legendary .auth-card:hover,.auth-legendary .auth-card.tilted{box-shadow:0 20px 44px rgba(0,0,0,.64),0 0 30px rgba(232,194,74,.6)}' +
+-      '@media(prefers-reduced-motion:reduce){.auth{animation:none}.auth-star,.auth-legendary .auth-foil{animation:none}.auth-card{transition:none}.auth-sheen{animation:none;display:none}.auth-glit{display:none}.auth-bgimg,.auth-star,.auth-corner,.auth-tags,.auth-text{transition:none}}',
++      '@media(prefers-reduced-motion:reduce){.auth{animation:none}.auth-star,.auth-legendary .auth-foil{animation:none}.auth-card{transition:none}.auth-sheen{animation:none;display:none}.auth-glit{display:none}.auth-bgimg,.auth-star,.auth-corner,.auth-tags,.auth-text{transition:none}.auth-legendary .auth-frame::after{animation:none}}',
+     card: function (c, ctx, i) {
+       var rar = ctx.RARITY[c.rarity] || ctx.RARITY.common;
+       var p = ctx.posterUrl(c.img);
+@@ -860,6 +869,8 @@
+       '.clr-back.cb-gold .clr-mono,.cb-swatch.cb-gold .clr-mono{color:#f5d97a;text-shadow:0 2px 14px rgba(232,194,74,.5)}' +
+       '.clr-back.cb-holo,.cb-swatch.cb-holo{background:conic-gradient(from 0deg,#3a2a4a,#243a5a,#244a44,#4a3a24,#3a2a4a);border-color:rgba(255,255,255,.42);box-shadow:inset 0 0 0 3px rgba(255,255,255,.18)}' +
+       '.clr-back.cb-holo .clr-mono,.cb-swatch.cb-holo .clr-mono{color:#fff}' +
++      '.clr-back.cb-aurora,.cb-swatch.cb-aurora{background:linear-gradient(160deg,#0b2a3a,#1f5a6e 40%,#3aa88f 70%,#7ad6a0);border-color:rgba(150,235,215,.5);box-shadow:inset 0 0 0 3px rgba(140,230,210,.22)}' +
++      '.clr-back.cb-aurora .clr-mono,.cb-swatch.cb-aurora .clr-mono{color:#eafff6;text-shadow:0 2px 14px rgba(120,230,200,.6)}' +
+       '.clr-back.cb-midnight,.cb-swatch.cb-midnight{background:radial-gradient(circle at 30% 20%,#1a2238,#080c16);border-color:rgba(122,166,232,.42);box-shadow:inset 0 0 0 3px rgba(122,166,232,.18)}' +
+       '.clr-back.cb-midnight .clr-mono,.cb-swatch.cb-midnight .clr-mono{color:#9ab8e8}' +
+       '.clr-back.cb-crimson,.cb-swatch.cb-crimson{background:linear-gradient(160deg,#3a1218,#16080a);border-color:rgba(216,90,90,.5);box-shadow:inset 0 0 0 3px rgba(216,90,90,.22)}' +
+diff --git a/lib/merge-stats.js b/lib/merge-stats.js
+index 24cc4e9..37aed43 100644
+--- a/lib/merge-stats.js
++++ b/lib/merge-stats.js
+@@ -41,6 +41,56 @@
+     return rank(b) > rank(a) ? b : a;
+   }
+ 
++  // Card-collection blob (cl_collection). Union every owned card and keep the BEST
++  // copy of each (most copies, highest rarity, earliest collected, any shine), then
++  // re-derive XP from the union so two devices that collected different cards end up
++  // with BOTH sets and the combined progress — a card or a level is never lost.
++  var CARD_XP = { common: 10, rare: 25, elite: 50, legendary: 100 }, DUPE_XP = 3;
++  var CARD_TIER = { common: 0, rare: 1, elite: 2, legendary: 3 };
++  function mergeCard(x, y) {
++    if (!x) return y;
++    if (!y) return x;
++    var no = Math.min(x.no || Infinity, y.no || Infinity);
++    if (!isFinite(no)) no = x.no || y.no || 0;
++    var first = (x.first && y.first) ? (x.first < y.first ? x.first : y.first) : (x.first || y.first || '');
++    return {
++      id: x.id != null ? x.id : y.id,
++      type: x.type || y.type,
++      name: x.name || y.name || '',
++      img: x.img || y.img || '',
++      rarity: (CARD_TIER[y.rarity] > CARD_TIER[x.rarity]) ? y.rarity : x.rarity,
++      n: Math.max(x.n | 0 || 1, y.n | 0 || 1),
++      first: first,
++      no: no,
++      isNew: (x.isNew || y.isNew) ? 1 : 0,
++      shine: (x.shine || y.shine) ? 1 : 0
++    };
++  }
++  function mergeCollection(a, b) {
++    if (!a || typeof a !== 'object') return b || null;
++    if (!b || typeof b !== 'object') return a || null;
++    var ac = a.cards || {}, bc = b.cards || {}, cards = {}, keys = {}, k;
++    for (k in ac) if (Object.prototype.hasOwnProperty.call(ac, k)) keys[k] = 1;
++    for (k in bc) if (Object.prototype.hasOwnProperty.call(bc, k)) keys[k] = 1;
++    var maxNo = 0, xp = 0;
++    for (k in keys) {
++      if (!Object.prototype.hasOwnProperty.call(keys, k)) continue;
++      var c = mergeCard(ac[k], bc[k]);
++      cards[k] = c;
++      if ((c.no | 0) > maxNo) maxNo = c.no | 0;
++      xp += (CARD_XP[c.rarity] || 10) + Math.max(0, (c.n | 0) - 1) * DUPE_XP;
++    }
++    return {
++      v: Math.max(a.v | 0, b.v | 0) || 1,
++      cards: cards,
++      xp: Math.max(xp, a.xp | 0, b.xp | 0),           // never below either device's stored XP
++      seen: Math.max(a.seen | 0, b.seen | 0),
++      dust: Math.max(a.dust | 0, b.dust | 0),
++      seq: Math.max(a.seq | 0, b.seq | 0, maxNo),
++      mv: Math.max(a.mv | 0, b.mv | 0)
++    };
++  }
++
+   var STREAK_KEYS = ['clStreak', 'cineclueStreak', 'cineframeStreak', 'cinecastStreak', 'cineplotStreak', 'cinelineStreak'];
+   var STATE_KEYS = ['cineclueState', 'cineframeState', 'cinecastState', 'cineplotState', 'cinelineState'];
+ 
+@@ -50,11 +100,12 @@
+     STREAK_KEYS.forEach(function (k) { out[k] = mergeStreak(a[k], b[k]); });
+     out.clPlayed = mergePlayed(a.clPlayed, b.clPlayed);
+     STATE_KEYS.forEach(function (k) { out[k] = mergeDayState(a[k], b[k]); });
++    out.cl_collection = mergeCollection(a.cl_collection, b.cl_collection);
+     return out;
+   }
+ 
+   // Keys that participate in sync (everything else in localStorage stays local).
+-  var SYNC_KEYS = STREAK_KEYS.concat(STATE_KEYS, ['clPlayed']);
++  var SYNC_KEYS = STREAK_KEYS.concat(STATE_KEYS, ['clPlayed', 'cl_collection']);
+ 
+-  return { merge: merge, mergeStreak: mergeStreak, mergePlayed: mergePlayed, mergeDayState: mergeDayState, SYNC_KEYS: SYNC_KEYS };
++  return { merge: merge, mergeStreak: mergeStreak, mergePlayed: mergePlayed, mergeDayState: mergeDayState, mergeCollection: mergeCollection, SYNC_KEYS: SYNC_KEYS };
+ }));
+diff --git a/mobile-cards.patch b/mobile-cards.patch
+deleted file mode 100644
+index 1096084..0000000
+--- a/mobile-cards.patch
++++ /dev/null
+@@ -1,165 +0,0 @@
+-diff --git a/collection.js b/collection.js
+-index a0bf8af..49f215b 100644
+---- a/collection.js
+-+++ b/collection.js
+-@@ -176,26 +176,37 @@
+-         raf = requestAnimationFrame(frame);
+-       }
+-       function kick() { if (!raf) raf = requestAnimationFrame(frame); }
+--      function track(e) {
+-+      function track(cx, cy) {
+-         var r = inner.getBoundingClientRect();
+--        tpx = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+--        tpy = Math.max(0, Math.min(1, (e.clientY - r.top) / r.height));
+-+        tpx = Math.max(0, Math.min(1, (cx - r.left) / r.width));
+-+        tpy = Math.max(0, Math.min(1, (cy - r.top) / r.height));
+-         try_ = (tpx - 0.5) * 16; trx = (0.5 - tpy) * 16;
+-       }
+--      inner.addEventListener('pointerdown', function (e) {
+--        if (e.pointerType === 'mouse') return;              // mouse keeps the hover tilt
+--        dragging = true; inner.classList.add('tilted');
+--        try { inner.setPointerCapture(e.pointerId); } catch (_) { /* noop */ }
+--        track(e); kick();
+--      });
+--      inner.addEventListener('pointermove', function (e) {
+--        if (!dragging || e.pointerType === 'mouse') return;
+-+      // Touch events with a NON-passive touchmove + preventDefault reliably tilt the card
+-+      // instead of scrolling the modal — pointer-events + touch-action:none alone did not
+-+      // stop the scroll on iOS. Mouse is left untouched (keeps the hover tilt from tiltMount).
+-+      inner.addEventListener('touchstart', function (e) {
+-+        var t = e.touches && e.touches[0]; if (!t) return;
+-+        dragging = true; track(t.clientX, t.clientY);
+-+        // snap the glare/foil under the finger AND write the vars synchronously BEFORE
+-+        // .tilted is added, so the first painted frame is already correct — no flash.
+-+        px = tpx; py = tpy;
+-+        inner.style.setProperty('--gx', (px * 100).toFixed(1) + '%');
+-+        inner.style.setProperty('--gy', (py * 100).toFixed(1) + '%');
+-+        inner.style.setProperty('--fx', (px * 200).toFixed(1) + '%');
+-+        inner.style.setProperty('--fy', (py * 200).toFixed(1) + '%');
+-+        inner.style.setProperty('--px', (px - 0.5).toFixed(3));
+-+        inner.style.setProperty('--py', (py - 0.5).toFixed(3));
+-+        inner.classList.add('tilted'); kick();
+-+      }, { passive: true });
+-+      inner.addEventListener('touchmove', function (e) {
+-+        var t = e.touches && e.touches[0]; if (!dragging || !t) return;
+-         if (e.cancelable) e.preventDefault();
+--        track(e); kick();
+--      });
+--      var end = function (e) { if (e.pointerType === 'mouse') return; dragging = false; trx = 0; try_ = 0; tpx = 0.5; tpy = 0.5; kick(); };
+--      inner.addEventListener('pointerup', end);
+--      inner.addEventListener('pointercancel', end);
+-+        track(t.clientX, t.clientY); kick();
+-+      }, { passive: false });
+-+      var end = function () { dragging = false; trx = 0; try_ = 0; tpx = 0.5; tpy = 0.5; kick(); };
+-+      inner.addEventListener('touchend', end);
+-+      inner.addEventListener('touchcancel', end);
+-     } catch (_) { /* noop */ }
+-   }
+- 
+-@@ -765,7 +776,7 @@
+-       '.cl-detail-box{position:relative;display:flex;flex-direction:column;align-items:center;gap:18px;margin:auto;overflow:visible;padding:4px}' +
+-       '.cl-detail-stage{width:340px;height:476px;max-width:94vw;display:flex;align-items:center;justify-content:center;flex-shrink:0}' +
+-       '.cl-detail-card{width:300px;max-width:86vw}' +
+--      '#clDetailCard .auth-card,#clDetailCard .ctc-inner,#clDetailCard .clc-card{touch-action:none}' +
+-+      '#clDetailCard{touch-action:none;-webkit-user-select:none;user-select:none}' +
+-       '.cl-detail-x{position:fixed;top:16px;right:18px;background:rgba(20,20,20,.65);border:1px solid rgba(255,255,255,.16);color:#ddd;font-size:1.1rem;cursor:pointer;border-radius:999px;width:38px;height:38px;line-height:1;z-index:1}' +
+-       '.cl-di{width:300px;max-width:90vw}' +
+-       '.cl-di-name{font-size:1.15rem;font-weight:800;color:#f5f5f5;text-align:center;margin-bottom:11px}' +
+-@@ -945,7 +956,67 @@
+-   function isOpen() { var m = document.getElementById('clCollModal'); return m && m.classList.contains('open'); }
+-   function refreshOpen() { if (isOpen()) render(); if (document.getElementById('clCollDebug') && document.getElementById('clCollDebug').classList.contains('open')) renderDebug(); }
+- 
+-+  var _holoStop = null;
+-+  function stopHolo() { if (_holoStop) { try { _holoStop(); } catch (_) { /* noop */ } _holoStop = null; } }
+-+  // On touch devices the grid can't hover, so the card nearest the scroll centre comes
+-+  // alive: a gentle oscillator drifts its glare/foil and micro-tilts it (the TCG-Pocket
+-+  // "card in focus" feel). Only one card animates at a time and it follows the scroll;
+-+  // desktop is left to the hover tilt. Cheap: a single rAF driving one element.
+-+  function mobileScrollHolo(grid) {
+-+    try {
+-+      if (reducedMotion()) return;
+-+      if (!(window.matchMedia && matchMedia('(pointer: coarse)').matches)) return;
+-+      var cards = Array.prototype.slice.call(grid.querySelectorAll('.auth,.ctc'));
+-+      if (!cards.length) return;
+-+      var active = null, inner = null, raf = 0, sraf = 0, t = Math.random() * 6;
+-+      var VARS = ['--gx', '--gy', '--fx', '--fy', '--px', '--py'];
+-+      function innerOf(el) { return el.querySelector('.auth-card,.ctc-inner') || el; }
+-+      function clearActive() {
+-+        if (inner) { inner.classList.remove('tilted'); inner.style.transform = ''; VARS.forEach(function (v) { inner.style.removeProperty(v); }); }
+-+        active = null; inner = null;
+-+      }
+-+      function setActive(el) {
+-+        if (el === active) return;
+-+        clearActive(); active = el; inner = innerOf(el);
+-+        if (inner) inner.classList.add('tilted');
+-+      }
+-+      function nearest() {
+-+        var r = grid.getBoundingClientRect(), cy = r.top + r.height / 2, best = null, bd = 1e9;
+-+        cards.forEach(function (el) {
+-+          var b = el.getBoundingClientRect();
+-+          if (b.bottom < r.top + 4 || b.top > r.bottom - 4) return;   // off-screen
+-+          var d = Math.abs((b.top + b.height / 2) - cy);
+-+          if (d < bd) { bd = d; best = el; }
+-+        });
+-+        return best;
+-+      }
+-+      function osc() {
+-+        t += 0.02;
+-+        if (inner) {
+-+          var gx = 50 + 22 * Math.sin(t), gy = 50 + 15 * Math.cos(t * 0.8);
+-+          inner.style.transform = 'perspective(760px) rotateX(' + (2 * Math.cos(t * 0.8)).toFixed(2) + 'deg) rotateY(' + (3 * Math.sin(t)).toFixed(2) + 'deg)';
+-+          inner.style.setProperty('--gx', gx.toFixed(1) + '%');
+-+          inner.style.setProperty('--gy', gy.toFixed(1) + '%');
+-+          inner.style.setProperty('--fx', (gx * 2).toFixed(1) + '%');
+-+          inner.style.setProperty('--fy', (gy * 2).toFixed(1) + '%');
+-+          inner.style.setProperty('--px', (gx / 100 - 0.5).toFixed(3));
+-+          inner.style.setProperty('--py', (gy / 100 - 0.5).toFixed(3));
+-+        }
+-+        raf = requestAnimationFrame(osc);
+-+      }
+-+      function onScroll() { if (sraf) return; sraf = requestAnimationFrame(function () { sraf = 0; var n = nearest(); if (n) setActive(n); }); }
+-+      grid.addEventListener('scroll', onScroll, { passive: true });
+-+      setActive(nearest() || cards[0]); raf = requestAnimationFrame(osc);
+-+      _holoStop = function () {
+-+        grid.removeEventListener('scroll', onScroll);
+-+        if (raf) cancelAnimationFrame(raf); if (sraf) cancelAnimationFrame(sraf);
+-+        clearActive();
+-+      };
+-+    } catch (_) { /* noop */ }
+-+  }
+-+
+-   function render() {
+-+    stopHolo();
+-     var st = stats();
+-     document.getElementById('clCollLvl').textContent = st.level;
+-     document.getElementById('clCollXpName').textContent = 'Level ' + st.level;
+-@@ -991,6 +1062,7 @@
+-       el.addEventListener('click', function () { openDetail(cards[idx], el); });
+-     });
+-     scrollReveal(grid);
+-+    mobileScrollHolo(grid);
+-   }
+- 
+-   // Cards past the first screen start hidden and rise as they scroll into view —
+-@@ -1061,7 +1133,7 @@
+-     try { if (window.Track) window.Track('collection_open', stats()); } catch (_) { /* noop */ }
+-     setTimeout(markSeen, 600);
+-   }
+--  function close() { var m = document.getElementById('clCollModal'); if (m) m.classList.remove('open'); }
+-+  function close() { stopHolo(); var m = document.getElementById('clCollModal'); if (m) m.classList.remove('open'); }
+- 
+-   // ─────────────────────────────── debug panel ───────────────────────────
+-   function debugEnabled() {
+-diff --git a/sw.js b/sw.js
+-index beb2c1e..25d5d4a 100644
+---- a/sw.js
+-+++ b/sw.js
+-@@ -5,7 +5,7 @@
+-  *   - other same-origin GETs (logo, icons, daily-challenges.js, i18n.js): stale-while-revalidate.
+-  * Bump CACHE_VERSION to invalidate old caches on deploy.
+-  */
+--const CACHE_VERSION = 'cinelinks-v95';
+-+const CACHE_VERSION = 'cinelinks-v96';
+- const SHELL = [
+-   '/',
+-   '/index.html',
+diff --git a/sw.js b/sw.js
+index 25d5d4a..6ce7f9b 100644
+--- a/sw.js
++++ b/sw.js
+@@ -5,7 +5,7 @@
+  *   - other same-origin GETs (logo, icons, daily-challenges.js, i18n.js): stale-while-revalidate.
+  * Bump CACHE_VERSION to invalidate old caches on deploy.
+  */
+-const CACHE_VERSION = 'cinelinks-v96';
++const CACHE_VERSION = 'cinelinks-v97';
+ const SHELL = [
+   '/',
+   '/index.html',
+diff --git a/test/merge-stats.test.js b/test/merge-stats.test.js
+index 6d10258..8c341c2 100644
+--- a/test/merge-stats.test.js
++++ b/test/merge-stats.test.js
+@@ -72,6 +72,36 @@ test('merge tolerates empty / missing blobs and unknown keys', () => {
+ 
+ test('SYNC_KEYS covers all synced stores', () => {
+   ['clStreak', 'cineclueStreak', 'cineframeStreak', 'cinecastStreak', 'cineplotStreak', 'cinelineStreak',
+-    'cineclueState', 'cineframeState', 'cinecastState', 'cineplotState', 'cinelineState', 'clPlayed']
++    'cineclueState', 'cineframeState', 'cinecastState', 'cineplotState', 'cinelineState', 'clPlayed', 'cl_collection']
+     .forEach(k => assert.ok(M.SYNC_KEYS.includes(k), 'missing ' + k));
+ });
++
++test('mergeCollection unions cards and never loses one', () => {
++  const a = { v: 1, xp: 135, seen: 3, dust: 20, seq: 3, cards: {
++    'movie:1': { id: 1, type: 'movie', name: 'A', rarity: 'legendary', n: 1, first: '2026-06-20', no: 1 },
++    'movie:2': { id: 2, type: 'movie', name: 'B', rarity: 'rare', n: 2, first: '2026-06-21', no: 2 }
++  } };
++  const b = { v: 1, xp: 60, seen: 2, dust: 45, seq: 5, cards: {
++    'movie:2': { id: 2, type: 'movie', name: 'B', rarity: 'rare', n: 1, first: '2026-06-19', no: 5, shine: 1 },
++    'person:9': { id: 9, type: 'person', name: 'C', rarity: 'elite', n: 1, first: '2026-06-22', no: 2 }
++  } };
++  const out = M.mergeCollection(a, b);
++  assert.deepStrictEqual(Object.keys(out.cards).sort(), ['movie:1', 'movie:2', 'person:9']); // union, nothing lost
++  assert.strictEqual(out.cards['movie:2'].n, 2);          // most copies
++  assert.strictEqual(out.cards['movie:2'].shine, 1);      // any shine kept
++  assert.strictEqual(out.cards['movie:2'].first, '2026-06-19'); // earliest collected
++  assert.strictEqual(out.cards['movie:2'].no, 2);         // lowest collection number
++  // XP re-derived from the union: legendary(100) + rare(25 + 1 dupe*3) + elite(50) = 178
++  assert.strictEqual(out.xp, 178);
++  assert.strictEqual(out.dust, 45);                       // higher balance
++  assert.strictEqual(out.seq, 5);                         // max sequence
++});
++
++test('mergeCollection is order-independent and handles nulls', () => {
++  const a = { v: 1, xp: 10, cards: { 'movie:1': { id: 1, type: 'movie', rarity: 'common', n: 1, no: 1 } } };
++  const b = { v: 1, xp: 25, cards: { 'movie:3': { id: 3, type: 'movie', rarity: 'rare', n: 1, no: 2 } } };
++  assert.deepStrictEqual(M.mergeCollection(a, b), M.mergeCollection(b, a));
++  assert.strictEqual(M.mergeCollection(a, null), a);
++  assert.strictEqual(M.mergeCollection(null, b), b);
++  assert.strictEqual(M.mergeCollection(null, null), null);
++});

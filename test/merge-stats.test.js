@@ -72,6 +72,36 @@ test('merge tolerates empty / missing blobs and unknown keys', () => {
 
 test('SYNC_KEYS covers all synced stores', () => {
   ['clStreak', 'cineclueStreak', 'cineframeStreak', 'cinecastStreak', 'cineplotStreak', 'cinelineStreak',
-    'cineclueState', 'cineframeState', 'cinecastState', 'cineplotState', 'cinelineState', 'clPlayed']
+    'cineclueState', 'cineframeState', 'cinecastState', 'cineplotState', 'cinelineState', 'clPlayed', 'cl_collection']
     .forEach(k => assert.ok(M.SYNC_KEYS.includes(k), 'missing ' + k));
+});
+
+test('mergeCollection unions cards and never loses one', () => {
+  const a = { v: 1, xp: 135, seen: 3, dust: 20, seq: 3, cards: {
+    'movie:1': { id: 1, type: 'movie', name: 'A', rarity: 'legendary', n: 1, first: '2026-06-20', no: 1 },
+    'movie:2': { id: 2, type: 'movie', name: 'B', rarity: 'rare', n: 2, first: '2026-06-21', no: 2 }
+  } };
+  const b = { v: 1, xp: 60, seen: 2, dust: 45, seq: 5, cards: {
+    'movie:2': { id: 2, type: 'movie', name: 'B', rarity: 'rare', n: 1, first: '2026-06-19', no: 5, shine: 1 },
+    'person:9': { id: 9, type: 'person', name: 'C', rarity: 'elite', n: 1, first: '2026-06-22', no: 2 }
+  } };
+  const out = M.mergeCollection(a, b);
+  assert.deepStrictEqual(Object.keys(out.cards).sort(), ['movie:1', 'movie:2', 'person:9']); // union, nothing lost
+  assert.strictEqual(out.cards['movie:2'].n, 2);          // most copies
+  assert.strictEqual(out.cards['movie:2'].shine, 1);      // any shine kept
+  assert.strictEqual(out.cards['movie:2'].first, '2026-06-19'); // earliest collected
+  assert.strictEqual(out.cards['movie:2'].no, 2);         // lowest collection number
+  // XP re-derived from the union: legendary(100) + rare(25 + 1 dupe*3) + elite(50) = 178
+  assert.strictEqual(out.xp, 178);
+  assert.strictEqual(out.dust, 45);                       // higher balance
+  assert.strictEqual(out.seq, 5);                         // max sequence
+});
+
+test('mergeCollection is order-independent and handles nulls', () => {
+  const a = { v: 1, xp: 10, cards: { 'movie:1': { id: 1, type: 'movie', rarity: 'common', n: 1, no: 1 } } };
+  const b = { v: 1, xp: 25, cards: { 'movie:3': { id: 3, type: 'movie', rarity: 'rare', n: 1, no: 2 } } };
+  assert.deepStrictEqual(M.mergeCollection(a, b), M.mergeCollection(b, a));
+  assert.strictEqual(M.mergeCollection(a, null), a);
+  assert.strictEqual(M.mergeCollection(null, b), b);
+  assert.strictEqual(M.mergeCollection(null, null), null);
 });

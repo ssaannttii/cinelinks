@@ -408,6 +408,7 @@
     { id: 'classic', name: 'Classic', level: 1, css: '' },
     { id: 'gold', name: 'Gold Foil', level: 3, css: 'cb-gold' },
     { id: 'holo', name: 'Holographic', level: 6, css: 'cb-holo' },
+    { id: 'aurora', name: 'Aurora', level: 8, css: 'cb-aurora' },
     { id: 'midnight', name: 'Midnight', level: 10, css: 'cb-midnight' },
     { id: 'crimson', name: 'Crimson', level: 15, css: 'cb-crimson' },
     { id: 'mastery', name: 'Mastery', achv: 12, css: 'cb-mastery' }
@@ -674,6 +675,14 @@
       '.auth-meta .sep{color:rgba(255,255,255,.32)}' +
       '.auth-no{color:rgba(255,255,255,.82);font-family:ui-monospace,Menlo,monospace;letter-spacing:.03em}' +
       '.auth-frame{position:absolute;inset:0;z-index:6;border-radius:13px;pointer-events:none;box-shadow:inset 0 0 0 .7cqw rgba(0,0,0,.55),inset 0 0 0 2cqw var(--cr),inset 0 0 0 2.7cqw rgba(0,0,0,.45)}' +
+      // Material rail: a gradient "metal" ring on the frame (light top-left → dark bottom-right = bevel/relief),
+      // tuned per rarity so the surface reads as matte / satin / metallic / gold at a glance.
+      '.auth-frame::after{content:"";position:absolute;inset:0;border-radius:13px;padding:1.9cqw;background:linear-gradient(140deg,rgba(255,255,255,.5),transparent 36%,transparent 60%,rgba(255,255,255,.3));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;mix-blend-mode:overlay;opacity:.5}' +
+      '.auth-common .auth-frame::after{opacity:.26;background:linear-gradient(140deg,rgba(255,255,255,.32),transparent 42%,transparent 58%,rgba(0,0,0,.28))}' +                                   // matte
+      '.auth-rare .auth-frame::after{opacity:.5;background:linear-gradient(140deg,rgba(222,236,255,.72),transparent 38%,transparent 60%,rgba(110,146,200,.4))}' +                                    // satin
+      '.auth-elite .auth-frame::after{opacity:.62;background:linear-gradient(140deg,rgba(242,228,255,.9),rgba(181,138,214,.25) 40%,transparent 56%,rgba(96,64,140,.5))}' +                            // metallic grain
+      '.auth-legendary .auth-frame::after{opacity:.85;background:linear-gradient(140deg,rgba(255,246,205,.98),rgba(232,194,74,.4) 36%,rgba(120,88,20,.42) 60%,rgba(255,240,190,.9));animation:authMetal 6s ease-in-out infinite}' +  // gold relief
+      '@keyframes authMetal{0%,100%{filter:brightness(1)}50%{filter:brightness(1.28)}}' +
       '.auth-foil{position:absolute;inset:0;z-index:7;pointer-events:none;opacity:0;background:repeating-linear-gradient(115deg,rgba(255,119,115,.4),rgba(255,237,95,.4) 11%,rgba(168,255,150,.4) 21%,rgba(131,255,247,.4) 31%,rgba(120,148,255,.4) 42%,rgba(216,117,255,.4) 52%,rgba(255,119,115,.4) 62%);background-size:280% 280%;background-position:var(--fx,50%) var(--fy,50%);mix-blend-mode:color-dodge;filter:brightness(.92) contrast(1.12);transition:opacity .22s}' +
       '.auth-rare .auth-foil{opacity:.16}.auth-elite .auth-foil{opacity:.24}.auth-legendary .auth-foil{opacity:.34;animation:authDrift 7s linear infinite}' +
       // glitter layer: fine specular dots that travel with the cursor/tilt and read as metallic foil grain. Elite+ only, on hover/tilt.
@@ -701,7 +710,7 @@
       '.auth-rare .auth-card:hover,.auth-rare .auth-card.tilted{box-shadow:0 20px 44px rgba(0,0,0,.64),0 0 26px rgba(122,166,232,.5)}' +
       '.auth-elite .auth-card:hover,.auth-elite .auth-card.tilted{box-shadow:0 20px 44px rgba(0,0,0,.64),0 0 26px rgba(181,138,214,.55)}' +
       '.auth-legendary .auth-card:hover,.auth-legendary .auth-card.tilted{box-shadow:0 20px 44px rgba(0,0,0,.64),0 0 30px rgba(232,194,74,.6)}' +
-      '@media(prefers-reduced-motion:reduce){.auth{animation:none}.auth-star,.auth-legendary .auth-foil{animation:none}.auth-card{transition:none}.auth-sheen{animation:none;display:none}.auth-glit{display:none}.auth-bgimg,.auth-star,.auth-corner,.auth-tags,.auth-text{transition:none}}',
+      '@media(prefers-reduced-motion:reduce){.auth{animation:none}.auth-star,.auth-legendary .auth-foil{animation:none}.auth-card{transition:none}.auth-sheen{animation:none;display:none}.auth-glit{display:none}.auth-bgimg,.auth-star,.auth-corner,.auth-tags,.auth-text{transition:none}.auth-legendary .auth-frame::after{animation:none}}',
     card: function (c, ctx, i) {
       var rar = ctx.RARITY[c.rarity] || ctx.RARITY.common;
       var p = ctx.posterUrl(c.img);
@@ -860,6 +869,8 @@
       '.clr-back.cb-gold .clr-mono,.cb-swatch.cb-gold .clr-mono{color:#f5d97a;text-shadow:0 2px 14px rgba(232,194,74,.5)}' +
       '.clr-back.cb-holo,.cb-swatch.cb-holo{background:conic-gradient(from 0deg,#3a2a4a,#243a5a,#244a44,#4a3a24,#3a2a4a);border-color:rgba(255,255,255,.42);box-shadow:inset 0 0 0 3px rgba(255,255,255,.18)}' +
       '.clr-back.cb-holo .clr-mono,.cb-swatch.cb-holo .clr-mono{color:#fff}' +
+      '.clr-back.cb-aurora,.cb-swatch.cb-aurora{background:linear-gradient(160deg,#0b2a3a,#1f5a6e 40%,#3aa88f 70%,#7ad6a0);border-color:rgba(150,235,215,.5);box-shadow:inset 0 0 0 3px rgba(140,230,210,.22)}' +
+      '.clr-back.cb-aurora .clr-mono,.cb-swatch.cb-aurora .clr-mono{color:#eafff6;text-shadow:0 2px 14px rgba(120,230,200,.6)}' +
       '.clr-back.cb-midnight,.cb-swatch.cb-midnight{background:radial-gradient(circle at 30% 20%,#1a2238,#080c16);border-color:rgba(122,166,232,.42);box-shadow:inset 0 0 0 3px rgba(122,166,232,.18)}' +
       '.clr-back.cb-midnight .clr-mono,.cb-swatch.cb-midnight .clr-mono{color:#9ab8e8}' +
       '.clr-back.cb-crimson,.cb-swatch.cb-crimson{background:linear-gradient(160deg,#3a1218,#16080a);border-color:rgba(216,90,90,.5);box-shadow:inset 0 0 0 3px rgba(216,90,90,.22)}' +

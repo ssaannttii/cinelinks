@@ -21,7 +21,7 @@
   window.refreshAuthCard = function () { try { setCardText(_lastCard.signedIn, _lastCard.name); } catch (_) {} };
 
   var SYNC_KEYS = (window.MergeStats && window.MergeStats.SYNC_KEYS) ||
-    ['clStreak', 'cineclueStreak', 'cineframeStreak', 'cineclueState', 'cineframeState', 'clPlayed'];
+    ['clStreak', 'cineclueStreak', 'cineframeStreak', 'cineclueState', 'cineframeState', 'clPlayed', 'cl_collection'];
   var lastToken = '';
 
   function readLocal() {
