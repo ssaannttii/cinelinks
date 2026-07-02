@@ -666,7 +666,12 @@
       '.ctc-gem-d{width:7px;height:7px;border-radius:2px;transform:rotate(45deg);background:var(--cr);box-shadow:0 0 7px var(--cr)}' +
       '.ctc-new{position:absolute;top:7px;right:7px;z-index:5;font-size:.46rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#06281a;background:#7fd49a;border-radius:5px;padding:2px 5px;box-shadow:0 2px 8px rgba(127,212,154,.4)}' +
       '.ctc-dupe{position:absolute;right:7px;bottom:7px;z-index:6;font-size:.54rem;font-weight:900;color:#1a1200;background:linear-gradient(135deg,#f5c542,#e8a000);border-radius:99px;padding:1px 7px;box-shadow:0 2px 8px rgba(0,0,0,.5)}' +
-      '@media(prefers-reduced-motion:reduce){.ctc{animation:none}.ctc-legendary .ctc-frame,.ctc-legendary .ctc-foil{animation:none}.ctc-inner{transition:none}}',
+      '@media(prefers-reduced-motion:reduce){.ctc{animation:none}.ctc-legendary .ctc-frame,.ctc-legendary .ctc-foil{animation:none}.ctc-inner{transition:none}}' +
+      // Mobile (coarse pointer): idle animations of box-shadow / background-position can't
+      // run on Blink's compositor — they invalidate paint and re-rasterize the layer stack
+      // every frame forever, saturating the raster queue until Chrome draws unpainted tiles
+      // as black flashes. Foil stays visible (static) and still tracks the drag tilt.
+      '@media(pointer:coarse){.ctc-legendary .ctc-frame{animation:none}.ctc-legendary .ctc-foil{animation:none}}',
     card: function (c, ctx, i) {
       var rar = ctx.RARITY[c.rarity] || ctx.RARITY.common;
       var p = ctx.posterUrl(c.img);
@@ -786,7 +791,16 @@
       '.auth-rare .auth-card:hover,.auth-rare .auth-card.tilted{box-shadow:0 20px 44px rgba(0,0,0,.64),0 0 26px rgba(122,166,232,.5)}' +
       '.auth-elite .auth-card:hover,.auth-elite .auth-card.tilted{box-shadow:0 20px 44px rgba(0,0,0,.64),0 0 26px rgba(181,138,214,.55)}' +
       '.auth-legendary .auth-card:hover,.auth-legendary .auth-card.tilted{box-shadow:0 20px 44px rgba(0,0,0,.64),0 0 30px rgba(232,194,74,.6)}' +
-      '@media(prefers-reduced-motion:reduce){.auth{animation:none}.auth-star,.auth-legendary .auth-foil{animation:none}.auth-card{transition:none}.auth-sheen{animation:none;display:none}.auth-glit{display:none}.auth-bgimg,.auth-star,.auth-corner,.auth-tags,.auth-text{transition:none}.auth-legendary .auth-frame::after{animation:none}}',
+      '@media(prefers-reduced-motion:reduce){.auth{animation:none}.auth-star,.auth-legendary .auth-foil{animation:none}.auth-card{transition:none}.auth-sheen{animation:none;display:none}.auth-glit{display:none}.auth-bgimg,.auth-star,.auth-corner,.auth-tags,.auth-text{transition:none}.auth-legendary .auth-frame::after{animation:none}}' +
+      // Mobile (coarse pointer): kill the idle infinite animations. None of them can run on
+      // Blink's compositor — authStar animates filter with a drop-shadow in the keyframe
+      // (disqualifies compositor filters), authDrift animates background-position and
+      // authMetal brightness on a blended layer — so each invalidates paint and forces the
+      // whole isolated card group (img included) to re-rasterize every frame, forever.
+      // On Android that saturates the raster queue and Chrome draws missed tiles as black
+      // flashes over the photo. Star/foil/frame remain visible, just static; the foil and
+      // glare still move with the finger during the drag tilt.
+      '@media(pointer:coarse){.auth-star{animation:none}.auth-legendary .auth-foil{animation:none}.auth-legendary .auth-frame::after{animation:none}}',
     card: function (c, ctx, i) {
       var rar = ctx.RARITY[c.rarity] || ctx.RARITY.common;
       var p = ctx.posterUrl(c.img);
@@ -1004,7 +1018,24 @@
       // ── WebGL godray canvas behind the legendary reveal ──
       '.clr-shader{position:absolute;inset:0;z-index:4;pointer-events:none;opacity:0;transition:opacity .5s ease}' +
       '.clr-shader.on{opacity:1}' +
-      '@media(prefers-reduced-motion:reduce){.cl-pre{opacity:1!important;transform:none!important}.cl-rise{animation:none}.clr-shader{display:none}}';
+      '@media(prefers-reduced-motion:reduce){.cl-pre{opacity:1!important;transform:none!important}.cl-rise{animation:none}.clr-shader{display:none}}' +
+      // ── Mobile (coarse pointer) compositing diet ──
+      // backdrop-filter re-filters the full backdrop texture every frame anything above it
+      // changes, and the detail view stacks a second fullscreen blur on top of the gallery's.
+      // On Android that plus the card's paint-invalidating animations starves the raster
+      // queue → black tile flashes over the card photo. Swap blurs for darker scrims.
+      '@media(pointer:coarse){' +
+        '#clCollModal,#clCollDebug{backdrop-filter:none;background:rgba(0,0,0,.9)}' +
+        '#clCollDetail{backdrop-filter:none;background:rgba(0,0,0,.94)}' +
+        '#clCollReveal{backdrop-filter:none}' +
+        // shine foil drift animates background-position (main-thread repaint per frame):
+        // static on mobile, still lights up and tracks the drag tilt.
+        '.cl-shine .auth-foil,.cl-shine .ctc-foil{animation:none}' +
+        // halo pulse: box-shadow keyframes repaint per frame — pulse opacity instead
+        // (compositor-only) over a static glow.
+        '.clr-flip:not(.flip-go):not(.flipped) .clr-halo{animation:clrHaloO 1s ease-in-out infinite;box-shadow:0 0 24px 5px var(--halo,transparent),inset 0 0 18px var(--halo,transparent)}' +
+      '}' +
+      '@keyframes clrHaloO{0%,100%{opacity:.35}50%{opacity:1}}';
     document.head.appendChild(css);
   }
 
