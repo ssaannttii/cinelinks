@@ -187,6 +187,7 @@
       // stop the scroll on iOS. Mouse is left untouched (keeps the hover tilt from tiltMount).
       inner.addEventListener('touchstart', function (e) {
         var t = e.touches && e.touches[0]; if (!t) return;
+        stopGyro();                       // finger takes over — two rAF loops writing the same transform fight
         dragging = true; track(t.clientX, t.clientY);
         // snap the glare/foil under the finger AND write the vars synchronously BEFORE
         // .tilted is added, so the first painted frame is already correct — no flash.
@@ -1419,7 +1420,8 @@
       var shb = document.getElementById('clShareBtn');
       if (shb) shb.addEventListener('click', function () { shareCard(c, shb); });
       document.getElementById('clCollDetail').classList.add('open');
-      stopGyro();                        // gyro paused for now (re-enable: _gyroOff = gyroMount(holder))
+      stopGyro();
+      _gyroOff = gyroMount(holder);      // tilt the phone and the card leans + holo shifts
       dragTiltMount(holder);             // touch: drag a finger on the card to tilt it
       // tap-to-open shimmer: a light sweep across the card as it appears
       var ac = holder.querySelector('.auth-card');
