@@ -17,19 +17,36 @@ const API_KEY = process.env.TMDB_API_KEY; // checked in main() — collectIds() 
 
 const ROOT = path.join(__dirname, '..');
 
+// A named `const X = [ … ];` block from a game file (so persons in neighbouring
+// arrays can't be mis-read as movies — CineGroup keeps both shapes side by side).
+function sliceBlock(txt, marker) {
+  const s = txt.indexOf(marker); if (s < 0) return '';
+  const e = txt.indexOf('];', s); return e < 0 ? '' : txt.slice(s, e);
+}
 function collectIds() {
   const ids = new Set(); // "type:id"
-  // 1. daily-challenges.js endpoints
-  const daily = fs.readFileSync(path.join(ROOT, 'daily-challenges.js'), 'utf8');
-  for (const m of daily.matchAll(/(movie|person|tv):(\d+)/g)) ids.add(m[1] + ':' + m[2]);
-  // 2. shared clue pool (bare numbers = movies, 'tv:<id>' strings = TV)
-  const clue = fs.readFileSync(path.join(ROOT, 'cineclue-pool.js'), 'utf8');
+  const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8');
+  // 1. daily-challenges.js endpoints (CineLinks goals)
+  for (const m of read('daily-challenges.js').matchAll(/(movie|person|tv):(\d+)/g)) ids.add(m[1] + ':' + m[2]);
+  // 2. shared clue pool — CineClue/Frame/Cast targets (bare numbers = movies, 'tv:<id>' = TV)
+  const clue = read('cineclue-pool.js');
   const arr = clue.slice(clue.indexOf('['), clue.lastIndexOf(']') + 1);
   for (const m of arr.matchAll(/'tv:(\d+)'/g)) ids.add('tv:' + m[1]);
   for (const m of arr.matchAll(/(?:^|[\s,[])(\d{2,9})(?=[\s,\]])/gm)) ids.add('movie:' + m[1]);
-  // 3. curated set members in collection.js
-  const coll = fs.readFileSync(path.join(ROOT, 'collection.js'), 'utf8');
-  for (const m of coll.matchAll(/\{ id: (\d+), type: '(movie|person|tv)'/g)) ids.add(m[2] + ':' + m[1]);
+  // 3. curated set members in collection.js (forgeable)
+  for (const m of read('collection.js').matchAll(/\{ id: (\d+), type: '(movie|person|tv)'/g)) ids.add(m[2] + ':' + m[1]);
+  // 4. CineLine deck pool (all correctly-placed films are granted)
+  const line = read('cineline-pool.js');
+  const larr = line.slice(line.indexOf('['), line.lastIndexOf(']') + 1);
+  for (const m of larr.matchAll(/(?:^|[\s,[])(\d{2,9})(?=\s*,)/gm)) ids.add('movie:' + m[1]);
+  // 5. CineReel curated actor pool (the guessed actor is the prize)
+  for (const m of read('cinereel.html').matchAll(/\{id:(\d+),name:/g)) ids.add('person:' + m[1]);
+  // 6. CineGroup baked film pools (saga/theme tiles are granted on a win; the
+  //    actor/director-group tiles come from live TMDB fetches and can't be
+  //    enumerated offline — those fall back to procedural depth)
+  const grp = read('cinegroup.html');
+  for (const m of sliceBlock(grp, 'const SAGAS').matchAll(/\[(\d{2,9}),"/g)) ids.add('movie:' + m[1]);
+  for (const m of sliceBlock(grp, 'const THEMES').matchAll(/\[(\d{2,9}),"/g)) ids.add('movie:' + m[1]);
   return [...ids];
 }
 
