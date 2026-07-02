@@ -671,7 +671,12 @@
       // run on Blink's compositor — they invalidate paint and re-rasterize the layer stack
       // every frame forever, saturating the raster queue until Chrome draws unpainted tiles
       // as black flashes. Foil stays visible (static) and still tracks the drag tilt.
-      '@media(pointer:coarse){.ctc-legendary .ctc-frame{animation:none}.ctc-legendary .ctc-foil{animation:none}}',
+      '@media(pointer:coarse){.ctc-legendary .ctc-frame{animation:none}.ctc-legendary .ctc-foil{animation:none}' +
+        // no blend-mode render surfaces on touch (see the authentic theme note)
+        '.ctc-foil,.ctc-glare{mix-blend-mode:normal}.ctc-foil{filter:none}' +
+        '.ctc-rare .ctc-foil{opacity:.18}.ctc-elite .ctc-foil{opacity:.26}.ctc-legendary .ctc-foil{opacity:.32}' +
+        '.ctc-inner:hover .ctc-glare,.ctc-inner.tilted .ctc-glare{opacity:.55}' +
+      '}',
     card: function (c, ctx, i) {
       var rar = ctx.RARITY[c.rarity] || ctx.RARITY.common;
       var p = ctx.posterUrl(c.img);
@@ -800,7 +805,25 @@
       // On Android that saturates the raster queue and Chrome draws missed tiles as black
       // flashes over the photo. Star/foil/frame remain visible, just static; the foil and
       // glare still move with the finger during the drag tilt.
-      '@media(pointer:coarse){.auth-star{animation:none}.auth-legendary .auth-foil{animation:none}.auth-legendary .auth-frame::after{animation:none}}',
+      '@media(pointer:coarse){.auth-star{animation:none;filter:none}.auth-legendary .auth-foil{animation:none}.auth-legendary .auth-frame::after{animation:none}' +
+        // Compositing diet v2: layers were still vanishing/flashing — every mix-blend-mode
+        // sibling forces the card group into an offscreen render surface, and dozens of grid
+        // cards each held a promoted poster texture underneath the open detail view. Android
+        // evicts textures under that pressure and whole layers blink out. So on touch: no
+        // blend modes (plain translucent overlays approximate the look — the pokemon-cards-css
+        // author ships exactly this tradeoff on mobile), no isolation (moot without blends),
+        // and posters only get a GPU layer inside the drag-tilted detail/reveal cards.
+        '.auth-card{isolation:auto}' +
+        '.auth-foil,.auth-glit,.auth-glare,.auth-frame::after{mix-blend-mode:normal}' +
+        '.auth-foil,.auth-glit{filter:none}' +
+        '.auth-rare .auth-foil{opacity:.1}.auth-elite .auth-foil{opacity:.15}.auth-legendary .auth-foil{opacity:.22}' +
+        '.auth-card:hover .auth-glare,.auth-card.tilted .auth-glare{opacity:.55}' +
+        '.auth-elite .auth-card:hover .auth-glit,.auth-elite .auth-card.tilted .auth-glit{opacity:.25}' +
+        '.auth-legendary .auth-card:hover .auth-glit,.auth-legendary .auth-card.tilted .auth-glit{opacity:.35}' +
+        '.auth-common .auth-frame::after{opacity:.18}.auth-rare .auth-frame::after{opacity:.32}.auth-elite .auth-frame::after{opacity:.42}.auth-legendary .auth-frame::after{opacity:.6}' +
+        '.auth-bgimg{transform:none;-webkit-backface-visibility:visible;backface-visibility:visible}' +
+        '#clDetailCard .auth-bgimg,#clrBody .auth-bgimg{transform:translateZ(0);-webkit-backface-visibility:hidden;backface-visibility:hidden}' +
+      '}',
     card: function (c, ctx, i) {
       var rar = ctx.RARITY[c.rarity] || ctx.RARITY.common;
       var p = ctx.posterUrl(c.img);
@@ -1029,8 +1052,13 @@
         '#clCollDetail{backdrop-filter:none;background:rgba(0,0,0,.94)}' +
         '#clCollReveal{backdrop-filter:none}' +
         // shine foil drift animates background-position (main-thread repaint per frame):
-        // static on mobile, still lights up and tracks the drag tilt.
-        '.cl-shine .auth-foil,.cl-shine .ctc-foil{animation:none}' +
+        // static on mobile, still lights up and tracks the drag tilt. Blend gone too
+        // (render surface), so drop the opacity to keep the wash subtle.
+        '.cl-shine .auth-foil,.cl-shine .ctc-foil{animation:none;mix-blend-mode:normal;filter:none;opacity:.4}' +
+        // While the detail view is open the gallery grid below it still held dozens of
+        // live card layer stacks — hide it so its textures are released. (Coarse-only:
+        // desktop keeps the blurred grid visible behind the backdrop-filter.)
+        'body:has(#clCollDetail.open) #clCollModal .cl-coll-grid{visibility:hidden}' +
         // halo pulse: box-shadow keyframes repaint per frame — pulse opacity instead
         // (compositor-only) over a static glow.
         '.clr-flip:not(.flip-go):not(.flipped) .clr-halo{animation:clrHaloO 1s ease-in-out infinite;box-shadow:0 0 24px 5px var(--halo,transparent),inset 0 0 18px var(--halo,transparent)}' +
