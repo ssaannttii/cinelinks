@@ -1169,32 +1169,97 @@
     if (document.getElementById('clCollStyles')) return;
     var css = document.createElement('style'); css.id = 'clCollStyles';
     css.textContent =
-      '#clCollModal,#clCollDebug{position:fixed;inset:0;z-index:240;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.72);backdrop-filter:blur(6px)}' +
-      '#clCollModal.open,#clCollDebug.open{display:flex}' +
-      '.cl-coll-box{background:#161616;border:1px solid rgba(232,160,0,.22);border-radius:16px;width:100%;max-width:560px;max-height:86vh;display:flex;flex-direction:column;box-shadow:0 28px 80px rgba(0,0,0,.55);animation:clCollIn .28s cubic-bezier(.2,.9,.3,1.1) both}' +
+      '#clCollDebug{position:fixed;inset:0;z-index:240;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.72);backdrop-filter:blur(6px)}' +
+      '#clCollDebug.open{display:flex}' +
       '@keyframes clCollIn{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}' +
-      '.cl-coll-hd{padding:18px 18px 12px;border-bottom:1px solid rgba(255,255,255,.08)}' +
+      // ── The Vault: fullscreen collection stage. UI is a dark neutral chrome so the
+      // card art carries all the colour (the Snap rule: cards own the hierarchy).
+      '#clCollModal{position:fixed;inset:0;z-index:240;display:none;flex-direction:column;background:radial-gradient(120% 70% at 50% -20%,rgba(232,160,0,.12),transparent 55%),radial-gradient(90% 60% at 88% 112%,rgba(122,166,232,.07),transparent 60%),#0b0b0d}' +
+      // site chrome that floats above the vault (help FAB z900, cookie bar z1000)
+      // ducks while any collection surface is open
+      'body:has(#clCollModal.open) #ht-btn,body:has(#clCollDetail.open) #ht-btn,body:has(#clCollReveal.open) #ht-btn,' +
+      'body:has(#clCollModal.open) #clCookieBar,body:has(#clCollDetail.open) #clCookieBar,body:has(#clCollReveal.open) #clCookieBar{display:none}' +
+      '#clCollModal.open{display:flex;animation:clVaultIn .3s ease both}' +
+      '@keyframes clVaultIn{from{opacity:0}to{opacity:1}}' +
+      '.cl-vault-hd{flex-shrink:0;width:100%;max-width:1192px;margin:0 auto;padding:14px 16px 0}' +
       '.cl-coll-hd-top{display:flex;align-items:center;justify-content:space-between;gap:10px}' +
-      '.cl-coll-title{font-size:1.1rem;font-weight:800;color:#f5f5f5}.cl-coll-title span{color:#e8a000}' +
+      '.cl-coll-title{font-size:1.3rem;font-weight:800;letter-spacing:-.01em;color:#f5f5f5}.cl-coll-title span{color:#e8a000}' +
+      '.cl-coll-sub{font-size:.7rem;font-weight:700;color:#8d8d8d;margin-top:1px}' +
       '.cl-coll-hd-btns{display:flex;align-items:center;gap:6px}' +
       '.cl-coll-icon{background:none;border:none;color:#888;font-size:1.1rem;cursor:pointer;line-height:1;padding:2px 6px}.cl-coll-icon:hover{color:#f5f5f5}' +
       '.cl-coll-dust{display:inline-flex;align-items:center;font-size:.78rem;font-weight:800;color:#bfe6ff;background:rgba(120,184,255,.12);border:1px solid rgba(150,205,255,.3);border-radius:99px;padding:3px 9px;margin-right:2px;white-space:nowrap}' +
-      '.cl-coll-x{background:none;border:none;color:#888;font-size:1.3rem;cursor:pointer;line-height:1;padding:2px 6px}.cl-coll-x:hover{color:#f5f5f5}' +
-      '.cl-coll-lvl{display:flex;align-items:center;gap:10px;margin-top:12px}' +
-      '.cl-coll-lvl-badge{flex-shrink:0;width:40px;height:40px;border-radius:50%;background:radial-gradient(circle,#e8a000,#a86f00);color:#1a1200;font-weight:900;font-size:1.05rem;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(232,160,0,.4)}' +
+      '.cl-coll-x{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:999px;width:34px;height:34px;color:#bbb;font-size:1.05rem;cursor:pointer;line-height:1}.cl-coll-x:hover{color:#fff;border-color:rgba(255,255,255,.3)}' +
+      // identity strip: SVG progress ring around the level + next-unlock teaser
+      '.cl-coll-lvl{display:flex;align-items:center;gap:12px;margin-top:12px}' +
+      '.cl-lvl-ring{position:relative;flex-shrink:0;width:52px;height:52px}' +
+      '.cl-lvl-ring svg{position:absolute;inset:0;transform:rotate(-90deg)}' +
+      '.cl-lvl-ring circle{fill:none;stroke-width:3.4}' +
+      '.cl-lvl-ring .bg{stroke:rgba(255,255,255,.1)}' +
+      '.cl-lvl-ring .fg{stroke:#e8a000;stroke-linecap:round;transition:stroke-dashoffset .7s cubic-bezier(.3,.9,.3,1)}' +
+      '.cl-lvl-ring b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.15rem;font-weight:900;color:#f5c542;text-shadow:0 2px 10px rgba(232,160,0,.5)}' +
       '.cl-coll-xp{flex:1;min-width:0}' +
-      '.cl-coll-xp-bar{height:7px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden;margin-top:5px}' +
+      '.cl-coll-xp-bar{height:6px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden;margin-top:5px}' +
       '.cl-coll-xp-bar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#e8a000,#f5c542);transition:width .6s cubic-bezier(.3,.9,.3,1)}' +
-      '.cl-coll-xp-l{display:flex;justify-content:space-between;font-size:.66rem;color:#9a9a9a;font-weight:700}' +
-      '.cl-coll-counts{display:flex;gap:7px;flex-wrap:wrap;margin-top:13px}' +
-      '.cl-coll-chip{font-size:.66rem;font-weight:800;letter-spacing:.03em;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:#cfcfcf;border-radius:99px;padding:5px 11px;cursor:pointer;text-transform:uppercase}' +
+      '.cl-coll-xp-l{display:flex;justify-content:space-between;gap:10px;font-size:.66rem;color:#9a9a9a;font-weight:700}' +
+      '.cl-coll-next{color:#7fb2e8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+      // nav tabs: labelled, top on desktop, thumb-reach bottom bar on mobile
+      '.cl-vault-tabs{display:flex;gap:4px;margin-top:12px;border-bottom:1px solid rgba(255,255,255,.08)}' +
+      '.cl-vtab{flex:0 0 auto;display:flex;align-items:center;gap:6px;background:none;border:none;border-bottom:2px solid transparent;color:#9a9a9a;font:inherit;font-size:.8rem;font-weight:800;letter-spacing:.02em;padding:9px 13px;cursor:pointer}' +
+      '.cl-vtab .ic{font-size:.95rem;line-height:1}' +
+      '.cl-vtab:hover{color:#e8e8e8}' +
+      '.cl-vtab.on{color:#e8a000;border-bottom-color:#e8a000}' +
+      '.cl-vtab .bdg{min-width:16px;padding:1px 5px;border-radius:99px;background:#e8a000;color:#1a1200;font-size:.6rem;font-weight:900;text-align:center}' +
+      '@media(max-width:640px){' +
+        '.cl-vault-tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;margin:0;justify-content:space-around;background:rgba(13,13,15,.97);border-top:1px solid rgba(255,255,255,.1);border-bottom:none;padding:4px 6px calc(4px + env(safe-area-inset-bottom))}' +
+        '.cl-vtab{flex:1;flex-direction:column;gap:2px;padding:7px 4px;font-size:.6rem;border-bottom:none;border-radius:10px}' +
+        '.cl-vtab .ic{font-size:1.15rem}' +
+        '.cl-vtab.on{background:rgba(232,160,0,.12);border-bottom-color:transparent}' +
+      '}' +
+      // toolbar (Cards tab): search + one-tap rarity gems + sort. On mobile the
+      // chips collapse to a single horizontally-scrollable row under the search.
+      '.cl-vault-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:11px 0 4px}' +
+      '.cl-vchips{display:flex;gap:8px;align-items:center;flex-wrap:wrap}' +
+      '@media(max-width:640px){' +
+        '.cl-vsearch{flex:1 1 100%}' +
+        '.cl-vchips{flex:1 1 100%;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px}' +
+        '.cl-vchips::-webkit-scrollbar{display:none}' +
+        '.cl-coll-chip{flex-shrink:0}' +
+      '}' +
+      '.cl-vsearch{flex:1 1 150px;min-width:130px;position:relative}' +
+      '.cl-vsearch input{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:99px;color:#eee;font:inherit;font-size:.8rem;font-weight:600;padding:7px 12px 7px 30px;outline:none}' +
+      '.cl-vsearch input:focus{border-color:rgba(232,160,0,.5)}' +
+      '.cl-vsearch::before{content:"🔍";position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:.72rem;opacity:.55}' +
+      '.cl-coll-chip{display:inline-flex;align-items:center;gap:6px;font-size:.66rem;font-weight:800;letter-spacing:.03em;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:#cfcfcf;border-radius:99px;padding:6px 11px;cursor:pointer;text-transform:uppercase}' +
       '.cl-coll-chip.on{border-color:rgba(232,160,0,.6);background:rgba(232,160,0,.14);color:#e8a000}' +
-      '.cl-coll-grid{padding:16px 16px 20px;overflow-y:auto;display:grid;gap:14px}' +
+      '.cl-coll-chip .gem{width:8px;height:8px;border-radius:2px;transform:rotate(45deg);background:var(--gc,#888);box-shadow:0 0 6px var(--gc,transparent)}' +
+      '.cl-vsort{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:99px;color:#cfcfcf;font:inherit;font-size:.7rem;font-weight:800;padding:6px 10px;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none}' +
+      '.cl-vsort:focus{border-color:rgba(232,160,0,.5)}' +
+      // scroller + tier sections with sticky headers
+      '.cl-coll-grid{flex:1;overflow-y:auto;width:100%;max-width:1192px;margin:0 auto;padding:6px 16px 26px}' +
+      '@media(max-width:640px){.cl-coll-grid{padding-bottom:96px}}' +
+      '.cl-sec{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:9px;padding:12px 2px 9px;background:linear-gradient(180deg,#0c0c0e 72%,rgba(12,12,14,0));font-weight:800;font-size:.76rem;letter-spacing:.09em;text-transform:uppercase;color:var(--sc,#cfcfcf)}' +
+      '.cl-sec .gem{width:9px;height:9px;border-radius:2.5px;transform:rotate(45deg);background:var(--sc,#888);box-shadow:0 0 9px var(--sc,transparent);flex-shrink:0}' +
+      '.cl-sec .n{color:#777;font-family:ui-monospace,Menlo,monospace;font-size:.72rem;letter-spacing:0}' +
+      '.cl-sec .ln{flex:1;height:1px;background:linear-gradient(90deg,rgba(255,255,255,.12),transparent)}' +
+      '.cl-sec-grid{display:grid;gap:14px;margin-bottom:10px}' +
       // Protect card art from casual extraction (open-image-in-new-tab / long-press save /
       // drag out) on desktop and mobile. pointer-events:none also means the tap/tilt lands
       // on the card itself, not the <img>, so there is no image context menu at all.
       '.cl-coll-grid img,#clDetailCard img,#clrBody img,.cl-detail-card img{pointer-events:none;-webkit-user-drag:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}' +
-      '.cl-coll-empty{padding:40px 20px;text-align:center;color:#9a9a9a;font-size:.9rem;grid-column:1/-1}' +
+      '.cl-coll-empty{padding:36px 20px 46px;text-align:center;color:#9a9a9a;font-size:.9rem;grid-column:1/-1}' +
+      '.cl-empty-row{display:flex;justify-content:center;gap:12px;margin-bottom:18px}' +
+      '.cl-ghost{width:86px;aspect-ratio:5/7;border-radius:10px;border:1.5px dashed rgba(255,255,255,.14);background:repeating-linear-gradient(45deg,#131315,#131315 8px,#17171a 8px,#17171a 16px);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.16);font-size:1.5rem;font-weight:900}' +
+      '.cl-empty-row .cl-ghost:nth-child(2){transform:translateY(-7px) rotate(2deg)}' +
+      '.cl-empty-row .cl-ghost:nth-child(1){transform:rotate(-4deg)}' +
+      '.cl-empty-row .cl-ghost:nth-child(3){transform:rotate(4deg)}' +
+      // detail prev/next: browse the current filtered list without round-tripping
+      '.cl-det-nav{position:fixed;top:50%;transform:translateY(-50%);z-index:2;width:42px;height:42px;border-radius:999px;background:rgba(20,20,22,.72);border:1px solid rgba(255,255,255,.16);color:#ddd;font-size:1.25rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}' +
+      '.cl-det-nav:hover{color:#fff;border-color:rgba(232,160,0,.55)}' +
+      '.cl-det-nav.prev{left:14px}.cl-det-nav.next{right:14px}' +
+      '.cl-det-count{position:fixed;top:22px;left:18px;z-index:1;font-size:.7rem;font-weight:800;color:#9a9a9a;background:rgba(20,20,22,.6);border:1px solid rgba(255,255,255,.12);border-radius:99px;padding:5px 11px;font-family:ui-monospace,Menlo,monospace}' +
+      '@media(max-width:640px){.cl-det-nav{top:auto;bottom:calc(18px + env(safe-area-inset-bottom));transform:none}}' +
+      '@keyframes clDetSwap{from{opacity:.25;transform:scale(.965)}to{opacity:1;transform:none}}' +
+      '.cl-detail-box.swap{animation:clDetSwap .2s ease both}' +
       // debug panel
       '.cl-dbg{background:#141414;border:1px solid rgba(232,160,0,.3);border-radius:14px;width:100%;max-width:440px;max-height:86vh;overflow-y:auto;padding:16px;box-shadow:0 28px 80px rgba(0,0,0,.6);color:#e8e8e8;font-size:.82rem}' +
       '.cl-dbg h3{font-size:.95rem;font-weight:800;margin:0 0 4px;display:flex;justify-content:space-between;align-items:center}' +
@@ -1322,12 +1387,8 @@
       '.clr-back.cb-crimson .clr-mono,.cb-swatch.cb-crimson .clr-mono{color:#e88080}' +
       '.clr-back.cb-mastery,.cb-swatch.cb-mastery{background:conic-gradient(from 45deg,#0b0b0b,#3a2a10,#e8c24a,#3a2a10,#0b0b0b,#1a1206,#0b0b0b);border-color:rgba(232,194,74,.7);box-shadow:inset 0 0 0 3px rgba(232,194,74,.38),0 0 22px rgba(232,194,74,.32)}' +
       '.clr-back.cb-mastery .clr-mono,.cb-swatch.cb-mastery .clr-mono{color:#fff;text-shadow:0 2px 18px rgba(232,194,74,.85)}' +
-      '#clCardbacks{position:fixed;inset:0;z-index:255;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.78);backdrop-filter:blur(7px)}' +
-      '#clCardbacks.open{display:flex}' +
-      '.cb-box{background:#161616;border:1px solid rgba(232,160,0,.22);border-radius:16px;width:100%;max-width:460px;max-height:86vh;overflow-y:auto;padding:18px;box-shadow:0 28px 80px rgba(0,0,0,.55)}' +
-      '.cb-box h3{display:flex;justify-content:space-between;align-items:center;font-size:1.05rem;font-weight:800;margin:0 0 6px;color:#f5f5f5}.cb-box h3 span{color:#e8a000}' +
       '.cb-sub{font-size:.74rem;color:#9a9a9a;margin-bottom:14px}' +
-      '.cb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:12px}' +
+      '.cb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:12px}' +
       '.cb-item{cursor:pointer;text-align:center}.cb-item.locked{cursor:default}' +
       '.cb-swatch{position:relative;aspect-ratio:5/7;border-radius:11px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:repeating-linear-gradient(45deg,#101a30,#101a30 9px,#13203a 9px,#13203a 18px);border:1px solid rgba(232,160,0,.32);box-shadow:inset 0 0 0 3px rgba(232,160,0,.16)}' +
       '.cb-swatch .clr-mono{font-size:1.6rem}' +
@@ -1335,9 +1396,7 @@
       '.cb-item.locked .cb-swatch{filter:grayscale(.7) brightness(.5)}' +
       '.cb-item.locked .cb-swatch::after{content:attr(data-req);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:6px;color:#fff;font-size:.66rem;font-weight:800;background:rgba(0,0,0,.55)}' +
       '.cb-nm{font-size:.7rem;font-weight:700;color:#cfcfcf;margin-top:6px}.cb-item.locked .cb-nm{color:#777}' +
-      '#clAchv{position:fixed;inset:0;z-index:255;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.78);backdrop-filter:blur(7px)}' +
-      '#clAchv.open{display:flex}' +
-      '.ac-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:11px}' +
+      '.ac-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:11px}' +
       '.ac-item{position:relative;border-radius:13px;padding:13px 11px 12px;text-align:center;background:#1d1d1d;border:1px solid rgba(255,255,255,.06)}' +
       '.ac-item.got{background:linear-gradient(165deg,#2a2410,#161204);border-color:rgba(232,194,74,.4);box-shadow:0 0 0 1px rgba(232,194,74,.12),0 10px 26px rgba(0,0,0,.4)}' +
       '.ac-ic{font-size:1.9rem;line-height:1;filter:grayscale(1) opacity(.4)}' +
@@ -1373,7 +1432,7 @@
       // On Android that plus the card's paint-invalidating animations starves the raster
       // queue → black tile flashes over the card photo. Swap blurs for darker scrims.
       '@media(pointer:coarse){' +
-        '#clCollModal,#clCollDebug{backdrop-filter:none;background:rgba(0,0,0,.9)}' +
+        '#clCollDebug{backdrop-filter:none;background:rgba(0,0,0,.9)}' +
         '#clCollDetail{backdrop-filter:none;background:rgba(0,0,0,.94)}' +
         '#clCollReveal{backdrop-filter:none}' +
         // shine foil drift animates background-position (main-thread repaint per frame):
@@ -1392,34 +1451,34 @@
     document.head.appendChild(css);
   }
 
+  // The Vault: fullscreen stage — identity strip up top, labelled tabs (bottom bar
+  // on mobile via CSS), a Cards toolbar (search / rarity gems / sort), and the
+  // scrolling tier-sectioned grid. Card backs & trophies live as tabs, not modals.
+  var RING_C = 138.23;                                   // 2π·22 (level-ring circumference)
   function buildModal() {
     var m = document.getElementById('clCollModal');
     if (m) return m;
     m = document.createElement('div'); m.id = 'clCollModal'; m.setAttribute('role', 'dialog');
     m.innerHTML =
-      '<div class="cl-coll-box">' +
-        '<div class="cl-coll-hd">' +
-          '<div class="cl-coll-hd-top"><div class="cl-coll-title">Your <span>collection</span></div>' +
-            '<div class="cl-coll-hd-btns" id="clCollHdBtns"><span class="cl-coll-dust" id="clCollDust" title="Dust — earned from duplicates, spent to Shine cards">&#10024; 0</span><button class="cl-coll-x" aria-label="Close">&#10005;</button></div></div>' +
-          '<div class="cl-coll-lvl"><div class="cl-coll-lvl-badge" id="clCollLvl">1</div>' +
-            '<div class="cl-coll-xp"><div class="cl-coll-xp-l"><span id="clCollXpName">Level 1</span><span id="clCollXpNum"></span></div>' +
-            '<div class="cl-coll-xp-bar"><i id="clCollXpFill" style="width:0%"></i></div></div></div>' +
-          '<div class="cl-coll-counts" id="clCollChips"></div>' +
+      '<div class="cl-vault-hd">' +
+        '<div class="cl-coll-hd-top">' +
+          '<div><div class="cl-coll-title">Your <span>collection</span></div><div class="cl-coll-sub" id="clCollSub"></div></div>' +
+          '<div class="cl-coll-hd-btns" id="clCollHdBtns"><span class="cl-coll-dust" id="clCollDust" title="Dust — earned from duplicates, spent to Shine or Forge cards">&#10024; 0</span><button class="cl-coll-x" aria-label="Close">&#10005;</button></div>' +
         '</div>' +
-        '<div class="cl-coll-grid" id="clCollGrid"></div>' +
-      '</div>';
+        '<div class="cl-coll-lvl">' +
+          '<div class="cl-lvl-ring"><svg viewBox="0 0 52 52"><circle class="bg" cx="26" cy="26" r="22"></circle><circle class="fg" id="clCollRing" cx="26" cy="26" r="22" stroke-dasharray="' + RING_C + '" stroke-dashoffset="' + RING_C + '"></circle></svg><b id="clCollLvl">1</b></div>' +
+          '<div class="cl-coll-xp">' +
+            '<div class="cl-coll-xp-l"><span id="clCollXpName">Level 1</span><span class="cl-coll-next" id="clCollNext"></span></div>' +
+            '<div class="cl-coll-xp-bar"><i id="clCollXpFill" style="width:0%"></i></div>' +
+            '<div class="cl-coll-xp-l" style="margin-top:4px"><span id="clCollXpNum"></span></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="cl-vault-tabs" id="clVaultTabs"></div>' +
+        '<div class="cl-vault-tools" id="clCollChips"></div>' +
+      '</div>' +
+      '<div class="cl-coll-grid" id="clCollGrid"></div>';
     document.body.appendChild(m);
     m.querySelector('.cl-coll-x').addEventListener('click', close);
-    m.addEventListener('click', function (e) { if (e.target === m) close(); });
-    // trophy case + card-back picker
-    var acBtn = document.createElement('button');
-    acBtn.className = 'cl-coll-icon'; acBtn.innerHTML = '🏅'; acBtn.title = 'Trophy case';
-    acBtn.addEventListener('click', openAchievements);
-    document.getElementById('clCollHdBtns').insertBefore(acBtn, m.querySelector('.cl-coll-x'));
-    var cbBtn = document.createElement('button');
-    cbBtn.className = 'cl-coll-icon'; cbBtn.innerHTML = '🎴'; cbBtn.title = 'Card backs';
-    cbBtn.addEventListener('click', openCardbacks);
-    document.getElementById('clCollHdBtns').insertBefore(cbBtn, m.querySelector('.cl-coll-x'));
     // optional debug gear (only when enabled)
     if (debugEnabled()) {
       var gear = document.createElement('button');
@@ -1430,7 +1489,7 @@
     return m;
   }
 
-  var _filter = 'all', _setOpen = null;
+  var _filter = 'all', _setOpen = null, _tab = 'cards', _query = '', _sort = 'rarity';
   function isOpen() { var m = document.getElementById('clCollModal'); return m && m.classList.contains('open'); }
   function refreshOpen() { if (isOpen()) render(); if (document.getElementById('clCollDebug') && document.getElementById('clCollDebug').classList.contains('open')) renderDebug(); }
 
@@ -1493,57 +1552,166 @@
     } catch (_) { /* noop */ }
   }
 
+  var TABS = [
+    { k: 'cards', ic: '🃏', label: 'Cards' }, { k: 'sets', ic: '🧩', label: 'Sets' },
+    { k: 'backs', ic: '🎴', label: 'Backs' }, { k: 'trophies', ic: '🏅', label: 'Trophies' }
+  ];
+  // What leveling gives you next — the retention teaser beside the XP bar.
+  function nextUnlock(st) {
+    var lv = CARDBACKS.filter(function (cb) { return cb.level && cb.level > st.level; }).sort(function (a, b) { return a.level - b.level; })[0];
+    if (lv) return 'Next: ' + lv.name + ' back &middot; Lvl ' + lv.level;
+    var ac = CARDBACKS.filter(function (cb) { return cb.achv; })[0];
+    if (ac && achvCount() < ac.achv) return 'Next: ' + ac.name + ' back &middot; ' + ac.achv + ' trophies';
+    return 'All card backs unlocked';
+  }
+  // Tier sections get physically larger cards as rarity climbs (presence = status);
+  // min() keeps phones at 2 columns instead of blowing up to a single giant card.
+  function tierCols(theme, tier) {
+    var base = theme.gridCols || 'minmax(150px,1fr)';
+    if (activeThemeName() !== 'authentic') return base;
+    return tier === 'legendary' ? 'minmax(min(178px,42vw),1fr)' : tier === 'elite' ? 'minmax(min(162px,41vw),1fr)' : 'minmax(min(150px,40vw),1fr)';
+  }
+  function cardMatches(c, q) {
+    if ((c.name || '').toLowerCase().indexOf(q) >= 0) return true;
+    var m = c.i18n || {};
+    for (var l in m) if (Object.prototype.hasOwnProperty.call(m, l) && (m[l] || '').toLowerCase().indexOf(q) >= 0) return true;
+    return false;
+  }
+  var SORTS = [
+    { k: 'rarity', label: 'Rarity' }, { k: 'new', label: 'Newest' }, { k: 'name', label: 'A–Z' },
+    { k: 'no', label: 'Number' }, { k: 'copies', label: 'Copies' }
+  ];
+  function sortCards(cards) {
+    var by = {
+      rarity: function (a, b) { return (ORDER[a.rarity] - ORDER[b.rarity]) || (a.name || '').localeCompare(b.name || ''); },
+      'new': function (a, b) { return (b.first || '').localeCompare(a.first || '') || (b.no || 0) - (a.no || 0); },
+      name: function (a, b) { return locName(a).localeCompare(locName(b)); },
+      no: function (a, b) { return (a.no || 0) - (b.no || 0); },
+      copies: function (a, b) { return (b.n || 1) - (a.n || 1) || (ORDER[a.rarity] - ORDER[b.rarity]); }
+    };
+    return cards.sort(by[_sort] || by.rarity);
+  }
+
   function render() {
     stopHolo();
     _uiLang = currentLang();
     var st = stats();
     document.getElementById('clCollLvl').textContent = st.level;
     document.getElementById('clCollXpName').textContent = 'Level ' + st.level;
-    document.getElementById('clCollXpNum').textContent = st.xpInto + ' / ' + st.xpSpan + ' XP';
+    document.getElementById('clCollXpNum').textContent = st.xpInto + ' / ' + st.xpSpan + ' XP to level ' + (st.level + 1);
     document.getElementById('clCollXpFill').style.width = Math.max(3, Math.min(100, st.xpSpan ? (st.xpInto / st.xpSpan) * 100 : 0)) + '%';
+    var ring = document.getElementById('clCollRing');
+    if (ring) ring.style.strokeDashoffset = (RING_C * (1 - Math.min(1, st.xpSpan ? st.xpInto / st.xpSpan : 0))).toFixed(1);
+    var nx = document.getElementById('clCollNext'); if (nx) nx.innerHTML = nextUnlock(st);
+    var sub = document.getElementById('clCollSub');
+    if (sub) sub.textContent = st.count + ' cards · ' + st.films + ' films · ' + st.people + ' people';
     var du = document.getElementById('clCollDust'); if (du) du.innerHTML = '&#10024; ' + dustBalance();
 
-    var chips = [
-      { k: 'all', label: 'All ' + st.count }, { k: 'film', label: 'Films ' + st.films },
-      { k: 'person', label: 'People ' + st.people }, { k: 'sets', label: 'Sets' },
-      { k: 'legendary', label: 'Legendary ' + st.byRarity.legendary }, { k: 'elite', label: 'Elite ' + st.byRarity.elite }
-    ];
-    document.getElementById('clCollChips').innerHTML = chips.map(function (c) {
-      return '<button class="cl-coll-chip' + (_filter === c.k ? ' on' : '') + '" data-k="' + c.k + '">' + esc(c.label) + '</button>';
+    // nav tabs (Cards badge = unseen new cards)
+    document.getElementById('clVaultTabs').innerHTML = TABS.map(function (t) {
+      var bdg = (t.k === 'cards' && st.newCount) ? '<span class="bdg">' + st.newCount + '</span>' : '';
+      return '<button class="cl-vtab' + (_tab === t.k ? ' on' : '') + '" data-k="' + t.k + '"><span class="ic">' + t.ic + '</span><span>' + t.label + '</span>' + bdg + '</button>';
     }).join('');
-    Array.prototype.forEach.call(document.querySelectorAll('#clCollChips .cl-coll-chip'), function (b) {
-      b.addEventListener('click', function () { _filter = b.dataset.k; _setOpen = null; render(); });
+    Array.prototype.forEach.call(document.querySelectorAll('#clVaultTabs .cl-vtab'), function (b) {
+      b.addEventListener('click', function () {
+        if (_tab === b.dataset.k) return;
+        _tab = b.dataset.k; _setOpen = null;
+        try { if (window.Sfx) window.Sfx.tap(); } catch (_) { /* noop */ }
+        render();
+      });
     });
 
-    if (_filter === 'sets') { renderSets(); return; }
+    var tools = document.getElementById('clCollChips');
+    var grid = document.getElementById('clCollGrid');
+    if (_tab === 'sets') { tools.innerHTML = ''; renderSets(); return; }
+    if (_tab === 'backs') {
+      tools.innerHTML = '';
+      grid.style.display = 'block';
+      grid.innerHTML = '<div class="cb-sub" style="margin:8px 2px 12px">Unlock card backs by leveling up — or earn Mastery in the trophy case. Tap to equip.</div><div class="cb-grid" id="cbGrid"></div>';
+      renderCardbacks(); return;
+    }
+    if (_tab === 'trophies') {
+      tools.innerHTML = '';
+      grid.style.display = 'block';
+      grid.innerHTML = '<div class="cb-sub" id="acSub" style="margin:8px 2px 12px"></div><div class="ac-grid" id="acGrid"></div>';
+      renderAchv(); return;
+    }
 
+    // ── Cards tab: toolbar (search / rarity gems / sort) + tier-sectioned grid ──
+    var chips = [
+      { k: 'all', label: 'All' }, { k: 'film', label: 'Films' }, { k: 'person', label: 'People' },
+      { k: 'legendary', gem: RARITY.legendary.ring, label: st.byRarity.legendary }, { k: 'elite', gem: RARITY.elite.ring, label: st.byRarity.elite },
+      { k: 'rare', gem: RARITY.rare.ring, label: st.byRarity.rare }, { k: 'common', gem: '#9a9a9a', label: st.byRarity.common }
+    ];
+    tools.innerHTML =
+      '<span class="cl-vsearch"><input id="clVaultQ" type="search" placeholder="Search cards…" autocomplete="off" value="' + esc(_query) + '"></span>' +
+      '<div class="cl-vchips">' +
+        chips.map(function (c) {
+          return '<button class="cl-coll-chip' + (_filter === c.k ? ' on' : '') + '" data-k="' + c.k + '"' + (c.gem ? ' style="--gc:' + c.gem + '"' : '') + '>' + (c.gem ? '<span class="gem"></span>' : '') + c.label + '</button>';
+        }).join('') +
+        '<select class="cl-vsort" id="clVaultSort" title="Sort">' + SORTS.map(function (s) { return '<option value="' + s.k + '"' + (_sort === s.k ? ' selected' : '') + '>' + s.label + '</option>'; }).join('') + '</select>' +
+      '</div>';
+    Array.prototype.forEach.call(tools.querySelectorAll('.cl-coll-chip'), function (b) {
+      b.addEventListener('click', function () { _filter = _filter === b.dataset.k ? 'all' : b.dataset.k; render(); });
+    });
+    var q = document.getElementById('clVaultQ'), qT = 0;
+    q.addEventListener('input', function () { clearTimeout(qT); qT = setTimeout(function () { _query = q.value.trim(); renderCardsGrid(); }, 140); });
+    document.getElementById('clVaultSort').addEventListener('change', function (e) { _sort = e.target.value; renderCardsGrid(); });
+    renderCardsGrid();
+  }
+
+  // The grid alone re-renders on search/sort so the search input keeps focus.
+  function renderCardsGrid() {
+    stopHolo();
+    var theme = activeTheme();
+    injectThemeCss(theme);
+    var grid = document.getElementById('clCollGrid');
+    var query = _query.toLowerCase();
     var cards = allCards().filter(function (c) {
+      if (query && !cardMatches(c, query)) return false;
       if (_filter === 'all') return true;
       if (_filter === 'film') return c.type !== 'person';
       if (_filter === 'person') return c.type === 'person';
       return c.rarity === _filter;
-    }).sort(function (a, b) { return (ORDER[a.rarity] - ORDER[b.rarity]) || (a.name || '').localeCompare(b.name || ''); });
-
-    var theme = activeTheme();
-    injectThemeCss(theme);
-    var grid = document.getElementById('clCollGrid');
-    grid.style.gridTemplateColumns = 'repeat(auto-fill,' + (theme.gridCols || 'minmax(110px,1fr)') + ')';
+    });
+    sortCards(cards);
+    grid.style.display = 'block';
+    grid.style.gridTemplateColumns = '';
     if (!cards.length) {
-      grid.style.display = 'grid';
-      grid.innerHTML = '<div class="cl-coll-empty">No cards yet — play a game to start collecting films, shows and people.</div>';
+      grid.innerHTML = '<div class="cl-coll-empty"><div class="cl-empty-row"><div class="cl-ghost">?</div><div class="cl-ghost">?</div><div class="cl-ghost">?</div></div>' +
+        (query ? 'No cards match &ldquo;' + esc(_query) + '&rdquo;.' : 'No cards yet — win any daily game to pull your first card.') + '</div>';
       return;
     }
-    grid.style.display = 'grid';
-    grid.innerHTML = cards.map(function (c, i) { return theme.card(locCard(c), CTX, i); }).join('');
+    // Sections: rarity sort groups by tier (with unseen cards pinned on top);
+    // any other sort/search is one flat stream labelled by what you asked for.
+    var secs = [];
+    if (_sort === 'rarity' && !query) {
+      var news = cards.filter(function (c) { return c.isNew; });
+      if (news.length >= 2) secs.push({ id: 'new', name: 'Just collected', color: '#7fd49a', cards: news });
+      TIERS.slice().reverse().forEach(function (t) {
+        var tc = cards.filter(function (c) { return c.rarity === t && !(news.length >= 2 && c.isNew); });
+        if (tc.length) secs.push({ id: t, name: RARITY[t].label, color: t === 'common' ? '#9a9a9a' : RARITY[t].ring, cards: tc });
+      });
+    } else {
+      var lbl = query ? 'Results' : (SORTS.filter(function (s) { return s.k === _sort; })[0] || {}).label || 'Cards';
+      secs.push({ id: 'flat', name: lbl, color: '#cfcfcf', cards: cards });
+    }
+    var flat = [], gi = 0;
+    grid.innerHTML = secs.map(function (sec) {
+      var cells = sec.cards.map(function (c) { flat.push(c); return theme.card(locCard(c), CTX, gi++); }).join('');
+      return '<div class="cl-sec" style="--sc:' + sec.color + '"><span class="gem"></span>' + esc(sec.name) + '<span class="n">' + sec.cards.length + '</span><span class="ln"></span></div>' +
+        '<div class="cl-sec-grid" style="grid-template-columns:repeat(auto-fill,' + tierCols(theme, sec.id) + ')">' + cells + '</div>';
+    }).join('');
     try { if (theme.mount) theme.mount(grid); } catch (_) { /* noop */ }
-    Array.prototype.forEach.call(grid.children, function (el, idx) {
+    var els = grid.querySelectorAll('.auth,.ctc,.clc-card');
+    Array.prototype.forEach.call(els, function (el, idx) {
       el.style.cursor = 'pointer';
-      el.addEventListener('click', function () { openDetail(cards[idx], el); });
+      el.addEventListener('click', function () { openDetail(flat[idx], el, { list: flat, i: idx }); });
     });
     scrollReveal(grid);
     mobileScrollHolo(grid);
-    localizeCards(cards, grid.children, _uiLang);
-    normalizePosters(cards, grid.children);
+    localizeCards(flat, els, _uiLang);
+    normalizePosters(flat, els);
   }
 
   // Cards past the first screen start hidden and rise as they scroll into view —
@@ -1552,7 +1720,7 @@
   function scrollReveal(grid) {
     try {
       if (reducedMotion() || !window.IntersectionObserver) return;
-      var kids = grid.children; if (kids.length <= 8) return;
+      var kids = grid.querySelectorAll('.auth,.ctc,.clc-card'); if (kids.length <= 8) return;
       Array.prototype.forEach.call(kids, function (el, i) { if (i >= 8) el.classList.add('cl-pre'); });
       var io = new window.IntersectionObserver(function (entries) {
         entries.forEach(function (en) {
@@ -1608,9 +1776,9 @@
       try { if (theme.mount) theme.mount(grid); } catch (_) { /* noop */ }
       var oi = 0, ownedEls = [];
       Array.prototype.forEach.call(grid.querySelectorAll('.auth,.ctc,.clc-card'), function (el) {
-        var card = owned[oi++]; if (!card) return;
+        var card = owned[oi], idx = oi; oi++; if (!card) return;
         ownedEls.push(el);
-        el.style.cursor = 'pointer'; el.addEventListener('click', function () { openDetail(card, el); });
+        el.style.cursor = 'pointer'; el.addEventListener('click', function () { openDetail(card, el, { list: owned, i: idx }); });
       });
       localizeCards(owned, ownedEls, _uiLang);
       normalizePosters(owned, ownedEls);
@@ -1632,9 +1800,11 @@
     });
   }
 
-  function openGallery() {
+  function openGallery(tab) {
     injectShell(); buildModal(); injectThemeCss(activeTheme());
-    _filter = 'all'; render();
+    _tab = (typeof tab === 'string' && tab) ? tab : 'cards';
+    _filter = 'all'; _query = ''; _setOpen = null;
+    render();
     document.getElementById('clCollModal').classList.add('open');
     try { if (window.Track) window.Track('collection_open', stats()); } catch (_) { /* noop */ }
     setTimeout(markSeen, 600);
@@ -1707,12 +1877,32 @@
     injectShell();
     d = document.createElement('div'); d.id = 'clCollDetail'; d.setAttribute('role', 'dialog');
     d.innerHTML = '<button class="cl-detail-x" aria-label="Close">&#10005;</button>' +
+      '<span class="cl-det-count" id="clDetCount" style="display:none"></span>' +
+      '<button class="cl-det-nav prev" id="clDetPrev" aria-label="Previous card" style="display:none">&#8249;</button>' +
+      '<button class="cl-det-nav next" id="clDetNext" aria-label="Next card" style="display:none">&#8250;</button>' +
       '<div class="cl-detail-box"><div class="cl-detail-stage"><div class="cl-detail-card" id="clDetailCard"></div></div>' +
       '<div class="cl-di" id="clDetailInfo"></div></div>';
     document.body.appendChild(d);
     d.querySelector('.cl-detail-x').addEventListener('click', closeDetail);
+    d.querySelector('#clDetPrev').addEventListener('click', function (e) { e.stopPropagation(); navDetail(-1); });
+    d.querySelector('#clDetNext').addEventListener('click', function (e) { e.stopPropagation(); navDetail(1); });
     d.addEventListener('click', function (e) { if (e.target === d) closeDetail(); });
     return d;
+  }
+  // Browse the current filtered list from inside the detail view (wraps around).
+  var _detCtx = null, _detKeysOn = false;
+  function navDetail(dir) {
+    if (!_detCtx || !_detCtx.list || _detCtx.list.length < 2) return;
+    _detCtx.i = (_detCtx.i + dir + _detCtx.list.length) % _detCtx.list.length;
+    try { if (window.Sfx) window.Sfx.tap(); } catch (_) { /* noop */ }
+    var box = document.querySelector('#clCollDetail .cl-detail-box');
+    if (box) { box.classList.remove('swap'); void box.offsetWidth; box.classList.add('swap'); }
+    openDetail(_detCtx.list[_detCtx.i], null, _detCtx);
+  }
+  function _detKeys(e) {
+    if (e.key === 'Escape') closeDetail();
+    else if (e.key === 'ArrowRight') navDetail(1);
+    else if (e.key === 'ArrowLeft') navDetail(-1);
   }
   function detailInfo(c) {
     var rar = RARITY[c.rarity] || RARITY.common;
@@ -1736,8 +1926,9 @@
       '<button class="cl-share-btn" id="clShareBtn">&#8599; Share card</button>';
   }
   var DETAIL_SEL = '#clDetailCard .auth-card,#clDetailCard .ctc-inner,#clDetailCard .clc-card';
-  function openDetail(c, srcEl) {
+  function openDetail(c, srcEl, ctx) {
     if (!c) return;
+    if (ctx) _detCtx = ctx;
     function fill() {
       buildDetail();
       _uiLang = currentLang();
@@ -1768,6 +1959,12 @@
       var shb = document.getElementById('clShareBtn');
       if (shb) shb.addEventListener('click', function () { shareCard(c, shb); });
       document.getElementById('clCollDetail').classList.add('open');
+      // prev/next browsing within the list this card was opened from
+      var hasNav = !!(_detCtx && _detCtx.list && _detCtx.list.length > 1);
+      ['clDetPrev', 'clDetNext'].forEach(function (id) { var b = document.getElementById(id); if (b) b.style.display = hasNav ? '' : 'none'; });
+      var cnt = document.getElementById('clDetCount');
+      if (cnt) { cnt.style.display = hasNav ? '' : 'none'; if (hasNav) cnt.textContent = (_detCtx.i + 1) + ' / ' + _detCtx.list.length; }
+      if (!_detKeysOn) { document.addEventListener('keydown', _detKeys); _detKeysOn = true; }
       stopGyro();
       _gyroOff = gyroMount(holder);      // tilt the phone and the card leans + holo shifts
       dragTiltMount(holder);             // touch: drag a finger on the card to tilt it
@@ -1794,7 +1991,12 @@
     }
     fill();
   }
-  function closeDetail() { stopGyro(); var d = document.getElementById('clCollDetail'); if (d) d.classList.remove('open'); }
+  function closeDetail() {
+    stopGyro();
+    if (_detKeysOn) { document.removeEventListener('keydown', _detKeys); _detKeysOn = false; }
+    _detCtx = null;
+    var d = document.getElementById('clCollDetail'); if (d) d.classList.remove('open');
+  }
 
   // Share a single card: opens a /s link that unfurls to a dynamic OG image of the
   // card (poster + rarity + number). Uses the native share sheet on mobile, and
@@ -1939,19 +2141,7 @@
     } catch (_) { /* noop */ }
   }
 
-  // ── Card-back picker ──
-  function buildCardbacks() {
-    var d = document.getElementById('clCardbacks');
-    if (d) return d;
-    injectShell();
-    d = document.createElement('div'); d.id = 'clCardbacks'; d.setAttribute('role', 'dialog');
-    d.innerHTML = '<div class="cb-box"><h3>Card <span>backs</span><button class="cl-coll-x" id="cbClose" style="font-size:1.2rem">&#10005;</button></h3>' +
-      '<div class="cb-sub">Unlock card backs by leveling up — or earn Mastery in the trophy case. Tap to equip.</div><div class="cb-grid" id="cbGrid"></div></div>';
-    document.body.appendChild(d);
-    d.querySelector('#cbClose').addEventListener('click', function () { d.classList.remove('open'); });
-    d.addEventListener('click', function (e) { if (e.target === d) d.classList.remove('open'); });
-    return d;
-  }
+  // ── Card-back picker (renders into the Vault's Backs tab) ──
   function renderCardbacks() {
     var grid = document.getElementById('cbGrid'); if (!grid) return;
     grid.innerHTML = cardbacksState().map(function (cb) {
@@ -1967,21 +2157,9 @@
       });
     });
   }
-  function openCardbacks() { buildCardbacks(); renderCardbacks(); document.getElementById('clCardbacks').classList.add('open'); }
+  function openCardbacks() { _tab = 'backs'; if (isOpen()) render(); else openGallery('backs'); }
 
-  // ── Achievements trophy case ──
-  function buildAchv() {
-    var d = document.getElementById('clAchv');
-    if (d) return d;
-    injectShell();
-    d = document.createElement('div'); d.id = 'clAchv'; d.setAttribute('role', 'dialog');
-    d.innerHTML = '<div class="cb-box"><h3>Trophy <span>case</span><button class="cl-coll-x" id="acClose" style="font-size:1.2rem">&#10005;</button></h3>' +
-      '<div class="cb-sub" id="acSub"></div><div class="ac-grid" id="acGrid"></div></div>';
-    document.body.appendChild(d);
-    d.querySelector('#acClose').addEventListener('click', function () { d.classList.remove('open'); });
-    d.addEventListener('click', function (e) { if (e.target === d) d.classList.remove('open'); });
-    return d;
-  }
+  // ── Achievements trophy case (renders into the Vault's Trophies tab) ──
   function renderAchv() {
     var grid = document.getElementById('acGrid'); if (!grid) return;
     var st = achievementsState(), got = st.filter(function (a) { return a.unlocked; }).length;
@@ -1993,7 +2171,7 @@
         '<div class="ac-nm">' + esc(a.name) + '</div><div class="ac-ds">' + esc(a.desc) + '</div>' + bar + '</div>';
     }).join('');
   }
-  function openAchievements() { syncAchievements(); buildAchv(); renderAchv(); document.getElementById('clAchv').classList.add('open'); }
+  function openAchievements() { syncAchievements(); _tab = 'trophies'; if (isOpen()) render(); else openGallery('trophies'); }
 
   // expose + init
   window.Collection = {
