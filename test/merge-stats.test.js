@@ -91,8 +91,8 @@ test('mergeCollection unions cards and never loses one', () => {
   assert.strictEqual(out.cards['movie:2'].shine, 1);      // any shine kept
   assert.strictEqual(out.cards['movie:2'].first, '2026-06-19'); // earliest collected
   assert.strictEqual(out.cards['movie:2'].no, 2);         // lowest collection number
-  // XP re-derived from the union: legendary(100) + rare(25 + 1 dupe*3) + elite(50) = 178
-  assert.strictEqual(out.xp, 178);
+  // XP re-derived from the union: legendary(100) + rare(25 + 1 dupe*5) + elite(50) = 180
+  assert.strictEqual(out.xp, 180);
   assert.strictEqual(out.dust, 45);                       // higher balance
   assert.strictEqual(out.seq, 5);                         // max sequence
 });
@@ -104,6 +104,31 @@ test('mergeCollection is order-independent and handles nulls', () => {
   assert.strictEqual(M.mergeCollection(a, null), a);
   assert.strictEqual(M.mergeCollection(null, b), b);
   assert.strictEqual(M.mergeCollection(null, null), null);
+});
+
+test('mergeCollection carries claimed sets, achievements and pity clocks', () => {
+  const a = { v: 1, cards: {},
+    setsDone: { avengers: '2026-06-01', icons: '2026-06-10' },
+    achievements: { first: '2026-05-01' },
+    pityE: '2026-06-20', pityL: '2026-06-01' };
+  const b = { v: 1, cards: {},
+    setsDone: { avengers: '2026-06-05' },
+    achievements: { first: '2026-04-20', rare1: '2026-05-02' },
+    pityE: '2026-06-25', pityL: '2026-05-15' };
+  const out = M.mergeCollection(a, b);
+  assert.deepStrictEqual(out.setsDone, { avengers: '2026-06-01', icons: '2026-06-10' }); // union, earliest claim
+  assert.deepStrictEqual(out.achievements, { first: '2026-04-20', rare1: '2026-05-02' }); // union, earliest unlock
+  assert.strictEqual(out.pityE, '2026-06-25');  // latest elite resets the clock
+  assert.strictEqual(out.pityL, '2026-06-01');
+  assert.deepStrictEqual(out, M.mergeCollection(b, a)); // order-independent
+});
+
+test('mergeCollection omits progress records when neither side has them', () => {
+  const out = M.mergeCollection({ v: 1, cards: {} }, { v: 1, cards: {} });
+  assert.strictEqual(out.setsDone, undefined);
+  assert.strictEqual(out.achievements, undefined);
+  assert.strictEqual(out.pityE, undefined);
+  assert.strictEqual(out.pityL, undefined);
 });
 
 test('mergeCollection unions the per-language title cache (i18n)', () => {

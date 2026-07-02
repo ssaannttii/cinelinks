@@ -22,7 +22,9 @@
   var THEME_KEY = 'cl_cardTheme';
   var SCHEMA = 1;
   var IMG = 'https://image.tmdb.org/t/p/w342';
-  var XP = { common: 10, rare: 25, elite: 50, legendary: 100, dupe: 3 };
+  // dupe = 5 (half a common): with a mature collection most daily cards are dupes,
+  // so this is the late-game levelling pace — 3 made levels crawl to a halt.
+  var XP = { common: 10, rare: 25, elite: 50, legendary: 100, dupe: 5 };
   // Duplicates economy: a dupe yields "dust" (by the dupe's rarity); dust is spent
   // to "Shine" an owned card — a permanent holographic foil. Purely cosmetic: it
   // never changes a card's rarity, number, or stats, so the rarity economy stays honest.
@@ -316,6 +318,13 @@
   function levelFromXp(xp) { return Math.floor(Math.sqrt(Math.max(0, xp) / 50)) + 1; }
 
   // ─────────────────────────────── engine ────────────────────────────────
+  // Pity floors (deterministic, no RNG): a prize/goal card (anything a game marks
+  // with rarityFloor) is forced up to Elite after 7 straight days without seeing an
+  // elite+, and to Legendary after 21 days without one — a dry streak self-corrects
+  // instead of souring. Any NEW elite/legendary from any source resets the clocks
+  // (dupes don't: there's no reveal moment). Clocks start at the first prize.
+  var PITY_ELITE_DAYS = 7, PITY_LEG_DAYS = 21;
+  function daysBetween(a, b) { var ms = new Date(b + 'T00:00:00') - new Date(a + 'T00:00:00'); return isNaN(ms) ? 0 : Math.round(ms / 864e5); }
   function add(items) {
     if (!Array.isArray(items) || !items.length) return [];
     var s = load(); if (!s || !s.cards) s = blank();
@@ -330,6 +339,13 @@
         s.dust = (s.dust || 0) + gd; _pendingDust += gd;
       } else {
         var rar = rarityOf(it);
+        if (it.rarityFloor) {                                  // prize card → pity applies
+          if (!s.pityE) s.pityE = d; if (!s.pityL) s.pityL = d;
+          if (daysBetween(s.pityL, d) >= PITY_LEG_DAYS) rar = 'legendary';
+          else if (daysBetween(s.pityE, d) >= PITY_ELITE_DAYS && TIERS.indexOf(rar) < 2) rar = 'elite';
+        }
+        if (rar === 'legendary') { s.pityL = d; s.pityE = d; }
+        else if (rar === 'elite') s.pityE = d;
         s.cards[k] = { id: it.id, type: it.type, name: it.name || '', img: it.img || '', rarity: rar, n: 1, first: d, no: (s.seq = (s.seq || 0) + 1), isNew: 1, i18n: (function () { var o = {}; o[currentLang()] = it.name || ''; return o; })() };
         s.xp += XP[rar] || 10;
         added.push(s.cards[k]);
@@ -425,22 +441,55 @@
   // Two kinds: curated (explicit TMDB members → silhouette slots for the missing)
   // and milestone (computed from your stats). Member ids are real TMDB ids so a
   // set fills as you win those titles in the daily games.
+  // Every curated member is verified to appear in the daily-goal pool (daily-challenges.js)
+  // or the shared clue pool (cineclue-pool.js), so each set genuinely fills from play —
+  // a set with an unobtainable member is pure frustration. (That's why Avatar: Fire and
+  // Ash was dropped from Pandora: it's in no pool.) Person/TV sets draw on the most
+  // frequent daily endpoints, so they complete within a few weeks of dailies.
   var SETS = [
     { id: 'avengers', name: 'Marvel Blockbusters', members: [
       { id: 24428, type: 'movie', name: 'The Avengers' }, { id: 299536, type: 'movie', name: 'Avengers: Infinity War' },
       { id: 299534, type: 'movie', name: 'Avengers: Endgame' }, { id: 634649, type: 'movie', name: 'Spider-Man: No Way Home' }
     ] },
     { id: 'pandora', name: 'Pandora · Avatar', members: [
-      { id: 19995, type: 'movie', name: 'Avatar' }, { id: 76600, type: 'movie', name: 'Avatar: The Way of Water' }, { id: 83533, type: 'movie', name: 'Avatar: Fire and Ash' }
+      { id: 19995, type: 'movie', name: 'Avatar' }, { id: 76600, type: 'movie', name: 'Avatar: The Way of Water' }
     ] },
     { id: 'titans', name: 'Box-Office Titans', members: [
       { id: 597, type: 'movie', name: 'Titanic' }, { id: 19995, type: 'movie', name: 'Avatar' },
       { id: 299534, type: 'movie', name: 'Avengers: Endgame' }, { id: 361743, type: 'movie', name: 'Top Gun: Maverick' }
     ] },
+    { id: 'nolan', name: 'Nolan Mind-Benders', members: [
+      { id: 27205, type: 'movie', name: 'Inception' }, { id: 157336, type: 'movie', name: 'Interstellar' },
+      { id: 155, type: 'movie', name: 'The Dark Knight' }, { id: 49026, type: 'movie', name: 'The Dark Knight Rises' }
+    ] },
+    { id: 'middleearth', name: 'Middle-earth', members: [
+      { id: 120, type: 'movie', name: 'The Fellowship of the Ring' }, { id: 121, type: 'movie', name: 'The Two Towers' },
+      { id: 122, type: 'movie', name: 'The Return of the King' }
+    ] },
+    { id: 'mcucast', name: 'Avengers Assembled', members: [
+      { id: 3223, type: 'person', name: 'Robert Downey Jr.' }, { id: 16828, type: 'person', name: 'Chris Evans' },
+      { id: 1245, type: 'person', name: 'Scarlett Johansson' }, { id: 103, type: 'person', name: 'Mark Ruffalo' },
+      { id: 74568, type: 'person', name: 'Chris Hemsworth' }
+    ] },
+    { id: 'icons', name: 'Hollywood Icons', members: [
+      { id: 31, type: 'person', name: 'Tom Hanks' }, { id: 3, type: 'person', name: 'Harrison Ford' },
+      { id: 380, type: 'person', name: 'Robert De Niro' }, { id: 1158, type: 'person', name: 'Al Pacino' },
+      { id: 192, type: 'person', name: 'Morgan Freeman' }
+    ] },
+    { id: 'leading', name: 'Leading Ladies', members: [
+      { id: 524, type: 'person', name: 'Natalie Portman' }, { id: 1204, type: 'person', name: 'Julia Roberts' },
+      { id: 2227, type: 'person', name: 'Nicole Kidman' }, { id: 54693, type: 'person', name: 'Emma Stone' }
+    ] },
+    { id: 'prestigetv', name: 'Prestige TV', members: [
+      { id: 1396, type: 'tv', name: 'Breaking Bad' }, { id: 1438, type: 'tv', name: 'The Wire' },
+      { id: 76331, type: 'tv', name: 'Succession' }, { id: 1104, type: 'tv', name: 'Mad Men' }
+    ] },
     { id: 'cinephile', name: 'Cinephile', goal: { kind: 'films', target: 25 } },
     { id: 'starstruck', name: 'Star-studded', goal: { kind: 'people', target: 15 } },
     { id: 'spectrum', name: 'Full Spectrum', goal: { kind: 'rarityAll' } },
-    { id: 'legends', name: 'Legend Hunter', goal: { kind: 'rarity', rarity: 'legendary', target: 5 } }
+    { id: 'legends', name: 'Legend Hunter', goal: { kind: 'rarity', rarity: 'legendary', target: 5 } },
+    { id: 'elite10', name: 'Elite Circle', goal: { kind: 'rarity', rarity: 'elite', target: 10 } },
+    { id: 'vault60', name: 'Serious Collector', goal: { kind: 'count', target: 60 } }
   ];
 
   function setsStateFrom(s) {
@@ -457,14 +506,17 @@
           var card = cards[m.type + ':' + m.id] || null; if (card) owned++;
           return { id: m.id, type: m.type, name: m.name, owned: !!card, card: card };
         });
-        return { id: set.id, name: set.name, kind: 'curated', owned: owned, total: set.members.length, pct: owned / set.members.length, complete: owned >= set.members.length, members: members, bonus: 50 * set.members.length };
+        // 100 XP per member: completing a 4-set ≈ two fresh legendaries — worth chasing
+        // even at high level (50/member made set completion feel like pocket change).
+        return { id: set.id, name: set.name, kind: 'curated', owned: owned, total: set.members.length, pct: owned / set.members.length, complete: owned >= set.members.length, members: members, bonus: 100 * set.members.length };
       }
       var g = set.goal, cur = 0, tot = g.target || 1;
       if (g.kind === 'films') cur = films;
       else if (g.kind === 'people') cur = people;
+      else if (g.kind === 'count') cur = arr.length;
       else if (g.kind === 'rarity') cur = byR[g.rarity] || 0;
       else if (g.kind === 'rarityAll') { cur = ['common', 'rare', 'elite', 'legendary'].filter(function (r) { return byR[r] > 0; }).length; tot = 4; }
-      return { id: set.id, name: set.name, kind: 'milestone', goal: g, owned: Math.min(cur, tot), total: tot, pct: Math.min(1, cur / tot), complete: cur >= tot, bonus: 75 };
+      return { id: set.id, name: set.name, kind: 'milestone', goal: g, owned: Math.min(cur, tot), total: tot, pct: Math.min(1, cur / tot), complete: cur >= tot, bonus: 150 };
     });
   }
   function setsState() { return setsStateFrom(load() || blank()); }
@@ -474,10 +526,10 @@
   var CARDBACKS = [
     { id: 'classic', name: 'Classic', level: 1, css: '' },
     { id: 'gold', name: 'Gold Foil', level: 3, css: 'cb-gold' },
-    { id: 'holo', name: 'Holographic', level: 6, css: 'cb-holo' },
+    { id: 'holo', name: 'Holographic', level: 5, css: 'cb-holo' },
     { id: 'aurora', name: 'Aurora', level: 8, css: 'cb-aurora' },
     { id: 'midnight', name: 'Midnight', level: 10, css: 'cb-midnight' },
-    { id: 'crimson', name: 'Crimson', level: 15, css: 'cb-crimson' },
+    { id: 'crimson', name: 'Crimson', level: 13, css: 'cb-crimson' },
     { id: 'mastery', name: 'Mastery', achv: 12, css: 'cb-mastery' }
   ];
   // Met trophy count (matches the trophy case). Safe from recursion because achievement
@@ -524,6 +576,7 @@
     { id: 'coll25', icon: '📚', name: 'Collector', desc: 'Collect 25 cards', goal: function (c) { return [c.st.count, 25]; } },
     { id: 'coll50', icon: '🗃️', name: 'Curator', desc: 'Collect 50 cards', goal: function (c) { return [c.st.count, 50]; } },
     { id: 'coll100', icon: '🏛️', name: 'Archivist', desc: 'Collect 100 cards', goal: function (c) { return [c.st.count, 100]; } },
+    { id: 'coll200', icon: '🏰', name: 'Vault Keeper', desc: 'Collect 200 cards', goal: function (c) { return [c.st.count, 200]; } },
     { id: 'people10', icon: '⭐', name: 'Star Power', desc: 'Collect 10 people', goal: function (c) { return [c.st.people, 10]; } },
     { id: 'films25', icon: '🍿', name: 'Cinephile', desc: 'Collect 25 films', goal: function (c) { return [c.st.films, 25]; } },
     { id: 'rare1', icon: '🔷', name: 'Rare Find', desc: 'Own a Rare card', goal: function (c) { return [c.st.byRarity.rare, 1]; } },
@@ -535,7 +588,8 @@
     { id: 'set3', icon: '🏆', name: 'Completionist', desc: 'Complete 3 sets', goal: function (c) { return [c.sd, 3]; } },
     { id: 'lvl5', icon: '📈', name: 'Rising Star', desc: 'Reach level 5', goal: function (c) { return [c.st.level, 5]; } },
     { id: 'lvl10', icon: '🎖️', name: 'Veteran', desc: 'Reach level 10', goal: function (c) { return [c.st.level, 10]; } },
-    { id: 'style', icon: '🎴', name: 'Style Icon', desc: 'Equip a non-default card back', goal: function (c) { return [c.cb !== 'classic' ? 1 : 0, 1]; } }
+    { id: 'style', icon: '🎴', name: 'Style Icon', desc: 'Equip a non-default card back', goal: function (c) { return [c.cb !== 'classic' ? 1 : 0, 1]; } },
+    { id: 'shine1', icon: '✨', name: 'Polished', desc: 'Shine a card with dust', goal: function (c) { return [c.sh, 1]; } }
   ];
   // Raw equipped card-back id (no unlock validation) — used for the 'style' achievement so
   // achievement evaluation never calls activeCardbackId()→cbUnlocked()→achvCount() (would recurse).
@@ -543,7 +597,8 @@
   function rawCardbackId() { var id = null; try { id = localStorage.getItem('cl_cardback'); } catch (_) {} return id || 'classic'; }
   function achCtx() {
     var st = stats(), s = load() || blank();
-    return { st: st, sd: s.setsDone ? Object.keys(s.setsDone).length : 0, cb: rawCardbackId() };
+    var sh = 0; Object.keys(s.cards || {}).forEach(function (k) { if (s.cards[k].shine) sh++; });
+    return { st: st, sd: s.setsDone ? Object.keys(s.setsDone).length : 0, cb: rawCardbackId(), sh: sh };
   }
   function achMet(a, ctx) { var g = a.goal(ctx); return g[0] >= g[1]; }
   // Record newly-satisfied achievements; returns the list newly unlocked this call.

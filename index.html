@@ -3340,10 +3340,19 @@ const game = window.game = {
     if (!replay) {
       try {
         if (window.Collection && Array.isArray(this.path)) {
-          const _tight = this.clicks > 0 && this.clicks <= 4;        // a sharp solve earns rarer cards
+          // The goal card's rarity bump is par-relative: solve AT or UNDER par → +2
+          // (rare→legendary — the flagship game can finally award the top tier, like a
+          // first-guess win does in CineClue/Frame/Cast), within 2 of par → +1.
+          // Falls back to the old "≤4 clicks" rule when par data is unavailable.
+          let _bump = this.clicks > 0 && this.clicks <= 4 ? 1 : 0;
+          try {
+            const _pd = await loadParData();
+            const _par = _pd && _pd[this.start.type + ':' + this.start.id + '>' + this.end.type + ':' + this.end.id];
+            if (Number.isFinite(_par) && _par > 0 && this.clicks > 0) _bump = this.clicks <= _par ? 2 : this.clicks <= _par + 2 ? 1 : 0;
+          } catch (_) {}
           _collNewCards = Collection.add(this.path.map(n => {
             const it = { id: n.id, type: n.type, name: n.name, img: n.img };
-            if (this.end && n.id === this.end.id && n.type === this.end.type) { it.rarityFloor = 'rare'; if (_tight) it.bump = 1; } // the goal card is the prize
+            if (this.end && n.id === this.end.id && n.type === this.end.type) { it.rarityFloor = 'rare'; if (_bump) it.bump = _bump; } // the goal card is the prize
             return it;
           }));
         }
