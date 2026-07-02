@@ -123,12 +123,25 @@ test('mergeCollection carries claimed sets, achievements and pity clocks', () =>
   assert.deepStrictEqual(out, M.mergeCollection(b, a)); // order-independent
 });
 
+test('mergeCollection keeps the level-reward ladder and daily double', () => {
+  const a = { v: 1, cards: {}, lvlPaid: 7, dd: { d: '2026-07-02', n: 1, done: 0 } };
+  const b = { v: 1, cards: {}, lvlPaid: 5, dd: { d: '2026-07-02', n: 2, done: 1 } };
+  const out = M.mergeCollection(a, b);
+  assert.strictEqual(out.lvlPaid, 7);                                    // never re-pays a level
+  assert.deepStrictEqual(out.dd, { d: '2026-07-02', n: 2, done: 1 });    // same day → furthest progress
+  const newer = M.mergeCollection(a, { v: 1, cards: {}, dd: { d: '2026-07-03', n: 1, done: 0 } });
+  assert.strictEqual(newer.dd.d, '2026-07-03');                          // newer day wins
+  assert.deepStrictEqual(out, M.mergeCollection(b, a));                  // order-independent
+});
+
 test('mergeCollection omits progress records when neither side has them', () => {
   const out = M.mergeCollection({ v: 1, cards: {} }, { v: 1, cards: {} });
   assert.strictEqual(out.setsDone, undefined);
   assert.strictEqual(out.achievements, undefined);
   assert.strictEqual(out.pityE, undefined);
   assert.strictEqual(out.pityL, undefined);
+  assert.strictEqual(out.lvlPaid, undefined);
+  assert.strictEqual(out.dd, undefined);
 });
 
 test('mergeCollection unions the per-language title cache (i18n)', () => {

@@ -47,7 +47,7 @@
     if (s && (s.mv || 0) < 3) { migrate(s); save(s); }
     return s;
   }
-  function blank() { return { v: SCHEMA, cards: {}, xp: 0, seen: 0 }; }
+  function blank() { return { v: SCHEMA, cards: {}, xp: 0, seen: 0, lvlPaid: 1 }; }
   function save(s) { try { s.v = SCHEMA; localStorage.setItem(KEY, JSON.stringify(s)); } catch (_) { /* noop */ } }
   function today() { return new Date().toISOString().slice(0, 10); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
@@ -467,12 +467,32 @@
   // (dupes don't: there's no reveal moment). Clocks start at the first prize.
   var PITY_ELITE_DAYS = 7, PITY_LEG_DAYS = 21;
   function daysBetween(a, b) { var ms = new Date(b + 'T00:00:00') - new Date(a + 'T00:00:00'); return isNaN(ms) ? 0 : Math.round(ms / 864e5); }
+  // Every level pays dust (15 + 5·level) so levelling always rewards something,
+  // not just the sparse card-back levels. Existing saves start the ladder at their
+  // current level — no retroactive windfall.
+  function payLevels(s) {
+    var lv = levelFromXp(s.xp || 0);
+    if (s.lvlPaid == null) { s.lvlPaid = lv; return 0; }
+    var paid = 0;
+    while (s.lvlPaid < lv) { s.lvlPaid++; paid += 15 + 5 * s.lvlPaid; }
+    if (paid) { s.dust = (s.dust || 0) + paid; _pendingDust += paid; }
+    return paid;
+  }
+  // Daily Double: collect prize cards from TWO different daily games in one day
+  // → +60 dust. The suite's cross-game hook — one win invites a second.
+  var DD_GOAL = 2, DD_DUST = 60;
+  function ddBump(s, d) {
+    if (!s.dd || s.dd.d !== d) s.dd = { d: d, n: 0, done: 0 };
+    s.dd.n++;
+    if (!s.dd.done && s.dd.n >= DD_GOAL) { s.dd.done = 1; s.dust = (s.dust || 0) + DD_DUST; _pendingDust += DD_DUST; }
+  }
   function add(items) {
     if (!Array.isArray(items) || !items.length) return [];
     var s = load(); if (!s || !s.cards) s = blank();
     var added = [], d = today();
     items.forEach(function (it) {
       if (!it || it.id == null || !it.type) return;
+      if (it.rarityFloor) ddBump(s, d);                        // a prize grant (new OR dupe) counts toward the Daily Double
       var k = it.type + ':' + it.id;
       if (s.cards[k]) {
         s.cards[k].n = (s.cards[k].n || 1) + 1;
@@ -494,6 +514,7 @@
       }
       s.seen = (s.seen || 0) + 1;
     });
+    payLevels(s);
     save(s);
     return added;
   }
@@ -726,6 +747,8 @@
     { id: 'aurora', name: 'Aurora', level: 8, css: 'cb-aurora' },
     { id: 'midnight', name: 'Midnight', level: 10, css: 'cb-midnight' },
     { id: 'crimson', name: 'Crimson', level: 13, css: 'cb-crimson' },
+    { id: 'emerald', name: 'Emerald', level: 16, css: 'cb-emerald' },
+    { id: 'prism', name: 'Prismatic', level: 20, css: 'cb-prism' },
     { id: 'mastery', name: 'Mastery', achv: 12, css: 'cb-mastery' }
   ];
   // Met trophy count (matches the trophy case). Safe from recursion because achievement
@@ -761,7 +784,7 @@
     setsStateFrom(s).forEach(function (st) {
       if (st.complete && !s.setsDone[st.id]) { s.setsDone[st.id] = today(); s.xp = (s.xp || 0) + (st.bonus || 75); newly.push(st); }
     });
-    if (newly.length) save(s);
+    if (newly.length) { payLevels(s); save(s); }
     return newly;
   }
 
@@ -803,7 +826,8 @@
     if (!s.achievements) s.achievements = {};
     var ctx = achCtx(), newly = [];
     ACHV.forEach(function (a) { if (!s.achievements[a.id] && achMet(a, ctx)) { s.achievements[a.id] = today(); newly.push({ id: a.id, name: a.name, icon: a.icon }); } });
-    if (newly.length) save(s);
+    // each trophy pays a one-time dust bounty — prestige you can also spend
+    if (newly.length) { s.dust = (s.dust || 0) + newly.length * 40; _pendingDust += newly.length * 40; save(s); }
     return newly;
   }
   function achievementsState() {
@@ -1029,6 +1053,11 @@
       '.auth-tags{position:absolute;top:4.6cqw;right:4.6cqw;z-index:9;display:flex;gap:2.7cqw}' +
       '.auth-nw{font-size:4.6cqw;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#06281a;background:#7fd49a;border-radius:3.3cqw;padding:1.3cqw 3.3cqw}' +
       '.auth-dp{font-size:5.3cqw;font-weight:900;color:#1a1200;background:linear-gradient(135deg,#f5c542,#e8a000);border-radius:99px;padding:.7cqw 4.6cqw}' +
+      // mastery star (copies ×3/×5/×10 → bronze/silver/gold)
+      '.auth-mst{font-size:6.2cqw;line-height:1;font-weight:900}' +
+      '.auth-mst.m1{color:#cd8f52;text-shadow:0 1px 4px rgba(0,0,0,.7)}' +
+      '.auth-mst.m2{color:#dfe6f2;text-shadow:0 0 6px rgba(200,220,255,.6),0 1px 4px rgba(0,0,0,.7)}' +
+      '.auth-mst.m3{color:#f5c542;text-shadow:0 0 8px rgba(245,197,66,.8),0 1px 4px rgba(0,0,0,.7)}' +
       '.auth-text{position:absolute;left:0;right:0;bottom:0;z-index:5;padding:0 7.3cqw 6.7cqw;text-align:center}' +
       '.auth-name{font-weight:900;font-size:10.9cqw;line-height:1.02;letter-spacing:.01em;text-transform:uppercase;white-space:normal;max-height:2.05em;overflow:hidden;background:linear-gradient(180deg,var(--m1),var(--cr) 52%,var(--m1));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;filter:drop-shadow(0 .7cqw 1.4cqw rgba(0,0,0,.9));margin-bottom:3.3cqw}' +
       '.auth-name--md{font-size:9cqw}.auth-name--sm{font-size:7.5cqw;letter-spacing:0}' +
@@ -1147,11 +1176,13 @@
       var nlen = (c.name || '').length;
       var nmCls = nlen > 22 ? ' auth-name--sm' : nlen > 14 ? ' auth-name--md' : '';
       var nm = ctx.esc(c.name);
+      // Card mastery: copies upgrade the card visibly (×3 bronze, ×5 silver, ×10 gold)
+      var mst = (c.n || 1) >= 10 ? 'm3' : (c.n || 1) >= 5 ? 'm2' : (c.n || 1) >= 3 ? 'm1' : '';
       return '<div class="auth auth-' + c.rarity + (person ? ' person' : '') + (c.shine ? ' cl-shine' : '') + '" style="--cr:' + rar.ring + ';--m1:' + (METAL[c.rarity] || '#fff') + ';animation-delay:' + Math.min(i, 16) * 22 + 'ms" title="' + nm + ' · ' + rar.label + ' · ' + no + (c.shine ? ' · Shined' : '') + '">' +
         '<div class="auth-card">' +
           (p ? '<img class="auth-bgimg" src="' + ctx.esc(p) + '" alt="" loading="lazy">' : '<div class="auth-noimg"></div>') +
           '<div class="auth-scrim"></div><div class="auth-corner"></div><div class="auth-star"></div>' +
-          '<div class="auth-tags">' + (c.shine ? '<span class="cl-shine-t">&#10024;</span>' : '') + (c.n > 1 ? '<span class="auth-dp">×' + c.n + '</span>' : '') + (c.isNew ? '<span class="auth-nw">New</span>' : '') + '</div>' +
+          '<div class="auth-tags">' + (c.shine ? '<span class="cl-shine-t">&#10024;</span>' : '') + (mst ? '<span class="auth-mst ' + mst + '" title="Mastery ×' + c.n + '">&#9733;</span>' : '') + (c.n > 1 ? '<span class="auth-dp">×' + c.n + '</span>' : '') + (c.isNew ? '<span class="auth-nw">New</span>' : '') + '</div>' +
           '<div class="auth-text">' +
             '<div class="auth-name' + nmCls + '">' + nm + '</div>' +
             '<div class="auth-meta"><span class="auth-gem"></span><span class="auth-rar">' + rar.label + '</span><span class="sep">·</span><span>' + typeUp + '</span><span class="sep">·</span><span class="auth-no">' + no + '</span></div>' +
@@ -1385,6 +1416,10 @@
       '.clr-back.cb-midnight .clr-mono,.cb-swatch.cb-midnight .clr-mono{color:#9ab8e8}' +
       '.clr-back.cb-crimson,.cb-swatch.cb-crimson{background:linear-gradient(160deg,#3a1218,#16080a);border-color:rgba(216,90,90,.5);box-shadow:inset 0 0 0 3px rgba(216,90,90,.22)}' +
       '.clr-back.cb-crimson .clr-mono,.cb-swatch.cb-crimson .clr-mono{color:#e88080}' +
+      '.clr-back.cb-emerald,.cb-swatch.cb-emerald{background:linear-gradient(160deg,#0d2c1e,#06120c 60%,#0f3323);border-color:rgba(80,200,140,.55);box-shadow:inset 0 0 0 3px rgba(80,200,140,.24),0 0 18px rgba(80,200,140,.18)}' +
+      '.clr-back.cb-emerald .clr-mono,.cb-swatch.cb-emerald .clr-mono{color:#7fe0ac;text-shadow:0 2px 14px rgba(80,200,140,.7)}' +
+      '.clr-back.cb-prism,.cb-swatch.cb-prism{background:conic-gradient(from 210deg,#2a1030,#102035,#10352a,#333012,#2a1030),linear-gradient(160deg,#191024,#0b0714);background-blend-mode:screen;border-color:rgba(216,160,255,.55);box-shadow:inset 0 0 0 3px rgba(216,160,255,.26),0 0 20px rgba(180,140,255,.22)}' +
+      '.clr-back.cb-prism .clr-mono,.cb-swatch.cb-prism .clr-mono{background:linear-gradient(100deg,#ff9a9a,#fff39a,#9affb0,#9ad9ff,#c39aff);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}' +
       '.clr-back.cb-mastery,.cb-swatch.cb-mastery{background:conic-gradient(from 45deg,#0b0b0b,#3a2a10,#e8c24a,#3a2a10,#0b0b0b,#1a1206,#0b0b0b);border-color:rgba(232,194,74,.7);box-shadow:inset 0 0 0 3px rgba(232,194,74,.38),0 0 22px rgba(232,194,74,.32)}' +
       '.clr-back.cb-mastery .clr-mono,.cb-swatch.cb-mastery .clr-mono{color:#fff;text-shadow:0 2px 18px rgba(232,194,74,.85)}' +
       '.cb-sub{font-size:.74rem;color:#9a9a9a;margin-bottom:14px}' +
@@ -1463,14 +1498,14 @@
       '<div class="cl-vault-hd">' +
         '<div class="cl-coll-hd-top">' +
           '<div><div class="cl-coll-title">Your <span>collection</span></div><div class="cl-coll-sub" id="clCollSub"></div></div>' +
-          '<div class="cl-coll-hd-btns" id="clCollHdBtns"><span class="cl-coll-dust" id="clCollDust" title="Dust — earned from duplicates, spent to Shine or Forge cards">&#10024; 0</span><button class="cl-coll-x" aria-label="Close">&#10005;</button></div>' +
+          '<div class="cl-coll-hd-btns" id="clCollHdBtns"><span class="cl-coll-dust" id="clCollDD" title="Daily Double — win two daily games today for bonus dust">&#9889; 0/2</span><span class="cl-coll-dust" id="clCollDust" title="Dust — earned from duplicates, spent to Shine or Forge cards">&#10024; 0</span><button class="cl-coll-x" aria-label="Close">&#10005;</button></div>' +
         '</div>' +
         '<div class="cl-coll-lvl">' +
           '<div class="cl-lvl-ring"><svg viewBox="0 0 52 52"><circle class="bg" cx="26" cy="26" r="22"></circle><circle class="fg" id="clCollRing" cx="26" cy="26" r="22" stroke-dasharray="' + RING_C + '" stroke-dashoffset="' + RING_C + '"></circle></svg><b id="clCollLvl">1</b></div>' +
           '<div class="cl-coll-xp">' +
             '<div class="cl-coll-xp-l"><span id="clCollXpName">Level 1</span><span class="cl-coll-next" id="clCollNext"></span></div>' +
             '<div class="cl-coll-xp-bar"><i id="clCollXpFill" style="width:0%"></i></div>' +
-            '<div class="cl-coll-xp-l" style="margin-top:4px"><span id="clCollXpNum"></span></div>' +
+            '<div class="cl-coll-xp-l" style="margin-top:4px"><span id="clCollXpNum"></span><span id="clCollPity" title="Guaranteed floors: a dry streak always self-corrects"></span></div>' +
           '</div>' +
         '</div>' +
         '<div class="cl-vault-tabs" id="clVaultTabs"></div>' +
@@ -1606,6 +1641,24 @@
     var sub = document.getElementById('clCollSub');
     if (sub) sub.textContent = st.count + ' cards · ' + st.films + ' films · ' + st.people + ' people';
     var du = document.getElementById('clCollDust'); if (du) du.innerHTML = '&#10024; ' + dustBalance();
+    var sNow = load() || blank();
+    // Daily Double chip: n/2 today, ✓ when banked
+    var dd = document.getElementById('clCollDD');
+    if (dd) {
+      var t = today(), n = (sNow.dd && sNow.dd.d === t) ? sNow.dd.n : 0, done = !!(sNow.dd && sNow.dd.d === t && sNow.dd.done);
+      dd.innerHTML = done ? '&#9889; &#10003; +' + 60 : '&#9889; ' + Math.min(n, 2) + '/2';
+      dd.style.opacity = done ? '.75' : '';
+    }
+    // Visible pity: anxiety → anticipation ("guaranteed Elite in ≤3d")
+    var pit = document.getElementById('clCollPity');
+    if (pit) {
+      if (sNow.pityE) {
+        var tD = today();
+        var eLeft = Math.max(0, PITY_ELITE_DAYS - daysBetween(sNow.pityE, tD));
+        var lLeft = Math.max(0, PITY_LEG_DAYS - daysBetween(sNow.pityL || tD, tD));
+        pit.innerHTML = 'Guaranteed: <span style="color:' + RARITY.elite.ring + '">Elite &le;' + eLeft + 'd</span> · <span style="color:' + RARITY.legendary.ring + '">Legendary &le;' + lLeft + 'd</span>';
+      } else pit.innerHTML = '';
+    }
 
     // nav tabs (Cards badge = unseen new cards)
     document.getElementById('clVaultTabs').innerHTML = TABS.map(function (t) {
@@ -1633,7 +1686,7 @@
     if (_tab === 'trophies') {
       tools.innerHTML = '';
       grid.style.display = 'block';
-      grid.innerHTML = '<div class="cb-sub" id="acSub" style="margin:8px 2px 12px"></div><div class="ac-grid" id="acGrid"></div>';
+      grid.innerHTML = '<div class="cb-sub" id="acSub" style="margin:8px 2px 12px"></div><div class="cb-sub" style="margin:-6px 2px 12px">Each trophy pays a one-time &#10024;40 dust bounty.</div><div class="ac-grid" id="acGrid"></div>';
       renderAchv(); return;
     }
 
@@ -1807,9 +1860,10 @@
     render();
     document.getElementById('clCollModal').classList.add('open');
     try { if (window.Track) window.Track('collection_open', stats()); } catch (_) { /* noop */ }
-    setTimeout(markSeen, 600);
   }
-  function close() { stopHolo(); var m = document.getElementById('clCollModal'); if (m) m.classList.remove('open'); }
+  // "New" badges live for the whole visit (Hearthstone-style) and clear on close,
+  // not 600ms after opening — so the pinned "Just collected" section stays put.
+  function close() { stopHolo(); markSeen(); var m = document.getElementById('clCollModal'); if (m) m.classList.remove('open'); }
 
   // ─────────────────────────────── debug panel ───────────────────────────
   function debugEnabled() {
@@ -1908,12 +1962,15 @@
     var rar = RARITY[c.rarity] || RARITY.common;
     var dt = null; try { dt = c.first ? new Date(c.first + 'T00:00:00') : null; } catch (_) { dt = null; }
     var dateStr = (dt && !isNaN(dt.getTime())) ? dt.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
+    var n = c.n || 1;
+    var mstRow = n >= 10 ? ['Mastery', 'Gold ★', '#f5c542'] : n >= 5 ? ['Mastery', 'Silver ★', '#dfe6f2'] : n >= 3 ? ['Mastery', 'Bronze ★', '#cd8f52'] : ['Mastery', (3 - n) + ' more cop' + (3 - n === 1 ? 'y' : 'ies') + ' to ★', ''];
     var rows = [
       ['Rarity', rar.label, rar.ring],
       ['Type', typeLabel(c), ''],
       ['Number', '#' + ('00' + (c.no || 0)).slice(-3), ''],
       ['Collected', dateStr, ''],
-      ['Copies', '×' + (c.n || 1), '']
+      ['Copies', '×' + n, ''],
+      mstRow
     ];
     var shined = isShined(c), cost = shineCost(c), bal = dustBalance(), afford = bal >= cost;
     var shineBlock = shined

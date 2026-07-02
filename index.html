@@ -3350,7 +3350,9 @@ const game = window.game = {
             const _par = _pd && _pd[this.start.type + ':' + this.start.id + '>' + this.end.type + ':' + this.end.id];
             if (Number.isFinite(_par) && _par > 0 && this.clicks > 0) _bump = this.clicks <= _par ? 2 : this.clicks <= _par + 2 ? 1 : 0;
           } catch (_) {}
-          _collNewCards = Collection.add(this.path.map(n => {
+          // The start node was handed to you (like CineChain's seed) — only the route
+          // you actually built is earned, so it doesn't mint a card.
+          _collNewCards = Collection.add(this.path.filter(n => !(this.start && n.id === this.start.id && n.type === this.start.type)).map(n => {
             const it = { id: n.id, type: n.type, name: n.name, img: n.img };
             if (this.end && n.id === this.end.id && n.type === this.end.type) { it.rarityFloor = 'rare'; if (_bump) it.bump = _bump; } // the goal card is the prize
             return it;
