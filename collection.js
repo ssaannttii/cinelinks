@@ -239,15 +239,32 @@
       var gl = cv.getContext('webgl', { alpha: false, antialias: false });
       if (!gl) return;
       var VS = 'attribute vec2 p;varying vec2 v;void main(){v=p*.5+.5;gl_Position=vec4(p,0.,1.);}';
-      var FS = 'precision mediump float;varying vec2 v;uniform sampler2D img;' +
-        'uniform vec2 cov;uniform vec2 off;uniform vec2 tilt;' +
-        'float depthAt(vec2 uv){vec2 f=vec2(.5,.62);' +          // focus (texture coords, y up): subject sits centre-upper
+      // Depth: a real per-poster map (white = near) when /depth/<basename> exists,
+      // else the procedural centre-weighted blob. On touch the holo also lives here:
+      // rainbow foil as color-dodge math and glare as screen math — the exact look
+      // DOM blend layers could never survive on Android.
+      var FS = 'precision mediump float;varying vec2 v;' +
+        'uniform sampler2D img;uniform sampler2D dmap;' +
+        'uniform vec2 cov;uniform vec2 off;uniform vec2 tilt;uniform float hasD;' +
+        'uniform vec2 glr;uniform float foilx;uniform float fAmp;uniform float gAmp;' +
+        'float pdepth(vec2 uv){vec2 f=vec2(.5,.62);' +            // focus (texture coords, y up): subject sits centre-upper
         'float d=distance(vec2(uv.x,(uv.y-.5)*1.15+.5),f);' +
-        'return 1.-smoothstep(.12,.78,d);}' +                     // 1 = front (subject), 0 = back (edges)
+        'return 1.-smoothstep(.12,.78,d);}' +                      // 1 = front (subject), 0 = back (edges)
         'void main(){vec2 uv=v*cov+off;' +
-        'float dep=depthAt(uv);' +
-        'vec2 suv=clamp(uv-tilt*(dep-.35)*.05,vec2(.002),vec2(.998));' +
-        'gl_FragColor=texture2D(img,suv);}';
+        'float dep=mix(pdepth(uv),texture2D(dmap,uv).r,hasD);' +
+        'vec2 suv=clamp(uv-tilt*(dep-.42)*.055,vec2(.002),vec2(.998));' +
+        'vec3 c=texture2D(img,suv).rgb;' +
+        'if(fAmp>0.){' +
+          'float t=(suv.x*.9+suv.y*.4)*3.5+foilx;' +
+          'vec3 rb=.5+.5*cos(6.2832*(t+vec3(0.,.33,.67)));' +
+          'c=c/(1.-clamp(rb*fAmp,0.,.85));' +                      // color-dodge foil
+        '}' +
+        'if(gAmp>0.){' +
+          'vec2 gv=(v-glr)*vec2(1.,1.4);' +
+          'float g=exp(-dot(gv,gv)*6.)*gAmp;' +
+          'c=c+(1.-c)*g;' +                                        // screen glare
+        '}' +
+        'gl_FragColor=vec4(c,1.);}';
       function sh(t, s) { var o = gl.createShader(t); gl.shaderSource(o, s); gl.compileShader(o); return o; }
       var prog = gl.createProgram();
       gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS));
@@ -256,19 +273,34 @@
       var buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
       gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
       var loc = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-      var u = { cov: gl.getUniformLocation(prog, 'cov'), off: gl.getUniformLocation(prog, 'off'), tilt: gl.getUniformLocation(prog, 'tilt') };
-      var tex = gl.createTexture();
+      var u = {};
+      ['cov', 'off', 'tilt', 'hasD', 'glr', 'foilx', 'fAmp', 'gAmp', 'img', 'dmap'].forEach(function (n) { u[n] = gl.getUniformLocation(prog, n); });
+      gl.uniform1i(u.img, 0); gl.uniform1i(u.dmap, 1);
+      gl.uniform1f(u.hasD, 0); gl.uniform1f(u.fAmp, 0); gl.uniform1f(u.gAmp, 0); gl.uniform2f(u.glr, 0.5, 0.5);
+      function mkTex(unit, image) {
+        gl.activeTexture(gl.TEXTURE0 + unit);
+        var t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        return t;
+      }
+      // Foil/glare in-shader on touch only — desktop keeps the (richer) DOM blend
+      // layers it already renders fine. Intensity scales with rarity / shine.
+      var coarse = false; try { coarse = matchMedia('(pointer: coarse)').matches || /[?&]cvholo=1\b/.test(location.search); } catch (_) { /* noop */ }
+      var wrap = holder.querySelector('.auth');
+      var rar = (wrap && (wrap.className.match(/auth-(common|rare|elite|legendary)/) || [])[1]) || 'common';
+      var shine = !!(wrap && /cl-shine/.test(wrap.className));
+      var fMax = !coarse ? 0 : shine ? 0.34 : rar === 'legendary' ? 0.27 : rar === 'elite' ? 0.2 : rar === 'rare' ? 0.13 : 0.06;
       var im = new Image();
       im.crossOrigin = 'anonymous';
       im.onload = function () {
         try {
           if (!cv.isConnected && !inner.isConnected) return;
-          gl.bindTexture(gl.TEXTURE_2D, tex);
-          gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, im);
-          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+          mkTex(0, im);
+          mkTex(1, im);                                             // dmap placeholder until the real map arrives
           var dpr = Math.min(2, window.devicePixelRatio || 1);
           var w = inner.clientWidth + 2, h = inner.clientHeight + 2;
           cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
@@ -280,16 +312,32 @@
           gl.uniform2f(u.cov, cov[0], cov[1]); gl.uniform2f(u.off, off[0], off[1]);
           img.parentNode.insertBefore(cv, img.nextSibling);
           img.style.visibility = 'hidden';                            // <img> stays as instant fallback
-          var last = '';
+          if (coarse) inner.classList.add('cv-holo');                 // shader replaces the DOM holo layers
+          // Real depth map, if the build step produced one for this poster.
+          var dm = new Image();
+          dm.onload = function () { try { if (cv.isConnected || inner.isConnected) { mkTex(1, dm); gl.uniform1f(u.hasD, 1); last = ''; } } catch (_) { /* procedural */ } };
+          dm.src = '/depth/' + (img.src.split('?')[0].split('/').pop() || '');
+          var last = '', fA = 0, gA = 0;
+          function num(nme, dflt) { var s = inner.style.getPropertyValue(nme); var f = parseFloat(s); return isNaN(f) ? dflt : f; }
           (function loop() {
             if (!cv.isConnected) {                                    // view closed / re-rendered: free the context
-              try { img.style.visibility = ''; var lx = gl.getExtension('WEBGL_lose_context'); if (lx) lx.loseContext(); } catch (_) { /* noop */ }
+              try { img.style.visibility = ''; inner.classList.remove('cv-holo'); var lx = gl.getExtension('WEBGL_lose_context'); if (lx) lx.loseContext(); } catch (_) { /* noop */ }
               return;
             }
-            var px = inner.style.getPropertyValue('--px') || '0', py = inner.style.getPropertyValue('--py') || '0';
-            if (px + ',' + py !== last) {                             // redraw only when the tilt moved
-              last = px + ',' + py;
-              gl.uniform2f(u.tilt, parseFloat(px) || 0, -(parseFloat(py) || 0));
+            var px = num('--px', 0), py = num('--py', 0);
+            var gx = num('--gx', 50) / 100, gy = num('--gy', 50) / 100;
+            var fx = num('--fx', 100) / 200;
+            var tilted = inner.classList.contains('tilted');
+            fA += ((tilted ? fMax : fMax * 0.5) - fA) * 0.12;         // idle keeps a soft foil, touch brings it up
+            gA += ((coarse && tilted ? 0.5 : 0) - gA) * 0.15;
+            var key = px + ',' + py + ',' + gx + ',' + gy + ',' + fx + ',' + fA.toFixed(3) + ',' + gA.toFixed(3);
+            if (key !== last) {                                       // redraw only when something moved
+              last = key;
+              gl.uniform2f(u.tilt, px, -py);
+              gl.uniform2f(u.glr, gx, 1 - gy);
+              gl.uniform1f(u.foilx, fx * 2.2);
+              gl.uniform1f(u.fAmp, fA < 0.005 ? 0 : fA);
+              gl.uniform1f(u.gAmp, gA < 0.005 ? 0 : gA);
               gl.drawArrays(gl.TRIANGLES, 0, 3);
             }
             requestAnimationFrame(loop);
@@ -1022,7 +1070,11 @@
         '.auth-common .auth-frame::after{opacity:.18}.auth-rare .auth-frame::after{opacity:.32}.auth-elite .auth-frame::after{opacity:.42}.auth-legendary .auth-frame::after{opacity:.6}' +
         '.auth-bgimg{transform:none;-webkit-backface-visibility:visible;backface-visibility:visible}' +
         '#clDetailCard .auth-bgimg,#clrBody .auth-bgimg{transform:translateZ(0);-webkit-backface-visibility:hidden;backface-visibility:hidden}' +
-      '}',
+      '}' +
+      // when the WebGL canvas renders the holo (cv-holo — set on coarse pointers or
+      // the ?cvholo=1 debug override), the DOM approximations duck out: the shader
+      // does real color-dodge/screen math in ONE surface.
+      '.auth-card.cv-holo .auth-foil,.auth-card.cv-holo .auth-glit,.auth-card.cv-holo .auth-glare{display:none}',
     card: function (c, ctx, i) {
       var rar = ctx.RARITY[c.rarity] || ctx.RARITY.common;
       var p = ctx.posterUrl(c.img);

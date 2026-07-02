@@ -5,13 +5,15 @@
   "description": "Connect actors, movies, directors and TV shows in the fewest clicks. A daily film puzzle.",
   "scripts": {
     "test": "node --test",
-    "lint": "eslint . || echo 'eslint not installed — run: npm i -D eslint'",
+    "lint": "eslint . || echo 'eslint not installed \u2014 run: npm i -D eslint'",
     "env:pull": "npx vercel env pull .env.local",
     "par": "node scripts/compute-par.js",
     "gen": "node scripts/generate-challenges.js",
     "difficulty": "node scripts/difficulty.js",
     "clue-pool": "node scripts/build-clue-pool.js",
-    "cineline-pool": "node scripts/build-cineline-pool.js"
+    "cineline-pool": "node scripts/build-cineline-pool.js",
+    "depth:collect": "node scripts/collect-depth-posters.js",
+    "depth:build": "python3 scripts/build-depth-maps.py"
   },
   "dependencies": {
     "@vercel/og": "^0.6.8"
