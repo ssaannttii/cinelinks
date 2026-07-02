@@ -8,6 +8,7 @@ import ShareButton from "@/components/ShareButton";
 import HomeIcon from "@/components/HomeIcon";
 import { api } from "@/lib/base";
 import { confetti } from "@/lib/confetti";
+import { markRatingDaily } from "@/lib/daily";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -225,7 +226,7 @@ function GameContent() {
   }
 
   const nextRound = useCallback(() => {
-    if (currentIdx + 1 >= movieIds.length) { setPhase("done"); return; }
+    if (currentIdx + 1 >= movieIds.length) { setPhase("done"); markRatingDaily("game"); return; }
     const nextIdx = currentIdx + 1;
     setCurrentIdx(nextIdx);
     setImdbGuess(5.0);

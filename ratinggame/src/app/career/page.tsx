@@ -5,6 +5,7 @@ import ShareButton from "@/components/ShareButton";
 import HomeIcon from "@/components/HomeIcon";
 import { api } from "@/lib/base";
 import { confetti } from "@/lib/confetti";
+import { markRatingDaily } from "@/lib/daily";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -193,6 +194,7 @@ export default function CareerPage() {
     const s = order.filter((m, i) => sorted[i]?.imdbId === m.imdbId).length;
     setScore(s);
     setPhase("revealed");
+    markRatingDaily("career", { careerScore: s });   // counts toward the home's rating-hub daily
   };
 
   // Celebrate a strong finish.

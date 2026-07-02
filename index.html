@@ -1824,10 +1824,17 @@ function markDoneBadges() {
       return !!(r && r.date === today);
     } catch(_) { return false; }
   }
-  // Higher or Lower (rating app, same origin) marks its daily done as YYYYMMDD.
-  function ratingDone() {
-    try { const s = JSON.parse(localStorage.getItem('cinerating_daily')); return !!(s && s.date === today.replace(/-/g, '')); } catch(_) { return false; }
+  // Rating hub (same origin): each of the four modes marks itself in
+  // cinerating_daily.modes; the card is done when ALL FOUR are played today.
+  function ratingModes() {
+    try {
+      const s = JSON.parse(localStorage.getItem('cinerating_daily'));
+      if (!s || s.date !== today.replace(/-/g, '')) return 0;
+      return s.modes ? Object.keys(s.modes).length : 1;   // legacy (no modes map) counts as 1
+    } catch(_) { return 0; }
   }
+  const ratingN = ratingModes();
+  function ratingDone() { return ratingN >= 4; }
   const state = {
     cl: linksDone(), clue: clueDone('cineclueState'), frame: clueDone('cineframeState'),
     cast: clueDone('cinecastState'), line: clueDone('cinelineState'),
@@ -1836,9 +1843,10 @@ function markDoneBadges() {
   };
   document.querySelectorAll('.game-done[data-done]').forEach(el => {
     const done = !!state[el.dataset.done];
-    el.textContent = done ? '✓ Done' : '';
+    // rating card shows partial progress (2/4) so playing one mode invites the rest
+    el.textContent = done ? '✓ Done' : (el.dataset.done === 'rating' && ratingN ? ratingN + '/4' : '');
     el.classList.toggle('on', done);
-    el.title = done ? 'Completed today' : '';
+    el.title = done ? 'Completed today' : (el.dataset.done === 'rating' && ratingN ? ratingN + ' of 4 rating modes played' : '');
     const card = el.closest('.game-card');
     if (card) {
       card.classList.toggle('done', done);
@@ -1964,7 +1972,15 @@ function metaItems() {
   { const s = gs('cinegridState'); const done = !!(s && s.day === ud && s.finished); items.push({ emoji: '🔲', done: done, text: done ? ('✅ ' + (s.filled || 0) + '/9') : null }); }
   { const s = gs('cinechainState'); const done = !!(s && s.day === ud && s.finished); items.push({ emoji: '⛓️', done: done, text: done ? ('✅ chain ' + (s.length || 0)) : null }); }
   { const s = gs('cinegroupState'); const done = !!(s && s.day === ud && s.finished); items.push({ emoji: '🟨', done: done, text: done ? (s.won ? ('✅ ' + (s.mistakes || 0) + '/4') : '❌') : null }); }
-  { const s = gs('cinerating_daily'); const td = today.replace(/-/g, ''); const done = !!(s && s.date === td); items.push({ emoji: '⚖️', done: done, text: done ? ('✅ ' + s.score + '/10') : null }); }
+  {
+    // Rating hub = FOUR modes (Higher or Lower, Career, Guess the Score, Top
+    // Trumps). Each marks itself in cinerating_daily.modes; the day only counts
+    // when all four are played — one mode must not tick the whole category.
+    const s = gs('cinerating_daily'); const td = today.replace(/-/g, '');
+    const m = (s && s.date === td) ? (s.modes ? Object.keys(s.modes).length : 1) : 0;   // legacy saves (no modes map) count as 1
+    const done = m >= 4;
+    items.push({ emoji: '⚖️', done: done, text: done ? '✅ 4/4' : (m ? (m + '/4') : null) });
+  }
   return items;
 }
 function metaStreakValue(doneToday) {

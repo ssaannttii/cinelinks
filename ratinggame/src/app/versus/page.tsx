@@ -9,6 +9,7 @@ import HomeIcon from "@/components/HomeIcon";
 import { getDailyPairs, getDayNumber } from "@/lib/movies";
 import { api } from "@/lib/base";
 import { confetti } from "@/lib/confetti";
+import { madridDayKey, markRatingDaily } from "@/lib/daily";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -55,10 +56,7 @@ function rememberSeen(ids: string[]) {
   }
 }
 
-function getTodayString() {
-  const d = new Date();
-  return `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, "0")}${String(d.getUTCDate()).padStart(2, "0")}`;
-}
+function getTodayString() { return madridDayKey(); }   // suite dailies roll over on Madrid midnight, not UTC
 
 interface DailySave {
   date: string;
@@ -158,8 +156,10 @@ function VersusGame() {
       try {
         const saved = localStorage.getItem(DAILY_KEY);
         if (saved) {
-          const data: DailySave = JSON.parse(saved);
-          if (data.date === getTodayString()) {
+          const data: DailySave & { modes?: Record<string, 1> } = JSON.parse(saved);
+          // resume only if VERSUS itself was played today — the key is shared by
+          // all rating modes now, so another mode's mark must not lock this one
+          if (data.date === getTodayString() && (data.modes ? data.modes.versus : data.score != null)) {
             setScore(data.score);
             setResults(data.results);
             setMaxStreak(data.maxStreak);
@@ -177,10 +177,7 @@ function VersusGame() {
   // Save daily result when game finishes
   useEffect(() => {
     if (phase !== "done" || !isDaily || alreadyPlayed) return;
-    try {
-      const save: DailySave = { date: getTodayString(), score, results, maxStreak };
-      localStorage.setItem(DAILY_KEY, JSON.stringify(save));
-    } catch { /* ignore */ }
+    markRatingDaily("versus", { score, results, maxStreak });
   }, [phase, isDaily, alreadyPlayed, score, results, maxStreak]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────

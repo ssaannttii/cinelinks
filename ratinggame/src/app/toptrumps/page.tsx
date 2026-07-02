@@ -5,6 +5,7 @@ import HomeIcon from "@/components/HomeIcon";
 import { TRUMP_POOL, type TrumpTuple } from "@/lib/trumps-pool";
 import { confetti } from "@/lib/confetti";
 import { Sfx } from "@/lib/sfx";
+import { madridDayKey, markRatingDaily } from "@/lib/daily";
 
 // ── Movie card battle vs CPU. Baked TMDB stats (instant, every field present). ──
 
@@ -64,7 +65,7 @@ function shuffle<T>(a: T[], rnd: () => number): T[] {
 }
 function mulberry(seed: number) { return () => { seed |= 0; seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 function dayNum() { const n = new Date(); return Math.floor(Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate()) / 86400000); }
-function todayKey() { const n = new Date(); return "" + n.getUTCFullYear() + String(n.getUTCMonth() + 1).padStart(2, "0") + String(n.getUTCDate()).padStart(2, "0"); }
+const todayKey = madridDayKey;   // suite dailies roll over on Madrid midnight, not UTC
 
 function buildDeck(mode: Mode): Card[] {
   const rnd = mode === "daily" ? mulberry(dayNum() * 2654435761) : mulberry((Math.random() * 1e9) | 0);
@@ -100,6 +101,7 @@ export default function TopTrumps() {
   const [sound, setSound] = useState(true);
 
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const initHandRef = useRef<Set<number>>(new Set());   // your dealt hand — cards beyond it were captured in battle
   const reducedRef = useRef(false);
   const boardRef = useRef<HTMLDivElement>(null);
   const clashRef = useRef<HTMLDivElement>(null);
@@ -150,6 +152,7 @@ export default function TopTrumps() {
   const newGame = useCallback((m: Mode) => {
     clearTimers();
     const deck = buildDeck(m);
+    initHandRef.current = new Set(deck.slice(0, HAND).map((c) => c.id));
     setPlayer(deck.slice(0, HAND)); setCpu(deck.slice(HAND, HAND * 2));
     setPot([]); setTurn("player"); setRound(1); setChosen(null); setDuel(null); setClash(false);
     setStreak(0); setBest(0); setWon(false); setRevealed(false);
@@ -168,10 +171,27 @@ export default function TopTrumps() {
     if (mode === "daily") {
       try {
         localStorage.setItem("toptrumps_daily", JSON.stringify({ date: todayKey(), won: w, mine: np.length, cpu: nc.length }));
-        const cur = JSON.parse(localStorage.getItem("cinerating_daily") || "null") || {};
-        localStorage.setItem("cinerating_daily", JSON.stringify({ ...cur, date: todayKey() }));
+        markRatingDaily("toptrumps");
       } catch { /* noop */ }
       setDailyLocked(true);
+      // Spoils of war: a daily win banks the best card you CAPTURED from the CPU
+      // into the CineLinks collection (same origin via the /rating proxy). Prize
+      // floor rare; a total sweep (CPU wiped out) bumps it a tier higher.
+      try {
+        if (w && typeof window !== "undefined" && window.Collection) {
+          const captured = np.filter((c) => !initHandRef.current.has(c.id));
+          const pool = captured.length ? captured : np;
+          const prize = pool.reduce((b, c) => (c.rating > b.rating ? c : b), pool[0]);
+          if (prize) {
+            const nc2 = window.Collection.add([{ id: prize.id, type: "movie", name: prize.title, img: prize.poster, rarityFloor: "rare", bump: nc.length === 0 ? 2 : 1 }]);
+            if (nc2 && nc2.length) {
+              try { const wns = JSON.parse(localStorage.getItem("clCardWins") || "[]"); if (wns.indexOf("rating") < 0) { wns.push("rating"); localStorage.setItem("clCardWins", JSON.stringify(wns)); } } catch { /* noop */ }
+              const rev = window.Collection.reveal;
+              if (rev) setTimeout(() => rev(nc2), 1300);
+            }
+          }
+        }
+      } catch { /* collection is optional */ }
     }
     if (w) { vibrate([20, 40, 20]); Sfx.victory(); setTimeout(() => confetti(160), 140); setTimeout(() => confetti(90), 620); }
     else { vibrate(80); Sfx.defeat(); }
