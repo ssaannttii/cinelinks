@@ -250,9 +250,18 @@
         'float pdepth(vec2 uv){vec2 f=vec2(.5,.62);' +            // focus (texture coords, y up): subject sits centre-upper
         'float d=distance(vec2(uv.x,(uv.y-.5)*1.15+.5),f);' +
         'return 1.-smoothstep(.12,.78,d);}' +                      // 1 = front (subject), 0 = back (edges)
+        'float depAt(vec2 uv){return mix(pdepth(uv),texture2D(dmap,uv).r,hasD);}' +
+        // Damped fixed-point refinement (2 extra taps): re-estimate depth at the
+        // displaced position and average — makes the displacement consistent with
+        // the depth of the pixel actually sampled, so background pixels next to a
+        // silhouette stop grabbing foreground colours (the "duplicated edge").
         'void main(){vec2 uv=v*cov+off;' +
-        'float dep=mix(pdepth(uv),texture2D(dmap,uv).r,hasD);' +
+        'float dep=depAt(uv);' +
         'vec2 suv=clamp(uv-tilt*(dep-.42)*.055,vec2(.002),vec2(.998));' +
+        'for(int i=0;i<2;i++){' +
+          'dep=mix(dep,depAt(suv),.5);' +
+          'suv=clamp(uv-tilt*(dep-.42)*.055,vec2(.002),vec2(.998));' +
+        '}' +
         'vec3 c=texture2D(img,suv).rgb;' +
         'if(fAmp>0.){' +
           'float t=(suv.x*.9+suv.y*.4)*3.5+foilx;' +

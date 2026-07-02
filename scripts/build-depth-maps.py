@@ -17,7 +17,7 @@ import io, json, os, sys, urllib.request
 
 import numpy as np
 import onnxruntime as ort
-from PIL import Image
+from PIL import Image, ImageFilter
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, 'depth')
@@ -67,6 +67,13 @@ def main():
             g = Image.fromarray((d * 255).astype(np.uint8), 'L')
             h = round(OUT_W * im.height / im.width)
             g = g.resize((OUT_W, h), Image.BILINEAR)
+            # Anti-ghosting: ERODE the near (bright) regions a couple of pixels so the
+            # colour silhouette slightly overhangs its depth — background pixels at the
+            # edge then displace with BACKGROUND depth and stop grabbing foreground
+            # colours ("duplicated edge"). The mild blur removes the remaining depth
+            # cliff so the transition warps smoothly instead of tearing.
+            g = g.filter(ImageFilter.MinFilter(5))
+            g = g.filter(ImageFilter.GaussianBlur(1.5))
             g.save(dst, 'JPEG', quality=60)
             done += 1
         except Exception as e:
