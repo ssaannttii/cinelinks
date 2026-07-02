@@ -130,8 +130,13 @@
         inner.classList.add('tilted');
         raf = requestAnimationFrame(frame);
       }
+      // Calibrate to the pose the phone is in when the view opens: the first reading
+      // becomes 0,0 (card flat), and tilting is measured from there — instead of
+      // assuming some universal "held at 38°" grip.
+      var b0 = null, g0 = null;
       function onOrient(e) {
-        var g = clamp((e.gamma || 0) / 32), b = clamp(((e.beta || 0) - 38) / 32);
+        if (b0 === null) { b0 = e.beta || 0; g0 = e.gamma || 0; }
+        var g = clamp(((e.gamma || 0) - g0) / 32), b = clamp(((e.beta || 0) - b0) / 32);
         tpx = 0.5 + g * 0.5; tpy = 0.5 + b * 0.5; try_ = g * 13; trx = -b * 13;
         if (!raf) raf = requestAnimationFrame(frame);
       }
