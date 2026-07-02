@@ -73,6 +73,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   <div class="foot">Posters &amp; data from TMDB · part of <a href="/">CineLinks</a></div>
 </div>
 <script src="/fx.js"></script>
+<script defer src="/sfx.js"></script>
+<script defer src="/collection.js"></script>
 <script>
 (function(){
   const IMG='https://image.tmdb.org/t/p/';
@@ -97,10 +99,33 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     timerId=setInterval(function(){
       timeLeft--;
       const el=document.getElementById('timer'); if(el){ el.textContent='⏱ '+fmtTime(Math.max(0,timeLeft)); el.classList.toggle('low',timeLeft<=15); }
-      if(timeLeft<=0){ stopTimer(); over=true; if(isDaily) persist(); render(); }
+      if(timeLeft<=0){ stopTimer(); over=true; if(isDaily) persist(); grantChain(); render(); }
     },1000);
   }
   function stopTimer(){ if(timerId){ clearInterval(timerId); timerId=null; } }
+
+  // Daily chain finished → collect every film you linked (the seed was given, not
+  // earned). A run of 4+ links earns a prize: the FINAL film (your furthest reach),
+  // floor rare, +2 for a masterful 8+ chain. Guarded so it only ever grants once.
+  let granted=false;
+  function grantChain(){
+    try{
+      if(granted || !isDaily || !window.Collection) return;
+      granted=true;
+      const links=chain.length-1; if(links<1) return;
+      const earned=chain.slice(1).filter(function(f){return f.id;});
+      const prize=links>=4 ? earned[earned.length-1] : null;
+      const nc=Collection.add(earned.map(function(f){
+        const it={id:f.id,type:'movie',name:f.title,img:f.poster};
+        if(prize&&f.id===prize.id){ it.rarityFloor='rare'; if(links>=8) it.bump=2; else it.bump=1; }
+        return it;
+      }));
+      if(nc&&nc.length){
+        try{ const w=JSON.parse(localStorage.getItem('clCardWins')||'[]'); if(w.indexOf('chain')<0){ w.push('chain'); localStorage.setItem('clCardWins',JSON.stringify(w)); } }catch(_e){}
+        if(Collection.reveal) setTimeout(function(){ Collection.reveal(nc); },900);
+      }
+    }catch(_){ /* collection is optional */ }
+  }
 
   async function castOf(id){ const cr=await api('movie/'+id+'/credits'); return (cr.cast||[]).slice(0,CAST_N).map(function(c){return {id:c.id,name:c.name};}); }
 
@@ -130,7 +155,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 
   function wire(){
     const ci=document.getElementById('ci'), ac=document.getElementById('ac');
-    document.getElementById('finish').onclick=function(){ stopTimer(); over=true; if(isDaily) persist(); render(); };
+    document.getElementById('finish').onclick=function(){ stopTimer(); over=true; if(isDaily) persist(); grantChain(); render(); };
     ci.focus();
     let lk; ci.addEventListener('input',function(){ clearTimeout(lk); lk=setTimeout(function(){ lookup(ci.value,ac); },240); });
   }

@@ -87,6 +87,7 @@
         inner.style.setProperty('--fy', (py * 200).toFixed(1) + '%');
         inner.style.setProperty('--px', (px - 0.5).toFixed(3));
         inner.style.setProperty('--py', (py - 0.5).toFixed(3));
+        inner.style.setProperty('--pfc', Math.min(1, Math.hypot(px - 0.5, py - 0.5) * 2).toFixed(3));
         var rest = !active &&
           Math.abs(vx) < 0.01 && Math.abs(vy) < 0.01 && Math.abs(vs) < 0.002 &&
           Math.abs(trx - rx) < 0.02 && Math.abs(try_ - ry) < 0.02 && Math.abs(tsc - sc) < 0.003;
@@ -129,6 +130,7 @@
         inner.style.setProperty('--fy', (py * 200).toFixed(1) + '%');
         inner.style.setProperty('--px', (px - 0.5).toFixed(3));
         inner.style.setProperty('--py', (py - 0.5).toFixed(3));
+        inner.style.setProperty('--pfc', Math.min(1, Math.hypot(px - 0.5, py - 0.5) * 2).toFixed(3));
         inner.classList.add('tilted');
         raf = requestAnimationFrame(frame);
       }
@@ -178,6 +180,7 @@
         inner.style.setProperty('--fy', (py * 200).toFixed(1) + '%');
         inner.style.setProperty('--px', (px - 0.5).toFixed(3));
         inner.style.setProperty('--py', (py - 0.5).toFixed(3));
+        inner.style.setProperty('--pfc', Math.min(1, Math.hypot(px - 0.5, py - 0.5) * 2).toFixed(3));
         var rest = !dragging && Math.abs(rx) < 0.05 && Math.abs(ry) < 0.05 && Math.abs(px - 0.5) < 0.004 && Math.abs(py - 0.5) < 0.004;
         if (rest) { raf = 0; inner.style.transform = ''; inner.classList.remove('tilted'); return; }
         raf = requestAnimationFrame(frame);
@@ -216,6 +219,88 @@
       inner.addEventListener('touchend', end);
       inner.addEventListener('touchcancel', end);
     } catch (_) { /* noop */ }
+  }
+
+  // ── Depth-parallax poster (detail view): the poster is re-rendered in a small
+  // WebGL canvas whose fragment shader displaces UVs by a procedural pseudo-depth
+  // (subject centre-upper pops forward, edges recede) driven by the live tilt vars —
+  // the "TCG Pocket" in-art 3D feel. Single canvas + uniform updates per frame, so
+  // it is safe under the mobile no-blend/no-repaint compositing constraint, and the
+  // depth function can later be swapped for a real per-poster depth-map texture.
+  // Fails soft at every step (no WebGL, CORS, no image) → the plain <img> stays.
+  function mountPosterDepth(holder) {
+    try {
+      if (reducedMotion() || !holder) return;
+      var inner = holder.querySelector('.auth-card'); if (!inner) return;
+      var img = inner.querySelector('.auth-bgimg'); if (!img || !img.src) return;
+      var cv = document.createElement('canvas');
+      cv.className = 'auth-bgcv';
+      cv.style.cssText = 'position:absolute;inset:-1px;width:calc(100% + 2px);height:calc(100% + 2px);z-index:0;pointer-events:none';
+      var gl = cv.getContext('webgl', { alpha: false, antialias: false });
+      if (!gl) return;
+      var VS = 'attribute vec2 p;varying vec2 v;void main(){v=p*.5+.5;gl_Position=vec4(p,0.,1.);}';
+      var FS = 'precision mediump float;varying vec2 v;uniform sampler2D img;' +
+        'uniform vec2 cov;uniform vec2 off;uniform vec2 tilt;' +
+        'float depthAt(vec2 uv){vec2 f=vec2(.5,.62);' +          // focus (texture coords, y up): subject sits centre-upper
+        'float d=distance(vec2(uv.x,(uv.y-.5)*1.15+.5),f);' +
+        'return 1.-smoothstep(.12,.78,d);}' +                     // 1 = front (subject), 0 = back (edges)
+        'void main(){vec2 uv=v*cov+off;' +
+        'float dep=depthAt(uv);' +
+        'vec2 suv=clamp(uv-tilt*(dep-.35)*.05,vec2(.002),vec2(.998));' +
+        'gl_FragColor=texture2D(img,suv);}';
+      function sh(t, s) { var o = gl.createShader(t); gl.shaderSource(o, s); gl.compileShader(o); return o; }
+      var prog = gl.createProgram();
+      gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS));
+      gl.linkProgram(prog); if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return;
+      gl.useProgram(prog);
+      var buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+      var loc = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+      var u = { cov: gl.getUniformLocation(prog, 'cov'), off: gl.getUniformLocation(prog, 'off'), tilt: gl.getUniformLocation(prog, 'tilt') };
+      var tex = gl.createTexture();
+      var im = new Image();
+      im.crossOrigin = 'anonymous';
+      im.onload = function () {
+        try {
+          if (!cv.isConnected && !inner.isConnected) return;
+          gl.bindTexture(gl.TEXTURE_2D, tex);
+          gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, im);
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+          var dpr = Math.min(2, window.devicePixelRatio || 1);
+          var w = inner.clientWidth + 2, h = inner.clientHeight + 2;
+          cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+          gl.viewport(0, 0, cv.width, cv.height);
+          // cover-fit + "center top" anchor (matches the img's object-fit/position)
+          var ca = w / h, ia = im.width / im.height, cov, off;
+          if (ia > ca) { cov = [ca / ia, 1]; off = [(1 - cov[0]) / 2, 0]; }
+          else { cov = [1, ia / ca]; off = [0, 1 - cov[1]]; }        // y-crop anchored to the TOP (v=1 after flip)
+          gl.uniform2f(u.cov, cov[0], cov[1]); gl.uniform2f(u.off, off[0], off[1]);
+          img.parentNode.insertBefore(cv, img.nextSibling);
+          img.style.visibility = 'hidden';                            // <img> stays as instant fallback
+          var last = '';
+          (function loop() {
+            if (!cv.isConnected) {                                    // view closed / re-rendered: free the context
+              try { img.style.visibility = ''; var lx = gl.getExtension('WEBGL_lose_context'); if (lx) lx.loseContext(); } catch (_) { /* noop */ }
+              return;
+            }
+            var px = inner.style.getPropertyValue('--px') || '0', py = inner.style.getPropertyValue('--py') || '0';
+            if (px + ',' + py !== last) {                             // redraw only when the tilt moved
+              last = px + ',' + py;
+              gl.uniform2f(u.tilt, parseFloat(px) || 0, -(parseFloat(py) || 0));
+              gl.drawArrays(gl.TRIANGLES, 0, 3);
+            }
+            requestAnimationFrame(loop);
+          })();
+        } catch (_) { /* keep the img */ }
+      };
+      // Cache-bust so the CORS-mode load never hits the <img>'s non-CORS cache entry
+      // (Chrome refuses a crossOrigin request served from a cache entry that was
+      // stored without CORS headers — the classic canvas-taint trap).
+      im.src = img.src + (img.src.indexOf('?') < 0 ? '?xo=1' : '&xo=1');
+    } catch (_) { /* keep the img */ }
   }
 
   // Legendary reveal shader: a lightweight raw-WebGL fragment shader (no Three.js)
@@ -618,6 +703,37 @@
     });
   }
 
+  // ── Forge (spend dust to craft a specific MISSING curated-set member) ──
+  // Turns set completion from pure luck into player agency: the last stubborn slot
+  // can be bought with saved-up dupe dust. Costs ~1.5× the Shine of the card's
+  // natural (hash) tier — crafting a real card is stronger than a cosmetic.
+  var FORGE_COST = { common: 60, rare: 120, elite: 240, legendary: 480 };
+  function forgeCost(member) { return FORGE_COST[rarityOf({ id: member.id, type: member.type })] || 120; }
+  function tmdbPoster(type, id) {
+    var tp = type === 'person' ? 'person' : (type === 'tv' ? 'tv' : 'movie');
+    return fetch('/api/tmdb?path=' + encodeURIComponent(tp + '/' + id))
+      .then(function (r) { return r && r.ok ? r.json() : null; })
+      .then(function (j) { return (j && (j.poster_path || j.profile_path)) || ''; })
+      .catch(function () { return ''; });
+  }
+  // Resolves {ok, cards?, dust?} | {ok:false, reason:'owned'|'dust', need?, have?}.
+  function forgeCard(member) {
+    var s = load() || blank();
+    var k = member.type + ':' + member.id;
+    if (s.cards && s.cards[k]) return Promise.resolve({ ok: false, reason: 'owned' });
+    var rar = rarityOf({ id: member.id, type: member.type });
+    var cost = FORGE_COST[rar] || 120;
+    if ((s.dust || 0) < cost) return Promise.resolve({ ok: false, reason: 'dust', need: cost, have: s.dust || 0 });
+    return tmdbPoster(member.type, member.id).then(function (img) {
+      var s2 = load() || blank();                    // re-check: the poster fetch took time
+      if (s2.cards && s2.cards[k]) return { ok: false, reason: 'owned' };
+      if ((s2.dust || 0) < cost) return { ok: false, reason: 'dust', need: cost, have: s2.dust || 0 };
+      s2.dust = (s2.dust || 0) - cost; save(s2);
+      var added = add([{ id: member.id, type: member.type, name: member.name, img: img, rarity: rar }]);
+      return { ok: true, cards: added, dust: dustBalance() };
+    });
+  }
+
   // ── Dust economy (spend duplicate dust to "Shine" owned cards) ──
   function dustBalance() { return (load() || blank()).dust || 0; }
   function shineCost(c) { return SHINE_COST[c && c.rarity] || 80; }
@@ -849,6 +965,28 @@
       '.auth-card.tilted .auth-text{transform:translate(calc(var(--px,0) * 2.2cqw),calc(var(--py,0) * 2.2cqw))}' +
       '.auth-glare{position:absolute;inset:0;z-index:8;pointer-events:none;opacity:0;background:radial-gradient(circle at var(--gx,50%) var(--gy,50%),rgba(255,255,255,.42),rgba(255,255,255,.08) 30%,transparent 52%);mix-blend-mode:overlay;transition:opacity .2s}' +
       '.auth-card:hover .auth-glare,.auth-card.tilted .auth-glare{opacity:1}' +
+      // Environment reflection sweep: a soft "window" of light baked into a static
+      // gradient on an oversized layer, slid with TRANSFORM against the tilt (a fixed
+      // light source the card moves under). Compositor-only per frame — mobile-safe.
+      '.auth-refl{position:absolute;inset:-45%;z-index:8;pointer-events:none;opacity:0;background:linear-gradient(115deg,transparent 34%,rgba(255,255,255,.13) 43%,rgba(255,255,255,.3) 50%,rgba(255,255,255,.13) 57%,transparent 66%);transition:opacity .25s}' +
+      '@media(pointer:fine){.auth-refl{mix-blend-mode:screen}}' +
+      '.auth-card.tilted .auth-refl{opacity:1;transform:translate3d(calc(var(--px,0) * -22%),calc(var(--py,0) * -22%),0)}' +
+      // Tilt-reactive rim light: thin metal-tinted strips on each edge whose opacity
+      // follows the tilt direction (fake Fresnel) — the edge "catches the light" as the
+      // card leans. Static paint, opacity-only per frame — mobile-safe.
+      '.auth-rim{position:absolute;z-index:9;pointer-events:none;opacity:0}' +
+      '.auth-rim-t{top:0;left:8%;right:8%;height:1.6%;background:linear-gradient(90deg,transparent,var(--m1,#fff),transparent)}' +
+      '.auth-rim-b{bottom:0;left:8%;right:8%;height:1.6%;background:linear-gradient(90deg,transparent,var(--m1,#fff),transparent)}' +
+      '.auth-rim-l{left:0;top:8%;bottom:8%;width:1.6%;background:linear-gradient(180deg,transparent,var(--m1,#fff),transparent)}' +
+      '.auth-rim-r{right:0;top:8%;bottom:8%;width:1.6%;background:linear-gradient(180deg,transparent,var(--m1,#fff),transparent)}' +
+      '.auth-card.tilted .auth-rim-r{opacity:max(0, calc(var(--px,0) * 1.8))}' +
+      '.auth-card.tilted .auth-rim-l{opacity:max(0, calc(var(--px,0) * -1.8))}' +
+      '.auth-card.tilted .auth-rim-b{opacity:max(0, calc(var(--py,0) * 1.8))}' +
+      '.auth-card.tilted .auth-rim-t{opacity:max(0, calc(var(--py,0) * -1.8))}' +
+      // Desktop: foil/glitter brightness rises as the pointer nears the card edges
+      // (--pfc = pointer distance from centre) — foil "catches the light" at angles,
+      // the pokemon-cards-css trick. Repaints per frame, so fine pointers only.
+      '@media(pointer:fine){.auth-card.tilted .auth-foil{filter:brightness(calc(.74 + var(--pfc,.5) * .55)) contrast(1.12)}.auth-card.tilted .auth-glit{filter:brightness(calc(.9 + var(--pfc,.5) * .5))}}' +
       // the WHOLE card tilts as one plane (no independent photo zoom); a moving inner
       // shade darkens the side that turns away, so it reads as a lit 3D surface.
       '.auth-shade{position:absolute;inset:0;z-index:8;pointer-events:none;opacity:0;border-radius:13px;background:linear-gradient(var(--shang,105deg),rgba(0,0,0,.5),transparent 42%,transparent 58%,rgba(255,255,255,.14));transition:opacity .2s}' +
@@ -857,7 +995,7 @@
       '.auth-rare .auth-card:hover,.auth-rare .auth-card.tilted{box-shadow:0 20px 44px rgba(0,0,0,.64),0 0 26px rgba(122,166,232,.5)}' +
       '.auth-elite .auth-card:hover,.auth-elite .auth-card.tilted{box-shadow:0 20px 44px rgba(0,0,0,.64),0 0 26px rgba(181,138,214,.55)}' +
       '.auth-legendary .auth-card:hover,.auth-legendary .auth-card.tilted{box-shadow:0 20px 44px rgba(0,0,0,.64),0 0 30px rgba(232,194,74,.6)}' +
-      '@media(prefers-reduced-motion:reduce){.auth{animation:none}.auth-star,.auth-legendary .auth-foil{animation:none}.auth-card{transition:none}.auth-sheen{animation:none;display:none}.auth-glit{display:none}.auth-bgimg,.auth-star,.auth-corner,.auth-tags,.auth-text{transition:none}.auth-legendary .auth-frame::after{animation:none}}' +
+      '@media(prefers-reduced-motion:reduce){.auth{animation:none}.auth-star,.auth-legendary .auth-foil{animation:none}.auth-card{transition:none}.auth-sheen{animation:none;display:none}.auth-glit{display:none}.auth-refl,.auth-rim{display:none}.auth-bgimg,.auth-star,.auth-corner,.auth-tags,.auth-text{transition:none}.auth-legendary .auth-frame::after{animation:none}}' +
       // Mobile (coarse pointer): kill the idle infinite animations. None of them can run on
       // Blink's compositor — authStar animates filter with a drop-shadow in the keyframe
       // (disqualifies compositor filters), authDrift animates background-position and
@@ -903,7 +1041,8 @@
             '<div class="auth-name' + nmCls + '">' + nm + '</div>' +
             '<div class="auth-meta"><span class="auth-gem"></span><span class="auth-rar">' + rar.label + '</span><span class="sep">·</span><span>' + typeUp + '</span><span class="sep">·</span><span class="auth-no">' + no + '</span></div>' +
           '</div>' +
-          '<div class="auth-frame"></div><div class="auth-foil"></div><div class="auth-glit"></div><div class="auth-shade"></div><div class="auth-sheen"></div><div class="auth-glare"></div>' +
+          '<div class="auth-frame"></div><div class="auth-foil"></div><div class="auth-glit"></div><div class="auth-shade"></div><div class="auth-sheen"></div><div class="auth-glare"></div><div class="auth-refl"></div>' +
+          '<div class="auth-rim auth-rim-t"></div><div class="auth-rim auth-rim-b"></div><div class="auth-rim auth-rim-l"></div><div class="auth-rim auth-rim-r"></div>' +
         '</div>' +
       '</div>';
     },
@@ -995,6 +1134,11 @@
       '.clr-stage{position:relative;width:300px;max-width:82vw;z-index:6;perspective:1200px;animation:clrStageIn .45s cubic-bezier(.2,.9,.3,1.2) both}' +
       '@keyframes clrStageIn{from{opacity:0;transform:translateY(16px) scale(.93)}to{opacity:1;transform:none}}' +
       '.clr-stage::after{content:"";position:absolute;left:50%;bottom:-22px;width:60%;height:24px;transform:translateX(-50%);background:radial-gradient(ellipse at center,rgba(0,0,0,.6),transparent 72%);filter:blur(5px);z-index:-1}' +
+      // elite+ crossover shockwave: a rarity-coloured ring that blasts outward.
+      // Pre-painted ring + transform/opacity keyframes only (compositor-safe).
+      '.clr-shock{position:absolute;inset:-4%;border-radius:18px;pointer-events:none;opacity:0;border:2px solid var(--halo,#fff);box-shadow:0 0 22px var(--halo,transparent),inset 0 0 16px var(--halo,transparent)}' +
+      '.clr-shock.go{animation:clrShock .75s cubic-bezier(.19,1,.22,1) forwards}' +
+      '@keyframes clrShock{0%{opacity:.95;transform:scale(.7)}100%{opacity:0;transform:scale(1.65)}}' +
       '.clr-flip{position:relative;width:100%;aspect-ratio:5/7;transform-style:preserve-3d;transform:rotateY(180deg);will-change:transform}' +
       '.clr-flip.flipped{transform:rotateY(0)}' +                       // static (reduced-motion) reveal
       '.clr-flip.flip-go{animation:clrFlip 1.05s cubic-bezier(.42,.04,.24,1) forwards}' +
@@ -1045,6 +1189,11 @@
       '.cl-slot{position:relative;aspect-ratio:5/7;border-radius:13px;border:1.5px dashed rgba(255,255,255,.16);background:repeating-linear-gradient(45deg,#141414,#141414 9px,#181818 9px,#181818 18px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:8px}' +
       '.cl-slot-q{font-size:1.8rem;font-weight:900;color:rgba(255,255,255,.22)}' +
       '.cl-slot-nm{font-size:.64rem;font-weight:700;color:rgba(255,255,255,.45);line-height:1.2}' +
+      '.cl-slot-forge{font:inherit;font-size:.66rem;font-weight:800;color:#bfe6ff;background:rgba(120,184,255,.12);border:1px solid rgba(150,205,255,.4);border-radius:999px;padding:4px 10px;cursor:pointer;transition:background .15s}' +
+      '.cl-slot-forge:hover{background:rgba(120,184,255,.22)}' +
+      '.cl-slot-forge.off{color:#8a8a8a;background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.14)}' +
+      '.cl-slot-forge.shake{animation:clShake .4s}' +
+      '.cl-slot-forge:disabled{opacity:.6;cursor:default}' +
       // ── card backs ──
       '.clr-back.cb-gold,.cb-swatch.cb-gold{background:linear-gradient(160deg,#3a2c0f,#150f04);border-color:rgba(232,194,74,.6);box-shadow:inset 0 0 0 3px rgba(232,194,74,.28)}' +
       '.clr-back.cb-gold .clr-mono,.cb-swatch.cb-gold .clr-mono{color:#f5d97a;text-shadow:0 2px 14px rgba(232,194,74,.5)}' +
@@ -1102,7 +1251,7 @@
       // ── WebGL godray canvas behind the legendary reveal ──
       '.clr-shader{position:absolute;inset:0;z-index:4;pointer-events:none;opacity:0;transition:opacity .5s ease}' +
       '.clr-shader.on{opacity:1}' +
-      '@media(prefers-reduced-motion:reduce){.cl-pre{opacity:1!important;transform:none!important}.cl-rise{animation:none}.clr-shader{display:none}}' +
+      '@media(prefers-reduced-motion:reduce){.cl-pre{opacity:1!important;transform:none!important}.cl-rise{animation:none}.clr-shader{display:none}.clr-shock{display:none}}' +
       // ── Mobile (coarse pointer) compositing diet ──
       // backdrop-filter re-filters the full backdrop texture every frame anything above it
       // changes, and the detail view stacks a second fullscreen blur on top of the gallery's.
@@ -1311,13 +1460,35 @@
       var theme = activeTheme(); injectThemeCss(theme);
       grid.style.display = 'grid';
       grid.style.gridTemplateColumns = 'repeat(auto-fill,' + (theme.gridCols || 'minmax(110px,1fr)') + ')';
-      var owned = [];
+      var owned = [], dustNow = dustBalance();
       grid.innerHTML = '<div class="cl-set-head"><button class="cl-back-btn" id="clSetBack">&#8249; Sets</button><span class="cl-set-htitle">' + esc(set.name) + ' &middot; ' + set.owned + '/' + set.total + (set.complete ? ' &#10003;' : '') + '</span></div>' +
         set.members.map(function (m, i) {
           if (m.owned) { owned.push(m.card); return theme.card(locCard(m.card), CTX, i); }
-          return '<div class="cl-slot"><div class="cl-slot-q">?</div><div class="cl-slot-nm">' + esc(m.name) + '</div></div>';
+          var fc = forgeCost(m);
+          return '<div class="cl-slot"><div class="cl-slot-q">?</div><div class="cl-slot-nm">' + esc(m.name) + '</div>' +
+            '<button class="cl-slot-forge' + (dustNow >= fc ? '' : ' off') + '" data-fi="' + i + '" title="Forge this card with dust">&#9874; ' + fc + '</button></div>';
         }).join('');
       document.getElementById('clSetBack').addEventListener('click', function () { _setOpen = null; render(); });
+      // Forge a missing member: spend dust → the card is added and revealed like a win.
+      Array.prototype.forEach.call(grid.querySelectorAll('.cl-slot-forge'), function (b) {
+        b.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var m = set.members[+b.getAttribute('data-fi')]; if (!m || m.owned) return;
+          b.disabled = true;
+          forgeCard(m).then(function (r) {
+            if (r.ok) {
+              try { if (window.Sfx) { window.Sfx.haptic([12, 30]); } } catch (_) { /* noop */ }
+              try { if (window.Track) window.Track('card_forged', { rarity: r.cards && r.cards[0] && r.cards[0].rarity, set: set.id }); } catch (_) { /* noop */ }
+              render();                                             // refresh slots + dust chip
+              if (r.cards && r.cards.length) setTimeout(function () { reveal(r.cards); }, 250);
+            } else {
+              b.disabled = false;
+              try { if (window.Sfx) window.Sfx.tap(); } catch (_) { /* noop */ }
+              if (r.reason === 'dust') { b.classList.add('shake'); setTimeout(function () { b.classList.remove('shake'); }, 420); }
+            }
+          });
+        });
+      });
       try { if (theme.mount) theme.mount(grid); } catch (_) { /* noop */ }
       var oi = 0, ownedEls = [];
       Array.prototype.forEach.call(grid.querySelectorAll('.auth,.ctc,.clc-card'), function (el) {
@@ -1483,6 +1654,7 @@
       stopGyro();
       _gyroOff = gyroMount(holder);      // tilt the phone and the card leans + holo shifts
       dragTiltMount(holder);             // touch: drag a finger on the card to tilt it
+      mountPosterDepth(holder);          // WebGL depth-parallax poster (fails soft to the img)
       // tap-to-open shimmer: a light sweep across the card as it appears
       var ac = holder.querySelector('.auth-card');
       if (ac && window.Fx && window.Fx.play) window.Fx.play(ac, 'sheen-go', 800);
@@ -1569,9 +1741,9 @@
       function card(c) {
         var tier = c.rarity, rl = RARITY[tier];
         document.getElementById('clrBody').innerHTML =
-          '<div class="clr-stage"><div class="clr-flip" id="clrFlip" style="--halo:' + rl.ring + '">' +
+          '<div class="clr-stage" style="--halo:' + rl.ring + '"><div class="clr-flip" id="clrFlip">' +
           '<div class="clr-back ' + activeCardbackClass() + '"><div class="clr-halo"></div><div class="clr-mono">CL</div></div>' +
-          '<div class="clr-face" id="clrFace"></div></div></div>' +
+          '<div class="clr-face" id="clrFace"></div></div><div class="clr-shock" id="clrShock"></div></div>' +
           '<div class="clr-cap" id="clrCap"></div>' +
           '<div class="clr-hint">' + (idx < queue.length - 1 ? 'tap for next' : 'tap to finish') + '</div>';
         document.getElementById('clrFace').innerHTML = theme.card(c, CTX, 0);
@@ -1583,6 +1755,13 @@
         later(360, function () { flip.classList.add('flip-go'); });            // keyframe flip (1.05s)
         later(900, function () {                                                // ~crossover: front swings into view
           try { if (window.Sfx) window.Sfx.reveal(tier); } catch (_) { /* noop */ }
+          // elite+ punctuates the crossover with a rarity-coloured ring shockwave
+          // (transform/opacity only — safe everywhere) and a short haptic hit
+          if (tier === 'legendary' || tier === 'elite') {
+            var sh = document.getElementById('clrShock');
+            if (sh) { sh.classList.remove('go'); void sh.offsetWidth; sh.classList.add('go'); }
+            if (tier === 'elite') { try { if (window.Sfx) window.Sfx.haptic([12, 28]); } catch (_) { /* noop */ } }
+          }
           if (tier === 'legendary') {
             var fl = document.getElementById('clrFlash'); if (fl) { fl.classList.remove('go'); void fl.offsetWidth; fl.classList.add('go'); }
             try { if (window.Sfx) window.Sfx.haptic([20, 40, 20, 40, 90]); } catch (_) { /* noop */ }

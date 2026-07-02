@@ -518,6 +518,29 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   }
 
   function pushSolved(g){ solved.push({key:g.key,label:g.label,color:g.color,tiles:g.tiles}); }
+
+  // Daily win → collect the FIRST group you cracked (pure deduction, before any
+  // elimination): its 4 films, posters fetched on the spot; the least-voted film is
+  // the prize, bumped for a clean board (0 mistakes → +2, 1 → +1).
+  async function grantCards(){
+    try{
+      if(PRACTICE || !window.Collection || !solved.length) return;
+      const g=solved[0];
+      const det=await Promise.all(g.tiles.map(t=>fetch(IMG+'movie/'+t.id+'&language=en-US').then(r=>r.ok?r.json():null).catch(()=>null)));
+      let prize=null, pv=Infinity;
+      det.forEach((d,i)=>{ const v=(d&&d.vote_count)||1e9; if(v<pv){ pv=v; prize=g.tiles[i].id; } });
+      const bump=mistakes===0?2:mistakes===1?1:0;
+      const nc=Collection.add(g.tiles.map((t,i)=>{
+        const it={id:t.id,type:'movie',name:t.title,img:(det[i]&&det[i].poster_path)||''};
+        if(t.id===prize){ it.rarityFloor='rare'; if(bump) it.bump=bump; }
+        return it;
+      }));
+      if(nc&&nc.length){
+        try{ const w=JSON.parse(localStorage.getItem('clCardWins')||'[]'); if(w.indexOf('group')<0){ w.push('group'); localStorage.setItem('clCardWins',JSON.stringify(w)); } }catch(_e){}
+        if(Collection.reveal) setTimeout(()=>Collection.reveal(nc),700);
+      }
+    }catch(_){ /* collection is optional */ }
+  }
   // Did the (wrong) 4 share a genuine link — a famous actor, director, or title pattern?
   function sharedConnection(ids){
     if(ids.length<4) return false;
@@ -546,7 +569,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
         const flyRects=selected.map(id=>{ const el=document.querySelector('.tile[data-id="'+id+'"]'); return el?el.getBoundingClientRect():null; }).filter(Boolean);
         pushSolved(g);                  // group collapses into a colored band via render()
         selected=[]; locked=false;
-        if(solved.length===4){ finished=true; won=true; statsBump(true); }
+        if(solved.length===4){ finished=true; won=true; statsBump(true); grantCards(); }
         saveDaily();                    // save AFTER finished is set, or a reload sticks on "4 solved, not finished"
         render();
         if(!finished){ try{ flyTiles(flyRects, g); }catch(_){} }   // tiles fly into the new band
@@ -634,5 +657,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   boot();
 })();
 </script>
+<script defer src="/sfx.js"></script>
+<script defer src="/collection.js"></script>
 </body>
 </html>

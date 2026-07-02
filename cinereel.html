@@ -80,6 +80,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 </div>
 
 <script src="/fx.js"></script>
+<script defer src="/sfx.js"></script>
+<script defer src="/collection.js"></script>
 <script>
 (function(){
   const IMG='https://image.tmdb.org/t/p/';
@@ -231,7 +233,22 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   }
   function advance(win,name,isSkip){
     const total=T.reveal.length;
-    if(win){ guesses.push({win:true}); over=true; render(); return; }
+    if(win){
+      guesses.push({win:true}); over=true;
+      // Daily win → the guessed actor is the prize card: floor rare, +2 for
+      // nailing it off the first poster, +1 within three.
+      try{
+        if(isDaily && window.Collection && T.person){
+          const nc=Collection.add([{ id:T.person.id, type:'person', name:T.person.name, img:T.person.profile_path,
+            rarityFloor:'rare', bump: shown===1?2:shown<=3?1:0 }]);
+          if(nc&&nc.length){
+            try{ const w=JSON.parse(localStorage.getItem('clCardWins')||'[]'); if(w.indexOf('reel')<0){ w.push('reel'); localStorage.setItem('clCardWins',JSON.stringify(w)); } }catch(_e){}
+            if(Collection.reveal) setTimeout(function(){ Collection.reveal(nc); },800);
+          }
+        }
+      }catch(_){ /* collection is optional */ }
+      render(); return;
+    }
     if(isSkip){ if(shown<total){ shown++; render(); } return; } // reveal, no penalty
     guesses.push({win:false});                                  // a real wrong guess
     if(shown>=total){ over=true; render(); return; }            // no posters left → lost

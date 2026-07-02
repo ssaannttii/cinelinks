@@ -150,6 +150,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 <div class="toast" id="toast"></div>
 
 <script src="/fx.js"></script>
+<script defer src="/sfx.js"></script>
+<script defer src="/collection.js"></script>
 <script src="cineline-pool.js"></script>
 <script src="/lib/timeline.js"></script>
 <script src="/lib/pool.js"></script>
@@ -283,6 +285,25 @@ function finish(){
   finished = true;
   score = results.filter(r => r === 'correct').length;
   solved = score >= PASS;
+  // Daily solve → collect every film you placed correctly; the deepest cut
+  // (earliest year) is the prize, bumped for a flawless / near-flawless deck.
+  try{
+    if(solved && !PRACTICE && window.Collection){
+      const corr = placed.filter(c => c._res === 'correct' && c.id);
+      let prize = null; corr.forEach(c => { if(!prize || c.year < prize.year) prize = c; });
+      const total = deck.length - 1;
+      const bump = score === total ? 2 : score >= total - 2 ? 1 : 0;
+      const nc = Collection.add(corr.map(c => {
+        const it = { id: c.id, type: 'movie', name: c.title, img: c.poster };
+        if(prize && c.id === prize.id){ it.rarityFloor = 'rare'; if(bump) it.bump = bump; }
+        return it;
+      }));
+      if(nc && nc.length){
+        try{ const w = JSON.parse(localStorage.getItem('clCardWins') || '[]'); if(w.indexOf('line') < 0){ w.push('line'); localStorage.setItem('clCardWins', JSON.stringify(w)); } }catch(_e){}
+        if(Collection.reveal) setTimeout(() => { Collection.reveal(nc); }, 900);
+      }
+    }
+  }catch(_){ /* collection is optional */ }
   const streak = updateStreak(solved);
   document.getElementById('current').style.display = 'none';
   document.getElementById('tlHint').style.display = 'none';

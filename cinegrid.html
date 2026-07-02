@@ -335,6 +335,24 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
   function finish(win){
     over=true; won=win;
     if(isDaily) persist();
+    // Daily win → collect every film you proved (path-like commons); the rarest find
+    // (fewest votes) is the prize card, bumped by how many lives survived.
+    try{
+      if(win && isDaily && window.Collection){
+        const corr=cells.filter(function(c){return c&&c.status==='correct'&&c.movieId;});
+        let prize=null; corr.forEach(function(c){ if(!prize||(+c.votes||1e9)<(+prize.votes||1e9)) prize=c; });
+        const bump=livesLeft>=5?2:livesLeft>=4?1:0;
+        const nc=Collection.add(corr.map(function(c){
+          const it={id:c.movieId,type:'movie',name:c.title,img:c.poster};
+          if(prize&&c.movieId===prize.movieId){ it.rarityFloor='rare'; if(bump) it.bump=bump; }
+          return it;
+        }));
+        if(nc&&nc.length){
+          try{ const w=JSON.parse(localStorage.getItem('clCardWins')||'[]'); if(w.indexOf('grid')<0){ w.push('grid'); localStorage.setItem('clCardWins',JSON.stringify(w)); } }catch(_e){}
+          if(Collection.reveal) setTimeout(function(){ Collection.reveal(nc); },900);
+        }
+      }
+    }catch(_){ /* collection is optional */ }
     render();
     const cells9=stage.querySelectorAll('.cell');
     if(win){
@@ -390,5 +408,6 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 })();
 </script>
 <script defer src="/sfx.js"></script>
+<script defer src="/collection.js"></script>
 </body>
 </html>
