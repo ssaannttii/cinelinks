@@ -550,6 +550,60 @@
       pump();
     } catch (_) { /* noop */ }
   }
+  // ─── Canonical posters ───
+  // A card's art must be the SAME object for every player (like a printed TCG:
+  // worldwide identical art, only the text localises — and our localised title is
+  // already overlaid on top). CineLinks fetches TMDB in the UI language, so cards
+  // could be collected with localised poster files; this lazily converges every
+  // rendered card to the canonical (default-language) poster, one TMDB fetch per
+  // card ever (card.imgc marks it done). Also what makes /depth maps match.
+  var _normUpd = {}, _normT = 0;
+  function _normFlush() {
+    _normT = 0; var keys = Object.keys(_normUpd); if (!keys.length) return;
+    var s = load(); if (!s || !s.cards) { _normUpd = {}; return; }
+    keys.forEach(function (k) { var card = s.cards[k]; if (!card) return; var u = _normUpd[k]; if (u.img) card.img = u.img; card.imgc = 1; });
+    save(s); _normUpd = {};
+  }
+  function _normQueue(key, img) { _normUpd[key] = { img: img }; if (!_normT) _normT = setTimeout(_normFlush, 900); }
+  function normalizePosters(cards, els) {
+    try {
+      var pend = [];
+      for (var i = 0; i < cards.length; i++) {
+        var c = cards[i]; if (!c || c.imgc) continue;
+        if (c.type === 'person' || !c.img || /^https?:/.test(c.img)) { c.imgc = 1; _normQueue(c.type + ':' + c.id, null); continue; } // profiles aren't localised
+        pend.push({ c: c, el: els ? els[i] : null });
+      }
+      if (!pend.length) return;
+      var qi = 0, active = 0, MAX = 3;
+      function pump() {
+        while (active < MAX && qi < pend.length) {
+          (function (it) {
+            active++;
+            var tp = it.c.type === 'tv' ? 'tv' : 'movie';
+            fetch('/api/tmdb?path=' + encodeURIComponent(tp + '/' + it.c.id))
+              .then(function (r) { return r && r.ok ? r.json() : null; })
+              .then(function (j) {
+                active--;
+                var canon = j && j.poster_path;
+                if (canon) {
+                  var changed = canon !== it.c.img;
+                  it.c.img = canon; it.c.imgc = 1;
+                  _normQueue(it.c.type + ':' + it.c.id, canon);
+                  if (changed && it.el) {
+                    var im = it.el.querySelector('.auth-bgimg,.ctc-art>img,.clc-img');
+                    if (im && im.tagName === 'IMG') im.src = im.src.replace(/\/t\/p\/(w\d+)\/.*$/, '/t/p/$1' + canon);
+                  }
+                }
+                pump();
+              })
+              .catch(function () { active--; pump(); });   // API down → retry on a future render
+          })(pend[qi++]);
+        }
+      }
+      pump();
+    } catch (_) { /* noop */ }
+  }
+
   function stats() {
     var s = load() || blank();
     var cards = Object.keys(s.cards || {}).map(function (k) { return s.cards[k]; });
@@ -1480,6 +1534,7 @@
     scrollReveal(grid);
     mobileScrollHolo(grid);
     localizeCards(cards, grid.children, _uiLang);
+    normalizePosters(cards, grid.children);
   }
 
   // Cards past the first screen start hidden and rise as they scroll into view —
@@ -1549,6 +1604,7 @@
         el.style.cursor = 'pointer'; el.addEventListener('click', function () { openDetail(card, el); });
       });
       localizeCards(owned, ownedEls, _uiLang);
+      normalizePosters(owned, ownedEls);
       return;
     }
     grid.style.display = 'block';

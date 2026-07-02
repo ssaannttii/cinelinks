@@ -13,8 +13,7 @@ const path = require('path');
 const { loadEnv } = require('./load-env');
 loadEnv();
 
-const API_KEY = process.env.TMDB_API_KEY;
-if (!API_KEY) { console.error('TMDB_API_KEY missing — run: npm run env:pull'); process.exit(1); }
+const API_KEY = process.env.TMDB_API_KEY; // checked in main() — collectIds() needs no key
 
 const ROOT = path.join(__dirname, '..');
 
@@ -42,6 +41,7 @@ async function tmdb(p) {
 }
 
 async function main() {
+  if (!API_KEY) { console.error('TMDB_API_KEY missing — run: npm run env:pull'); process.exit(1); }
   const ids = collectIds();
   console.log('entities:', ids.length);
   const out = [];
@@ -61,4 +61,8 @@ async function main() {
   fs.writeFileSync(path.join(__dirname, 'depth-posters.json'), JSON.stringify(out, null, 1));
   console.log('with image:', out.length, '→ scripts/depth-posters.json');
 }
-main().catch(e => { console.error(e); process.exit(1); });
+
+// Exported so test/depth-coverage.test.js can verify (offline) that every pool
+// entity has been through the depth pipeline; run directly to refresh the list.
+module.exports = { collectIds };
+if (require.main === module) main().catch(e => { console.error(e); process.exit(1); });
