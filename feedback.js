@@ -47,6 +47,18 @@
     try { if (window.Track) window.Track(name, data || {}); } catch (_) { /* noop */ }
   }
 
+  function submit(value) {
+    if (isTester()) return;
+    try {
+      fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        keepalive: true,
+        body: JSON.stringify({ value: value, page: pageKey(), beta: isBeta() ? 1 : 0 })
+      }).catch(function () { /* noop */ });
+    } catch (_) { /* noop */ }
+  }
+
   function pageKey() {
     var path = location.pathname || '/';
     if (path === '/') return 'home';
@@ -112,6 +124,7 @@
     panel.querySelectorAll('.clfb-choice').forEach(function (choice) {
       choice.addEventListener('click', function () {
         track('feedback_quick', { page: pageKey(), value: choice.dataset.v || '', beta: isBeta() ? 1 : 0 });
+        submit(choice.dataset.v || '');
         var done = document.getElementById('clFbDone');
         if (done) done.classList.add('on');
         setTimeout(function () { panel.classList.remove('open'); if (done) done.classList.remove('on'); }, 900);

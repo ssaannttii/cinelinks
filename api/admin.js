@@ -81,6 +81,17 @@ function dateKey(date) {
   return y + '-' + m + '-' + d;
 }
 
+function madridDateKey(date) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Madrid',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(date);
+  const byType = Object.fromEntries(parts.map(part => [part.type, part.value]));
+  return byType.year + '-' + byType.month + '-' + byType.day;
+}
+
 function monthDates(month) {
   if (!/^\d{4}-\d{2}$/.test(month || '')) return null;
   const [year, monthNum] = month.split('-').map(Number);
@@ -91,6 +102,50 @@ function monthDates(month) {
     current.setUTCDate(current.getUTCDate() + 1);
   }
   return dates;
+}
+
+function recentDates(days) {
+  const out = [];
+  const current = new Date();
+  for (let i = 0; i < days; i++) {
+    out.push(madridDateKey(current));
+    current.setUTCDate(current.getUTCDate() - 1);
+  }
+  return out;
+}
+
+function redisHash(raw) {
+  if (!raw) return {};
+  if (Array.isArray(raw)) {
+    const obj = {};
+    for (let i = 0; i < raw.length; i += 2) obj[raw[i]] = raw[i + 1];
+    return obj;
+  }
+  if (typeof raw === 'object') return raw;
+  return {};
+}
+
+function intField(obj, key) {
+  const n = parseInt(obj && obj[key], 10);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function parseRecentFeedback(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw.map(item => {
+    try {
+      const entry = typeof item === 'string' ? JSON.parse(item) : item;
+      return {
+        time: Number(entry.t || 0),
+        date: String(entry.d || ''),
+        value: String(entry.v || ''),
+        page: String(entry.p || ''),
+        beta: entry.b ? 1 : 0
+      };
+    } catch (_) {
+      return null;
+    }
+  }).filter(Boolean);
 }
 
 function parseChallenge(raw) {
@@ -214,6 +269,41 @@ async function handleClear(req, res) {
   return res.status(200).json({ ok: true });
 }
 
+async function handleFeedback(req, res) {
+  const daysBack = Math.min(30, Math.max(1, parseInt(req.query.days || '14', 10) || 14));
+  const dates = recentDates(daysBack);
+  const commands = [];
+  dates.forEach(date => {
+    commands.push(['HGETALL', 'feedback:day:' + date]);
+    commands.push(['HGETALL', 'feedback:page:' + date]);
+  });
+  commands.push(['LRANGE', 'feedback:recent', 0, 59]);
+
+  const results = await redisCommand(commands);
+  const days = dates.map((date, i) => {
+    const totals = redisHash(results[i * 2] && results[i * 2].result);
+    const pagesRaw = redisHash(results[i * 2 + 1] && results[i * 2 + 1].result);
+    const pages = Object.keys(pagesRaw).map(page => ({
+      page,
+      count: intField(pagesRaw, page)
+    })).sort((a, b) => b.count - a.count).slice(0, 8);
+    return {
+      date,
+      total: intField(totals, 'total'),
+      fun: intField(totals, 'fun'),
+      confusing: intField(totals, 'confusing'),
+      hard: intField(totals, 'hard'),
+      bug: intField(totals, 'bug'),
+      beta: intField(totals, 'beta'),
+      public: intField(totals, 'public'),
+      pages
+    };
+  });
+  const recent = parseRecentFeedback(results[results.length - 1] && results[results.length - 1].result);
+
+  return res.status(200).json({ days, recent });
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Password');
@@ -224,6 +314,7 @@ module.exports = async function handler(req, res) {
     const action = req.method === 'GET' ? req.query.action : (req.body && req.body.action);
     if (req.method === 'GET' && action === 'month') return handleMonth(req, res);
     if (req.method === 'GET' && action === 'search') return handleSearch(req, res);
+    if (req.method === 'GET' && action === 'feedback') return handleFeedback(req, res);
     if (req.method === 'POST' && action === 'update') return handleUpdate(req, res);
     if (req.method === 'POST' && action === 'clear') return handleClear(req, res);
     return res.status(400).json({ error: 'Unknown action' });

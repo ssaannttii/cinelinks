@@ -92,6 +92,15 @@ users see the lightweight feedback button, and analytics events include
 Tester mode wins over beta mode: if your browser has `cl_tester=1`, feedback and
 analytics still no-op even if you open the beta link.
 
+Beta feedback is stored in KV through `/api/feedback` and can be reviewed from:
+
+```txt
+https://cinelinks.vercel.app/admin.html
+```
+
+Unlock with `ADMIN_PASSWORD`; the feedback panel shows 14-day button counts and
+the latest compact votes.
+
 ## Native function gotcha
 
 `api/depth` uses `onnxruntime-node` and `sharp`. It must be built by Vercel's Linux

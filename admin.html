@@ -52,6 +52,23 @@ button,input{font:inherit}
 .result-meta{font-size:.66rem;color:var(--mut);margin-top:2px;text-transform:uppercase;letter-spacing:.08em}
 .actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 .status{min-height:20px;margin-top:12px;color:var(--mut);font-size:.76rem}
+.feedback-box{border-top:1px solid var(--bdr);margin-top:18px;padding-top:16px}
+.feedback-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.feedback-title{font-size:.72rem;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.feedback-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:12px}
+.fb-stat{border:1px solid var(--bdr);border-radius:8px;background:rgba(255,255,255,.025);padding:8px;text-align:center}
+.fb-stat b{display:block;font-size:1rem;color:var(--txt)}
+.fb-stat span{display:block;margin-top:1px;font-size:.55rem;color:var(--mut);font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.fb-days,.fb-recent{display:grid;gap:6px}
+.fb-days{margin-bottom:13px}
+.fb-row{display:grid;grid-template-columns:74px 1fr auto;gap:8px;align-items:center;font-size:.7rem;color:var(--mut)}
+.fb-bar{height:7px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}
+.fb-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--gold),#55d98d)}
+.fb-recent-title{font-size:.62rem;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin-bottom:7px}
+.fb-item{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;border:1px solid var(--bdr);border-radius:8px;background:rgba(255,255,255,.025);padding:7px;font-size:.7rem}
+.fb-val{border-radius:999px;padding:3px 7px;font-size:.56rem;font-weight:900;text-transform:uppercase;letter-spacing:.08em;background:rgba(232,160,0,.12);color:var(--gold)}
+.fb-meta{min-width:0;color:var(--txt);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fb-time{color:var(--mut);font-size:.62rem}
 .lock{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(13,13,13,.96);padding:20px}
 .lock-card{width:min(420px,100%);background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:22px}
 .lock-card h1{font-size:1.2rem;margin-bottom:8px}
@@ -115,6 +132,17 @@ button,input{font:inherit}
       <button class="btn red" id="clearOverrideBtn">Use base</button>
     </div>
     <div class="status" id="status"></div>
+
+    <div class="feedback-box">
+      <div class="feedback-head">
+        <div class="feedback-title">Beta feedback</div>
+        <button class="btn" id="refreshFeedbackBtn">Refresh</button>
+      </div>
+      <div class="feedback-summary" id="feedbackSummary"></div>
+      <div class="fb-days" id="feedbackDays"></div>
+      <div class="fb-recent-title">Latest votes</div>
+      <div class="fb-recent" id="feedbackRecent">Unlock to load feedback.</div>
+    </div>
   </aside>
 </main>
 
@@ -137,6 +165,7 @@ let monthCursor = new Date();
 let days = [];
 let selected = null;
 let picked = {s:null, e:null};
+let feedback = null;
 
 function monthKey(date) {
   return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0');
@@ -167,6 +196,12 @@ async function apiPost(action, body = {}) {
 
 function setStatus(text) {
   document.getElementById('status').textContent = text || '';
+}
+
+function esc(text) {
+  return String(text == null ? '' : text).replace(/[&<>"']/g, c => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+  })[c]);
 }
 
 function nodeType(node) {
@@ -245,6 +280,53 @@ async function loadMonth() {
   setStatus('');
 }
 
+function feedbackLabel(value) {
+  return ({ fun:'fun', confusing:'confusing', hard:'hard', bug:'bug' })[value] || value || '-';
+}
+
+function shortTime(ts) {
+  if (!ts) return '';
+  return new Intl.DateTimeFormat('en-US', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}).format(new Date(ts));
+}
+
+function renderFeedback() {
+  const summaryEl = document.getElementById('feedbackSummary');
+  const daysEl = document.getElementById('feedbackDays');
+  const recentEl = document.getElementById('feedbackRecent');
+  if (!feedback) {
+    summaryEl.innerHTML = '';
+    daysEl.innerHTML = '';
+    recentEl.textContent = 'No feedback loaded.';
+    return;
+  }
+  const totals = feedback.days.reduce((acc, day) => {
+    ['fun', 'confusing', 'hard', 'bug', 'total'].forEach(k => { acc[k] = (acc[k] || 0) + (day[k] || 0); });
+    return acc;
+  }, {});
+  summaryEl.innerHTML = ['fun', 'confusing', 'hard', 'bug'].map(k =>
+    '<div class="fb-stat"><b>' + (totals[k] || 0) + '</b><span>' + feedbackLabel(k) + '</span></div>'
+  ).join('');
+
+  const max = Math.max(1, ...feedback.days.map(day => day.total || 0));
+  daysEl.innerHTML = feedback.days.slice(0, 7).map(day =>
+    '<div class="fb-row"><span>' + esc(day.date.slice(5)) + '</span><span class="fb-bar"><i style="width:' + Math.round((day.total || 0) / max * 100) + '%"></i></span><b>' + (day.total || 0) + '</b></div>'
+  ).join('');
+
+  if (!feedback.recent.length) {
+    recentEl.textContent = 'No votes yet.';
+    return;
+  }
+  recentEl.innerHTML = feedback.recent.slice(0, 12).map(item =>
+    '<div class="fb-item"><span class="fb-val">' + esc(feedbackLabel(item.value)) + '</span><span class="fb-meta">' + esc(item.page || 'home') + (item.beta ? ' · beta' : '') + '</span><span class="fb-time">' + esc(shortTime(item.time)) + '</span></div>'
+  ).join('');
+}
+
+async function loadFeedback() {
+  document.getElementById('feedbackRecent').textContent = 'Loading feedback...';
+  feedback = await apiGet('feedback', {days:14});
+  renderFeedback();
+}
+
 async function search(slot) {
   const input = document.getElementById(slot === 's' ? 'searchS' : 'searchE');
   const resultsEl = document.getElementById(slot === 's' ? 'resultsS' : 'resultsE');
@@ -308,6 +390,7 @@ async function unlock() {
   sessionStorage.setItem('cinelinksAdminPassword', password);
   try {
     await loadMonth();
+    await loadFeedback();
     document.getElementById('lock').style.display = 'none';
   } catch (e) {
     document.getElementById('lockStatus').textContent = e.message;
@@ -333,6 +416,9 @@ document.querySelectorAll('[data-clear]').forEach(btn => btn.onclick = () => {
 });
 document.getElementById('saveBtn').onclick = saveChallenge;
 document.getElementById('clearOverrideBtn').onclick = clearOverride;
+document.getElementById('refreshFeedbackBtn').onclick = () => loadFeedback().catch(e => {
+  document.getElementById('feedbackRecent').textContent = e.message;
+});
 
 if (password) unlock();
 </script>
