@@ -195,6 +195,15 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .game-done.on{display:inline-flex;align-items:center;color:#7fd49a;font-weight:800;font-size:.56rem;letter-spacing:.06em;text-transform:uppercase;background:rgba(91,189,122,.16);border:1px solid rgba(91,189,122,.38);padding:2px 7px;border-radius:999px;white-space:nowrap;flex-shrink:0;transition:transform .2s}
 /* Return-to-hub celebration: a freshly-completed game's card blooms once on arrival. */
 .game-card{position:relative}
+/* Poster mood: a signature film poster (blurred, faded, diagonally masked) sits
+   behind each card so the home instantly reads as a movie-game hub. --poster is
+   assigned per card in JS; content is lifted above it. */
+.game-card::before{content:"";position:absolute;inset:0;z-index:0;border-radius:14px;background:var(--poster) center/cover no-repeat;opacity:.09;filter:blur(1px) saturate(1.15);pointer-events:none;transition:opacity .25s ease;-webkit-mask:linear-gradient(115deg,#000,transparent 58%);mask:linear-gradient(115deg,#000,transparent 58%)}
+.game-card:hover::before{opacity:.17}
+.game-card.hero::before{opacity:.13}
+.game-card.hero:hover::before{opacity:.22}
+.game-card>*{position:relative;z-index:1}
+@media(prefers-reduced-motion:reduce){.game-card::before{transition:none}}
 @keyframes cardCele{0%{box-shadow:0 0 0 0 rgba(91,189,122,0)}16%{transform:scale(1.035);box-shadow:0 0 0 2px rgba(127,212,154,.6),0 18px 54px rgba(91,189,122,.42)}100%{transform:scale(1);box-shadow:0 0 0 0 rgba(91,189,122,0)}}
 @keyframes badgePop{0%{transform:scale(0) rotate(-14deg);opacity:0}55%{transform:scale(1.45) rotate(5deg);opacity:1}78%{transform:scale(.92)}100%{transform:scale(1) rotate(0)}}
 @keyframes celeSweep{0%{transform:translateX(-120%) skewX(-18deg);opacity:0}30%{opacity:.55}100%{transform:translateX(220%) skewX(-18deg);opacity:0}}
@@ -1873,6 +1882,30 @@ function renderCollCard() {
 }
 // Three rotating "★ Today" chips steer the day's menu (pure guidance — any five
 // dailies complete the day). Deterministic by UTC day so everyone sees the same.
+// Signature blurred poster behind each game card (assigned once). w185 keeps the
+// home light; it's a low-priority background image. Iconic non-answer films so it
+// never hints a puzzle.
+function assignGamePosters() {
+  try {
+    const P = 'https://image.tmdb.org/t/p/w185';
+    const map = {
+      cl: '/RYMX2wcKCBAr24UyPD7xwmjaTn.jpg',      // The Avengers (ensemble = connections)
+      line: '/9xjZS2rlVxm8SFx8kPC3aIGCOYQ.jpg',   // Titanic (a period on the timeline)
+      grp: '/ulzhLuWrPK07P1YkdWQLZnQh1JL.jpg',    // Endgame (ensemble to group)
+      chain: '/n0YuM4f5lvGAP6MAW2kBIzugXnc.jpg',  // Top Gun: Maverick
+      trumps: '/gKY6q7SjCkAU6FqvqWybDYgUKIF.jpg', // Avatar
+      guess: '/rhr4y79GpxQF9IsfJItRXVaoGs4.jpg',  // Jurassic World
+      reel: '/dzBtMocZuJbjLOXvrl4zGYigDzh.jpg',   // The Lion King
+      grid: '/mINJaa34MtknCYl5AjtNJzWj8cD.jpg',   // Frozen II
+      rating: '/gKY6q7SjCkAU6FqvqWybDYgUKIF.jpg'  // Avatar
+    };
+    Object.keys(map).forEach(k => {
+      const badge = document.querySelector('.game-done[data-done="' + k + '"]');
+      const card = badge && badge.closest('.game-card');
+      if (card && !card.style.getPropertyValue('--poster')) card.style.setProperty('--poster', 'url(' + P + map[k] + ')');
+    });
+  } catch (_) {}
+}
 function renderFeatured() {
   try {
     const keys = ['line', 'reel', 'grid', 'chain', 'grp', 'trumps', 'guess', 'rating'];
@@ -1897,7 +1930,7 @@ function renderFeatured() {
     }
   } catch(_) {}
 }
-window.addEventListener('load', function () { try { renderCollCard(); renderFeatured(); } catch(_) {} });
+window.addEventListener('load', function () { try { renderCollCard(); renderFeatured(); assignGamePosters(); } catch(_) {} });
 let _bip = null;
 window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); _bip = e; try { maybeShowInstall(); } catch(_) {} });
 function maybeShowInstall() {
