@@ -2427,6 +2427,7 @@
     achievements: achievementsState, openAchievements: openAchievements,
     dust: dustBalance, shine: shineCard, shineCost: shineCost, isShined: isShined,
     addDust: function (n) { var s = load() || blank(); s.dust = Math.max(0, (s.dust || 0) + (+n || 0)); save(s); refreshOpen(); return s.dust; },
+    forge: forgeCard, forgeCost: forgeCost, toggleShowcase: toggleShowcase, showcase: showcaseCards,
     reset: reset, grant: grant, addXp: addXp, setLevel: setLevel, exportData: exportData, importData: importData, seed: function () { return grant(SEED.map(function (s) { return s; })); },
     debug: debug,
     themes: { register: defineTheme, use: useTheme, list: function () { return Object.keys(THEMES).map(function (n) { return { name: n, label: THEMES[n].label || n }; }); }, current: activeThemeName }
