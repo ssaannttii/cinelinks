@@ -146,6 +146,7 @@ export default function TopTrumps() {
   const [banned, setBanned] = useState<StatKey | null>(null);   // the stat you just lost with (can't re-pick it)
   const [revealed, setRevealed] = useState(false);
   const [reduced, setReduced] = useState(false);
+  const [wide, setWide] = useState(false);   // desktop face-off layout
   const [sound, setSound] = useState(true);
 
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -165,6 +166,12 @@ export default function TopTrumps() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing client-only prefs on mount
     setReduced(r);
     setSound(Sfx.enabled);
+    // desktop face-off layout, kept in sync on resize
+    const mq = window.matchMedia("(min-width: 920px)");
+    const sync = () => setWide(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
   }, []);
 
   // ── juice helpers (refs/setState only → stable) ──
@@ -406,12 +413,14 @@ export default function TopTrumps() {
         </div>
       </div>
 
-      <div ref={boardRef} className="tt-board">
+      <div ref={boardRef} className={"tt-board" + (wide ? " tt-wide" : "")}>
         {/* CPU card */}
-        <FlipCard card={cc} faceUp={showCpu} duel={duel} clash={clash} reduced={reduced} owner={rivalTag || "CPU"} />
+        <div className="tt-slot tt-slot-cpu">
+          <FlipCard card={cc} faceUp={showCpu} duel={duel} clash={clash} reduced={reduced} owner={rivalTag || "CPU"} wide={wide} />
+        </div>
 
         {/* clash / VS zone */}
-        <div ref={clashRef} className="tt-clash">
+        <div ref={clashRef} className="tt-clash tt-slot-vs">
           {clash && duel && !reduced && <span className="tt-shock" style={{ borderColor: resColor(duel.res) }} />}
           <div className={"tt-vs" + (clash ? " on" : "")} style={clash && duel ? { borderColor: resColor(duel.res), color: resColor(duel.res), boxShadow: `0 0 22px ${resColor(duel.res)}55` } : undefined}>
             {!revealed ? "VS" : !clash ? "…" : duel ? (duel.res === "win" ? "✓" : duel.res === "lose" ? "✗" : "=") : "VS"}
@@ -419,7 +428,7 @@ export default function TopTrumps() {
         </div>
 
         {/* banner */}
-        <div className="text-center" style={{ minHeight: 22, fontSize: ".82rem", fontWeight: 800, marginBottom: 8 }}>
+        <div className="tt-banner text-center" style={{ minHeight: 22, fontSize: ".82rem", fontWeight: 800, marginBottom: 8 }}>
           {shineOffer
             ? <span style={{ display: "inline-flex", gap: 8, alignItems: "center", flexWrap: "wrap", justifyContent: "center" }}>
                 <button onClick={() => { shineUsedRef.current = true; setBanned(shineOffer); setShineOffer(null); settleRef.current = null; setRevealed(false); setChosen(null); setClash(false); setDuel(null); setPhase("play"); Sfx.select(); }}
@@ -435,7 +444,9 @@ export default function TopTrumps() {
         </div>
 
         {/* Player card */}
-        {pc && <PlayerCard key={pc.id} card={pc} chosen={chosen} duel={duel} clash={clash} revealed={revealed} yourTurn={yourTurn} onPick={resolve} onFire={onFire} streak={streak} banned={banned} />}
+        <div className="tt-slot tt-slot-you">
+          {pc && <PlayerCard key={pc.id} card={pc} chosen={chosen} duel={duel} clash={clash} revealed={revealed} yourTurn={yourTurn} onPick={resolve} onFire={onFire} streak={streak} banned={banned} />}
+        </div>
       </div>
 
       {phase === "over" && (
@@ -541,6 +552,20 @@ const CSS = `
   .tt-rows{margin-top:7px!important;gap:5px!important}
   .tt-row{padding:4px 10px;font-size:.78rem}
 }
+/* Desktop face-off: your card and the opponent's sit side by side with the VS
+   between them, using the wide aspect ratio instead of a narrow phone column. */
+@media(min-width:920px){
+  .tt-main{max-width:1000px;padding:60px 24px 48px}
+  .tt-momentum{max-width:620px;margin-left:auto;margin-right:auto}
+  .tt-board.tt-wide{display:grid;grid-template-columns:minmax(0,380px) 104px minmax(0,380px);grid-template-rows:auto auto;justify-content:center;align-items:start;column-gap:10px;row-gap:4px;margin-top:6px}
+  .tt-wide .tt-slot{width:100%}
+  .tt-wide .tt-slot-you{grid-column:1;grid-row:1}
+  .tt-wide .tt-slot-vs{grid-column:2;grid-row:1;align-self:center;height:auto;margin:0}
+  .tt-wide .tt-slot-cpu{grid-column:3;grid-row:1}
+  .tt-wide .tt-banner{grid-column:1 / -1;grid-row:2;margin-top:10px}
+  .tt-wide .tt-vs{width:52px;height:52px;font-size:1.3rem}
+  .tt-wide .tt-vs.on{font-size:1.6rem}
+}
 @media(prefers-reduced-motion:reduce){
   .tt-deal,.tt-rise,.tt-trophy,.tt-shake,.tt-vs.on,.tt-fire{animation:none}
   .tt-shine,.tt-sheen,.tt-spark,.tt-shock{display:none}
@@ -612,7 +637,7 @@ function PlayerCard({ card, chosen, duel, clash, revealed, yourTurn, onPick, onF
   );
 }
 
-function FlipCard({ card, faceUp, duel, clash, reduced, owner }: { card?: Card; faceUp: boolean; duel: Duel; clash: boolean; reduced: boolean; owner: string }) {
+function FlipCard({ card, faceUp, duel, clash, reduced, owner, wide }: { card?: Card; faceUp: boolean; duel: Duel; clash: boolean; reduced: boolean; owner: string; wide?: boolean }) {
   if (!card) return null;
   const rar = RARITY[card.rarity];
   const sdef = duel ? STATS.find((s) => s.key === duel.stat)! : null;
@@ -622,31 +647,82 @@ function FlipCard({ card, faceUp, duel, clash, reduced, owner }: { card?: Card; 
   const valColor = win ? "#7fd49a" : lose ? "#e8806f" : "var(--gold)";
   const hidden: React.CSSProperties = { backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" };
   const frontBorder = win ? "#7fd49a" : lose ? "rgba(232,128,111,.5)" : rar.ring;
-  return (
-    <div style={{ perspective: 900, minHeight: 96 }}>
-      <div style={{ position: "relative", transformStyle: "preserve-3d", transition: reduced ? "none" : "transform .55s cubic-bezier(.3,.9,.3,1)", transform: faceUp ? "rotateY(0)" : "rotateY(180deg)", filter: lose ? "saturate(.6) brightness(.85)" : "none" }}>
-        {/* front face (revealed card) */}
-        <div className="tt-flip-face" style={{ ...hidden, position: "relative", background: "var(--s1)", border: "2px solid " + frontBorder, borderRadius: 14, padding: 12, display: "flex", alignItems: "center", gap: 12, minHeight: 96, overflow: "hidden", boxShadow: win ? "0 0 22px rgba(127,212,154,.45)" : "0 10px 30px rgba(0,0,0,.4)" }}>
-          {fancy && <div style={{ position: "absolute", inset: 0, background: rar.grad, pointerEvents: "none" }} />}
-          {fancy && <span className="tt-sheen" />}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={card.poster} alt="" className="tt-flip-poster" style={{ width: 54, height: 81, objectFit: "cover", borderRadius: 7, flexShrink: 0, background: "var(--s2)", position: "relative" }} />
-          <div className="min-w-0 flex-1" style={{ position: "relative" }}>
-            <div style={{ fontWeight: 800, fontSize: ".92rem", lineHeight: 1.2 }}>{card.title}</div>
-            <div style={{ color: "var(--mut)", fontSize: ".74rem" }}>{card.year} · {owner}&apos;s card</div>
-            {sdef && <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontWeight: 800, color: valColor, fontSize: ".98rem", display: "inline-block", animation: win && clash ? "ttwinpop .4s cubic-bezier(.2,.9,.3,1) both" : undefined }}>
-                {sdef.icon} {faceUp ? <CountStat target={sdef.val(card)} from={sdef.from(card)} fmt={sdef.fmtNum} run /> : sdef.fmtNum(sdef.val(card))}
+
+  // Desktop face-off: a full vertical card that mirrors the player's card —
+  // poster header + all six stat slots, values masked with "?" until the duel
+  // reveals the chosen one. Opponent's other stats stay hidden (real Top Trumps).
+  const frontWide = (
+    <div className="tt-flip-face tt-pc" style={{ ...hidden, position: "relative", background: "var(--s1)", border: "2px solid " + frontBorder, borderRadius: 16, padding: 14, overflow: "hidden", boxShadow: win ? "0 0 26px rgba(127,212,154,.5)" : "0 14px 40px rgba(0,0,0,.4)" }}>
+      {fancy && <div style={{ position: "absolute", inset: 0, background: rar.grad, pointerEvents: "none" }} />}
+      {fancy && <span className="tt-sheen" />}
+      {card.rarity === "legendary" && <Sparkles />}
+      <div className="flex gap-3" style={{ position: "relative" }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={card.poster} alt="" className="tt-pc-poster" style={{ width: 72, height: 108, objectFit: "cover", borderRadius: 9, flexShrink: 0, background: "var(--s2)", boxShadow: "0 4px 14px rgba(0,0,0,.5)" }} />
+        <div className="min-w-0 flex-1">
+          <div className="tt-pc-title" style={{ fontWeight: 800, fontSize: "1rem", lineHeight: 1.2 }}>{card.title}</div>
+          <div style={{ color: "var(--mut)", fontSize: ".78rem", marginTop: 2 }}>{card.year} · {card.genre}</div>
+          <div style={{ display: "inline-block", marginTop: 7, fontSize: ".58rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: ".07em", color: rar.ring, border: "1px solid " + rar.ring, borderRadius: 999, padding: "2px 8px" }}>{rar.label} · {owner}</div>
+        </div>
+      </div>
+      <div className="tt-rows mt-3 flex flex-col gap-2" style={{ position: "relative" }}>
+        {STATS.map((s) => {
+          const isDuel = duel && duel.stat === s.key;
+          const showVal = isDuel && faceUp;
+          const rowColor = isDuel ? valColor : "var(--txt)";
+          return (
+            <div key={s.key} className={"tt-row" + (isDuel ? " lit" : "")} style={{ background: isDuel ? "rgba(232,160,0,.16)" : "transparent", opacity: isDuel ? 1 : 0.5 }}>
+              <span style={{ width: 18, textAlign: "center" }}>{s.icon}</span>
+              <span style={{ width: 64, flexShrink: 0 }}>{s.label}</span>
+              {showVal ? <StatBar frac={s.bar(card)} color={valColor} lit /> : <span className="tt-bar" style={{ opacity: 0.35 }} />}
+              <span style={{ width: 58, textAlign: "right", fontWeight: 800, color: rowColor, display: "inline-block", animation: win && clash && isDuel ? "ttwinpop .4s cubic-bezier(.2,.9,.3,1) both" : undefined }}>
+                {showVal ? <CountStat target={s.val(card)} from={s.from(card)} fmt={s.fmtNum} run /> : "?"}
               </span>
-              <StatBar frac={sdef.bar(card)} color={valColor} lit />
-            </div>}
-          </div>
-        </div>
-        {/* back face (pre-rotated so it reads correctly when the card is down) */}
-        <div className="tt-flip-face" style={{ ...hidden, position: "absolute", inset: 0, transform: "rotateY(180deg)", background: "repeating-linear-gradient(45deg,#161616,#161616 10px,#1d1d1d 10px,#1d1d1d 20px)", border: "2px solid var(--bdr)", borderRadius: 14, padding: 12, display: "flex", alignItems: "center", gap: 12 }}>
-          <div className="tt-flip-poster" style={{ width: 54, height: 81, borderRadius: 7, flexShrink: 0, background: "rgba(232,160,0,.1)", border: "1px solid rgba(232,160,0,.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem", color: "var(--gold)" }}>🃏</div>
-          <div><div style={{ fontWeight: 800, fontSize: ".86rem" }}>{owner}&apos;s card</div><div style={{ color: "var(--mut)", fontSize: ".74rem", marginTop: 2 }}>hidden until a stat is picked</div></div>
-        </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  const frontCompact = (
+    <div className="tt-flip-face" style={{ ...hidden, position: "relative", background: "var(--s1)", border: "2px solid " + frontBorder, borderRadius: 14, padding: 12, display: "flex", alignItems: "center", gap: 12, minHeight: 96, overflow: "hidden", boxShadow: win ? "0 0 22px rgba(127,212,154,.45)" : "0 10px 30px rgba(0,0,0,.4)" }}>
+      {fancy && <div style={{ position: "absolute", inset: 0, background: rar.grad, pointerEvents: "none" }} />}
+      {fancy && <span className="tt-sheen" />}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={card.poster} alt="" className="tt-flip-poster" style={{ width: 54, height: 81, objectFit: "cover", borderRadius: 7, flexShrink: 0, background: "var(--s2)", position: "relative" }} />
+      <div className="min-w-0 flex-1" style={{ position: "relative" }}>
+        <div style={{ fontWeight: 800, fontSize: ".92rem", lineHeight: 1.2 }}>{card.title}</div>
+        <div style={{ color: "var(--mut)", fontSize: ".74rem" }}>{card.year} · {owner}&apos;s card</div>
+        {sdef && <div style={{ marginTop: 6, display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontWeight: 800, color: valColor, fontSize: ".98rem", display: "inline-block", animation: win && clash ? "ttwinpop .4s cubic-bezier(.2,.9,.3,1) both" : undefined }}>
+            {sdef.icon} {faceUp ? <CountStat target={sdef.val(card)} from={sdef.from(card)} fmt={sdef.fmtNum} run /> : sdef.fmtNum(sdef.val(card))}
+          </span>
+          <StatBar frac={sdef.bar(card)} color={valColor} lit />
+        </div>}
+      </div>
+    </div>
+  );
+
+  const backCompact = (
+    <div className="tt-flip-face" style={{ ...hidden, position: "absolute", inset: 0, transform: "rotateY(180deg)", background: "repeating-linear-gradient(45deg,#161616,#161616 10px,#1d1d1d 10px,#1d1d1d 20px)", border: "2px solid var(--bdr)", borderRadius: 14, padding: 12, display: "flex", alignItems: "center", gap: 12 }}>
+      <div className="tt-flip-poster" style={{ width: 54, height: 81, borderRadius: 7, flexShrink: 0, background: "rgba(232,160,0,.1)", border: "1px solid rgba(232,160,0,.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem", color: "var(--gold)" }}>🃏</div>
+      <div><div style={{ fontWeight: 800, fontSize: ".86rem" }}>{owner}&apos;s card</div><div style={{ color: "var(--mut)", fontSize: ".74rem", marginTop: 2 }}>hidden until a stat is picked</div></div>
+    </div>
+  );
+
+  const backWide = (
+    <div className="tt-flip-face" style={{ ...hidden, position: "absolute", inset: 0, transform: "rotateY(180deg)", background: "repeating-linear-gradient(45deg,#161616,#161616 12px,#1d1d1d 12px,#1d1d1d 24px)", border: "2px solid var(--bdr)", borderRadius: 16, padding: 14, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12 }}>
+      <div style={{ width: 88, height: 132, borderRadius: 12, background: "rgba(232,160,0,.1)", border: "1px solid rgba(232,160,0,.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2.6rem", color: "var(--gold)" }}>🃏</div>
+      <div className="text-center"><div style={{ fontWeight: 800, fontSize: ".92rem" }}>{owner}&apos;s card</div><div style={{ color: "var(--mut)", fontSize: ".76rem", marginTop: 2 }}>hidden until you pick a stat</div></div>
+    </div>
+  );
+
+  return (
+    <div style={{ perspective: 900, minHeight: wide ? undefined : 96 }}>
+      <div style={{ position: "relative", transformStyle: "preserve-3d", transition: reduced ? "none" : "transform .55s cubic-bezier(.3,.9,.3,1)", transform: faceUp ? "rotateY(0)" : "rotateY(180deg)", filter: lose ? "saturate(.6) brightness(.85)" : "none" }}>
+        {wide ? frontWide : frontCompact}
+        {wide ? backWide : backCompact}
       </div>
     </div>
   );
