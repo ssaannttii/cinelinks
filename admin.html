@@ -23,7 +23,7 @@ button,input{font:inherit}
 .calendar{background:var(--s1);border:1px solid var(--bdr);border-radius:8px;overflow:hidden}
 .dow,.days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
 .dow div{padding:10px 8px;color:var(--mut);font-size:.66rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;border-bottom:1px solid var(--bdr);text-align:center}
-.day{min-height:118px;border-right:1px solid var(--bdr);border-bottom:1px solid var(--bdr);padding:10px;cursor:pointer;background:rgba(255,255,255,.025);transition:background .15s,border-color .15s}
+.day{min-height:118px;border-right:1px solid var(--bdr);border-bottom:1px solid var(--bdr);padding:10px;cursor:pointer;background:rgba(255,255,255,.025);transition:background .15s,border-color .15s;color:var(--txt);font:inherit;text-align:left}
 .day:nth-child(7n){border-right:none}
 .day:hover,.day.active{background:rgba(232,160,0,.08);border-color:rgba(232,160,0,.38)}
 .day.empty{cursor:default;background:rgba(255,255,255,.01)}
