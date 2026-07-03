@@ -85,9 +85,9 @@ For friends or early testers, use:
 https://cinelinks.vercel.app/beta.html
 ```
 
-That stores a local `cl_beta=1` flag and then sends them to the home page. Beta
-users see the lightweight feedback button, and analytics events include
-`beta: 1` so they can be filtered separately from normal traffic.
+That stores a local `cl_beta=1` flag and then sends them to `/?beta=1`. Beta users
+see the obvious BETA badge and lightweight feedback button, and analytics events
+include `beta: 1` so they can be filtered separately from normal traffic.
 
 Tester mode wins over beta mode: if your browser has `cl_tester=1`, feedback and
 analytics still no-op even if you open the beta link.

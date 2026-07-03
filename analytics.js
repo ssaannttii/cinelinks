@@ -28,15 +28,17 @@
     try { localStorage.setItem(key, on ? '1' : '0'); } catch (_) { /* noop */ }
   }
 
-  function applyBooleanQuery(param, key) {
+  function applyBooleanQuery(param, key, keepInUrl) {
     try {
       var url = new URL(window.location.href);
       var v = url.searchParams.get(param);
       if (v == null) return;
       var on = !/^(0|false|off|no)$/i.test(String(v));
       writeFlag(key, on);
-      url.searchParams.delete(param);
-      window.history.replaceState(null, '', url.pathname + url.search + url.hash);
+      if (!keepInUrl) {
+        url.searchParams.delete(param);
+        window.history.replaceState(null, '', url.pathname + url.search + url.hash);
+      }
     } catch (_) { /* noop */ }
   }
 
@@ -44,8 +46,8 @@
     return readTester();
   }
 
-  applyBooleanQuery(TESTER_QUERY, TESTER_KEY);
-  applyBooleanQuery(BETA_QUERY, BETA_KEY);
+  applyBooleanQuery(TESTER_QUERY, TESTER_KEY, false);
+  applyBooleanQuery(BETA_QUERY, BETA_KEY, true);
 
   window.CineInternal = window.CineInternal || {};
   window.CineInternal.isTester = isTester;
