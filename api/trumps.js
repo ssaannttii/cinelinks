@@ -51,7 +51,7 @@ module.exports = async function handler(req, res) {
         if (!raw) continue;
         try {
           const e = JSON.parse(raw);
-          if (skip && Array.isArray(e.d) && e.d.slice().sort().join(',') === skip) continue;   // that's you — reroll
+          if (skip && Array.isArray(e.d) && e.d.slice().sort(function (a, b) { return a - b; }).join(',') === skip) continue;   // that's you — reroll (numeric sort, matching the client's a-b)
           res.setHeader('Cache-Control', 'no-store');
           return res.status(200).json({ rival: e });
         } catch (_) { /* skip corrupt entry */ }
