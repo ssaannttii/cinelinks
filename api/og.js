@@ -34,6 +34,44 @@ export default function handler(req) {
   const n = p.get('n'), k = p.get('k');
   const a = p.get('a'), b = p.get('b');
 
+  // Showcase share: /api/og?g=show&ims=/p1.jpg,/p2.jpg&rs=legendary,rare&n=6
+  // — a fanned spread of up to six collected cards (the vitrine unfurl).
+  if (g === 'show') {
+    const ims = String(p.get('ims') || '').split(',').filter(Boolean).slice(0, 6);
+    const rs = String(p.get('rs') || '').split(',');
+    const count = p.get('n') || String(ims.length);
+    const full = (im) => /^https?:/i.test(im) ? im : 'https://image.tmdb.org/t/p/w342' + (im.charAt(0) === '/' ? '' : '/') + im;
+    const fan = ims.map((im, i) => {
+      const rc = RARITY_C[String(rs[i] || 'common').toLowerCase()] || RARITY_C.common;
+      const rot = (i - (ims.length - 1) / 2) * 5;
+      return h('div', {
+        style: {
+          display: 'flex', width: 200, height: 290, borderRadius: 16, overflow: 'hidden',
+          border: '5px solid ' + rc, backgroundColor: '#0a1830', flexShrink: 0,
+          marginLeft: i === 0 ? 0 : -58, transform: 'rotate(' + rot + 'deg)',
+          boxShadow: '0 18px 44px rgba(0,0,0,0.55)'
+        }
+      }, h('img', { src: full(im), width: 200, height: 290, style: { width: 200, height: 290, objectFit: 'cover' } }));
+    });
+    const img = h('div', {
+      style: {
+        width: '1200px', height: '630px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        backgroundColor: BG, color: '#f5f5f5',
+        backgroundImage: 'radial-gradient(900px circle at 50% -20%, rgba(232,160,0,0.2), transparent 60%)'
+      }
+    },
+      h('div', { style: { display: 'flex', alignItems: 'center', fontSize: 34, fontWeight: 600, letterSpacing: '0.04em', marginBottom: 10 } },
+        h('span', { style: { color: '#f5f5f5' } }, 'CINE'), h('span', { style: { color: GOLD } }, 'LINKS')),
+      h('div', { style: { display: 'flex', color: '#9a9a9a', fontSize: 26, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 34 } }, 'My showcase · ' + count + ' cards'),
+      h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'center' } }, ...fan),
+      h('div', { style: { display: 'flex', marginTop: 38, alignItems: 'center', background: GOLD, color: '#111', fontSize: 26, fontWeight: 600, padding: '12px 26px', borderRadius: 13 } }, 'Start your collection →')
+    );
+    return new ImageResponse(img, {
+      width: 1200, height: 630,
+      headers: { 'Cache-Control': 'public, max-age=86400, s-maxage=86400, immutable' }
+    });
+  }
+
   // Collectible-card share: /api/og?g=card&title=Name&r=legendary&n=74&sub=Film&im=/poster.jpg
   if (g === 'card') {
     const rarity = String(p.get('r') || 'common').toLowerCase();

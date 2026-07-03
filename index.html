@@ -846,25 +846,12 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     </div>
     <button class="more-toggle" id="moreToggle" type="button" aria-expanded="false">+ More games</button>
     <div class="games more-games" id="moreGames" hidden>
-      <div class="game-card" style="--accent:224,106,168">
-        <div class="game-head"><span class="game-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="1.6"/><path d="m21 15-5-5L5 21"/></svg></span><span class="game-meta"><span class="game-name">CineFrame <span class="new-tag">NEW</span><span class="game-done" data-done="frame"></span></span><span class="game-desc">Guess the film from a frame</span></span></div>
+      <div class="game-card" style="--accent:106,156,216">
+        <div class="game-head"><span class="game-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/><path d="M8 11h6M11 8v6"/></svg></span><span class="game-meta"><span class="game-name">Guess It <span class="game-done" data-done="guess"></span></span><span class="game-desc">One film a day — guess it from clues, a frame, or the cast</span></span></div>
         <div class="game-modes">
-          <a class="mode mode-daily" href="/cineframe.html">Daily</a>
-          <a class="mode mode-practice" href="/cineframe.html?practice=1">Practice</a>
-        </div>
-      </div>
-      <div class="game-card" style="--accent:106,191,122">
-        <div class="game-head"><span class="game-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span><span class="game-meta"><span class="game-name">CineCast <span class="new-tag">NEW</span><span class="game-done" data-done="cast"></span></span><span class="game-desc">Guess the film from its cast</span></span></div>
-        <div class="game-modes">
-          <a class="mode mode-daily" href="/cinecast.html">Daily</a>
-          <a class="mode mode-practice" href="/cinecast.html?practice=1">Practice</a>
-        </div>
-      </div>
-      <div class="game-card" style="--accent:77,184,216">
-        <div class="game-head"><span class="game-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span><span class="game-meta"><span class="game-name">CineClue <span class="new-tag">NEW</span><span class="game-done" data-done="clue"></span></span><span class="game-desc">Guess the film from its synopsis &amp; clues</span></span></div>
-        <div class="game-modes">
-          <a class="mode mode-daily" href="/cineclue.html">Daily</a>
-          <a class="mode mode-practice" href="/cineclue.html?practice=1">Practice</a>
+          <a class="mode mode-daily" href="/cineclue.html">🔍 Clue</a>
+          <a class="mode mode-daily" href="/cineframe.html">🖼 Frame</a>
+          <a class="mode mode-daily" href="/cinecast.html">🧑 Cast</a>
         </div>
       </div>
       <div class="game-card" style="--accent:224,99,90">
@@ -1332,7 +1319,7 @@ function applyI18n() {
   if (_secs[0]) _secs[0].textContent = t('sectionDaily');
   if (_secs[1]) _secs[1].textContent = t('sectionRating');
   document.querySelectorAll('.new-tag').forEach(el => el.textContent = t('newTag'));
-  const _descMap = { cl:'descCl', clue:'descClue', frame:'descFrame', cast:'descCast', plot:'descPlot', line:'descLine', reel:'descReel', grid:'descGrid', chain:'descChain', grp:'descGroup' };
+  const _descMap = { cl:'descCl', guess:'descGuess', clue:'descClue', frame:'descFrame', cast:'descCast', plot:'descPlot', line:'descLine', reel:'descReel', grid:'descGrid', chain:'descChain', grp:'descGroup', trumps:'descTrumps' };
   document.querySelectorAll('.game-done[data-done]').forEach(el => { const k = _descMap[el.dataset.done]; if (k) { const card = el.closest('.game-card'); const d = card && card.querySelector('.game-desc'); if (d) d.textContent = t(k); } });
   const _cBtn = document.querySelector('.archive-btn[onclick*="creator"]'); if (_cBtn) _cBtn.textContent = t('navCreate');
   const _sLink = document.querySelector('a.archive-btn[href="/stats.html"]'); if (_sLink) _sLink.textContent = t('navStats');
@@ -1860,7 +1847,7 @@ function renderCollCard() {
 // dailies complete the day). Deterministic by UTC day so everyone sees the same.
 function renderFeatured() {
   try {
-    const keys = ['line', 'reel', 'grid', 'chain', 'grp', 'trumps', 'clue', 'frame', 'cast', 'rating'];
+    const keys = ['line', 'reel', 'grid', 'chain', 'grp', 'trumps', 'guess', 'rating'];
     const ud = Math.floor(Date.now() / 86400000);
     const picks = [0, 1, 2].map(i => keys[(ud * 3 + i * 4) % keys.length]);
     document.querySelectorAll('.feat-tag').forEach(e => e.remove());
@@ -1949,10 +1936,13 @@ function markDoneBadges() {
     reel: clueDone('cinereelState'), grid: clueDone('cinegridState'), chain: clueDone('cinechainState'),
     grp: clueDone('cinegroupState'), rating: ratingDone(), trumps: trumpsDone()
   };
+  // the fused Guess It card: three lenses over one engine, done at 3/3
+  const guessN = ['cineclueState', 'cineframeState', 'cinecastState'].filter(clueDone).length;
+  state.guess = guessN >= 3;
   document.querySelectorAll('.game-done[data-done]').forEach(el => {
     const done = !!state[el.dataset.done];
     // rating card shows partial progress (2/4) so playing one mode invites the rest
-    el.textContent = done ? '✓ Done' : (el.dataset.done === 'rating' && ratingN ? ratingN + '/3' : '');
+    el.textContent = done ? '✓ Done' : (el.dataset.done === 'rating' && ratingN ? ratingN + '/3' : (el.dataset.done === 'guess' && guessN ? guessN + '/3' : ''));
     el.classList.toggle('on', done);
     el.title = done ? 'Completed today' : (el.dataset.done === 'rating' && ratingN ? ratingN + ' of 3 rating modes played' : '');
     const card = el.closest('.game-card');
@@ -1973,6 +1963,8 @@ function celebrateNewlyDone() {
   const ss = document.getElementById('startScreen');
   if (!ss || !ss.classList.contains('active')) return;
   let state; try { state = markDoneBadges() || {}; } catch (_) { return; }
+  // the three guess lenses live on one fused card — celebrate it for any of them
+  ['clue', 'frame', 'cast'].forEach(k => { if (state[k]) state.guess = true; });
   const doneKeys = Object.keys(state).filter(k => state[k]);
   const firstRun = localStorage.getItem('clHomeSeenDone') == null;
   let seen = []; try { seen = JSON.parse(localStorage.getItem('clHomeSeenDone')) || []; } catch (_) {}

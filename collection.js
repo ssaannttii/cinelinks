@@ -1862,11 +1862,12 @@
   // carries the full line-up.
   function shareShowcase(cards, btn) {
     try {
-      var top = cards.slice().sort(function (a, b) { return ORDER[a.rarity] - ORDER[b.rarity]; })[0];
       var names = cards.map(function (c) { return locName(c); }).join(' · ');
-      var no = ('00' + (top.no || 0)).slice(-3);
-      var qs = 'g=card&title=' + encodeURIComponent(locName(top)) + '&r=' + encodeURIComponent(top.rarity || 'common') +
-        '&n=' + encodeURIComponent(no) + '&sub=' + encodeURIComponent('Showcase') + '&im=' + encodeURIComponent(top.img || '') + '&to=/';
+      // rarest first so the fan leads with your best pulls
+      var byRank = cards.slice().sort(function (a, b) { return ORDER[a.rarity] - ORDER[b.rarity]; });
+      var qs = 'g=show&n=' + cards.length +
+        '&ims=' + encodeURIComponent(byRank.map(function (c) { return c.img || ''; }).join(',')) +
+        '&rs=' + encodeURIComponent(byRank.map(function (c) { return c.rarity || 'common'; }).join(',')) + '&to=/';
       var url = location.origin + '/s?' + qs;
       var text = 'My CineLinks showcase: ' + names;
       try { if (window.Track) window.Track('showcase_shared', { n: cards.length }); } catch (_) { /* noop */ }
@@ -2085,6 +2086,65 @@
       '<button class="cl-share-btn" id="clShareBtn">&#8599; Share card</button>' +
       '<button class="cl-share-btn" id="clShowTog" style="margin-top:7px">' + (inShowcase(c) ? '&#9733; In your showcase — remove' : '&#9734; Add to showcase') + '</button>';
   }
+  var _cineStop = null;
+  function closeCine() {
+    var ov = document.getElementById('clCine');
+    if (_cineStop) { try { _cineStop(); } catch (_) { /* noop */ } _cineStop = null; }
+    if (ov) ov.remove();
+  }
+  function openCine(c) {
+    try {
+      closeCine();
+      var theme = activeTheme(); injectThemeCss(theme);
+      var ov = document.createElement('div');
+      ov.id = 'clCine';
+      ov.style.cssText = 'position:fixed;inset:0;z-index:260;display:flex;align-items:center;justify-content:center;background:radial-gradient(120% 90% at 50% 40%,#141118,#050408 75%);animation:clVaultIn .35s ease both;cursor:pointer';
+      ov.innerHTML = '<div id="clCineCard" style="width:min(80vw,58vh)">' + theme.card(locCard(c), CTX, 0) + '</div>' +
+        '<div style="position:fixed;bottom:calc(20px + env(safe-area-inset-bottom));left:0;right:0;text-align:center;color:#7a7a7a;font-size:.72rem;font-weight:700">tap to exit</div>';
+      document.body.appendChild(ov);
+      var holder = document.getElementById('clCineCard');
+      Array.prototype.forEach.call(holder.querySelectorAll('img'), function (im) { im.src = im.src.replace(/\/t\/p\/w\d+\//, '/t/p/w780/'); });
+      mountPosterDepth(holder);
+      // slow cinematic drift through the depth + holo (single rAF, one card)
+      var inner = holder.querySelector('.auth-card,.ctc-inner,.clc-card');
+      var raf = 0, tt = Math.random() * 9;
+      if (inner && !reducedMotion()) {
+        inner.classList.add('tilted');
+        (function drift() {
+          tt += 0.008;
+          var px = 0.30 * Math.sin(tt), py = 0.22 * Math.cos(tt * 0.7);
+          inner.style.transform = 'perspective(900px) rotateX(' + (-py * 14).toFixed(2) + 'deg) rotateY(' + (px * 16).toFixed(2) + 'deg)';
+          inner.style.setProperty('--px', px.toFixed(3)); inner.style.setProperty('--py', py.toFixed(3));
+          inner.style.setProperty('--gx', (50 + px * 90).toFixed(1) + '%'); inner.style.setProperty('--gy', (50 + py * 90).toFixed(1) + '%');
+          inner.style.setProperty('--fx', (100 + px * 170).toFixed(1) + '%'); inner.style.setProperty('--fy', (100 + py * 170).toFixed(1) + '%');
+          inner.style.setProperty('--pfc', Math.min(1, Math.hypot(px, py) * 2).toFixed(3));
+          raf = requestAnimationFrame(drift);
+        })();
+      }
+      _cineStop = function () { if (raf) cancelAnimationFrame(raf); };
+      ov.addEventListener('click', closeCine);
+      try { if (window.Sfx) { window.Sfx.reveal('legendary'); window.Sfx.haptic([10, 30, 10]); } } catch (_) { /* noop */ }
+      try { if (window.Track) window.Track('cinema_mode', { rarity: c.rarity }); } catch (_) { /* noop */ }
+    } catch (_) { closeCine(); }
+  }
+  // long-press (~550ms, no movement) on a legendary detail card opens cinema mode
+  function cineLongPress(holder, c) {
+    try {
+      if (c.rarity !== 'legendary') return;
+      var inner = holder.querySelector('.auth-card,.ctc-inner,.clc-card'); if (!inner) return;
+      var timer = 0, sx = 0, sy = 0;
+      var arm = function (x, y) { sx = x; sy = y; clearTimeout(timer); timer = setTimeout(function () { openCine(c); }, 550); };
+      var cancel = function () { clearTimeout(timer); };
+      inner.addEventListener('touchstart', function (e) { var p = e.touches && e.touches[0]; if (p) arm(p.clientX, p.clientY); }, { passive: true });
+      inner.addEventListener('touchmove', function (e) { var p = e.touches && e.touches[0]; if (p && Math.hypot(p.clientX - sx, p.clientY - sy) > 12) cancel(); }, { passive: true });
+      inner.addEventListener('touchend', cancel);
+      inner.addEventListener('mousedown', function (e) { arm(e.clientX, e.clientY); });
+      inner.addEventListener('mousemove', function (e) { if (timer && Math.hypot(e.clientX - sx, e.clientY - sy) > 12) cancel(); });
+      inner.addEventListener('mouseup', cancel);
+      inner.addEventListener('mouseleave', cancel);
+    } catch (_) { /* noop */ }
+  }
+
   var DETAIL_SEL = '#clDetailCard .auth-card,#clDetailCard .ctc-inner,#clDetailCard .clc-card';
   function openDetail(c, srcEl, ctx) {
     if (!c) return;
@@ -2142,6 +2202,10 @@
       _gyroOff = gyroMount(holder);      // tilt the phone and the card leans + holo shifts
       dragTiltMount(holder);             // touch: drag a finger on the card to tilt it
       mountPosterDepth(holder);          // WebGL depth-parallax poster (fails soft to the img)
+      cineLongPress(holder, c);          // legendaries: hold the card → cinema mode
+      var cnt2 = document.getElementById('clDetCount');
+      if (c.rarity === 'legendary' && cnt2 && cnt2.style.display !== 'none') cnt2.textContent += ' · hold card for cinema';
+      else if (c.rarity === 'legendary' && cnt2) { cnt2.style.display = ''; cnt2.textContent = 'hold card for cinema'; }
       // tap-to-open shimmer: a light sweep across the card as it appears
       var ac = holder.querySelector('.auth-card');
       if (ac && window.Fx && window.Fx.play) window.Fx.play(ac, 'sheen-go', 800);
@@ -2168,6 +2232,7 @@
     stopGyro();
     if (_detKeysOn) { document.removeEventListener('keydown', _detKeys); _detKeysOn = false; }
     _detCtx = null;
+    closeCine();
     var d = document.getElementById('clCollDetail'); if (d) d.classList.remove('open');
   }
 

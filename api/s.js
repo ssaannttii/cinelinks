@@ -3,7 +3,7 @@
 //   /s?g=cl&a=..&b=..&n=..&k=..&to=<game-url>
 // gets result-specific Open Graph / Twitter meta (image = /api/og?...), while a
 // human is immediately redirected to `to` (the real game). Pure Node, no deps.
-const OG_KEYS = ['g', 'a', 'b', 'n', 'nl', 'k', 'w', 'l', 'title', 'sub', 'r', 'im'];
+const OG_KEYS = ['g', 'a', 'b', 'n', 'nl', 'k', 'w', 'l', 'title', 'sub', 'r', 'im', 'ims', 'rs'];
 
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
@@ -36,7 +36,9 @@ module.exports = function handler(req, res) {
     }
   } catch (_) { to = '/'; }
 
-  const title = q.g === 'card'
+  const title = q.g === 'show'
+    ? 'My CineLinks showcase — ' + (q.n || '') + ' cards'
+    : q.g === 'card'
     ? 'I collected ' + (q.title || 'a card') + (q.n ? ' #' + String(q.n).replace(/^#/, '') : '') + ' · CineLinks'
     : (q.title
         ? String(q.title)

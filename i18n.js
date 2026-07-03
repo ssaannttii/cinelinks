@@ -9,6 +9,7 @@ const LANGS = {
 
 const I18N = {
   'en-US': {
+    descGuess: 'One film a day — guess it from clues, a frame, or the cast', descTrumps: 'Battle the CPU with cards from your collection',
     ccName: 'Your collection', ccZero: 'Win any daily to pull your first card', ccHow: 'How it works', ccOpen: 'Open →', ccCards: 'cards', ccLevel: 'Level', ccNewSuf: 'new', featToday: '★ today', pwaAdd: '📲 Add CineLinks to your home screen', pwaInstall: 'Install',
     // hub mode labels
     modeDaily: 'Daily', modePractice: 'Practice', modePlay: 'Play', modeResults: 'Results',
@@ -63,6 +64,7 @@ const I18N = {
     clicksLabel: 'clicks',
   },
   'es-ES': {
+    descGuess: 'Una película al día: adivínala por pistas, un fotograma o su reparto', descTrumps: 'Bate a la CPU con cartas de tu colección',
     ccName: 'Tu colección', ccZero: 'Gana cualquier daily para sacar tu primera carta', ccHow: 'Cómo funciona', ccOpen: 'Abrir →', ccCards: 'cartas', ccLevel: 'Nivel', ccNewSuf: 'nuevas', featToday: '★ hoy', pwaAdd: '📲 Añade CineLinks a tu pantalla de inicio', pwaInstall: 'Instalar',
     // hub mode labels
     modeDaily: 'Diario', modePractice: 'Práctica', modePlay: 'Jugar', modeResults: 'Resultado',
@@ -117,6 +119,7 @@ const I18N = {
     clicksLabel: 'clics',
   },
   'es-MX': {
+    descGuess: 'Una película al día: adivínala por pistas, un fotograma o su reparto', descTrumps: 'Vence a la CPU con cartas de tu colección',
     ccName: 'Tu colección', ccZero: 'Gana cualquier daily para sacar tu primera carta', ccHow: 'Cómo funciona', ccOpen: 'Abrir →', ccCards: 'cartas', ccLevel: 'Nivel', ccNewSuf: 'nuevas', featToday: '★ hoy', pwaAdd: '📲 Agrega CineLinks a tu pantalla de inicio', pwaInstall: 'Instalar',
     // hub mode labels
     modeDaily: 'Diario', modePractice: 'Práctica', modePlay: 'Jugar', modeResults: 'Resultado',
@@ -171,6 +174,7 @@ const I18N = {
     clicksLabel: 'clics',
   },
   'fr-FR': {
+    descGuess: 'Un film par jour : devine-le par indices, image ou casting', descTrumps: 'Bats l’ordi avec les cartes de ta collection',
     ccName: 'Ta collection', ccZero: 'Gagne un daily pour tirer ta première carte', ccHow: 'Comment ça marche', ccOpen: 'Ouvrir →', ccCards: 'cartes', ccLevel: 'Niveau', ccNewSuf: 'nouvelles', featToday: '★ auj.', pwaAdd: '📲 Ajoute CineLinks à ton écran d’accueil', pwaInstall: 'Installer',
     // hub mode labels
     modeDaily: 'Quotidien', modePractice: 'Entraînement', modePlay: 'Jouer', modeResults: 'Résultat',
@@ -217,6 +221,7 @@ const I18N = {
     clicksLabel: 'clics',
   },
   'de-DE': {
+    descGuess: 'Ein Film pro Tag – errate ihn über Hinweise, ein Bild oder die Besetzung', descTrumps: 'Schlag die CPU mit Karten deiner Sammlung',
     ccName: 'Deine Sammlung', ccZero: 'Gewinne ein Daily für deine erste Karte', ccHow: 'So funktioniert’s', ccOpen: 'Öffnen →', ccCards: 'Karten', ccLevel: 'Level', ccNewSuf: 'neu', featToday: '★ heute', pwaAdd: '📲 CineLinks zum Startbildschirm hinzufügen', pwaInstall: 'Installieren',
     // hub mode labels
     modeDaily: 'Täglich', modePractice: 'Üben', modePlay: 'Spielen', modeResults: 'Ergebnis',
@@ -263,6 +268,7 @@ const I18N = {
     clicksLabel: 'Klicks',
   },
   'pt-BR': {
+    descGuess: 'Um filme por dia — adivinhe por pistas, um frame ou o elenco', descTrumps: 'Vença a CPU com cartas da sua coleção',
     ccName: 'Sua coleção', ccZero: 'Vença qualquer daily para tirar sua primeira carta', ccHow: 'Como funciona', ccOpen: 'Abrir →', ccCards: 'cartas', ccLevel: 'Nível', ccNewSuf: 'novas', featToday: '★ hoje', pwaAdd: '📲 Adicione o CineLinks à tela inicial', pwaInstall: 'Instalar',
     // hub mode labels
     modeDaily: 'Diário', modePractice: 'Treino', modePlay: 'Jogar', modeResults: 'Resultado',
