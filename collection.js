@@ -1212,15 +1212,28 @@
       'body:has(#clCollModal.open) #clCookieBar,body:has(#clCollDetail.open) #clCookieBar,body:has(#clCollReveal.open) #clCookieBar{display:none}' +
       '#clCollModal.open{display:flex;animation:clVaultIn .3s ease both}' +
       '@keyframes clVaultIn{from{opacity:0}to{opacity:1}}' +
-      '.cl-vault-hd{flex-shrink:0;width:100%;max-width:1192px;margin:0 auto;padding:14px 16px 0}' +
+      '.cl-vault-hd{flex-shrink:0;width:100%;max-width:1192px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top)) 16px 0}' +
       '.cl-coll-hd-top{display:flex;align-items:center;justify-content:space-between;gap:10px}' +
-      '.cl-coll-title{font-size:1.3rem;font-weight:800;letter-spacing:-.01em;color:#f5f5f5}.cl-coll-title span{color:#e8a000}' +
-      '.cl-coll-sub{font-size:.7rem;font-weight:700;color:#8d8d8d;margin-top:1px}' +
-      '.cl-coll-hd-btns{display:flex;align-items:center;gap:6px}' +
+      '.cl-coll-hd-top>div:first-child{min-width:0}' +
+      '.cl-coll-title{font-size:1.3rem;font-weight:800;letter-spacing:-.01em;color:#f5f5f5;white-space:nowrap}.cl-coll-title span{color:#e8a000}' +
+      '.cl-coll-sub{font-size:.7rem;font-weight:700;color:#8d8d8d;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+      '.cl-coll-hd-btns{display:flex;align-items:center;gap:6px;flex-shrink:0}' +
       '.cl-coll-icon{background:none;border:none;color:#888;font-size:1.1rem;cursor:pointer;line-height:1;padding:2px 6px}.cl-coll-icon:hover{color:#f5f5f5}' +
       '.cl-coll-dust{display:inline-flex;align-items:center;font-size:.78rem;font-weight:800;color:#bfe6ff;background:rgba(120,184,255,.12);border:1px solid rgba(150,205,255,.3);border-radius:99px;padding:3px 9px;margin-right:2px;white-space:nowrap}' +
       '.cl-coll-battle{color:#f5c542;background:rgba(232,160,0,.12);border-color:rgba(232,160,0,.4);text-decoration:none;cursor:pointer}' +
       '.cl-coll-battle:hover{background:rgba(232,160,0,.22)}' +
+      // Narrow phones: the header chips go compact (icon-only Battle, tighter pills)
+      // so title + chips + close always fit on ONE row.
+      '@media(max-width:480px){' +
+        '.cl-coll-battle .lbl{display:none}' +
+        '.cl-coll-dust{font-size:.7rem;padding:3px 7px;margin-right:0}' +
+        '.cl-coll-title{font-size:1.12rem}' +
+        '.cl-coll-x{width:30px;height:30px;font-size:.95rem}' +
+        '.cl-xp-extra{display:none}' +                       // "to level N" / "Guaranteed:" prefixes
+      '}' +
+      // Short screens (landscape phones): the identity strip folds away so the
+      // grid keeps real estate; everything it shows lives in the tabs/sub anyway.
+      '@media(max-height:520px){.cl-vault-hd .cl-coll-lvl{display:none}.cl-vault-hd{padding-top:8px}.cl-vault-hd .cl-vault-tabs{margin-top:8px}}' +
       '.cl-coll-x{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:999px;width:34px;height:34px;color:#bbb;font-size:1.05rem;cursor:pointer;line-height:1}.cl-coll-x:hover{color:#fff;border-color:rgba(255,255,255,.3)}' +
       // identity strip: SVG progress ring around the level + next-unlock teaser
       '.cl-coll-lvl{display:flex;align-items:center;gap:12px;margin-top:12px}' +
@@ -1289,7 +1302,7 @@
       '.cl-det-nav{position:fixed;top:50%;transform:translateY(-50%);z-index:2;width:42px;height:42px;border-radius:999px;background:rgba(20,20,22,.72);border:1px solid rgba(255,255,255,.16);color:#ddd;font-size:1.25rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}' +
       '.cl-det-nav:hover{color:#fff;border-color:rgba(232,160,0,.55)}' +
       '.cl-det-nav.prev{left:14px}.cl-det-nav.next{right:14px}' +
-      '.cl-det-count{position:fixed;top:22px;left:18px;z-index:1;font-size:.7rem;font-weight:800;color:#9a9a9a;background:rgba(20,20,22,.6);border:1px solid rgba(255,255,255,.12);border-radius:99px;padding:5px 11px;font-family:ui-monospace,Menlo,monospace}' +
+      '.cl-det-count{position:fixed;top:calc(22px + env(safe-area-inset-top));left:18px;z-index:1;font-size:.7rem;font-weight:800;color:#9a9a9a;background:rgba(20,20,22,.6);border:1px solid rgba(255,255,255,.12);border-radius:99px;padding:5px 11px;font-family:ui-monospace,Menlo,monospace}' +
       '@media(max-width:640px){.cl-det-nav{top:auto;bottom:calc(18px + env(safe-area-inset-bottom));transform:none}}' +
       '@keyframes clDetSwap{from{opacity:.25;transform:scale(.965)}to{opacity:1;transform:none}}' +
       '.cl-detail-box.swap{animation:clDetSwap .2s ease both}' +
@@ -1316,7 +1329,11 @@
       '.cl-detail-stage{width:340px;height:476px;max-width:94vw;display:flex;align-items:center;justify-content:center;flex-shrink:0}' +
       '.cl-detail-card{width:300px;max-width:86vw}' +
       '#clDetailCard{touch-action:none;-webkit-user-select:none;user-select:none}' +
-      '.cl-detail-x{position:fixed;top:16px;right:18px;background:rgba(20,20,20,.65);border:1px solid rgba(255,255,255,.16);color:#ddd;font-size:1.1rem;cursor:pointer;border-radius:999px;width:38px;height:38px;line-height:1;z-index:1}' +
+      '.cl-detail-x{position:fixed;top:calc(16px + env(safe-area-inset-top));right:18px;background:rgba(20,20,20,.65);border:1px solid rgba(255,255,255,.16);color:#ddd;font-size:1.1rem;cursor:pointer;border-radius:999px;width:38px;height:38px;line-height:1;z-index:1}' +
+      // Short screens (landscape phones): the fixed-height stage would force a scroll
+      // before the card is even fully seen — let it collapse and size the card by
+      // height instead so the hero moment fits the screen.
+      '@media(max-height:560px){.cl-detail-stage{width:auto;height:auto;padding:22px 0 8px}.cl-detail-card{max-width:min(86vw,46vh)}}' +
       '.cl-di{width:300px;max-width:90vw}' +
       '.cl-di-name{font-size:1.15rem;font-weight:800;color:#f5f5f5;text-align:center;margin-bottom:11px}' +
       '.cl-di-rows{display:flex;flex-direction:column;gap:1px;border-radius:11px;overflow:hidden;border:1px solid rgba(255,255,255,.09)}' +
@@ -1339,12 +1356,14 @@
       '.clr-flash{position:absolute;inset:0;z-index:5;pointer-events:none;opacity:0;background:radial-gradient(circle at 50% 45%,rgba(232,160,0,.5),rgba(232,160,0,.12) 38%,transparent 66%)}' +
       '.clr-flash.go{animation:clrFlash .62s cubic-bezier(.22,1,.36,1)}' +
       '@keyframes clrFlash{0%{opacity:0;transform:scale(.7)}22%{opacity:1}100%{opacity:0;transform:scale(1.3)}}' +
-      '.clr-progress{position:absolute;top:22px;display:flex;gap:6px;z-index:7}' +
+      '.clr-progress{position:absolute;top:calc(22px + env(safe-area-inset-top));display:flex;gap:6px;z-index:7}' +
       '.clr-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.22);transition:background .2s}' +
       '.clr-dot.on{background:#e8a000}' +
-      '.clr-skip{position:absolute;top:18px;right:20px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#ccc;font:inherit;font-size:.74rem;font-weight:700;padding:6px 13px;border-radius:999px;cursor:pointer;z-index:8}' +
+      '.clr-skip{position:absolute;top:calc(18px + env(safe-area-inset-top));right:20px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#ccc;font:inherit;font-size:.74rem;font-weight:700;padding:6px 13px;border-radius:999px;cursor:pointer;z-index:8}' +
       '.clr-skip:hover{color:#fff}' +
-      '.clr-stage{position:relative;width:300px;max-width:82vw;z-index:6;perspective:1200px;animation:clrStageIn .45s cubic-bezier(.2,.9,.3,1.2) both}' +
+      // width also capped by HEIGHT (5/7 card ⇒ ~56vh wide fits with the caption)
+      // so landscape phones never clip the reveal card off-screen.
+      '.clr-stage{position:relative;width:300px;max-width:min(82vw,56vh);z-index:6;perspective:1200px;animation:clrStageIn .45s cubic-bezier(.2,.9,.3,1.2) both}' +
       '@keyframes clrStageIn{from{opacity:0;transform:translateY(16px) scale(.93)}to{opacity:1;transform:none}}' +
       '.clr-stage::after{content:"";position:absolute;left:50%;bottom:-22px;width:60%;height:24px;transform:translateX(-50%);background:radial-gradient(ellipse at center,rgba(0,0,0,.6),transparent 72%);filter:blur(5px);z-index:-1}' +
       // elite+ crossover shockwave: a rarity-coloured ring that blasts outward.
@@ -1500,7 +1519,7 @@
       '<div class="cl-vault-hd">' +
         '<div class="cl-coll-hd-top">' +
           '<div><div class="cl-coll-title">Your <span>collection</span></div><div class="cl-coll-sub" id="clCollSub"></div></div>' +
-          '<div class="cl-coll-hd-btns" id="clCollHdBtns"><a class="cl-coll-dust cl-coll-battle" href="/rating/toptrumps" title="Top Trumps — battle the CPU with cards from this collection">&#9876;&#65039; Battle</a><span class="cl-coll-dust" id="clCollDD" title="Daily Double — win two daily games today for bonus dust">&#9889; 0/2</span><span class="cl-coll-dust" id="clCollDust" title="Dust — earned from duplicates, spent to Shine or Forge cards">&#10024; 0</span><button class="cl-coll-x" aria-label="Close">&#10005;</button></div>' +
+          '<div class="cl-coll-hd-btns" id="clCollHdBtns"><a class="cl-coll-dust cl-coll-battle" href="/rating/toptrumps" title="Top Trumps — battle the CPU with cards from this collection">&#9876;&#65039;<span class="lbl">&nbsp;Battle</span></a><span class="cl-coll-dust" id="clCollDD" title="Daily Double — win two daily games today for bonus dust">&#9889; 0/2</span><span class="cl-coll-dust" id="clCollDust" title="Dust — earned from duplicates, spent to Shine or Forge cards">&#10024; 0</span><button class="cl-coll-x" aria-label="Close">&#10005;</button></div>' +
         '</div>' +
         '<div class="cl-coll-lvl">' +
           '<div class="cl-lvl-ring"><svg viewBox="0 0 52 52"><circle class="bg" cx="26" cy="26" r="22"></circle><circle class="fg" id="clCollRing" cx="26" cy="26" r="22" stroke-dasharray="' + RING_C + '" stroke-dashoffset="' + RING_C + '"></circle></svg><b id="clCollLvl">1</b></div>' +
@@ -1635,7 +1654,7 @@
     var st = stats();
     document.getElementById('clCollLvl').textContent = st.level;
     document.getElementById('clCollXpName').textContent = 'Level ' + st.level;
-    document.getElementById('clCollXpNum').textContent = st.xpInto + ' / ' + st.xpSpan + ' XP to level ' + (st.level + 1);
+    document.getElementById('clCollXpNum').innerHTML = st.xpInto + ' / ' + st.xpSpan + ' XP<span class="cl-xp-extra"> to level ' + (st.level + 1) + '</span>';
     document.getElementById('clCollXpFill').style.width = Math.max(3, Math.min(100, st.xpSpan ? (st.xpInto / st.xpSpan) * 100 : 0)) + '%';
     var ring = document.getElementById('clCollRing');
     if (ring) ring.style.strokeDashoffset = (RING_C * (1 - Math.min(1, st.xpSpan ? st.xpInto / st.xpSpan : 0))).toFixed(1);
@@ -1658,7 +1677,7 @@
         var tD = today();
         var eLeft = Math.max(0, PITY_ELITE_DAYS - daysBetween(sNow.pityE, tD));
         var lLeft = Math.max(0, PITY_LEG_DAYS - daysBetween(sNow.pityL || tD, tD));
-        pit.innerHTML = 'Guaranteed: <span style="color:' + RARITY.elite.ring + '">Elite &le;' + eLeft + 'd</span> · <span style="color:' + RARITY.legendary.ring + '">Legendary &le;' + lLeft + 'd</span>';
+        pit.innerHTML = '<span class="cl-xp-extra">Guaranteed: </span><span style="color:' + RARITY.elite.ring + '" title="An Elite or better prize is guaranteed within this many days">Elite &le;' + eLeft + 'd</span> · <span style="color:' + RARITY.legendary.ring + '" title="A Legendary prize is guaranteed within this many days">Legend. &le;' + lLeft + 'd</span>';
       } else pit.innerHTML = '';
     }
 
