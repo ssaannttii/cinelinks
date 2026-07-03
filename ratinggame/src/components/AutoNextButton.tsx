@@ -19,19 +19,22 @@ export default function AutoNextButton({
 }: Props) {
   const [cancelled, setCancelled] = useState(false);
   const [elapsed, setElapsed] = useState(0);
-  const startRef = useRef(Date.now());
+  const startRef = useRef<number | null>(null);
   const pauseRef = useRef<number | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const firedRef = useRef(false);
   const onNextRef = useRef(onNext);
-  onNextRef.current = onNext;
+
+  useEffect(() => {
+    onNextRef.current = onNext;
+  }, [onNext]);
 
   // Pause when tab is hidden so we don't advance while user isn't watching
   useEffect(() => {
     const onVis = () => {
       if (document.hidden) {
         pauseRef.current = Date.now();
-      } else if (pauseRef.current !== null) {
+      } else if (pauseRef.current !== null && startRef.current !== null) {
         startRef.current += Date.now() - pauseRef.current;
         pauseRef.current = null;
       }
@@ -43,8 +46,12 @@ export default function AutoNextButton({
   useEffect(() => {
     if (cancelled) return;
 
+    startRef.current = Date.now();
+    pauseRef.current = null;
+    firedRef.current = false;
+
     timerRef.current = setInterval(() => {
-      if (document.hidden || pauseRef.current !== null) return;
+      if (document.hidden || pauseRef.current !== null || startRef.current === null) return;
       const el = Date.now() - startRef.current;
       setElapsed(el);
       if (el >= delay && !firedRef.current) {

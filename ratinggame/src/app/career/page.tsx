@@ -101,7 +101,13 @@ export default function CareerPage() {
     setPhase("playing");
   }, [fetchMovie, selectCard]);
 
-  useEffect(() => { initGame(); }, [initGame]);
+  useEffect(() => {
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (!cancelled) initGame();
+    });
+    return () => { cancelled = true; };
+  }, [initGame]);
 
   // ── Pointer drag ──────────────────────────────────────────────────────────
   // Unified for mouse and touch. On desktop: smooth live reorder while dragging.

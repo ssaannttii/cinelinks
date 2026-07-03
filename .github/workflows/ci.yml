@@ -6,26 +6,31 @@ on:
   pull_request:
 
 jobs:
-  test:
+  verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      # Unit tests use Node's built-in runner — no install needed.
-      - name: Run tests
-        run: node --test
-
-  lint:
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v4
+          cache: npm
+      - name: Install root dependencies
+        run: npm ci
+      - name: Run root tests
+        run: npm test
+      - name: Run root lint
+        run: npm run lint
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install ESLint
-        run: npm install --no-save eslint @eslint/js
-      - name: Lint
-        run: npx eslint .
+          cache: npm
+          cache-dependency-path: ratinggame/package-lock.json
+      - name: Install ratinggame dependencies
+        working-directory: ratinggame
+        run: npm ci
+      - name: Run ratinggame lint
+        working-directory: ratinggame
+        run: npm run lint
+      - name: Build ratinggame
+        working-directory: ratinggame
+        run: npm run build

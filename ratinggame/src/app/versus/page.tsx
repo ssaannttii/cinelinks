@@ -152,25 +152,30 @@ function VersusGame() {
   useEffect(() => {
     if (hasInitRef.current) return;
     hasInitRef.current = true;
-    if (isDaily) {
-      try {
-        const saved = localStorage.getItem(DAILY_KEY);
-        if (saved) {
-          const data: DailySave & { modes?: Record<string, 1> } = JSON.parse(saved);
-          // resume only if VERSUS itself was played today — the key is shared by
-          // all rating modes now, so another mode's mark must not lock this one
-          if (data.date === getTodayString() && (data.modes ? data.modes.versus : data.score != null)) {
-            setScore(data.score);
-            setResults(data.results);
-            setMaxStreak(data.maxStreak);
-            setAlreadyPlayed(true);
-            setPhase("done");
-            return;
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      if (isDaily) {
+        try {
+          const saved = localStorage.getItem(DAILY_KEY);
+          if (saved) {
+            const data: DailySave & { modes?: Record<string, 1> } = JSON.parse(saved);
+            // resume only if VERSUS itself was played today — the key is shared by
+            // all rating modes now, so another mode's mark must not lock this one
+            if (data.date === getTodayString() && (data.modes ? data.modes.versus : data.score != null)) {
+              setScore(data.score);
+              setResults(data.results);
+              setMaxStreak(data.maxStreak);
+              setAlreadyPlayed(true);
+              setPhase("done");
+              return;
+            }
           }
-        }
-      } catch { /* ignore */ }
-    }
-    initGame();
+        } catch { /* ignore */ }
+      }
+      initGame();
+    });
+    return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

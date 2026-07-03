@@ -1,9 +1,9 @@
 node_modules/
-package-lock.json
 .env
 .env.*
 !.env.example
 .DS_Store
+.fuse_hidden*
 .vercel
 .claude/
 generated-challenges.txt

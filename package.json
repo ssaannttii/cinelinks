@@ -5,7 +5,11 @@
   "description": "Connect actors, movies, directors and TV shows in the fewest clicks. A daily film puzzle.",
   "scripts": {
     "test": "node --test",
-    "lint": "eslint . || echo 'eslint not installed — run: npm i -D eslint'",
+    "lint": "eslint .",
+    "lint:rating": "npm --prefix ratinggame run lint",
+    "build:rating": "npm --prefix ratinggame run build",
+    "smoke:prod": "node scripts/smoke-production.js",
+    "verify": "npm test && npm run lint && npm run lint:rating && npm run build:rating",
     "env:pull": "npx vercel env pull .env.local",
     "par": "node scripts/compute-par.js",
     "gen": "node scripts/generate-challenges.js",

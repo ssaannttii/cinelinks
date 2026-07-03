@@ -16,7 +16,8 @@ const browser = {
 const node = {
   process: 'readonly', module: 'writable', require: 'readonly', __dirname: 'readonly',
   console: 'readonly', fetch: 'readonly', Buffer: 'readonly', URL: 'readonly',
-  URLSearchParams: 'readonly', setTimeout: 'readonly'
+  URLSearchParams: 'readonly', setTimeout: 'readonly', clearTimeout: 'readonly',
+  AbortController: 'readonly', Intl: 'readonly'
 };
 const worker = {
   self: 'readonly', caches: 'readonly', fetch: 'readonly', URL: 'readonly',
@@ -24,7 +25,20 @@ const worker = {
 };
 
 export default [
-  { ignores: ['ratinggame/**', 'node_modules/**', '**/.next/**', '.claude/**', '**/*.json', '**/*.html', '_*.js'] },
+  {
+    ignores: [
+      'ratinggame/**',
+      'node_modules/**',
+      '**/.next/**',
+      '.vercel/**',
+      '.claude/**',
+      '.fuse_hidden*',
+      'coverage/**',
+      '**/*.json',
+      '**/*.html',
+      '_*.js'
+    ]
+  },
   js.configs.recommended,
 
   // Node serverless functions + offline scripts

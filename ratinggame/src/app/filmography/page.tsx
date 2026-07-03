@@ -335,7 +335,6 @@ export default function FilmographyPage() {
 
   const ratings    = movies.map((m) => parseFloat(m.imdbRating) || 0);
   const maxRating  = Math.max(...ratings);
-  const winnerIdx  = ratings.indexOf(maxRating);
   const ranked     = [...ratings.map((r, i) => ({ r, i }))].sort((a, b) => b.r - a.r).map((x) => x.i);
   const rankOf     = (idx: number) => ranked.indexOf(idx);
   const progress   = ((round + 1) / ROUNDS) * 100;

@@ -11,3 +11,9 @@ Data and images from [TMDB](https://www.themoviedb.org/). This product uses the 
 ## Admin
 
 `/admin.html` manages daily challenge overrides. Set `ADMIN_PASSWORD`, `TMDB_API_KEY`, `KV_REST_API_URL`, and `KV_REST_API_TOKEN` in Vercel.
+
+## Operations
+
+Before deploying, run `npm run verify`. After production deploys, run
+`npm run smoke:prod`. The full deploy checklist and native-function notes live in
+[`DEPLOYMENT.md`](DEPLOYMENT.md).
