@@ -23,13 +23,43 @@
       hard: 'Dificil',
       bug: 'Bug',
       done: 'Gracias, anotado.'
+    },
+    fr: {
+      open: 'Avis',
+      title: 'Ca vous a plu ?',
+      sub: 'Un tap suffit.',
+      fun: 'Fun',
+      confusing: 'Confus',
+      hard: 'Trop dur',
+      bug: 'Bug',
+      done: 'Merci, note.'
+    },
+    de: {
+      open: 'Feedback',
+      title: 'Wie war das?',
+      sub: 'Ein Tipp genugt.',
+      fun: 'Spassig',
+      confusing: 'Verwirrend',
+      hard: 'Zu schwer',
+      bug: 'Bug',
+      done: 'Danke, notiert.'
+    },
+    pt: {
+      open: 'Feedback',
+      title: 'Como foi?',
+      sub: 'Um toque basta.',
+      fun: 'Divertido',
+      confusing: 'Confuso',
+      hard: 'Dificil',
+      bug: 'Bug',
+      done: 'Obrigado, anotado.'
     }
   };
 
   function lang() {
     try {
       var l = (localStorage.getItem('clLang') || navigator.language || 'en').slice(0, 2).toLowerCase();
-      return l === 'es' ? copy.es : copy.en;
+      return copy[l] || copy.en;
     } catch (_) {
       return copy.en;
     }
@@ -93,7 +123,9 @@
     if (isBeta() && !isTester()) {
       var chip = document.createElement('div');
       chip.className = 'clfb-beta';
-      chip.innerHTML = 'BETA <span>Private test</span>';
+      var betaSub = { es: 'Prueba privada', fr: 'Test prive', de: 'Privater Test', pt: 'Teste privado' };
+      var bl = (function () { try { return (localStorage.getItem('clLang') || 'en').slice(0, 2).toLowerCase(); } catch (_) { return 'en'; } })();
+      chip.innerHTML = 'BETA <span>' + (betaSub[bl] || 'Private test') + '</span>';
       document.body.appendChild(chip);
     }
 

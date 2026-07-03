@@ -52,7 +52,7 @@
   function today() { return new Date().toISOString().slice(0, 10); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function posterUrl(p) { if (!p) return ''; return /^https?:/.test(p) ? p : IMG + p; }
-  function typeLabel(c) { return c.type === 'person' ? 'Person' : c.type === 'tv' ? 'Series' : 'Film'; }
+  function typeLabel(c) { return c.type === 'person' ? CT('Person') : c.type === 'tv' ? CT('Series') : CT('Film'); }
   function reducedMotion() { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (_) { return false; } }
   // Shared cursor-tracking 3D tilt + glare/foil shift (mouse only). Used by themes.
   // Real fake-3D tilt: a per-element perspective rotation plus a "lift", with
@@ -541,6 +541,24 @@
   // across our locales, so they keep the snapshot. Offline / API-down → snapshot is shown.
   var _uiLang = 'en-US';
   function currentLang() { try { var l = localStorage.getItem('clLang'); return (l && /^[a-z]{2}-[A-Z]{2}$/.test(l)) ? l : 'en-US'; } catch (_) { return 'en-US'; } }
+  // Self-contained UI strings (i18n.js isn't loaded on the game pages where the
+  // collection modal also lives, so we key off clLang directly). English fallback.
+  var CT_STR = {
+    Film: { es: 'Película', fr: 'Film', de: 'Film', pt: 'Filme' },
+    Series: { es: 'Serie', fr: 'Série', de: 'Serie', pt: 'Série' },
+    Person: { es: 'Persona', fr: 'Personne', de: 'Person', pt: 'Pessoa' },
+    Actor: { es: 'Actor', fr: 'Acteur', de: 'Schauspieler', pt: 'Ator' },
+    All: { es: 'Todas', fr: 'Toutes', de: 'Alle', pt: 'Todas' },
+    Films: { es: 'Películas', fr: 'Films', de: 'Filme', pt: 'Filmes' },
+    People: { es: 'Personas', fr: 'Personnes', de: 'Personen', pt: 'Pessoas' },
+    Rarity: { es: 'Rareza', fr: 'Rarete', de: 'Seltenheit', pt: 'Raridade' },
+    Type: { es: 'Tipo', fr: 'Type', de: 'Typ', pt: 'Tipo' },
+    Number: { es: 'Numero', fr: 'Numero', de: 'Nummer', pt: 'Numero' },
+    Collected: { es: 'Obtenida', fr: 'Obtenue', de: 'Erhalten', pt: 'Obtida' },
+    Copies: { es: 'Copias', fr: 'Copies', de: 'Kopien', pt: 'Copias' },
+    Mastery: { es: 'Maestria', fr: 'Maitrise', de: 'Meisterschaft', pt: 'Maestria' }
+  };
+  function CT(key) { var m = CT_STR[key]; if (!m) return key; var l = currentLang().slice(0, 2); return m[l] || key; }
   function locName(c) { return (c && c.i18n && c.i18n[_uiLang]) ? c.i18n[_uiLang] : (c ? (c.name || '') : ''); }
   function locCard(c) { var n = locName(c); return (n === c.name) ? c : Object.assign({}, c, { name: n }); }
   function tmdbTitle(type, id, lang) {
@@ -1202,7 +1220,7 @@
       var rar = ctx.RARITY[c.rarity] || ctx.RARITY.common;
       var p = ctx.posterUrl(c.img);
       var person = c.type === 'person';
-      var typeUp = person ? 'Actor' : (c.type === 'tv' ? 'Series' : 'Film');
+      var typeUp = person ? CT('Actor') : (c.type === 'tv' ? CT('Series') : CT('Film'));
       var no = '#' + ('00' + (c.no || 0)).slice(-3);
       var nlen = (c.name || '').length;
       var nmCls = nlen > 22 ? ' auth-name--sm' : nlen > 14 ? ' auth-name--md' : '';
@@ -1758,7 +1776,7 @@
 
     // ── Cards tab: toolbar (search / rarity gems / sort) + tier-sectioned grid ──
     var chips = [
-      { k: 'all', label: 'All' }, { k: 'film', label: 'Films' }, { k: 'person', label: 'People' },
+      { k: 'all', label: CT('All') }, { k: 'film', label: CT('Films') }, { k: 'person', label: CT('People') },
       { k: 'legendary', gem: RARITY.legendary.ring, label: st.byRarity.legendary }, { k: 'elite', gem: RARITY.elite.ring, label: st.byRarity.elite },
       { k: 'rare', gem: RARITY.rare.ring, label: st.byRarity.rare }, { k: 'common', gem: '#9a9a9a', label: st.byRarity.common }
     ];
@@ -2091,13 +2109,13 @@
     var dt = null; try { dt = c.first ? new Date(c.first + 'T00:00:00') : null; } catch (_) { dt = null; }
     var dateStr = (dt && !isNaN(dt.getTime())) ? dt.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
     var n = c.n || 1;
-    var mstRow = n >= 10 ? ['Mastery', 'Gold ★', '#f5c542'] : n >= 5 ? ['Mastery', 'Silver ★', '#dfe6f2'] : n >= 3 ? ['Mastery', 'Bronze ★', '#cd8f52'] : ['Mastery', (3 - n) + ' more cop' + (3 - n === 1 ? 'y' : 'ies') + ' to ★', ''];
+    var mstRow = n >= 10 ? [CT('Mastery'), 'Gold ★', '#f5c542'] : n >= 5 ? [CT('Mastery'), 'Silver ★', '#dfe6f2'] : n >= 3 ? [CT('Mastery'), 'Bronze ★', '#cd8f52'] : [CT('Mastery'), (3 - n) + ' more cop' + (3 - n === 1 ? 'y' : 'ies') + ' to ★', ''];
     var rows = [
-      ['Rarity', rar.label, rar.ring],
-      ['Type', typeLabel(c), ''],
-      ['Number', '#' + ('00' + (c.no || 0)).slice(-3), ''],
-      ['Collected', dateStr, ''],
-      ['Copies', '×' + n, ''],
+      [CT('Rarity'), rar.label, rar.ring],
+      [CT('Type'), typeLabel(c), ''],
+      [CT('Number'), '#' + ('00' + (c.no || 0)).slice(-3), ''],
+      [CT('Collected'), dateStr, ''],
+      [CT('Copies'), '×' + n, ''],
       mstRow
     ];
     var shined = isShined(c), cost = shineCost(c), bal = dustBalance(), afford = bal >= cost;
@@ -2267,7 +2285,7 @@
   function shareCard(c, btn) {
     try {
       var no = ('00' + (c.no || 0)).slice(-3);
-      var ty = c.type === 'person' ? 'Actor' : (c.type === 'tv' ? 'Series' : 'Film');
+      var ty = c.type === 'person' ? CT('Actor') : (c.type === 'tv' ? CT('Series') : CT('Film'));
       var rlabel = (RARITY[c.rarity] || RARITY.common).label;
       var nm = locName(c) || c.name || '';
       var qs = 'g=card&title=' + encodeURIComponent(nm) + '&r=' + encodeURIComponent(c.rarity || 'common') +

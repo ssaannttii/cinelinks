@@ -22,7 +22,7 @@ interface Movie {
   genre: string;
 }
 
-type Phase = "loading" | "choosing" | "revealing" | "done";
+type Phase = "loading" | "choosing" | "revealing" | "done" | "error";
 
 interface RoundResult {
   correct: boolean;
@@ -100,30 +100,43 @@ function VersusGame() {
   const fetchMovie = useCallback(async (id: string): Promise<Movie> => {
     if (cacheRef.current[id]) return cacheRef.current[id];
     if (fetchingRef.current.has(id)) {
-      return new Promise((resolve) => {
+      // wait for the in-flight fetch, but give up after ~6s so a failed peer
+      // request can't hang this promise (and the loading UI) forever
+      return new Promise((resolve, reject) => {
+        let waited = 0;
         const poll = setInterval(() => {
           if (cacheRef.current[id]) { clearInterval(poll); resolve(cacheRef.current[id]); }
+          else if ((waited += 50) > 6000 || !fetchingRef.current.has(id)) { clearInterval(poll); reject(new Error('peer fetch failed')); }
         }, 50);
       });
     }
     fetchingRef.current.add(id);
-    const res = await fetch(api(`/api/movie?id=${id}`));
-    const data: Movie = await res.json();
-    cacheRef.current[id] = data;
-    return data;
+    try {
+      const res = await fetch(api(`/api/movie?id=${id}`));
+      if (!res.ok) throw new Error('movie ' + res.status);
+      const data: Movie = await res.json();
+      cacheRef.current[id] = data;
+      return data;
+    } finally {
+      fetchingRef.current.delete(id);   // clear the in-flight flag on success OR failure
+    }
   }, []);
 
   const loadRound = useCallback(async (idx: number) => {
     const pair = pairsRef.current[idx];
     if (!pair) return;
     setPhase("loading");
-    const [l, r] = await Promise.all([fetchMovie(pair[0]), fetchMovie(pair[1])]);
-    setLeftMovie(l);
-    setRightMovie(r);
-    setPick(null);
-    setPhase("choosing");
-    const next = pairsRef.current[idx + 1];
-    if (next) next.forEach((id) => fetchMovie(id));
+    try {
+      const [l, r] = await Promise.all([fetchMovie(pair[0]), fetchMovie(pair[1])]);
+      setLeftMovie(l);
+      setRightMovie(r);
+      setPick(null);
+      setPhase("choosing");
+      const next = pairsRef.current[idx + 1];
+      if (next) next.forEach((id) => fetchMovie(id).catch(() => {}));
+    } catch {
+      setPhase("error");   // surface a retry instead of an eternal spinner
+    }
   }, [fetchMovie]);
 
   const initGame = useCallback(() => {
@@ -136,7 +149,7 @@ function VersusGame() {
     const seen = readSeen();
     const qs = seen.length ? `&exclude=${seen.join(",")}` : "";
     fetch(api(`/api/session?count=10${qs}`))
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error('session ' + r.status); return r.json(); })
       .then((d) => {
         const pairs: [string, string][] = (d.pairs as [{ imdbId: string }, { imdbId: string }][])
           .slice(0, ROUNDS)
@@ -144,7 +157,8 @@ function VersusGame() {
         pairsRef.current = pairs;
         rememberSeen(pairs.flat());
         loadRound(0);
-      });
+      })
+      .catch(() => setPhase("error"));
   }, [loadRound, isDaily]);
 
   // Single mount effect: check localStorage for daily, then init
@@ -243,6 +257,17 @@ function VersusGame() {
   useEffect(() => { if (phase === "done" && score >= ROUNDS - 2) confetti(score === ROUNDS ? 130 : 90); }, [phase, score]);
 
   // ── Render: Loading ───────────────────────────────────────────────────────
+
+  if (phase === "error") {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-6" style={{ background: "#0d0d0d" }}>
+        <div className="text-center space-y-4">
+          <p className="text-sm" style={{ color: "#999" }}>Couldn&apos;t load the matchup.</p>
+          <button onClick={() => initGame()} className="font-bold py-2.5 px-6 rounded-xl" style={{ background: "#e8a000", color: "#111" }}>Retry</button>
+        </div>
+      </div>
+    );
+  }
 
   if (phase === "loading" && !leftMovie) {
     return (

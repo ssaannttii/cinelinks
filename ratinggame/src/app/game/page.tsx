@@ -195,13 +195,19 @@ function GameContent() {
     if (fetchedIds.current.has(imdbId)) return;
     fetchedIds.current.add(imdbId);
     setMovieLoading(true);
-    const res = await fetch(api(`/api/movie?id=${imdbId}`));
-    const data: MovieData = await res.json();
-    setMovieLoading(false);
-    setRounds((prev) => {
-      if (prev.find((r) => r.movie.imdbId === imdbId)) return prev;
-      return [...prev, { movie: data, revealed: false }];
-    });
+    try {
+      const res = await fetch(api(`/api/movie?id=${imdbId}`));
+      if (!res.ok) throw new Error('movie ' + res.status);
+      const data: MovieData = await res.json();
+      setRounds((prev) => {
+        if (prev.find((r) => r.movie.imdbId === imdbId)) return prev;
+        return [...prev, { movie: data, revealed: false }];
+      });
+    } catch {
+      fetchedIds.current.delete(imdbId);   // allow a retry on the next trigger
+    } finally {
+      setMovieLoading(false);              // never strand the UI in "loading"
+    }
   }, []);
 
   useEffect(() => { if (movieIds.length) movieIds.slice(0, 2).forEach((m) => fetchMovie(m.imdbId)); }, [movieIds, fetchMovie]);
@@ -210,6 +216,7 @@ function GameContent() {
 
   useEffect(() => {
     if (!movieIds.length || currentIdx >= movieIds.length - 1) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- prefetch the next round's movie (external sync)
     fetchMovie(movieIds[currentIdx + 1].imdbId);
   }, [currentIdx, movieIds, fetchMovie]);
 

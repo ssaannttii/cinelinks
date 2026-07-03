@@ -1013,7 +1013,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
         <span id="endNodeName" class="hdr-name"></span>
       </div>
       <div id="reverseBtn" style="flex-shrink:0">
-        <button class="btn btn-ghost btn-sm" onclick="game.reverseGame()" title="Reverse direction" style="padding:5px 8px;font-size:.9rem;line-height:1">&#8644;</button>
+        <button class="btn btn-ghost btn-sm" onclick="game.reverseGame()" title="Reverse direction" aria-label="Reverse direction" style="padding:5px 8px;font-size:.9rem;line-height:1"><span aria-hidden="true">&#8644;</span></button>
       </div>
     </div>
     <div class="hdr-clicks" ondblclick="game.toggleDebug()">
