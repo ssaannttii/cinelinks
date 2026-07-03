@@ -9,6 +9,7 @@ const LANGS = {
 
 const I18N = {
   'en-US': {
+    ccName: 'Your collection', ccZero: 'Win any daily to pull your first card', ccHow: 'How it works', ccOpen: 'Open →', ccCards: 'cards', ccLevel: 'Level', ccNewSuf: 'new', featToday: '★ today', pwaAdd: '📲 Add CineLinks to your home screen', pwaInstall: 'Install',
     // hub mode labels
     modeDaily: 'Daily', modePractice: 'Practice', modePlay: 'Play', modeResults: 'Results',
     sectionDaily: 'Daily puzzles', sectionRating: 'Rating games', newTag: 'NEW',
@@ -62,6 +63,7 @@ const I18N = {
     clicksLabel: 'clicks',
   },
   'es-ES': {
+    ccName: 'Tu colección', ccZero: 'Gana cualquier daily para sacar tu primera carta', ccHow: 'Cómo funciona', ccOpen: 'Abrir →', ccCards: 'cartas', ccLevel: 'Nivel', ccNewSuf: 'nuevas', featToday: '★ hoy', pwaAdd: '📲 Añade CineLinks a tu pantalla de inicio', pwaInstall: 'Instalar',
     // hub mode labels
     modeDaily: 'Diario', modePractice: 'Práctica', modePlay: 'Jugar', modeResults: 'Resultado',
     sectionDaily: 'Retos diarios', sectionRating: 'Juegos de puntuación', newTag: 'NUEVO',
@@ -115,6 +117,7 @@ const I18N = {
     clicksLabel: 'clics',
   },
   'es-MX': {
+    ccName: 'Tu colección', ccZero: 'Gana cualquier daily para sacar tu primera carta', ccHow: 'Cómo funciona', ccOpen: 'Abrir →', ccCards: 'cartas', ccLevel: 'Nivel', ccNewSuf: 'nuevas', featToday: '★ hoy', pwaAdd: '📲 Agrega CineLinks a tu pantalla de inicio', pwaInstall: 'Instalar',
     // hub mode labels
     modeDaily: 'Diario', modePractice: 'Práctica', modePlay: 'Jugar', modeResults: 'Resultado',
     sectionDaily: 'Retos diarios', sectionRating: 'Juegos de puntuación', newTag: 'NUEVO',
@@ -168,6 +171,7 @@ const I18N = {
     clicksLabel: 'clics',
   },
   'fr-FR': {
+    ccName: 'Ta collection', ccZero: 'Gagne un daily pour tirer ta première carte', ccHow: 'Comment ça marche', ccOpen: 'Ouvrir →', ccCards: 'cartes', ccLevel: 'Niveau', ccNewSuf: 'nouvelles', featToday: '★ auj.', pwaAdd: '📲 Ajoute CineLinks à ton écran d’accueil', pwaInstall: 'Installer',
     // hub mode labels
     modeDaily: 'Quotidien', modePractice: 'Entraînement', modePlay: 'Jouer', modeResults: 'Résultat',
     // click singular + goal tag
@@ -213,6 +217,7 @@ const I18N = {
     clicksLabel: 'clics',
   },
   'de-DE': {
+    ccName: 'Deine Sammlung', ccZero: 'Gewinne ein Daily für deine erste Karte', ccHow: 'So funktioniert’s', ccOpen: 'Öffnen →', ccCards: 'Karten', ccLevel: 'Level', ccNewSuf: 'neu', featToday: '★ heute', pwaAdd: '📲 CineLinks zum Startbildschirm hinzufügen', pwaInstall: 'Installieren',
     // hub mode labels
     modeDaily: 'Täglich', modePractice: 'Üben', modePlay: 'Spielen', modeResults: 'Ergebnis',
     // click singular + goal tag
@@ -258,6 +263,7 @@ const I18N = {
     clicksLabel: 'Klicks',
   },
   'pt-BR': {
+    ccName: 'Sua coleção', ccZero: 'Vença qualquer daily para tirar sua primeira carta', ccHow: 'Como funciona', ccOpen: 'Abrir →', ccCards: 'cartas', ccLevel: 'Nível', ccNewSuf: 'novas', featToday: '★ hoje', pwaAdd: '📲 Adicione o CineLinks à tela inicial', pwaInstall: 'Instalar',
     // hub mode labels
     modeDaily: 'Diário', modePractice: 'Treino', modePlay: 'Jogar', modeResults: 'Resultado',
     // click singular + goal tag

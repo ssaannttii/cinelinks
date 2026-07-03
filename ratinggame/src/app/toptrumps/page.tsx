@@ -18,6 +18,7 @@ interface Card {
   owned?: boolean;      // came from YOUR CineLinks collection (rarity shown is the one you earned)
   mastery?: number;     // collection copies tier (×3=1, ×5=2, ×10=3) — masters win ties
   loaner?: boolean;     // house card lent to fill the hand until you collect more
+  shine?: boolean;      // Shined in the collection — once per match, re-pick after a losing duel
 }
 type StatKey = "rating" | "votes" | "revenue" | "budget" | "runtime" | "year";
 
@@ -40,7 +41,7 @@ function toCard(t: TrumpTuple): Card {
 // there in localStorage. Owned cards keep the rarity you EARNED (floors, bumps,
 // pity) rather than the pool's rating-derived tier, and carry their mastery.
 const TRUMP_MAP = new Map(TRUMP_POOL.map((t) => [t[0], t]));
-type OwnedRec = { t: TrumpTuple; rarity: Card["rarity"]; mastery: number };
+type OwnedRec = { t: TrumpTuple; rarity: Card["rarity"]; mastery: number; shine: boolean };
 function readOwned(): OwnedRec[] {
   try {
     const blob = JSON.parse(localStorage.getItem("cl_collection") || "null");
@@ -53,7 +54,7 @@ function readOwned(): OwnedRec[] {
       if (!t) continue;
       const n = c.n || 1;
       const rar: Card["rarity"] = (["common", "rare", "elite", "legendary"] as const).includes(c.rarity) ? c.rarity : rarityOf(t[4]);
-      out.push({ t, rarity: rar, mastery: n >= 10 ? 3 : n >= 5 ? 2 : n >= 3 ? 1 : 0 });
+      out.push({ t, rarity: rar, mastery: n >= 10 ? 3 : n >= 5 ? 2 : n >= 3 ? 1 : 0, shine: !!c.shine });
     }
     out.sort((a, b) => a.t[0] - b.t[0]);   // stable base order → deterministic daily shuffle
     return out;
@@ -66,7 +67,7 @@ function readOwned(): OwnedRec[] {
 function buildDecks(m: Mode): { mine: Card[]; theirs: Card[]; ownedN: number } {
   const rnd = m === "daily" ? mulberry(dayNum() * 2654435761) : mulberry((Math.random() * 1e9) | 0);
   const owned = shuffle(readOwned(), rnd).slice(0, HAND);
-  const mineOwned = owned.map((o) => ({ ...toCard(o.t), owned: true, rarity: o.rarity, mastery: o.mastery }));
+  const mineOwned = owned.map((o) => ({ ...toCard(o.t), owned: true, rarity: o.rarity, mastery: o.mastery, shine: o.shine }));
   const used = new Set(mineOwned.map((c) => c.id));
   const rest = shuffle(TRUMP_POOL.filter((t) => !used.has(t[0])), rnd);
   const loaners = rest.slice(0, HAND - mineOwned.length).map((t) => ({ ...toCard(t), loaner: true }));
@@ -139,6 +140,10 @@ export default function TopTrumps() {
   const [rivalTag, setRivalTag] = useState<string | null>(null);   // battling a recorded human deck
   const [rivalMsg, setRivalMsg] = useState<string | null>(null);
   const postedRef = useRef(false);           // deck published to the rival pool once per day
+  const shineUsedRef = useRef(false);        // the Shine save is once per match
+  const settleRef = useRef<(() => void) | null>(null);
+  const [shineOffer, setShineOffer] = useState<StatKey | null>(null);
+  const [banned, setBanned] = useState<StatKey | null>(null);   // the stat you just lost with (can't re-pick it)
   const [revealed, setRevealed] = useState(false);
   const [reduced, setReduced] = useState(false);
   const [sound, setSound] = useState(true);
@@ -201,6 +206,7 @@ export default function TopTrumps() {
     setPot([]); setTurn("player"); setRound(1); setChosen(null); setDuel(null); setClash(false);
     setStreak(0); setBest(0); setWon(false); setRevealed(false);
     setRivalTag(null); setRivalMsg(null);
+    shineUsedRef.current = false; settleRef.current = null; setShineOffer(null); setBanned(null);
     setPhase("play");
     if (m === "daily") {
       try { const s = JSON.parse(localStorage.getItem("toptrumps_daily") || "null"); setDailyLocked(!!(s && s.date === todayKey())); } catch { setDailyLocked(false); }
@@ -276,12 +282,14 @@ export default function TopTrumps() {
       setPot([]); setTurn("player"); setRound(1); setChosen(null); setDuel(null); setClash(false);
       setStreak(0); setBest(0); setWon(false); setRevealed(false); setDailyLocked(false);
       setRivalTag((r.rival.t as string) || "Rival");
+      shineUsedRef.current = false; settleRef.current = null; setShineOffer(null); setBanned(null);
       setPhase("play");
     } catch { /* noop */ }
   }, []);
 
   const resolve = useCallback((stat: StatKey) => {
-    if (phase !== "play" || !player.length || !cpu.length) return;
+    if (phase !== "play" || !player.length || !cpu.length || shineOffer) return;
+    setBanned(null);
     const sdef = STATS.find((s) => s.key === stat)!;
     const pc = player[0], cc = cpu[0];
     const pv = sdef.val(pc), cv = sdef.val(cc);
@@ -300,7 +308,7 @@ export default function TopTrumps() {
       else if (res === "lose") { vibrate([14, 28]); Sfx.lose(); sweep("cpu", [pc, cc, ...pot].length); }
       else { vibrate([10, 22, 10]); Sfx.tie(); }
     });
-    after(1620, () => {
+    const settle = () => {
       const spoils = shuffle([pc, cc, ...pot], Math.random);
       let np = player.slice(1), nc = cpu.slice(1), nturn = turn, nstreak = streak;
       if (res === "win") { np = [...np, ...spoils]; nturn = "player"; nstreak = streak + 1; setPot([]); if (nstreak >= 2) Sfx.streak(nstreak); }
@@ -309,8 +317,19 @@ export default function TopTrumps() {
       setPlayer(np); setCpu(nc); setTurn(nturn); setStreak(nstreak); setBest((b) => Math.max(b, nstreak));
       if (np.length === 0 || nc.length === 0 || round >= MAX_ROUNDS) { finish(np, nc); }
       else { setRound((r) => r + 1); setRevealed(false); setChosen(null); setClash(false); setDuel(null); setPhase("play"); }
+    };
+    after(1620, () => {
+      // Shine save: a Shined card from your collection lets you re-pick ONCE per
+      // match after losing a duel you chose — the cosmetic becomes a lifeline.
+      if (res === "lose" && byPlayer && pc.shine && !shineUsedRef.current) {
+        settleRef.current = settle;
+        setShineOffer(stat);
+        vibrate([8, 20]);
+        return;
+      }
+      settle();
     });
-  }, [phase, player, cpu, pot, turn, round, streak, finish, sweep, triggerShake]);
+  }, [phase, player, cpu, pot, turn, round, streak, finish, sweep, triggerShake, shineOffer]);
 
   useEffect(() => {
     if (phase === "play" && turn === "cpu" && cpu.length) {
@@ -400,7 +419,14 @@ export default function TopTrumps() {
 
         {/* banner */}
         <div className="text-center" style={{ minHeight: 22, fontSize: ".82rem", fontWeight: 800, marginBottom: 8 }}>
-          {clash && duel
+          {shineOffer
+            ? <span style={{ display: "inline-flex", gap: 8, alignItems: "center", flexWrap: "wrap", justifyContent: "center" }}>
+                <button onClick={() => { shineUsedRef.current = true; setBanned(shineOffer); setShineOffer(null); settleRef.current = null; setRevealed(false); setChosen(null); setClash(false); setDuel(null); setPhase("play"); Sfx.select(); }}
+                  style={{ ...btn(true), padding: "7px 14px", fontSize: ".76rem" }}>✨ Shine save — pick again</button>
+                <button onClick={() => { const f = settleRef.current; settleRef.current = null; setShineOffer(null); if (f) f(); }}
+                  style={{ ...btn(false), padding: "7px 14px", fontSize: ".76rem" }}>Accept loss</button>
+              </span>
+            : clash && duel
             ? <span style={{ color: resColor(duel.res) }}>{duel.res === "win" ? (duel.tb ? "★ Mastery breaks the tie — cards are yours" : "You took the cards") : duel.res === "lose" ? "CPU took the cards" : "Tie — pot grows ⚔"}</span>
             : yourTurn ? <span style={{ color: "var(--gold)" }}>Your turn — pick a stat</span>
             : phase === "reveal" ? <span style={{ color: "var(--mut)" }}>Revealing…</span>
@@ -408,7 +434,7 @@ export default function TopTrumps() {
         </div>
 
         {/* Player card */}
-        {pc && <PlayerCard key={pc.id} card={pc} chosen={chosen} duel={duel} clash={clash} revealed={revealed} yourTurn={yourTurn} onPick={resolve} onFire={onFire} streak={streak} />}
+        {pc && <PlayerCard key={pc.id} card={pc} chosen={chosen} duel={duel} clash={clash} revealed={revealed} yourTurn={yourTurn} onPick={resolve} onFire={onFire} streak={streak} banned={banned} />}
       </div>
 
       {phase === "over" && (
@@ -537,7 +563,7 @@ function Sparkles() {
   return <>{pts.map((p, i) => <span key={i} className="tt-spark" style={{ top: p.top, left: p.left, animationDelay: p.d }} />)}</>;
 }
 
-function PlayerCard({ card, chosen, duel, clash, revealed, yourTurn, onPick, onFire, streak }: { card: Card; chosen: StatKey | null; duel: Duel; clash: boolean; revealed: boolean; yourTurn: boolean; onPick: (k: StatKey) => void; onFire: boolean; streak: number }) {
+function PlayerCard({ card, chosen, duel, clash, revealed, yourTurn, onPick, onFire, streak, banned }: { card: Card; chosen: StatKey | null; duel: Duel; clash: boolean; revealed: boolean; yourTurn: boolean; onPick: (k: StatKey) => void; onFire: boolean; streak: number; banned?: StatKey | null }) {
   const rar = RARITY[card.rarity];
   const fancy = card.rarity !== "common";
   const glow = onFire ? `0 14px 40px rgba(0,0,0,.45), 0 0 ${18 + Math.min(streak, 7) * 4}px rgba(232,160,0,${0.25 + Math.min(streak, 7) * 0.04})` : `0 14px 40px rgba(0,0,0,.4)`;
@@ -555,6 +581,7 @@ function PlayerCard({ card, chosen, duel, clash, revealed, yourTurn, onPick, onF
           <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 7, flexWrap: "wrap" }}>
             <span style={{ fontSize: ".58rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: ".07em", color: rar.ring, border: "1px solid " + rar.ring, borderRadius: 999, padding: "2px 8px" }}>{rar.label}{card.owned ? " · yours" : card.loaner ? " · loaner" : ""}</span>
             {(card.mastery || 0) > 0 && <span title="Mastery — wins ties" style={{ fontSize: ".62rem", fontWeight: 900, color: card.mastery === 3 ? "#f5c542" : card.mastery === 2 ? "#dfe6f2" : "#cd8f52", textShadow: "0 0 8px rgba(245,197,66,.5)" }}>★ M{card.mastery}</span>}
+            {card.shine && <span title="Shined — once per match you may re-pick after losing a duel" style={{ fontSize: ".62rem" }}>✨</span>}
           </div>
         </div>
       </div>
@@ -565,9 +592,9 @@ function PlayerCard({ card, chosen, duel, clash, revealed, yourTurn, onPick, onF
           const lose = lit && clash && duel ? duel.res === "lose" : false;
           const valColor = win ? "#7fd49a" : lose ? "#e8806f" : lit ? "var(--gold)" : "var(--txt)";
           return (
-            <button key={s.key} disabled={!yourTurn} onClick={() => onPick(s.key)}
+            <button key={s.key} disabled={!yourTurn || banned === s.key} onClick={() => onPick(s.key)}
               className={"tt-row" + (lit ? " lit" : "")}
-              style={{ background: lit ? "rgba(232,160,0,.16)" : (yourTurn ? "rgba(255,255,255,.03)" : "transparent"), cursor: yourTurn ? "pointer" : "default", opacity: yourTurn || lit ? 1 : .55, animation: lit && !clash ? "ttpulse .8s" : undefined }}>
+              style={{ background: lit ? "rgba(232,160,0,.16)" : (yourTurn ? "rgba(255,255,255,.03)" : "transparent"), cursor: yourTurn && banned !== s.key ? "pointer" : "default", opacity: (yourTurn && banned !== s.key) || lit ? 1 : .55, animation: lit && !clash ? "ttpulse .8s" : undefined }}>
               <span style={{ width: 18, textAlign: "center" }}>{s.icon}</span>
               <span style={{ width: 64, flexShrink: 0 }}>{s.label}</span>
               <StatBar frac={s.bar(card)} color={win ? "#7fd49a" : lose ? "#e8806f" : lit ? "var(--gold)" : "rgba(255,255,255,.4)"} lit={lit} />

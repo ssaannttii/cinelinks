@@ -1843,13 +1843,15 @@ function renderCollCard() {
   try { st = Collection.stats(); dust = Collection.dust(); } catch(_) { return; }
   try { const b = JSON.parse(localStorage.getItem('cl_collection')); const td = new Date().toISOString().slice(0,10); if (b && b.dd && b.dd.d === td) dd = b.dd; } catch(_) {}
   const sub = document.getElementById('collCardSub'), cta = document.getElementById('collCardCta');
+  const tt = k => { const v = t(k); return v === k ? ({ ccName: 'Your collection', ccZero: 'Win any daily to pull your first card', ccHow: 'How it works', ccOpen: 'Open →', ccCards: 'cards', ccLevel: 'Level', ccNewSuf: 'new' })[k] || k : v; };
+  const nameEl = el.querySelector('.cc-name'); if (nameEl) nameEl.textContent = tt('ccName');
   if (!st || !st.count) {
-    sub.textContent = 'Win any daily to pull your first card';
-    cta.textContent = 'How it works';
+    sub.textContent = tt('ccZero');
+    cta.textContent = tt('ccHow');
   } else {
     const ddTxt = dd && dd.done ? ' · ⚡✓' : (dd && dd.n ? ' · ⚡' + Math.min(dd.n, 2) + '/2' : '');
-    sub.textContent = st.count + ' cards · Level ' + st.level + ' · ✨' + dust + ddTxt + (st.newCount ? ' · ' + st.newCount + ' new' : '');
-    cta.textContent = st.newCount ? st.newCount + ' new →' : 'Open →';
+    sub.textContent = st.count + ' ' + tt('ccCards') + ' · ' + tt('ccLevel') + ' ' + st.level + ' · ✨' + dust + ddTxt + (st.newCount ? ' · ' + st.newCount + ' ' + tt('ccNewSuf') : '');
+    cta.textContent = st.newCount ? st.newCount + ' ' + tt('ccNewSuf') + ' →' : tt('ccOpen');
   }
   el.style.display = '';
   el.onclick = () => { try { Collection.openGallery(); } catch(_) {} };
@@ -1862,11 +1864,22 @@ function renderFeatured() {
     const ud = Math.floor(Date.now() / 86400000);
     const picks = [0, 1, 2].map(i => keys[(ud * 3 + i * 4) % keys.length]);
     document.querySelectorAll('.feat-tag').forEach(e => e.remove());
+    const featLbl = (t('featToday') === 'featToday') ? '★ today' : t('featToday');
+    let hiddenFeat = false;
     picks.forEach(k => {
       const badge = document.querySelector('.game-done[data-done="' + k + '"]');
       const name = badge && badge.closest('.game-name');
-      if (name) { const s = document.createElement('span'); s.className = 'feat-tag'; s.textContent = '★ today'; name.appendChild(s); }
+      if (name) { const s = document.createElement('span'); s.className = 'feat-tag'; s.textContent = featLbl; name.appendChild(s); }
+      if (badge && badge.closest('#moreGames')) hiddenFeat = true;
     });
+    // a featured game tucked in the tray gets a star on the toggle so it isn't invisible
+    const mt = document.getElementById('moreToggle');
+    if (mt) {
+      const had = mt.querySelector('.feat-tag'); if (had) had.remove();
+      if (hiddenFeat && !document.getElementById('moreGames').offsetParent) {
+        const s = document.createElement('span'); s.className = 'feat-tag'; s.textContent = '★'; mt.appendChild(s);
+      }
+    }
   } catch(_) {}
 }
 window.addEventListener('load', function () { try { renderCollCard(); renderFeatured(); } catch(_) {} });
@@ -1883,7 +1896,9 @@ function maybeShowInstall() {
     if (!anchor) return;
     const d = document.createElement('div');
     d.id = 'pwaNudge'; d.className = 'pwa-nudge';
-    d.innerHTML = '<span>📲 Add CineLinks to your home screen</span><span class="pn-btns"><button type="button" id="pwaGo">Install</button><button type="button" id="pwaNo" aria-label="Dismiss">✕</button></span>';
+    const pa = (t('pwaAdd') === 'pwaAdd') ? '📲 Add CineLinks to your home screen' : t('pwaAdd');
+    const pi = (t('pwaInstall') === 'pwaInstall') ? 'Install' : t('pwaInstall');
+    d.innerHTML = '<span>' + pa + '</span><span class="pn-btns"><button type="button" id="pwaGo">' + pi + '</button><button type="button" id="pwaNo" aria-label="Dismiss">✕</button></span>';
     anchor.parentNode.insertBefore(d, anchor.nextSibling);
     document.getElementById('pwaGo').onclick = function () {
       try { localStorage.setItem('pwaNudgeDone', '1'); } catch(_) {}
