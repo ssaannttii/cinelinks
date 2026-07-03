@@ -199,10 +199,10 @@ body{font-family:var(--fui);background:radial-gradient(circle at 50% -10%,rgba(2
 /* Poster mood: a signature film poster (sharp, saturated) bleeds in from the
    right edge behind each card, faded out horizontally so the left stays clean
    for the title. --poster is assigned per card in JS; content sits above it. */
-.game-card::before{content:"";position:absolute;inset:0;z-index:0;border-radius:14px;background:var(--poster) right center/cover no-repeat;opacity:.22;filter:saturate(1.2);pointer-events:none;transition:opacity .25s ease;-webkit-mask:linear-gradient(90deg,transparent 32%,rgba(0,0,0,.55) 66%,#000 100%);mask:linear-gradient(90deg,transparent 32%,rgba(0,0,0,.55) 66%,#000 100%)}
-.game-card:hover::before{opacity:.34}
-.game-card.hero::before{opacity:.28}
-.game-card.hero:hover::before{opacity:.4}
+.game-card::before{content:"";position:absolute;inset:0;z-index:0;border-radius:14px;background:var(--poster) right center/cover no-repeat;opacity:.3;filter:saturate(1.22);pointer-events:none;transition:opacity .25s ease;-webkit-mask:linear-gradient(90deg,transparent 30%,rgba(0,0,0,.6) 64%,#000 100%);mask:linear-gradient(90deg,transparent 30%,rgba(0,0,0,.6) 64%,#000 100%)}
+.game-card:hover::before{opacity:.42}
+.game-card.hero::before{opacity:.36}
+.game-card.hero:hover::before{opacity:.48}
 .game-card>*{position:relative;z-index:1}
 @media(prefers-reduced-motion:reduce){.game-card::before{transition:none}}
 @keyframes cardCele{0%{box-shadow:0 0 0 0 rgba(91,189,122,0)}16%{transform:scale(1.035);box-shadow:0 0 0 2px rgba(127,212,154,.6),0 18px 54px rgba(91,189,122,.42)}100%{transform:scale(1);box-shadow:0 0 0 0 rgba(91,189,122,0)}}
@@ -1885,12 +1885,12 @@ function renderCollCard() {
 }
 // Three rotating "★ Today" chips steer the day's menu (pure guidance — any five
 // dailies complete the day). Deterministic by UTC day so everyone sees the same.
-// Signature blurred poster behind each game card (assigned once). w185 keeps the
-// home light; it's a low-priority background image. Iconic non-answer films so it
-// never hints a puzzle.
+// Signature sharp poster bleeding in behind each game card (assigned once). w500
+// keeps the visible right-edge crisp at 2x without upscaling blur; it's a
+// low-priority background image. Iconic non-answer films so it never hints a puzzle.
 function assignGamePosters() {
   try {
-    const P = 'https://image.tmdb.org/t/p/w185';
+    const P = 'https://image.tmdb.org/t/p/w500';
     const map = {
       cl: '/RYMX2wcKCBAr24UyPD7xwmjaTn.jpg',      // The Avengers (ensemble = connections)
       line: '/9xjZS2rlVxm8SFx8kPC3aIGCOYQ.jpg',   // Titanic (a period on the timeline)
