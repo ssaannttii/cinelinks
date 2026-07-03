@@ -53,6 +53,30 @@ function:
 npm run smoke:prod -- --skip-depth
 ```
 
+## Internal tester mode
+
+Use this on your own devices before playing/testing production:
+
+```txt
+https://cinelinks.vercel.app/?cl_tester=1
+```
+
+It stores a local `cl_internalTester=1` flag in that browser. While active:
+
+- Vercel Analytics is not loaded.
+- `Track(...)` custom events are ignored.
+- Daily score POSTs and Top Trumps rival-deck POSTs are skipped, so your tests do
+  not pollute shared aggregates.
+
+Disable it on a device with:
+
+```txt
+https://cinelinks.vercel.app/?cl_tester=0
+```
+
+This flag is per browser/device. For cross-device sync of real game progress, use
+Google sign-in; for analytics exclusion, open the tester URL once on each device.
+
 ## Native function gotcha
 
 `api/depth` uses `onnxruntime-node` and `sharp`. It must be built by Vercel's Linux

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://cinelinks.vercel.app/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>
+  <url><loc>https://cinelinks.vercel.app/cineline.html</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://cinelinks.vercel.app/cineclue.html</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://cinelinks.vercel.app/cineframe.html</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://cinelinks.vercel.app/cinecast.html</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://cinelinks.vercel.app/cinegrid.html</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://cinelinks.vercel.app/cinechain.html</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://cinelinks.vercel.app/cinereel.html</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://cinelinks.vercel.app/cinegroup.html</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+</urlset>

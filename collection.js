@@ -498,7 +498,7 @@
   function add(items) {
     if (!Array.isArray(items) || !items.length) return [];
     var s = load(); if (!s || !s.cards) s = blank();
-    var added = [], d = today();
+    var added = [], dupes = 0, top = 'common', d = today();
     items.forEach(function (it) {
       if (!it || it.id == null || !it.type) return;
       if (it.rarityFloor) ddBump(s, d);                        // a prize grant (new OR dupe) counts toward the Daily Double
@@ -508,6 +508,8 @@
         s.xp += XP.dupe;
         var gd = DUST[s.cards[k].rarity] || 5;
         s.dust = (s.dust || 0) + gd; _pendingDust += gd;
+        dupes++;
+        if (ORDER[s.cards[k].rarity] < ORDER[top]) top = s.cards[k].rarity;
       } else {
         var rar = rarityOf(it);
         if (it.rarityFloor) {                                  // prize card → pity applies
@@ -520,11 +522,13 @@
         s.cards[k] = { id: it.id, type: it.type, name: it.name || '', img: it.img || '', rarity: rar, n: 1, first: d, no: (s.seq = (s.seq || 0) + 1), isNew: 1, i18n: (function () { var o = {}; o[currentLang()] = it.name || ''; return o; })() };
         s.xp += XP[rar] || 10;
         added.push(s.cards[k]);
+        if (ORDER[rar] < ORDER[top]) top = rar;
       }
       s.seen = (s.seen || 0) + 1;
     });
     payLevels(s);
     save(s);
+    try { if (window.Track) window.Track('collection_grant', { items: items.length, fresh: added.length, dupes: dupes, top: top, total: Object.keys(s.cards || {}).length }); } catch (_) { /* noop */ }
     return added;
   }
   function allCards() { var s = load() || blank(); return Object.keys(s.cards || {}).map(function (k) { return s.cards[k]; }); }
@@ -1325,6 +1329,12 @@
       '.cl-empty-row .cl-ghost:nth-child(2){transform:translateY(-7px) rotate(2deg)}' +
       '.cl-empty-row .cl-ghost:nth-child(1){transform:rotate(-4deg)}' +
       '.cl-empty-row .cl-ghost:nth-child(3){transform:rotate(4deg)}' +
+      '.cl-empty-title{font-size:1.05rem;font-weight:900;color:#f5f5f5;margin-bottom:8px}' +
+      '.cl-empty-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;max-width:620px;margin:18px auto 0}' +
+      '.cl-empty-step{border:1px solid rgba(255,255,255,.1);border-radius:12px;background:rgba(255,255,255,.035);padding:12px 10px;color:#cfcfcf;font-size:.76rem;font-weight:700;line-height:1.35}' +
+      '.cl-empty-step b{display:block;color:#e8a000;margin-bottom:4px;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em}' +
+      '.cl-empty-cta{display:inline-flex;align-items:center;justify-content:center;margin-top:18px;border:none;border-radius:12px;background:linear-gradient(135deg,#f5c542,#e8a000);color:#111;font:inherit;font-size:.84rem;font-weight:900;padding:11px 17px;text-decoration:none;box-shadow:0 8px 20px rgba(232,160,0,.22)}' +
+      '@media(max-width:560px){.cl-empty-steps{grid-template-columns:1fr}}' +
       // detail prev/next: browse the current filtered list without round-tripping
       '.cl-det-nav{position:fixed;top:50%;transform:translateY(-50%);z-index:2;width:42px;height:42px;border-radius:999px;background:rgba(20,20,22,.72);border:1px solid rgba(255,255,255,.16);color:#ddd;font-size:1.25rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}' +
       '.cl-det-nav:hover{color:#fff;border-color:rgba(232,160,0,.55)}' +
@@ -1787,8 +1797,14 @@
     grid.style.display = 'block';
     grid.style.gridTemplateColumns = '';
     if (!cards.length) {
-      grid.innerHTML = '<div class="cl-coll-empty"><div class="cl-empty-row"><div class="cl-ghost">?</div><div class="cl-ghost">?</div><div class="cl-ghost">?</div></div>' +
-        (query ? 'No cards match &ldquo;' + esc(_query) + '&rdquo;.' : 'No cards yet — win any daily game to pull your first card.') + '</div>';
+      grid.innerHTML = query
+        ? '<div class="cl-coll-empty"><div class="cl-empty-row"><div class="cl-ghost">?</div><div class="cl-ghost">?</div><div class="cl-ghost">?</div></div>No cards match &ldquo;' + esc(_query) + '&rdquo;.</div>'
+        : '<div class="cl-coll-empty"><div class="cl-empty-row"><div class="cl-ghost">?</div><div class="cl-ghost">?</div><div class="cl-ghost">?</div></div>' +
+          '<div class="cl-empty-title">Start your collection</div>' +
+          '<div>Win a daily game to pull your first card. Better solves can upgrade the prize.</div>' +
+          '<div class="cl-empty-steps"><div class="cl-empty-step"><b>1 · Play</b>Finish a daily puzzle.</div><div class="cl-empty-step"><b>2 · Reveal</b>Flip your prize card.</div><div class="cl-empty-step"><b>3 · Complete</b>Build sets, dust dupes, unlock backs.</div></div>' +
+          '<a class="cl-empty-cta" href="/">Choose today&apos;s daily</a></div>';
+      try { if (!query && window.Track) window.Track('collection_zero_state'); } catch (_) { /* noop */ }
       return;
     }
     // Sections: rarity sort groups by tier (with unseen cards pinned on top);

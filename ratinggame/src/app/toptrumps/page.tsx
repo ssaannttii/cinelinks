@@ -228,7 +228,8 @@ export default function TopTrumps() {
       // Publish today's deck to the rival pool (async PvP): someone else can now
       // battle YOUR cards. Fire-and-forget; 404s harmlessly in standalone dev.
       try {
-        if (!postedRef.current) {
+        const isTester = typeof window !== "undefined" && window.CineInternal?.isTester?.();
+        if (!postedRef.current && !isTester) {
           postedRef.current = true;
           let tag: string | null = null;
           try { tag = localStorage.getItem("gauth_name"); } catch { /* noop */ }

@@ -91,6 +91,16 @@ async function main() {
     baseUrl: args.baseUrl,
     contentType: /(application|text)\/javascript/
   });
+  await check('robots', '/robots.txt', {
+    baseUrl: args.baseUrl,
+    contentType: /text\/plain/,
+    minBytes: 20
+  });
+  await check('sitemap', '/sitemap.xml', {
+    baseUrl: args.baseUrl,
+    contentType: /(application|text)\/xml/,
+    minBytes: 200
+  });
   await check('share-landing', '/s?g=cl&a=Alien&b=Jaws&n=4&to=/', {
     baseUrl: args.baseUrl,
     contentType: /text\/html/,

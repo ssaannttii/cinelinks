@@ -3550,6 +3550,15 @@ const game = window.game = {
       }).catch(() => {});
     } else if (avgEl && this.scoreDate === dateKey()) {
       avgEl.textContent = '';
+      if (window.CineInternal && window.CineInternal.isTester && window.CineInternal.isTester()) {
+        fetchDailyScore(this.scoreDate).then(data => {
+          if (!data) return;
+          const avg = scoreNumber(data.avg), record = scoreNumber(data.record);
+          const recordText = record ? " · Daily record: <strong>" + record + " clicks</strong>" : "";
+          avgEl.innerHTML = (avg ? "Today's average: <strong>" + avg + " clicks</strong>" : "") + recordText;
+        }).catch(() => {});
+        return;
+      }
       fetch('/api/score', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -4284,6 +4293,5 @@ window.addEventListener('storage', function (e) {
 <script defer src="/daily-gallery.js"></script>
 <script defer src="/lib/merge-stats.js"></script>
 <script defer src="/auth.js"></script>
-<script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>
