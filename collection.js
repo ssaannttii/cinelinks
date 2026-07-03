@@ -1575,7 +1575,7 @@
       '<div class="cl-vault-hd">' +
         '<div class="cl-coll-hd-top">' +
           '<div><div class="cl-coll-title">Your <span>collection</span></div><div class="cl-coll-sub" id="clCollSub"></div></div>' +
-          '<div class="cl-coll-hd-btns" id="clCollHdBtns"><a class="cl-coll-dust cl-coll-battle" href="/rating/toptrumps" title="Top Trumps — battle the CPU with cards from this collection">&#9876;&#65039;<span class="lbl">&nbsp;Battle</span></a><span class="cl-coll-dust" id="clCollDD" title="Daily Double — win two daily games today for bonus dust">&#9889; 0/2</span><span class="cl-coll-dust" id="clCollDust" title="Dust — earned from duplicates, spent to Shine or Forge cards">&#10024; 0</span><button class="cl-coll-x" aria-label="Close">&#10005;</button></div>' +
+          '<div class="cl-coll-hd-btns" id="clCollHdBtns"><a class="cl-coll-dust cl-coll-battle" href="/rating/toptrumps" title="Top Trumps — battle the CPU with cards from this collection">&#9876;&#65039;<span class="lbl">&nbsp;Battle</span></a><span class="cl-coll-dust" id="clCollDD" title="Daily Double — win two daily games today for bonus dust">&#9889; 0/2</span><span class="cl-coll-dust" id="clCollDust" title="Dust — earned from duplicate cards, leveling up, the Daily Double and trophies. Spend it to Shine a card (permanent foil) or Forge a missing set card.">&#10024; 0</span><button class="cl-coll-x" aria-label="Close">&#10005;</button></div>' +
         '</div>' +
         '<div class="cl-coll-lvl">' +
           '<div class="cl-lvl-ring"><svg viewBox="0 0 52 52"><circle class="bg" cx="26" cy="26" r="22"></circle><circle class="fg" id="clCollRing" cx="26" cy="26" r="22" stroke-dasharray="' + RING_C + '" stroke-dashoffset="' + RING_C + '"></circle></svg><b id="clCollLvl">1</b></div>' +
@@ -2401,7 +2401,9 @@
           (newAchv.length > 3 ? '<div class="clr-sum-lvl">🏅 +' + (newAchv.length - 3) + ' more achievements</div>' : '');
         // achievement-gated card backs (e.g. Mastery) newly crossed this win
         if (newAchv.length) { var ac2 = achvCount(); backLine += cardbacksUnlockedByAchv(ac2 - newAchv.length, ac2).map(function (cb) { return '<div class="clr-sum-lvl">🎴 Card back unlocked: ' + esc(cb.name) + '</div>'; }).join(''); }
-        var dustLine = _pendingDust > 0 ? '<div class="clr-sum-lvl">&#10024; +' + _pendingDust + ' dust from duplicates</div>' : '';
+        // _pendingDust bundles every source this session (dupes, level-ups, the
+        // Daily Double, trophies) — so label it generically, not "from duplicates".
+        var dustLine = _pendingDust > 0 ? '<div class="clr-sum-lvl">&#10024; +' + _pendingDust + ' dust earned</div>' : '';
         _pendingDust = 0;
         document.getElementById('clrBody').innerHTML =
           '<div class="clr-sum"><div class="clr-sum-h">+' + queue.length + (queue.length === 1 ? ' card' : ' cards') + '</div>' +
