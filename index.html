@@ -3494,7 +3494,10 @@ const game = window.game = {
     this.renderPar();
     try { this._renderVersus(); } catch (_) {}
     let _collNewCards = [];
-    if (!replay) {
+    // Cards are a DAILY reward only: practice is unlimited, so granting there would
+    // be infinite free cards/dust/XP. scoreDate === today marks the daily game.
+    const _isDailyGame = this.scoreDate === dateKey();
+    if (!replay && _isDailyGame) {
       try {
         if (window.Collection && Array.isArray(this.path)) {
           // The goal card's rarity bump is par-relative: solve AT or UNDER par → +2
