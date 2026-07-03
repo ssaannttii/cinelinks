@@ -9,6 +9,8 @@
   'use strict';
   var TESTER_KEY = 'cl_internalTester';
   var TESTER_QUERY = 'cl_tester';
+  var BETA_KEY = 'cl_beta';
+  var BETA_QUERY = 'beta';
 
   function readTester() {
     try { return localStorage.getItem(TESTER_KEY) === '1'; } catch (_) { return false; }
@@ -18,14 +20,22 @@
     try { localStorage.setItem(TESTER_KEY, on ? '1' : '0'); } catch (_) { /* noop */ }
   }
 
-  function applyTesterQuery() {
+  function readFlag(key) {
+    try { return localStorage.getItem(key) === '1'; } catch (_) { return false; }
+  }
+
+  function writeFlag(key, on) {
+    try { localStorage.setItem(key, on ? '1' : '0'); } catch (_) { /* noop */ }
+  }
+
+  function applyBooleanQuery(param, key) {
     try {
       var url = new URL(window.location.href);
-      var v = url.searchParams.get(TESTER_QUERY);
+      var v = url.searchParams.get(param);
       if (v == null) return;
       var on = !/^(0|false|off|no)$/i.test(String(v));
-      writeTester(on);
-      url.searchParams.delete(TESTER_QUERY);
+      writeFlag(key, on);
+      url.searchParams.delete(param);
       window.history.replaceState(null, '', url.pathname + url.search + url.hash);
     } catch (_) { /* noop */ }
   }
@@ -34,11 +44,14 @@
     return readTester();
   }
 
-  applyTesterQuery();
+  applyBooleanQuery(TESTER_QUERY, TESTER_KEY);
+  applyBooleanQuery(BETA_QUERY, BETA_KEY);
 
   window.CineInternal = window.CineInternal || {};
   window.CineInternal.isTester = isTester;
   window.CineInternal.setTester = function (on) { writeTester(!!on); };
+  window.CineInternal.isBeta = function () { return readFlag(BETA_KEY); };
+  window.CineInternal.setBeta = function (on) { writeFlag(BETA_KEY, !!on); };
 
   function Track(name, props) {
     try {
@@ -69,7 +82,12 @@
     var last = null; try { last = localStorage.getItem(KEY); } catch (_) {}
     if (last !== today) {
       try { localStorage.setItem(KEY, today); } catch (_) {}
-      Track('visit', { returning: last ? 1 : 0, path: location.pathname });
+      Track('visit', {
+        returning: last ? 1 : 0,
+        path: location.pathname,
+        beta: window.CineInternal.isBeta() ? 1 : 0
+      });
+      if (window.CineInternal.isBeta()) Track('beta_visit', { path: location.pathname, returning: last ? 1 : 0 });
     }
   } catch (_) { /* noop */ }
 

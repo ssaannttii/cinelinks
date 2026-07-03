@@ -91,6 +91,16 @@ async function main() {
     baseUrl: args.baseUrl,
     contentType: /(application|text)\/javascript/
   });
+  await check('feedback-js', '/feedback.js', {
+    baseUrl: args.baseUrl,
+    contentType: /(application|text)\/javascript/,
+    minBytes: 1000
+  });
+  await check('beta-link', '/beta.html', {
+    baseUrl: args.baseUrl,
+    contentType: /text\/html/,
+    minBytes: 200
+  });
   await check('robots', '/robots.txt', {
     baseUrl: args.baseUrl,
     contentType: /text\/plain/,

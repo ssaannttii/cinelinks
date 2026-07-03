@@ -77,6 +77,21 @@ https://cinelinks.vercel.app/?cl_tester=0
 This flag is per browser/device. For cross-device sync of real game progress, use
 Google sign-in; for analytics exclusion, open the tester URL once on each device.
 
+## Private beta link
+
+For friends or early testers, use:
+
+```txt
+https://cinelinks.vercel.app/beta.html
+```
+
+That stores a local `cl_beta=1` flag and then sends them to the home page. Beta
+users see the lightweight feedback button, and analytics events include
+`beta: 1` so they can be filtered separately from normal traffic.
+
+Tester mode wins over beta mode: if your browser has `cl_tester=1`, feedback and
+analytics still no-op even if you open the beta link.
+
 ## Native function gotcha
 
 `api/depth` uses `onnxruntime-node` and `sharp`. It must be built by Vercel's Linux

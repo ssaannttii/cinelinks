@@ -29,6 +29,7 @@ export default function RootLayout({
             and reveals get sound. 404s harmlessly when the app runs standalone. */}
         <Script src="/sfx.js" strategy="afterInteractive" />
         <Script src="/analytics.js" strategy="afterInteractive" />
+        <Script src="/feedback.js" strategy="afterInteractive" />
         <Script src="/collection.js" strategy="afterInteractive" />
       </body>
     </html>

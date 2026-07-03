@@ -27,7 +27,9 @@ const I18N = {
     diffEasy: 'Easy', diffMedium: 'Medium', diffHard: 'Hard', diffExpert: 'Expert', difficultyLabel: 'Difficulty',
     // CineLinks additions: streak / archive / par
     streakLabel: 'Streak', streakBest: 'best', streakKept: 'Streak kept!', parLabel: 'Best possible', parYou: 'You matched the best route!', archiveTitle: 'Past challenges', archiveBtn: 'Past challenges', archiveClose: 'Close', archivePlayedTag: 'done', archiveTodayTag: 'today',
-    tagline: 'A new film puzzle every day — pick your game.',
+    tagline: 'Daily movie games with streaks, shareable results, and cards to collect.',
+    loopPlay: 'Play daily', loopCollect: 'Reveal cards', loopShare: 'Share results',
+    betaTitle: 'Private beta', betaSub: 'Try a daily, then tap Feedback if something feels off.',
     nodeActor: 'Actor', nodeMovie: 'Movie', nodeTarget: 'Target',
     btnToday: "Today's Challenge", btnRandom: 'Practice',
     rulesTitle: 'How CineLinks works',
@@ -82,7 +84,9 @@ const I18N = {
     diffEasy: 'Fácil', diffMedium: 'Media', diffHard: 'Difícil', diffExpert: 'Experto', difficultyLabel: 'Dificultad',
     // CineLinks additions: streak / archive / par
     streakLabel: 'Racha', streakBest: 'mejor', streakKept: '¡Racha mantenida!', parLabel: 'Mínimo posible', parYou: '¡Igualaste la ruta óptima!', archiveTitle: 'Retos anteriores', archiveBtn: 'Retos anteriores', archiveClose: 'Cerrar', archivePlayedTag: 'hecho', archiveTodayTag: 'hoy',
-    tagline: 'Un puzle de cine nuevo cada día — elige tu juego.',
+    tagline: 'Juegos diarios de cine con rachas, resultados para compartir y cartas que coleccionar.',
+    loopPlay: 'Juega daily', loopCollect: 'Revela cartas', loopShare: 'Comparte',
+    betaTitle: 'Beta privada', betaSub: 'Prueba un daily y toca Feedback si algo chirria.',
     nodeActor: 'Actor', nodeMovie: 'Película', nodeTarget: 'Objetivo',
     btnToday: 'Reto del día', btnRandom: 'Práctica',
     rulesTitle: 'Cómo funciona CineLinks',
@@ -137,7 +141,9 @@ const I18N = {
     diffEasy: 'Fácil', diffMedium: 'Media', diffHard: 'Difícil', diffExpert: 'Experto', difficultyLabel: 'Dificultad',
     // CineLinks additions: streak / archive / par
     streakLabel: 'Racha', streakBest: 'mejor', streakKept: '¡Racha mantenida!', parLabel: 'Mínimo posible', parYou: '¡Igualaste la ruta óptima!', archiveTitle: 'Retos anteriores', archiveBtn: 'Retos anteriores', archiveClose: 'Cerrar', archivePlayedTag: 'hecho', archiveTodayTag: 'hoy',
-    tagline: 'Un puzle de cine nuevo cada día — elige tu juego.',
+    tagline: 'Juegos diarios de cine con rachas, resultados para compartir y cartas que coleccionar.',
+    loopPlay: 'Juega daily', loopCollect: 'Revela cartas', loopShare: 'Comparte',
+    betaTitle: 'Beta privada', betaSub: 'Prueba un daily y toca Feedback si algo se siente raro.',
     nodeActor: 'Actor', nodeMovie: 'Película', nodeTarget: 'Meta',
     btnToday: 'Reto del día', btnRandom: 'Práctica',
     rulesTitle: 'Cómo funciona CineLinks',
