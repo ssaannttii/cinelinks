@@ -160,7 +160,7 @@ button,input{font:inherit}
 
 <script>
 const IMGBASE = 'https://image.tmdb.org/t/p/w185';
-let password = sessionStorage.getItem('cinelinksAdminPassword') || '';
+let password = (sessionStorage.getItem('cinelinksAdminPassword') || '').trim();
 let monthCursor = new Date();
 let days = [];
 let selected = null;
@@ -386,14 +386,17 @@ async function clearOverride() {
 }
 
 async function unlock() {
-  password = document.getElementById('password').value;
+  // trim: a pasted password often carries a trailing space/newline, and the
+  // server compares lengths first — so the right key would 401 silently.
+  password = document.getElementById('password').value.trim();
   sessionStorage.setItem('cinelinksAdminPassword', password);
   try {
     await loadMonth();
     await loadFeedback();
     document.getElementById('lock').style.display = 'none';
   } catch (e) {
-    document.getElementById('lockStatus').textContent = e.message;
+    const msg = /unauthorized/i.test(e.message) ? 'Wrong password' : e.message;
+    document.getElementById('lockStatus').textContent = msg;
   }
 }
 
