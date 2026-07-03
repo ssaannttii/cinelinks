@@ -17,21 +17,39 @@
     {
       "source": "/index.html",
       "headers": [
-        { "key": "Content-Type", "value": "text/html; charset=utf-8" }
+        {
+          "key": "Content-Type",
+          "value": "text/html; charset=utf-8"
+        }
       ]
     },
     {
       "source": "/manifest.webmanifest",
       "headers": [
-        { "key": "Content-Type", "value": "application/manifest+json; charset=utf-8" }
+        {
+          "key": "Content-Type",
+          "value": "application/manifest+json; charset=utf-8"
+        }
       ]
     },
     {
       "source": "/sw.js",
       "headers": [
-        { "key": "Content-Type", "value": "application/javascript; charset=utf-8" },
-        { "key": "Cache-Control", "value": "no-cache" }
+        {
+          "key": "Content-Type",
+          "value": "application/javascript; charset=utf-8"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        }
       ]
     }
-  ]
+  ],
+  "functions": {
+    "api/depth.js": {
+      "memory": 1769,
+      "maxDuration": 30
+    }
+  }
 }

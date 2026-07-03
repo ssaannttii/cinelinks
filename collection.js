@@ -322,10 +322,19 @@
           img.parentNode.insertBefore(cv, img.nextSibling);
           img.style.visibility = 'hidden';                            // <img> stays as instant fallback
           if (coarse) inner.classList.add('cv-holo');                 // shader replaces the DOM holo layers
-          // Real depth map, if the build step produced one for this poster.
-          var dm = new Image();
-          dm.onload = function () { try { if (cv.isConnected || inner.isConnected) { mkTex(1, dm); gl.uniform1f(u.hasD, 1); last = ''; } } catch (_) { /* procedural */ } };
-          dm.src = '/depth/' + (img.src.split('?')[0].split('/').pop() || '');
+          // Real depth map: pre-baked (/depth) first; the long tail falls back to the
+          // on-demand server model (/api/depth, CDN-cached per poster); any failure
+          // leaves the procedural depth in place.
+          var base = img.src.split('?')[0].split('/').pop() || '';
+          if (/^[\w-]{5,64}\.(jpg|jpeg|png)$/i.test(base)) {
+            var dm = new Image();
+            dm.onload = function () { try { if (cv.isConnected || inner.isConnected) { mkTex(1, dm); gl.uniform1f(u.hasD, 1); last = ''; } } catch (_) { /* procedural */ } };
+            dm.onerror = function () {
+              if (dm._retried) return; dm._retried = 1;
+              dm.src = '/api/depth?im=' + encodeURIComponent(base);
+            };
+            dm.src = '/depth/' + base;
+          }
           var last = '', fA = 0, gA = 0;
           function num(nme, dflt) { var s = inner.style.getPropertyValue(nme); var f = parseFloat(s); return isNaN(f) ? dflt : f; }
           (function loop() {
