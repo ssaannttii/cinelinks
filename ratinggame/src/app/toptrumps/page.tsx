@@ -15,6 +15,9 @@ interface Card {
   id: number; title: string; year: number; poster: string; genre: string;
   rating: number; votes: number; revenue: number; budget: number; runtime: number;
   rarity: "common" | "rare" | "elite" | "legendary";
+  owned?: boolean;      // came from YOUR CineLinks collection (rarity shown is the one you earned)
+  mastery?: number;     // collection copies tier (×3=1, ×5=2, ×10=3) — masters win ties
+  loaner?: boolean;     // house card lent to fill the hand until you collect more
 }
 type StatKey = "rating" | "votes" | "revenue" | "budget" | "runtime" | "year";
 
@@ -30,6 +33,46 @@ const RARITY: Record<Card["rarity"], { label: string; ring: string; glow: string
 
 function toCard(t: TrumpTuple): Card {
   return { id: t[0], title: t[1], year: t[2], poster: IMG + t[3], rating: t[4], votes: t[5], revenue: t[6], budget: t[7], runtime: t[8], genre: t[9], rarity: rarityOf(t[4]) };
+}
+
+// ── Collection bridge: your CineLinks cards ARE your deck ──
+// Same origin through the /rating/* proxy, so the shared collection blob is right
+// there in localStorage. Owned cards keep the rarity you EARNED (floors, bumps,
+// pity) rather than the pool's rating-derived tier, and carry their mastery.
+const TRUMP_MAP = new Map(TRUMP_POOL.map((t) => [t[0], t]));
+type OwnedRec = { t: TrumpTuple; rarity: Card["rarity"]; mastery: number };
+function readOwned(): OwnedRec[] {
+  try {
+    const blob = JSON.parse(localStorage.getItem("cl_collection") || "null");
+    if (!blob || !blob.cards) return [];
+    const out: OwnedRec[] = [];
+    for (const k of Object.keys(blob.cards)) {
+      const c = blob.cards[k];
+      if (!c || c.type !== "movie") continue;
+      const t = TRUMP_MAP.get(+c.id);
+      if (!t) continue;
+      const n = c.n || 1;
+      const rar: Card["rarity"] = (["common", "rare", "elite", "legendary"] as const).includes(c.rarity) ? c.rarity : rarityOf(t[4]);
+      out.push({ t, rarity: rar, mastery: n >= 10 ? 3 : n >= 5 ? 2 : n >= 3 ? 1 : 0 });
+    }
+    out.sort((a, b) => a.t[0] - b.t[0]);   // stable base order → deterministic daily shuffle
+    return out;
+  } catch { return []; }
+}
+
+// Deal both hands. Yours is built from your collection first (owned cards, earned
+// rarity, mastery); "loaner" house cards fill the gaps until you collect more.
+// The CPU never draws a card that's in your hand.
+function buildDecks(m: Mode): { mine: Card[]; theirs: Card[]; ownedN: number } {
+  const rnd = m === "daily" ? mulberry(dayNum() * 2654435761) : mulberry((Math.random() * 1e9) | 0);
+  const owned = shuffle(readOwned(), rnd).slice(0, HAND);
+  const mineOwned = owned.map((o) => ({ ...toCard(o.t), owned: true, rarity: o.rarity, mastery: o.mastery }));
+  const used = new Set(mineOwned.map((c) => c.id));
+  const rest = shuffle(TRUMP_POOL.filter((t) => !used.has(t[0])), rnd);
+  const loaners = rest.slice(0, HAND - mineOwned.length).map((t) => ({ ...toCard(t), loaner: true }));
+  const mine = shuffle([...mineOwned, ...loaners], rnd);
+  const theirs = rest.slice(HAND - mineOwned.length, HAND - mineOwned.length + HAND).map(toCard);
+  return { mine, theirs, ownedN: mineOwned.length };
 }
 
 // pool maxima for the strength bars
@@ -56,7 +99,7 @@ type Phase = "play" | "reveal" | "over";
 type Mode = "daily" | "practice";
 type Diff = "normal" | "hard";
 type Res = "win" | "lose" | "tie";
-type Duel = { stat: StatKey; pv: number; cv: number; res: Res } | null;
+type Duel = { stat: StatKey; pv: number; cv: number; res: Res; tb?: boolean } | null;
 
 function shuffle<T>(a: T[], rnd: () => number): T[] {
   const r = a.slice();
@@ -67,10 +110,6 @@ function mulberry(seed: number) { return () => { seed |= 0; seed = (seed + 0x6D2
 function dayNum() { const n = new Date(); return Math.floor(Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate()) / 86400000); }
 const todayKey = madridDayKey;   // suite dailies roll over on Madrid midnight, not UTC
 
-function buildDeck(mode: Mode): Card[] {
-  const rnd = mode === "daily" ? mulberry(dayNum() * 2654435761) : mulberry((Math.random() * 1e9) | 0);
-  return shuffle(TRUMP_POOL, rnd).slice(0, HAND * 2).map(toCard);
-}
 function cpuPick(card: Card, diff: Diff): StatKey {
   const scored = STATS.map((s) => ({ k: s.key, b: s.bar(card) }));
   scored.sort((a, b) => b.b - a.b);
@@ -96,6 +135,7 @@ export default function TopTrumps() {
   const [best, setBest] = useState(0);
   const [won, setWon] = useState(false);
   const [dailyLocked, setDailyLocked] = useState(false);
+  const [ownedN, setOwnedN] = useState(0);   // how many of your hand came from your collection
   const [revealed, setRevealed] = useState(false);
   const [reduced, setReduced] = useState(false);
   const [sound, setSound] = useState(true);
@@ -151,9 +191,10 @@ export default function TopTrumps() {
 
   const newGame = useCallback((m: Mode) => {
     clearTimers();
-    const deck = buildDeck(m);
-    initHandRef.current = new Set(deck.slice(0, HAND).map((c) => c.id));
-    setPlayer(deck.slice(0, HAND)); setCpu(deck.slice(HAND, HAND * 2));
+    const { mine, theirs, ownedN: on } = buildDecks(m);
+    initHandRef.current = new Set(mine.map((c) => c.id));
+    setOwnedN(on);
+    setPlayer(mine); setCpu(theirs);
     setPot([]); setTurn("player"); setRound(1); setChosen(null); setDuel(null); setClash(false);
     setStreak(0); setBest(0); setWon(false); setRevealed(false);
     setPhase("play");
@@ -202,10 +243,13 @@ export default function TopTrumps() {
     const sdef = STATS.find((s) => s.key === stat)!;
     const pc = player[0], cc = cpu[0];
     const pv = sdef.val(pc), cv = sdef.val(cc);
-    const res: Res = pv > cv ? "win" : cv > pv ? "lose" : "tie";
+    let res: Res = pv > cv ? "win" : cv > pv ? "lose" : "tie";
+    let tb = false;
+    // Mastery perk: a starred card from your collection (×3+ copies) wins ties.
+    if (res === "tie" && (pc.mastery || 0) > 0) { res = "win"; tb = true; }
     const byPlayer = turn === "player";
     setChosen(stat); setRevealed(true); setPhase("reveal"); setClash(false);
-    setDuel({ stat, pv, cv, res });
+    setDuel({ stat, pv, cv, res, tb });
     vibrate(10); Sfx.flip(); if (byPlayer) Sfx.pick();
     clearTimers();
     after(820, () => {
@@ -274,6 +318,13 @@ export default function TopTrumps() {
         </div>
       </div>
 
+      {/* deck provenance: your collection IS your deck */}
+      <div className="text-center" style={{ marginTop: 8, fontSize: ".7rem", fontWeight: 700, color: "var(--mut)" }}>
+        {ownedN > 0
+          ? <span>🃏 <b style={{ color: "var(--gold)" }}>{ownedN}</b> from your collection{ownedN < HAND ? <> · {HAND - ownedN} loaner{HAND - ownedN === 1 ? "" : "s"}</> : " — full deck!"}</span>
+          : <span>Playing with house cards — <a href="https://cinelinks.vercel.app" style={{ color: "var(--gold)", textDecoration: "none" }}>collect cards in CineLinks</a> to battle with your own deck</span>}
+      </div>
+
       {/* tug-of-war momentum bar */}
       <div className="mt-4 mb-3">
         <div className="flex items-end justify-between mb-1" style={{ fontSize: ".78rem", fontWeight: 800 }}>
@@ -308,7 +359,7 @@ export default function TopTrumps() {
         {/* banner */}
         <div className="text-center" style={{ minHeight: 22, fontSize: ".82rem", fontWeight: 800, marginBottom: 8 }}>
           {clash && duel
-            ? <span style={{ color: resColor(duel.res) }}>{duel.res === "win" ? "You took the cards" : duel.res === "lose" ? "CPU took the cards" : "Tie — pot grows ⚔"}</span>
+            ? <span style={{ color: resColor(duel.res) }}>{duel.res === "win" ? (duel.tb ? "★ Mastery breaks the tie — cards are yours" : "You took the cards") : duel.res === "lose" ? "CPU took the cards" : "Tie — pot grows ⚔"}</span>
             : yourTurn ? <span style={{ color: "var(--gold)" }}>Your turn — pick a stat</span>
             : phase === "reveal" ? <span style={{ color: "var(--mut)" }}>Revealing…</span>
             : <span style={{ color: "var(--mut)" }}>CPU choosing…</span>}
@@ -437,7 +488,10 @@ function PlayerCard({ card, chosen, duel, clash, revealed, yourTurn, onPick, onF
         <div className="min-w-0 flex-1">
           <div style={{ fontWeight: 800, fontSize: "1rem", lineHeight: 1.2 }}>{card.title}</div>
           <div style={{ color: "var(--mut)", fontSize: ".78rem", marginTop: 2 }}>{card.year} · {card.genre}</div>
-          <div style={{ display: "inline-block", marginTop: 7, fontSize: ".58rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: ".07em", color: rar.ring, border: "1px solid " + rar.ring, borderRadius: 999, padding: "2px 8px" }}>{rar.label} · your card</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 7, flexWrap: "wrap" }}>
+            <span style={{ fontSize: ".58rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: ".07em", color: rar.ring, border: "1px solid " + rar.ring, borderRadius: 999, padding: "2px 8px" }}>{rar.label}{card.owned ? " · yours" : card.loaner ? " · loaner" : ""}</span>
+            {(card.mastery || 0) > 0 && <span title="Mastery — wins ties" style={{ fontSize: ".62rem", fontWeight: 900, color: card.mastery === 3 ? "#f5c542" : card.mastery === 2 ? "#dfe6f2" : "#cd8f52", textShadow: "0 0 8px rgba(245,197,66,.5)" }}>★ M{card.mastery}</span>}
+          </div>
         </div>
       </div>
       <div className="mt-3 flex flex-col gap-2" style={{ position: "relative" }}>

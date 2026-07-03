@@ -1219,6 +1219,8 @@
       '.cl-coll-hd-btns{display:flex;align-items:center;gap:6px}' +
       '.cl-coll-icon{background:none;border:none;color:#888;font-size:1.1rem;cursor:pointer;line-height:1;padding:2px 6px}.cl-coll-icon:hover{color:#f5f5f5}' +
       '.cl-coll-dust{display:inline-flex;align-items:center;font-size:.78rem;font-weight:800;color:#bfe6ff;background:rgba(120,184,255,.12);border:1px solid rgba(150,205,255,.3);border-radius:99px;padding:3px 9px;margin-right:2px;white-space:nowrap}' +
+      '.cl-coll-battle{color:#f5c542;background:rgba(232,160,0,.12);border-color:rgba(232,160,0,.4);text-decoration:none;cursor:pointer}' +
+      '.cl-coll-battle:hover{background:rgba(232,160,0,.22)}' +
       '.cl-coll-x{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:999px;width:34px;height:34px;color:#bbb;font-size:1.05rem;cursor:pointer;line-height:1}.cl-coll-x:hover{color:#fff;border-color:rgba(255,255,255,.3)}' +
       // identity strip: SVG progress ring around the level + next-unlock teaser
       '.cl-coll-lvl{display:flex;align-items:center;gap:12px;margin-top:12px}' +
@@ -1498,7 +1500,7 @@
       '<div class="cl-vault-hd">' +
         '<div class="cl-coll-hd-top">' +
           '<div><div class="cl-coll-title">Your <span>collection</span></div><div class="cl-coll-sub" id="clCollSub"></div></div>' +
-          '<div class="cl-coll-hd-btns" id="clCollHdBtns"><span class="cl-coll-dust" id="clCollDD" title="Daily Double — win two daily games today for bonus dust">&#9889; 0/2</span><span class="cl-coll-dust" id="clCollDust" title="Dust — earned from duplicates, spent to Shine or Forge cards">&#10024; 0</span><button class="cl-coll-x" aria-label="Close">&#10005;</button></div>' +
+          '<div class="cl-coll-hd-btns" id="clCollHdBtns"><a class="cl-coll-dust cl-coll-battle" href="/rating/toptrumps" title="Top Trumps — battle the CPU with cards from this collection">&#9876;&#65039; Battle</a><span class="cl-coll-dust" id="clCollDD" title="Daily Double — win two daily games today for bonus dust">&#9889; 0/2</span><span class="cl-coll-dust" id="clCollDust" title="Dust — earned from duplicates, spent to Shine or Forge cards">&#10024; 0</span><button class="cl-coll-x" aria-label="Close">&#10005;</button></div>' +
         '</div>' +
         '<div class="cl-coll-lvl">' +
           '<div class="cl-lvl-ring"><svg viewBox="0 0 52 52"><circle class="bg" cx="26" cy="26" r="22"></circle><circle class="fg" id="clCollRing" cx="26" cy="26" r="22" stroke-dasharray="' + RING_C + '" stroke-dashoffset="' + RING_C + '"></circle></svg><b id="clCollLvl">1</b></div>' +
