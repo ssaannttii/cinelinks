@@ -295,7 +295,7 @@ export default function TopTrumps() {
   }
 
   return (
-    <main style={{ maxWidth: 460, margin: "0 auto", padding: "52px 14px 40px" }}>
+    <main className="tt-main">
       <style>{CSS}</style>
 
       <a href="https://cinelinks.vercel.app/rating" style={backStyle}><HomeIcon /> Rating games</a>
@@ -303,11 +303,11 @@ export default function TopTrumps() {
 
       <div className="text-center">
         <h1 className="tt-title" style={{ fontSize: "2rem", fontWeight: 900, letterSpacing: "-.025em", lineHeight: 1 }}>Top<span>Trumps</span></h1>
-        <p style={{ color: "var(--mut)", fontSize: ".82rem", marginTop: 5 }}>Pick a stat. Higher wins the cards. Take the deck.</p>
+        <p className="tt-sub" style={{ color: "var(--mut)", fontSize: ".82rem", marginTop: 5 }}>Pick a stat. Higher wins the cards. Take the deck.</p>
       </div>
 
       {/* mode + difficulty */}
-      <div className="flex items-center justify-center gap-2 mt-3">
+      <div className="tt-mode-row flex items-center justify-center gap-2 mt-3">
         <div className="tt-seg">
           <Seg active={mode === "daily"} onClick={() => { Sfx.select(); setMode("daily"); newGame("daily"); }}>Daily</Seg>
           <Seg active={mode === "practice"} onClick={() => { Sfx.select(); setMode("practice"); newGame("practice"); }}>Practice</Seg>
@@ -319,14 +319,14 @@ export default function TopTrumps() {
       </div>
 
       {/* deck provenance: your collection IS your deck */}
-      <div className="text-center" style={{ marginTop: 8, fontSize: ".7rem", fontWeight: 700, color: "var(--mut)" }}>
+      <div className="tt-deck-line text-center" style={{ marginTop: 8, fontSize: ".7rem", fontWeight: 700, color: "var(--mut)" }}>
         {ownedN > 0
           ? <span>🃏 <b style={{ color: "var(--gold)" }}>{ownedN}</b> from your collection{ownedN < HAND ? <> · {HAND - ownedN} loaner{HAND - ownedN === 1 ? "" : "s"}</> : " — full deck!"}</span>
           : <span>Playing with house cards — <a href="https://cinelinks.vercel.app" style={{ color: "var(--gold)", textDecoration: "none" }}>collect cards in CineLinks</a> to battle with your own deck</span>}
       </div>
 
       {/* tug-of-war momentum bar */}
-      <div className="mt-4 mb-3">
+      <div className="tt-momentum mt-4 mb-3">
         <div className="flex items-end justify-between mb-1" style={{ fontSize: ".78rem", fontWeight: 800 }}>
           <span ref={youRef} style={{ color: "var(--gold)" }}>You <b style={{ fontSize: "1rem" }}>{player.length}</b></span>
           <span style={{ color: "var(--mut)", fontSize: ".66rem", fontWeight: 700 }}>round {round}/{MAX_ROUNDS}</span>
@@ -338,7 +338,7 @@ export default function TopTrumps() {
           </i>
           <span className="tt-knob" style={{ left: youPct + "%", transition: reduced ? "none" : "left .7s cubic-bezier(.3,.9,.3,1)" }} />
         </div>
-        <div className="flex items-center justify-center gap-2 mt-2" style={{ minHeight: 20 }}>
+        <div className="tt-status-row flex items-center justify-center gap-2 mt-2" style={{ minHeight: 20 }}>
           {onFire && <span className="tt-fire">🔥 {streak} in a row{streak >= 5 ? " · ON FIRE" : ""}</span>}
           {pot.length > 0 && <span className="tt-war">⚔ WAR · pot {pot.length}</span>}
         </div>
@@ -430,6 +430,7 @@ const CSS = `
 .tt-rise{animation:ttrise .42s cubic-bezier(.2,.8,.2,1) both}
 .tt-trophy{animation:tttrophy .7s cubic-bezier(.2,.9,.3,1) both}
 .tt-shake{animation:ttshake .42s cubic-bezier(.36,.07,.19,.97)}
+.tt-main{max-width:460px;margin:0 auto;padding:52px 14px 40px}
 .tt-board{position:relative}
 .tt-seg{display:inline-flex;background:rgba(255,255,255,.04);border:1px solid var(--bdr);border-radius:999px;padding:3px}
 .tt-bar{height:5px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden;flex:1}
@@ -450,6 +451,25 @@ const CSS = `
 .tt-row:not(:disabled):hover{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.18)}
 .tt-row:not(:disabled):active{transform:scale(.985)}
 .tt-row.lit{border-color:var(--gold);background:rgba(232,160,0,.16)}
+/* Mobile compact: on phones the whole your-turn state (momentum bar, CPU card,
+   VS, banner and ALL six stat rows) must fit one screen - no scrolling to act. */
+@media(max-width:480px){
+  .tt-main{padding:46px 12px 24px}
+  .tt-title{font-size:1.35rem}
+  .tt-sub{display:none}
+  .tt-mode-row{margin-top:8px}
+  .tt-deck-line{margin-top:5px;font-size:.64rem}
+  .tt-momentum{margin:8px 0 6px}
+  .tt-status-row{min-height:16px;margin-top:4px}
+  .tt-flip-face{min-height:70px!important;padding:8px!important}
+  .tt-flip-poster{width:38px!important;height:57px!important}
+  .tt-clash{height:30px;margin:4px 0 2px}
+  .tt-pc{padding:10px!important}
+  .tt-pc-poster{width:50px!important;height:75px!important}
+  .tt-pc-title{font-size:.88rem!important}
+  .tt-rows{margin-top:7px!important;gap:5px!important}
+  .tt-row{padding:4px 10px;font-size:.78rem}
+}
 @media(prefers-reduced-motion:reduce){
   .tt-deal,.tt-rise,.tt-trophy,.tt-shake,.tt-vs.on,.tt-fire{animation:none}
   .tt-shine,.tt-sheen,.tt-spark,.tt-shock{display:none}
@@ -478,15 +498,15 @@ function PlayerCard({ card, chosen, duel, clash, revealed, yourTurn, onPick, onF
   const fancy = card.rarity !== "common";
   const glow = onFire ? `0 14px 40px rgba(0,0,0,.45), 0 0 ${18 + Math.min(streak, 7) * 4}px rgba(232,160,0,${0.25 + Math.min(streak, 7) * 0.04})` : `0 14px 40px rgba(0,0,0,.4)`;
   return (
-    <div className="tt-deal" key={card.id} style={{ position: "relative", background: "var(--s1)", border: "2px solid " + rar.ring, borderRadius: 16, padding: 14, boxShadow: glow, overflow: "hidden", animation: onFire ? "ttdeal .4s cubic-bezier(.2,.8,.2,1) both, ttglow 1.8s ease-in-out infinite" : undefined }}>
+    <div className="tt-deal tt-pc" key={card.id} style={{ position: "relative", background: "var(--s1)", border: "2px solid " + rar.ring, borderRadius: 16, padding: 14, boxShadow: glow, overflow: "hidden", animation: onFire ? "ttdeal .4s cubic-bezier(.2,.8,.2,1) both, ttglow 1.8s ease-in-out infinite" : undefined }}>
       {fancy && <div style={{ position: "absolute", inset: 0, background: rar.grad, pointerEvents: "none" }} />}
       {fancy && <span className="tt-sheen" />}
       {card.rarity === "legendary" && <Sparkles />}
       <div className="flex gap-3" style={{ position: "relative" }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={card.poster} alt="" style={{ width: 72, height: 108, objectFit: "cover", borderRadius: 9, flexShrink: 0, background: "var(--s2)", boxShadow: "0 4px 14px rgba(0,0,0,.5)" }} />
+        <img src={card.poster} alt="" className="tt-pc-poster" style={{ width: 72, height: 108, objectFit: "cover", borderRadius: 9, flexShrink: 0, background: "var(--s2)", boxShadow: "0 4px 14px rgba(0,0,0,.5)" }} />
         <div className="min-w-0 flex-1">
-          <div style={{ fontWeight: 800, fontSize: "1rem", lineHeight: 1.2 }}>{card.title}</div>
+          <div className="tt-pc-title" style={{ fontWeight: 800, fontSize: "1rem", lineHeight: 1.2 }}>{card.title}</div>
           <div style={{ color: "var(--mut)", fontSize: ".78rem", marginTop: 2 }}>{card.year} · {card.genre}</div>
           <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 7, flexWrap: "wrap" }}>
             <span style={{ fontSize: ".58rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: ".07em", color: rar.ring, border: "1px solid " + rar.ring, borderRadius: 999, padding: "2px 8px" }}>{rar.label}{card.owned ? " · yours" : card.loaner ? " · loaner" : ""}</span>
@@ -494,7 +514,7 @@ function PlayerCard({ card, chosen, duel, clash, revealed, yourTurn, onPick, onF
           </div>
         </div>
       </div>
-      <div className="mt-3 flex flex-col gap-2" style={{ position: "relative" }}>
+      <div className="tt-rows mt-3 flex flex-col gap-2" style={{ position: "relative" }}>
         {STATS.map((s) => {
           const lit = chosen === s.key;
           const win = lit && clash && duel ? duel.res === "win" : false;
@@ -534,11 +554,11 @@ function FlipCard({ card, faceUp, duel, clash, reduced, owner }: { card?: Card; 
     <div style={{ perspective: 900, minHeight: 96 }}>
       <div style={{ position: "relative", transformStyle: "preserve-3d", transition: reduced ? "none" : "transform .55s cubic-bezier(.3,.9,.3,1)", transform: faceUp ? "rotateY(0)" : "rotateY(180deg)", filter: lose ? "saturate(.6) brightness(.85)" : "none" }}>
         {/* front face (revealed card) */}
-        <div style={{ ...hidden, position: "relative", background: "var(--s1)", border: "2px solid " + frontBorder, borderRadius: 14, padding: 12, display: "flex", alignItems: "center", gap: 12, minHeight: 96, overflow: "hidden", boxShadow: win ? "0 0 22px rgba(127,212,154,.45)" : "0 10px 30px rgba(0,0,0,.4)" }}>
+        <div className="tt-flip-face" style={{ ...hidden, position: "relative", background: "var(--s1)", border: "2px solid " + frontBorder, borderRadius: 14, padding: 12, display: "flex", alignItems: "center", gap: 12, minHeight: 96, overflow: "hidden", boxShadow: win ? "0 0 22px rgba(127,212,154,.45)" : "0 10px 30px rgba(0,0,0,.4)" }}>
           {fancy && <div style={{ position: "absolute", inset: 0, background: rar.grad, pointerEvents: "none" }} />}
           {fancy && <span className="tt-sheen" />}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={card.poster} alt="" style={{ width: 54, height: 81, objectFit: "cover", borderRadius: 7, flexShrink: 0, background: "var(--s2)", position: "relative" }} />
+          <img src={card.poster} alt="" className="tt-flip-poster" style={{ width: 54, height: 81, objectFit: "cover", borderRadius: 7, flexShrink: 0, background: "var(--s2)", position: "relative" }} />
           <div className="min-w-0 flex-1" style={{ position: "relative" }}>
             <div style={{ fontWeight: 800, fontSize: ".92rem", lineHeight: 1.2 }}>{card.title}</div>
             <div style={{ color: "var(--mut)", fontSize: ".74rem" }}>{card.year} · {owner}&apos;s card</div>
@@ -551,8 +571,8 @@ function FlipCard({ card, faceUp, duel, clash, reduced, owner }: { card?: Card; 
           </div>
         </div>
         {/* back face (pre-rotated so it reads correctly when the card is down) */}
-        <div style={{ ...hidden, position: "absolute", inset: 0, transform: "rotateY(180deg)", background: "repeating-linear-gradient(45deg,#161616,#161616 10px,#1d1d1d 10px,#1d1d1d 20px)", border: "2px solid var(--bdr)", borderRadius: 14, padding: 12, display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ width: 54, height: 81, borderRadius: 7, flexShrink: 0, background: "rgba(232,160,0,.1)", border: "1px solid rgba(232,160,0,.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem", color: "var(--gold)" }}>🃏</div>
+        <div className="tt-flip-face" style={{ ...hidden, position: "absolute", inset: 0, transform: "rotateY(180deg)", background: "repeating-linear-gradient(45deg,#161616,#161616 10px,#1d1d1d 10px,#1d1d1d 20px)", border: "2px solid var(--bdr)", borderRadius: 14, padding: 12, display: "flex", alignItems: "center", gap: 12 }}>
+          <div className="tt-flip-poster" style={{ width: 54, height: 81, borderRadius: 7, flexShrink: 0, background: "rgba(232,160,0,.1)", border: "1px solid rgba(232,160,0,.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem", color: "var(--gold)" }}>🃏</div>
           <div><div style={{ fontWeight: 800, fontSize: ".86rem" }}>{owner}&apos;s card</div><div style={{ color: "var(--mut)", fontSize: ".74rem", marginTop: 2 }}>hidden until a stat is picked</div></div>
         </div>
       </div>

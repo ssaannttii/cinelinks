@@ -401,16 +401,16 @@ function GameContent() {
           <div className="animate-pulse text-sm" style={{ color: "#555" }}>Loading…</div>
         </div>
       ) : (
-        <div className="w-full flex flex-col md:flex-row gap-6 animate-slide-up">
+        <div className="w-full flex flex-col md:flex-row gap-4 md:gap-6 animate-slide-up">
           {/* Poster */}
-          <div className="w-full md:w-52 flex-shrink-0">
+          <div className="w-32 md:w-52 flex-shrink-0 mx-auto md:mx-0">
             <PosterImage src={movie.poster} title={movie.title} />
           </div>
 
           {/* Info + controls */}
           <div className="flex-1 flex flex-col">
             <div className="mb-4">
-              <h2 className="text-2xl font-black leading-tight mb-2 text-[#f0f0f0]">{movie.title}</h2>
+              <h2 className="text-xl md:text-2xl font-black leading-tight mb-2 text-center md:text-left text-[#f0f0f0]">{movie.title}</h2>
               <div className="flex flex-wrap gap-1.5 text-xs">
                 {[movie.year, movie.runtime !== "N/A" ? movie.runtime : null, ...movie.genre.split(", ").slice(0, 2)].filter(Boolean).map((tag) => (
                   <span key={tag} className="rounded-full px-2.5 py-0.5" style={{ background: "rgba(255,255,255,0.06)", color: "#777" }}>{tag}</span>
@@ -426,7 +426,7 @@ function GameContent() {
                 <SliderInput mode={mode} imdbValue={imdbGuess} rtValue={rtGuess} onImdbChange={setImdbGuess} onRtChange={setRtGuess} />
                 <button
                   onClick={submitGuess}
-                  className="mt-6 w-full font-bold py-3 rounded-xl transition-all hover:opacity-85 active:scale-[0.99]"
+                  className="mt-4 md:mt-6 w-full font-bold py-3 rounded-xl transition-all hover:opacity-85 active:scale-[0.99]"
                   style={{ background: "#e8a000", color: "#111" }}
                 >
                   Lock In My Guess 🎯
