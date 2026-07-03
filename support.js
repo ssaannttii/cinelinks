@@ -21,4 +21,18 @@
     "font-family:Inter,-apple-system,sans-serif;font-weight:800;font-size:.8rem;padding:9px 14px;border-radius:999px;" +
     'text-decoration:none;box-shadow:0 8px 24px rgba(0,0,0,.35)';
   document.body.appendChild(a);
+  // Shrink out of the way while the page scrolls (the pill was covering buttons
+  // mid-page on phones); grows back near the top.
+  (function () {
+    var mini = false;
+    function onScroll() {
+      var m = (window.scrollY || 0) > 140;
+      if (m === mini) return; mini = m;
+      a.style.transition = 'transform .2s ease, opacity .2s ease';
+      a.style.transform = m ? 'scale(.68)' : '';
+      a.style.opacity = m ? '.5' : '1';
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+  })();
+
 })();

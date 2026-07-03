@@ -59,6 +59,20 @@
 
   document.body.appendChild(ov);
   document.body.appendChild(btn);
+  // Shrink out of the way while the page scrolls (the pill was covering buttons
+  // mid-page on phones); grows back near the top.
+  (function () {
+    var mini = false;
+    function onScroll() {
+      var m = (window.scrollY || 0) > 140;
+      if (m === mini) return; mini = m;
+      btn.style.transition = 'transform .2s ease, opacity .2s ease';
+      btn.style.transform = m ? 'scale(.68)' : '';
+      btn.style.opacity = m ? '.5' : '1';
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+  })();
+
   // number the steps
   var i = 1;
   ov.querySelectorAll('.ht-num').forEach(function (n) { n.textContent = i++; });

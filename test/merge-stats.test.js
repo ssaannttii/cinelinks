@@ -134,6 +134,13 @@ test('mergeCollection keeps the level-reward ladder and daily double', () => {
   assert.deepStrictEqual(out, M.mergeCollection(b, a));                  // order-independent
 });
 
+test('mergeCollection unions the showcase (a first, capped at 6)', () => {
+  const a = { v: 1, cards: {}, showcase: ['movie:1', 'movie:2', 'movie:3', 'movie:4'] };
+  const b = { v: 1, cards: {}, showcase: ['movie:9', 'movie:2', 'movie:8', 'movie:7'] };
+  const out = M.mergeCollection(a, b);
+  assert.deepStrictEqual(out.showcase, ['movie:1', 'movie:2', 'movie:3', 'movie:4', 'movie:9', 'movie:8']);
+});
+
 test('mergeCollection omits progress records when neither side has them', () => {
   const out = M.mergeCollection({ v: 1, cards: {} }, { v: 1, cards: {} });
   assert.strictEqual(out.setsDone, undefined);

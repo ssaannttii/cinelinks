@@ -869,6 +869,24 @@
     });
   }
 
+  // ── Showcase: a hand-picked vitrine of up to 6 cards (the TCG-Pocket binder
+  //    instinct in miniature) — curation is what turns a database into a collection. ──
+  var SHOWCASE_MAX = 6;
+  function showcaseKeys() { var s = load() || blank(); return Array.isArray(s.showcase) ? s.showcase : []; }
+  function showcaseCards() {
+    var s = load() || blank(); var ks = Array.isArray(s.showcase) ? s.showcase : [];
+    return ks.map(function (k) { return s.cards && s.cards[k]; }).filter(Boolean);
+  }
+  function inShowcase(c) { return showcaseKeys().indexOf(c.type + ':' + c.id) >= 0; }
+  function toggleShowcase(c) {
+    var s = load() || blank();
+    if (!Array.isArray(s.showcase)) s.showcase = [];
+    var k = c.type + ':' + c.id, i = s.showcase.indexOf(k);
+    if (i >= 0) { s.showcase.splice(i, 1); save(s); return { ok: true, on: false }; }
+    if (s.showcase.length >= SHOWCASE_MAX) return { ok: false, full: true };
+    s.showcase.push(k); save(s); return { ok: true, on: true };
+  }
+
   // ── Dust economy (spend duplicate dust to "Shine" owned cards) ──
   function dustBalance() { return (load() || blank()).dust || 0; }
   function shineCost(c) { return SHINE_COST[c && c.rarity] || 80; }
@@ -1350,6 +1368,7 @@
       '.cl-share-btn{width:100%;margin-top:9px;border:1px solid rgba(232,160,0,.55);border-radius:11px;padding:11px 14px;font-size:.9rem;font-weight:800;cursor:pointer;color:#e8a000;background:rgba(232,160,0,.1);transition:transform .12s ease,background .2s ease}' +
       '.cl-share-btn:hover{background:rgba(232,160,0,.18);transform:translateY(-1px)}' +
       '.cl-share-btn:disabled{opacity:.85;cursor:default;transform:none}' +
+      '.cl-share-btn.shake{animation:clShake .4s}' +
       // ── reveal sequence ──
       '#clCollReveal{position:fixed;inset:0;z-index:260;display:none;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 42%,rgba(18,20,30,.72),rgba(0,0,0,.92) 70%);backdrop-filter:blur(8px);overflow:hidden;cursor:pointer}' +
       '#clCollReveal.open{display:flex}' +
@@ -1610,6 +1629,7 @@
 
   var TABS = [
     { k: 'cards', ic: '🃏', label: 'Cards' }, { k: 'sets', ic: '🧩', label: 'Sets' },
+    { k: 'show', ic: '⭐', label: 'Showcase' },
     { k: 'backs', ic: '🎴', label: 'Backs' }, { k: 'trophies', ic: '🏅', label: 'Trophies' }
   ];
   // What leveling gives you next — the retention teaser beside the XP bar.
@@ -1660,7 +1680,12 @@
     if (ring) ring.style.strokeDashoffset = (RING_C * (1 - Math.min(1, st.xpSpan ? st.xpInto / st.xpSpan : 0))).toFixed(1);
     var nx = document.getElementById('clCollNext'); if (nx) nx.innerHTML = nextUnlock(st);
     var sub = document.getElementById('clCollSub');
-    if (sub) sub.textContent = st.count + ' cards · ' + st.films + ' films · ' + st.people + ' people';
+    if (sub) {
+      var synced = false; try { synced = !!localStorage.getItem('gauth_in'); } catch (_) { /* noop */ }
+      sub.innerHTML = st.count + ' cards · ' + st.films + ' films · ' + st.people + ' people' +
+        (synced ? ' · <span title="Signed in — your collection syncs across devices" style="color:#7fd49a">&#9729; synced</span>'
+                : ' · <span title="Sign in on the home page to back up your collection across devices" style="color:#8d8d8d">&#9729; local</span>');
+    }
     var du = document.getElementById('clCollDust'); if (du) du.innerHTML = '&#10024; ' + dustBalance();
     var sNow = load() || blank();
     // Daily Double chip: n/2 today, ✓ when banked
@@ -1698,6 +1723,7 @@
     var tools = document.getElementById('clCollChips');
     var grid = document.getElementById('clCollGrid');
     if (_tab === 'sets') { tools.innerHTML = ''; renderSets(); return; }
+    if (_tab === 'show') { tools.innerHTML = ''; renderShowcase(); return; }
     if (_tab === 'backs') {
       tools.innerHTML = '';
       grid.style.display = 'block';
@@ -1808,6 +1834,49 @@
     } catch (_) { /* noop */ }
   }
 
+  function renderShowcase() {
+    var grid = document.getElementById('clCollGrid');
+    var theme = activeTheme(); injectThemeCss(theme);
+    var cards = showcaseCards().map(locCard);
+    grid.style.display = 'block';
+    grid.style.gridTemplateColumns = '';
+    var cells = cards.map(function (c, i) { return theme.card(c, CTX, i); }).join('');
+    for (var i = cards.length; i < SHOWCASE_MAX; i++) cells += '<div class="cl-slot"><div class="cl-slot-q">&#9733;</div><div class="cl-slot-nm">Empty slot</div></div>';
+    grid.innerHTML =
+      '<div class="cb-sub" style="margin:8px 2px 12px">Your vitrine — up to ' + SHOWCASE_MAX + ' cards. Open any card and tap &#9733; Showcase to feature it here.</div>' +
+      '<div class="cl-sec-grid" style="grid-template-columns:repeat(auto-fill,' + tierCols(theme, 'legendary') + ')">' + cells + '</div>' +
+      (cards.length ? '<button class="cl-share-btn" id="clShowShare" style="max-width:340px;display:block;margin:16px auto 0">&#8599; Share my showcase</button>' : '');
+    try { if (theme.mount) theme.mount(grid); } catch (_) { /* noop */ }
+    var els = grid.querySelectorAll('.auth,.ctc,.clc-card');
+    Array.prototype.forEach.call(els, function (el, idx) {
+      el.style.cursor = 'pointer';
+      el.addEventListener('click', function () { openDetail(cards[idx], el, { list: cards, i: idx }); });
+    });
+    localizeCards(cards, els, _uiLang);
+    normalizePosters(cards, els);
+    mobileScrollHolo(grid);
+    var sb = document.getElementById('clShowShare');
+    if (sb) sb.addEventListener('click', function () { shareShowcase(cards, sb); });
+  }
+  // Share the vitrine: the rarest card's OG unfurl carries the visual, the text
+  // carries the full line-up.
+  function shareShowcase(cards, btn) {
+    try {
+      var top = cards.slice().sort(function (a, b) { return ORDER[a.rarity] - ORDER[b.rarity]; })[0];
+      var names = cards.map(function (c) { return locName(c); }).join(' · ');
+      var no = ('00' + (top.no || 0)).slice(-3);
+      var qs = 'g=card&title=' + encodeURIComponent(locName(top)) + '&r=' + encodeURIComponent(top.rarity || 'common') +
+        '&n=' + encodeURIComponent(no) + '&sub=' + encodeURIComponent('Showcase') + '&im=' + encodeURIComponent(top.img || '') + '&to=/';
+      var url = location.origin + '/s?' + qs;
+      var text = 'My CineLinks showcase: ' + names;
+      try { if (window.Track) window.Track('showcase_shared', { n: cards.length }); } catch (_) { /* noop */ }
+      if (navigator.share) { navigator.share({ title: 'CineLinks', text: text, url: url }).catch(function () { /* cancelled */ }); return; }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text + ' ' + url).then(function () { flashShare(btn, 'Copied ✓'); }).catch(function () { window.prompt('Copy this', text + ' ' + url); });
+      } else { window.prompt('Copy this', text + ' ' + url); }
+    } catch (_) { /* noop */ }
+  }
+
   function renderSets() {
     var grid = document.getElementById('clCollGrid');
     try { claimSets(); } catch (_) { /* claim passively-completed (milestone) sets */ }
@@ -1881,6 +1950,18 @@
     render();
     document.getElementById('clCollModal').classList.add('open');
     try { if (window.Track) window.Track('collection_open', stats()); } catch (_) { /* noop */ }
+    // one-shot orientation tip on the first real visit
+    try {
+      if (!localStorage.getItem('clVaultTip') && stats().count > 0) {
+        localStorage.setItem('clVaultTip', '1');
+        var tip = document.createElement('div');
+        tip.style.cssText = 'position:absolute;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:9;max-width:min(92vw,420px);background:#1d1a12;border:1px solid rgba(232,160,0,.5);border-radius:12px;padding:11px 14px;font-size:.78rem;line-height:1.5;color:#e8dcc0;box-shadow:0 14px 40px rgba(0,0,0,.5)';
+        tip.innerHTML = '<b style="color:#f5c542">Welcome to your collection.</b> Tap any card for the 3D view. Duplicates become &#10024;dust — spend it to Shine a card or Forge missing set cards. Win two games in a day for the &#9889;Daily&nbsp;Double.';
+        document.getElementById('clCollModal').appendChild(tip);
+        var killTip = function () { try { tip.remove(); } catch (_) { /* noop */ } };
+        tip.addEventListener('click', killTip); setTimeout(killTip, 9000);
+      }
+    } catch (_) { /* noop */ }
   }
   // "New" badges live for the whole visit (Hearthstone-style) and clear on close,
   // not 600ms after opening — so the pinned "Just collected" section stays put.
@@ -2001,7 +2082,8 @@
     return '<div class="cl-di-name">' + esc(locName(c)) + '</div><div class="cl-di-rows">' +
       rows.map(function (r) { return '<div class="cl-di-row"><span>' + r[0] + '</span><b' + (r[2] ? ' style="color:' + r[2] + '"' : '') + '>' + esc(r[1]) + '</b></div>'; }).join('') +
       '</div><div class="cl-shine-wrap">' + shineBlock + '</div>' +
-      '<button class="cl-share-btn" id="clShareBtn">&#8599; Share card</button>';
+      '<button class="cl-share-btn" id="clShareBtn">&#8599; Share card</button>' +
+      '<button class="cl-share-btn" id="clShowTog" style="margin-top:7px">' + (inShowcase(c) ? '&#9733; In your showcase — remove' : '&#9734; Add to showcase') + '</button>';
   }
   var DETAIL_SEL = '#clDetailCard .auth-card,#clDetailCard .ctc-inner,#clDetailCard .clc-card';
   function openDetail(c, srcEl, ctx) {
@@ -2036,6 +2118,19 @@
       });
       var shb = document.getElementById('clShareBtn');
       if (shb) shb.addEventListener('click', function () { shareCard(c, shb); });
+      var stg = document.getElementById('clShowTog');
+      if (stg) stg.addEventListener('click', function () {
+        var r = toggleShowcase(c);
+        if (r.ok) {
+          try { if (window.Sfx) window.Sfx.tap(); } catch (_) { /* noop */ }
+          stg.innerHTML = r.on ? '&#9733; In your showcase — remove' : '&#9734; Add to showcase';
+          refreshOpen();
+        } else if (r.full) {
+          try { if (window.Sfx) window.Sfx.tap(); } catch (_) { /* noop */ }
+          stg.classList.add('shake'); setTimeout(function () { stg.classList.remove('shake'); }, 420);
+          flashShare(stg, 'Showcase is full (6)');
+        }
+      });
       document.getElementById('clCollDetail').classList.add('open');
       // prev/next browsing within the list this card was opened from
       var hasNav = !!(_detCtx && _detCtx.list && _detCtx.list.length > 1);
@@ -2142,7 +2237,7 @@
           '<div class="clr-back ' + activeCardbackClass() + '"><div class="clr-halo"></div><div class="clr-mono">CL</div></div>' +
           '<div class="clr-face" id="clrFace"></div></div><div class="clr-shock" id="clrShock"></div></div>' +
           '<div class="clr-cap" id="clrCap"></div>' +
-          '<div class="clr-hint">' + (idx < queue.length - 1 ? 'tap for next' : 'tap to finish') + '</div>';
+          '<div class="clr-hint">' + (idx < queue.length - 1 ? 'tap for next' : 'tap to finish') + (function () { try { if (!localStorage.getItem('clRevealTip')) { localStorage.setItem('clRevealTip', '1'); return '<div style="margin-top:6px;font-size:.68rem;color:#b9a97f">New cards land in <b>Your collection</b> on the home page</div>'; } } catch (_) { /* noop */ } return ''; })() + '</div>';
         document.getElementById('clrFace').innerHTML = theme.card(c, CTX, 0);
         setDots();
         var flip = document.getElementById('clrFlip');

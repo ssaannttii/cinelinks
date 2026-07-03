@@ -136,6 +136,9 @@ export default function TopTrumps() {
   const [won, setWon] = useState(false);
   const [dailyLocked, setDailyLocked] = useState(false);
   const [ownedN, setOwnedN] = useState(0);   // how many of your hand came from your collection
+  const [rivalTag, setRivalTag] = useState<string | null>(null);   // battling a recorded human deck
+  const [rivalMsg, setRivalMsg] = useState<string | null>(null);
+  const postedRef = useRef(false);           // deck published to the rival pool once per day
   const [revealed, setRevealed] = useState(false);
   const [reduced, setReduced] = useState(false);
   const [sound, setSound] = useState(true);
@@ -197,6 +200,7 @@ export default function TopTrumps() {
     setPlayer(mine); setCpu(theirs);
     setPot([]); setTurn("player"); setRound(1); setChosen(null); setDuel(null); setClash(false);
     setStreak(0); setBest(0); setWon(false); setRevealed(false);
+    setRivalTag(null); setRivalMsg(null);
     setPhase("play");
     if (m === "daily") {
       try { const s = JSON.parse(localStorage.getItem("toptrumps_daily") || "null"); setDailyLocked(!!(s && s.date === todayKey())); } catch { setDailyLocked(false); }
@@ -215,6 +219,17 @@ export default function TopTrumps() {
         markRatingDaily("toptrumps");
       } catch { /* noop */ }
       setDailyLocked(true);
+      // Publish today's deck to the rival pool (async PvP): someone else can now
+      // battle YOUR cards. Fire-and-forget; 404s harmlessly in standalone dev.
+      try {
+        if (!postedRef.current) {
+          postedRef.current = true;
+          let tag: string | null = null;
+          try { tag = localStorage.getItem("gauth_name"); } catch { /* noop */ }
+          fetch("/api/trumps", { method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ day: todayKey(), deck: Array.from(initHandRef.current).slice(0, 8), won: w, tag: tag || undefined }) }).catch(() => {});
+        }
+      } catch { /* noop */ }
       // Spoils of war: a daily win banks the best card you CAPTURED from the CPU
       // into the CineLinks collection (same origin via the /rating proxy). Prize
       // floor rare; a total sweep (CPU wiped out) bumps it a tier higher.
@@ -237,6 +252,33 @@ export default function TopTrumps() {
     if (w) { vibrate([20, 40, 20]); Sfx.victory(); setTimeout(() => confetti(160), 140); setTimeout(() => confetti(90), 620); }
     else { vibrate(80); Sfx.defeat(); }
   }, [mode]);
+
+  const startRival = useCallback(async () => {
+    try {
+      Sfx.select();
+      setRivalMsg(null);
+      const myIds = Array.from(initHandRef.current).sort((a, b) => a - b).join(",");
+      const r = await fetch("/api/trumps?day=" + todayKey() + "&skip=" + myIds).then((x) => (x.ok ? x.json() : null)).catch(() => null);
+      const ids: number[] = r && r.rival && Array.isArray(r.rival.d) ? r.rival.d : [];
+      const tuples = ids.map((i) => TRUMP_MAP.get(i)).filter(Boolean) as TrumpTuple[];
+      if (tuples.length < 4) { setRivalMsg("No rival decks yet today — you might be the first!"); return; }
+      clearTimers();
+      const { mine, ownedN: on } = buildDecks("practice");
+      initHandRef.current = new Set(mine.map((c) => c.id));
+      const used = new Set(mine.map((c) => c.id));
+      let theirs = tuples.filter((tp) => !used.has(tp[0])).slice(0, HAND).map(toCard);
+      if (theirs.length < HAND) {
+        const pad = TRUMP_POOL.filter((tp) => !used.has(tp[0]) && !theirs.some((c) => c.id === tp[0]));
+        theirs = theirs.concat(pad.slice(0, HAND - theirs.length).map(toCard));
+      }
+      setMode("practice"); setOwnedN(on);
+      setPlayer(mine); setCpu(theirs);
+      setPot([]); setTurn("player"); setRound(1); setChosen(null); setDuel(null); setClash(false);
+      setStreak(0); setBest(0); setWon(false); setRevealed(false); setDailyLocked(false);
+      setRivalTag((r.rival.t as string) || "Rival");
+      setPhase("play");
+    } catch { /* noop */ }
+  }, []);
 
   const resolve = useCallback((stat: StatKey) => {
     if (phase !== "play" || !player.length || !cpu.length) return;
@@ -330,7 +372,7 @@ export default function TopTrumps() {
         <div className="flex items-end justify-between mb-1" style={{ fontSize: ".78rem", fontWeight: 800 }}>
           <span ref={youRef} style={{ color: "var(--gold)" }}>You <b style={{ fontSize: "1rem" }}>{player.length}</b></span>
           <span style={{ color: "var(--mut)", fontSize: ".66rem", fontWeight: 700 }}>round {round}/{MAX_ROUNDS}</span>
-          <span ref={cpuRef} style={{ color: "#aab2c0", textAlign: "right" }}><b style={{ fontSize: "1rem" }}>{cpu.length}</b> CPU</span>
+          <span ref={cpuRef} style={{ color: "#aab2c0", textAlign: "right" }}><b style={{ fontSize: "1rem" }}>{cpu.length}</b> {rivalTag ? rivalTag : "CPU"}</span>
         </div>
         <div className="tt-track">
           <i style={{ width: youPct + "%", transition: reduced ? "none" : "width .7s cubic-bezier(.3,.9,.3,1)" }}>
@@ -346,7 +388,7 @@ export default function TopTrumps() {
 
       <div ref={boardRef} className="tt-board">
         {/* CPU card */}
-        <FlipCard card={cc} faceUp={showCpu} duel={duel} clash={clash} reduced={reduced} owner="CPU" />
+        <FlipCard card={cc} faceUp={showCpu} duel={duel} clash={clash} reduced={reduced} owner={rivalTag || "CPU"} />
 
         {/* clash / VS zone */}
         <div ref={clashRef} className="tt-clash">
@@ -362,7 +404,7 @@ export default function TopTrumps() {
             ? <span style={{ color: resColor(duel.res) }}>{duel.res === "win" ? (duel.tb ? "★ Mastery breaks the tie — cards are yours" : "You took the cards") : duel.res === "lose" ? "CPU took the cards" : "Tie — pot grows ⚔"}</span>
             : yourTurn ? <span style={{ color: "var(--gold)" }}>Your turn — pick a stat</span>
             : phase === "reveal" ? <span style={{ color: "var(--mut)" }}>Revealing…</span>
-            : <span style={{ color: "var(--mut)" }}>CPU choosing…</span>}
+            : <span style={{ color: "var(--mut)" }}>{rivalTag || "CPU"} choosing…</span>}
         </div>
 
         {/* Player card */}
@@ -372,19 +414,21 @@ export default function TopTrumps() {
       {phase === "over" && (
         <div className="text-center mt-6 tt-rise">
           <div className="tt-trophy" style={{ fontSize: "2.6rem" }}>{won ? "🏆" : "🎬"}</div>
-          <div style={{ fontSize: "1.55rem", fontWeight: 900, color: won ? "#7fd49a" : "#e8806f", marginTop: 2 }}>{won ? "You win!" : "CPU wins"}</div>
+          <div style={{ fontSize: "1.55rem", fontWeight: 900, color: won ? "#7fd49a" : "#e8806f", marginTop: 2 }}>{won ? "You win!" : (rivalTag || "CPU") + " wins"}</div>
           <div className="flex items-center justify-center gap-4 my-3" style={{ fontWeight: 900 }}>
             <span style={{ color: "var(--gold)", fontSize: "1.5rem" }}><CountStat target={player.length} fmt={(n) => String(Math.round(n))} run /> <span style={{ fontSize: ".72rem", color: "var(--mut)", fontWeight: 800 }}>YOU</span></span>
             <span style={{ color: "var(--mut)" }}>·</span>
-            <span style={{ color: "#aab2c0", fontSize: "1.5rem" }}><CountStat target={cpu.length} fmt={(n) => String(Math.round(n))} run /> <span style={{ fontSize: ".72rem", color: "var(--mut)", fontWeight: 800 }}>CPU</span></span>
+            <span style={{ color: "#aab2c0", fontSize: "1.5rem" }}><CountStat target={cpu.length} fmt={(n) => String(Math.round(n))} run /> <span style={{ fontSize: ".72rem", color: "var(--mut)", fontWeight: 800 }}>{(rivalTag || "CPU").toUpperCase()}</span></span>
           </div>
           {best >= 3 && <div style={{ color: "#7fd49a", fontSize: ".8rem", fontWeight: 800, marginBottom: 10 }}>Best streak this game · {best}🔥</div>}
-          <div className="flex gap-2 justify-center">
+          <div className="flex gap-2 justify-center flex-wrap">
             <button onClick={() => { Sfx.tap(); share(); }} style={btn(false)}>Share</button>
+            <button onClick={() => { startRival(); }} style={btn(false)}>⚔ Rival deck</button>
             {mode === "daily" && dailyLocked
               ? <button onClick={() => { Sfx.select(); setMode("practice"); newGame("practice"); }} style={btn(true)}>Practice</button>
               : <button onClick={() => { Sfx.select(); newGame(mode); }} style={btn(true)}>{mode === "daily" ? "Replay" : "New deck"}</button>}
           </div>
+          {rivalMsg && <div style={{ color: "var(--mut)", fontSize: ".74rem", marginTop: 10 }}>{rivalMsg}</div>}
           {mode === "daily" && <div style={{ color: "var(--mut)", fontSize: ".72rem", marginTop: 12 }}>Daily counts toward your streak · come back tomorrow for a new deck</div>}
         </div>
       )}
