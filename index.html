@@ -26,12 +26,13 @@
 <meta name="twitter:title" content="CineLinks - Connect the film world in the fewest clicks">
 <meta name="twitter:description" content="A daily film-trivia game: connect actors, movies, directors and TV shows in as few clicks as possible.">
 <meta name="twitter:image" content="https://cinelinks.vercel.app/og-image.png">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#0d0d0d;--s1:#181818;--s2:#222;--bdr:rgba(255,255,255,0.13);--txt:#f5f5f5;--mut:#a6a6a6;--gold:#e8a000;--golddim:rgba(232,160,0,0.15)}
+:root{--bg:#0d0d0d;--s1:#181818;--s2:#222;--bdr:rgba(255,255,255,0.13);--txt:#f5f5f5;--mut:#a6a6a6;--gold:#e8a000;--golddim:rgba(232,160,0,0.15);--fdisp:'Fraunces',Georgia,'Times New Roman',serif;--fui:'Schibsted Grotesk','Inter',-apple-system,sans-serif}
 @property --click-ring{syntax:'<angle>';inherits:false;initial-value:0deg}
-body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(circle at 50% -10%,rgba(232,160,0,.08),transparent 34%),linear-gradient(180deg,#101010 0%,var(--bg) 330px);color:var(--txt);min-height:100vh}
+body{font-family:var(--fui);background:radial-gradient(circle at 50% -10%,rgba(232,160,0,.08),transparent 34%),linear-gradient(180deg,#101010 0%,var(--bg) 330px);color:var(--txt);min-height:100vh}
 .screen{display:none}
 .screen.active{display:flex;flex-direction:column}
 
@@ -69,9 +70,9 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .start-kicker{font-size:.62rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:12px}
 .start-logo{width:100%;max-width:280px;height:auto;display:block;margin:0 auto 20px}
 .tagline{color:var(--mut);font-size:0.95rem;line-height:1.5;margin:0 auto 24px;max-width:360px}
-.first-loop{display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;margin:-10px auto 18px;color:#cfcfcf;font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
-.first-loop span{border:1px solid rgba(232,160,0,.24);border-radius:999px;background:rgba(232,160,0,.07);padding:5px 9px;white-space:nowrap}
-.first-loop i{color:var(--gold);font-style:normal;opacity:.82}
+.first-loop{display:flex;align-items:center;justify-content:center;gap:9px;flex-wrap:wrap;margin:-2px auto 20px;color:var(--mut);font-size:.74rem;font-weight:500;letter-spacing:.01em}
+.first-loop span{border:0;background:none;padding:0;white-space:nowrap}
+.first-loop i{color:var(--gold);font-style:normal;opacity:.5;font-size:.82em;transform:translateY(-1px)}
 .beta-callout{display:none;align-items:center;justify-content:space-between;gap:13px;margin:0 0 15px;padding:13px 14px;border-radius:13px;border:1px solid rgba(245,197,66,.55);background:linear-gradient(110deg,rgba(245,197,66,.18),rgba(127,212,154,.08) 70%,rgba(255,255,255,.035));text-align:left;box-shadow:0 10px 32px rgba(232,160,0,.14)}
 .beta-callout.on{display:flex}
 .beta-copy{display:flex;flex-direction:column;gap:1px;min-width:0}
@@ -117,7 +118,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .meta-share:hover{opacity:.9}
 .meta-share.copied{background:transparent;color:var(--gold)}
 @media (max-width:560px){.meta-bar{flex-direction:column;align-items:stretch}.meta-share{width:100%}}
-@media (max-width:560px){.first-loop{font-size:.6rem;gap:5px}.first-loop span{padding:5px 7px}.beta-callout{align-items:flex-start;flex-direction:column}.beta-pill{align-self:flex-start}}
+@media (max-width:560px){.first-loop{font-size:.66rem;gap:7px}.beta-callout{align-items:flex-start;flex-direction:column}.beta-pill{align-self:flex-start}}
 /* "Day complete" — clearing every daily lights the top banner gold-green. */
 .meta-bar.all-done{background:linear-gradient(110deg,rgba(232,160,0,.24),rgba(127,212,154,.16));border-color:rgba(232,160,0,.55);box-shadow:0 0 0 1px rgba(232,160,0,.25),0 14px 40px rgba(232,160,0,.16)}
 .meta-alldone{color:var(--gold);font-weight:800;letter-spacing:.01em}
@@ -184,11 +185,11 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .game-card.hero .game-modes{max-width:340px}
 .game-head{display:flex;align-items:center;gap:10px}
 .game-ic{font-size:1.5rem;width:44px;height:44px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:rgba(var(--accent,232,160,0),.18);border-radius:11px;color:rgb(var(--accent,232,160,0))}
-.games-section{font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin:18px 0 8px;text-align:left}
+.games-section{font-size:.62rem;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);opacity:.82;margin:20px 0 9px;text-align:left}
 .mode-play{background:var(--gold);color:#111;border-color:var(--gold)}
 .mode-play:hover{opacity:.9;background:var(--gold)}
 .game-meta{display:flex;flex-direction:column;min-width:0;flex:1}
-.game-name{font-weight:800;font-size:.95rem;display:flex;align-items:center;flex-wrap:wrap;gap:5px 6px;min-width:0}
+.game-name{font-family:var(--fdisp);font-weight:600;letter-spacing:.005em;font-size:1.05rem;display:flex;align-items:center;flex-wrap:wrap;gap:5px 6px;min-width:0}
 .game-desc{font-size:.73rem;color:#bdbdbd;margin-top:2px;line-height:1.35}
 .new-tag{font-size:.52rem;font-weight:800;letter-spacing:.06em;color:#111;background:var(--gold);padding:1px 5px;border-radius:999px}
 .game-done{display:none}
@@ -224,7 +225,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 @keyframes cardWinChip{0%{transform:translateY(10px) scale(.7);opacity:0}22%{transform:translateY(0) scale(1);opacity:1}72%{opacity:1}100%{transform:translateY(-28px) scale(.96);opacity:0}}
 .game-card.cardwin{animation:cardWinPulse 1.2s cubic-bezier(.2,.85,.25,1);z-index:3}
 .cele-sweep.cardwin-sweep::before{background:linear-gradient(100deg,transparent,rgba(255,236,170,.62),transparent)}
-.cardwin-chip{position:absolute;top:8px;right:10px;z-index:5;font-size:.7rem;font-weight:800;color:#1a1200;background:linear-gradient(135deg,#f5c542,#e8a000);border-radius:99px;padding:3px 9px;box-shadow:0 4px 14px rgba(232,160,0,.5);pointer-events:none;white-space:nowrap;animation:cardWinChip 1.7s ease-out forwards}
+.cardwin-chip{position:absolute;top:8px;right:10px;z-index:5;font-size:.7rem;font-weight:800;color:#1a1200;background:linear-gradient(135deg,#f5c542,#e8a000);border-radius:99px;padding:3px 9px;box-shadow:0 4px 12px rgba(0,0,0,.45),0 1px 5px rgba(232,160,0,.32);pointer-events:none;white-space:nowrap;animation:cardWinChip 1.7s ease-out forwards}
 @media(prefers-reduced-motion:reduce){.game-card.cardwin{animation:none}.cardwin-chip{animation:none}}
 /* Once done, drop the redundant NEW tag so "✓ DONE" never gets clipped. */
 .game-card.done .new-tag{display:none}
@@ -314,7 +315,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .how li::before{content:"→";position:absolute;left:0;color:var(--gold);font-weight:600}
 .credits{margin-top:22px;border-top:1px solid var(--bdr);padding-top:18px;text-align:left}
 .account-card{display:flex;align-items:center;gap:12px;background:linear-gradient(180deg,rgba(232,160,0,.07),transparent),var(--s1);border:1px solid rgba(232,160,0,.2);border-radius:14px;padding:13px 15px;margin:20px 0 2px;text-align:left}
-.account-ic{width:40px;height:40px;flex-shrink:0;border-radius:11px;background:rgba(232,160,0,.14);display:flex;align-items:center;justify-content:center;font-size:1.2rem}
+.account-ic{width:40px;height:40px;flex-shrink:0;border-radius:11px;background:rgba(232,160,0,.14);display:flex;align-items:center;justify-content:center;color:var(--gold)}
+.account-ic svg{width:21px;height:21px}
 .account-tx{flex:1;min-width:0}
 .account-tx b{display:block;font-size:.9rem}
 .account-tx span{display:block;font-size:.75rem;color:var(--mut);margin-top:1px}
@@ -342,7 +344,8 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .profile-actions{display:flex;flex-direction:column;gap:9px;margin-bottom:16px}
 .prow{display:flex;align-items:center;gap:12px;width:100%;background:#1d1d1d;border:1px solid rgba(255,255,255,.07);border-radius:13px;padding:13px 15px;text-align:left;cursor:pointer;font-family:inherit;color:var(--txt);transition:border-color .15s,transform .15s,background .15s}
 .prow:hover{border-color:rgba(232,160,0,.45);transform:translateY(-1px);background:#222}
-.prow-ic{width:38px;height:38px;flex-shrink:0;border-radius:11px;background:rgba(232,160,0,.14);display:flex;align-items:center;justify-content:center;font-size:1.15rem}
+.prow-ic{width:38px;height:38px;flex-shrink:0;border-radius:11px;background:rgba(232,160,0,.14);display:flex;align-items:center;justify-content:center;color:var(--gold)}
+.prow-ic svg{width:20px;height:20px}
 .prow-tx{flex:1;min-width:0}.prow-tx b{display:block;font-size:.9rem}.prow-tx span{display:block;font-size:.74rem;color:var(--mut);margin-top:1px}
 .prow-dot{width:9px;height:9px;border-radius:50%;background:#7fd49a;box-shadow:0 0 0 3px rgba(127,212,154,.25);flex-shrink:0}
 .prow-arrow{color:var(--gold);font-size:1.3rem;font-weight:700;flex-shrink:0}
@@ -535,7 +538,7 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
 .card.goal::after{content:"";position:absolute;inset:0 auto 0 -80%;width:60%;background:linear-gradient(90deg,transparent,rgba(232,160,0,.3),rgba(255,255,255,.12),transparent);transform:skewX(-12deg);animation:goalShine 2.4s ease-in-out infinite;pointer-events:none;z-index:2}
 @keyframes goalCardGlow{0%,100%{box-shadow:0 0 14px rgba(232,160,0,.28),0 0 0 2px rgba(232,160,0,.34)}50%{box-shadow:0 0 36px rgba(232,160,0,.6),0 0 0 2px rgba(232,160,0,.62)}}
 /* GOAL badge on the target card */
-.card-goal-tag{position:absolute;top:8px;left:8px;z-index:3;display:flex;align-items:center;gap:4px;background:var(--gold);color:#1a1200;font-size:.56rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:4px 7px;border-radius:7px;box-shadow:0 2px 12px rgba(232,160,0,.55);animation:goalTagPop .42s cubic-bezier(.22,1,.36,1) both;pointer-events:none}
+.card-goal-tag{position:absolute;top:8px;left:8px;z-index:3;display:flex;align-items:center;gap:4px;background:var(--gold);color:#1a1200;font-size:.56rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:4px 7px;border-radius:7px;box-shadow:0 3px 8px rgba(0,0,0,.42),0 1px 4px rgba(232,160,0,.32);animation:goalTagPop .42s cubic-bezier(.22,1,.36,1) both;pointer-events:none}
 @keyframes goalTagPop{0%{transform:scale(0) translateY(-4px);opacity:0}70%{transform:scale(1.14)}100%{transform:scale(1);opacity:1}}
 @keyframes goalShine{0%{transform:translateX(0) skewX(-12deg);opacity:0}8%{opacity:1}28%{transform:translateX(320%) skewX(-12deg);opacity:0}100%{transform:translateX(320%) skewX(-12deg);opacity:0}}
 .card.visited{opacity:.38;cursor:not-allowed;pointer-events:none;position:relative}
@@ -963,15 +966,15 @@ body{font-family:'Inter',-apple-system,sans-serif;background:radial-gradient(cir
     </div>
     <div class="profile-actions">
       <button class="prow" type="button" onclick="closeProfile();try{Collection.openGallery()}catch(_){}">
-        <span class="prow-ic">🎞️</span><span class="prow-tx"><b>Your collection</b><span id="prowCollSub">Play to start collecting</span></span>
+        <span class="prow-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="16" rx="2.5"/><path d="M7 4v16M17 4v16M2.5 9.5H7M17 9.5h4.5M2.5 14.5H7M17 14.5h4.5"/></svg></span><span class="prow-tx"><b>Your collection</b><span id="prowCollSub">Play to start collecting</span></span>
         <span class="prow-dot" id="prowCollDot" style="display:none"></span><span class="prow-arrow">›</span></button>
       <button class="prow" type="button" onclick="closeProfile();try{Collection.openAchievements()}catch(_){}">
-        <span class="prow-ic">🏅</span><span class="prow-tx"><b>Trophy case</b><span id="prowTroSub">Earn trophies as you collect</span></span><span class="prow-arrow">›</span></button>
+        <span class="prow-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="5.5"/><path d="M8.5 13.5 7 21l5-2.5L17 21l-1.5-7.5"/></svg></span><span class="prow-tx"><b>Trophy case</b><span id="prowTroSub">Earn trophies as you collect</span></span><span class="prow-arrow">›</span></button>
       <button class="prow" type="button" onclick="closeProfile();try{Collection.openCardbacks()}catch(_){}">
-        <span class="prow-ic">🎴</span><span class="prow-tx"><b>Card backs</b><span>Unlock & equip card reverses</span></span><span class="prow-arrow">›</span></button>
+        <span class="prow-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="3" width="12" height="16" rx="2.2"/><path d="M15.5 21H6a2 2 0 0 1-2-2V7.5"/></svg></span><span class="prow-tx"><b>Card backs</b><span>Unlock & equip card reverses</span></span><span class="prow-arrow">›</span></button>
     </div>
     <div class="profile-account">
-      <div class="account-ic">☁️</div>
+      <div class="account-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 0 0 .5-8.97A6 6 0 0 0 6.3 9.5 3.5 3.5 0 0 0 7 19z"/><path d="M12 12v6M12 12l2.2 2.2M12 12l-2.2 2.2"/></svg></div>
       <div class="account-tx"><b>Cross-device sync</b><span>Sign in with Google to save your progress on every device.</span></div>
       <div id="authInline"></div>
     </div>
