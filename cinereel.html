@@ -102,8 +102,49 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
   const VOTE_FLOOR=250;       // recognisability gate
   const ACTOR_POOL=[{id:109513,name:"Alexandra Daddario"},{id:976,name:"Jason Statham"},{id:9278,name:"Jennifer Garner"},{id:2387,name:"Patrick Stewart"},{id:31,name:"Tom Hanks"},{id:1059597,name:"Zoey Deutch"},{id:1173984,name:"Olivia Cooke"},{id:73968,name:"Henry Cavill"},{id:1245,name:"Scarlett Johansson"},{id:115440,name:"Sydney Sweeney"},{id:1108907,name:"Nick Robinson"},{id:550843,name:"Elizabeth Olsen"},{id:287,name:"Brad Pitt"},{id:65731,name:"Sam Worthington"},{id:18897,name:"Jackie Chan"},{id:289,name:"Madeleine Stowe"},{id:1813,name:"Anne Hathaway"},{id:500,name:"Tom Cruise"},{id:974169,name:"Jenna Ortega"},{id:505710,name:"Zendaya"},{id:64,name:"Gary Oldman"},{id:2963,name:"Nicolas Cage"},{id:17521,name:"Kelly Reilly"},{id:5081,name:"Emily Blunt"},{id:117642,name:"Jason Momoa"},{id:1892,name:"Matt Damon"},{id:6161,name:"Jennifer Connelly"},{id:1253360,name:"Pedro Pascal"},{id:12835,name:"Vin Diesel"},{id:54882,name:"Morena Baccarin"},{id:6384,name:"Keanu Reeves"},{id:18918,name:"Dwayne Johnson"},{id:1372369,name:"Samara Weaving"},{id:8767,name:"Jim Caviezel"},{id:1172108,name:"Mckenna Grace"},{id:1356210,name:"Millie Bobby Brown"},{id:76070,name:"Mia Wasikowska"},{id:30614,name:"Ryan Gosling"},{id:6856,name:"Kurt Russell"},{id:234352,name:"Margot Robbie"},{id:1190668,name:"Timothée Chalamet"},{id:18999,name:"J.K. Simmons"},{id:192,name:"Morgan Freeman"},{id:205,name:"Kirsten Dunst"},{id:224513,name:"Ana de Armas"},{id:7056,name:"Emma Thompson"},{id:1136406,name:"Tom Holland"},{id:5292,name:"Denzel Washington"},{id:16501,name:"Milo Ventimiglia"},{id:1397778,name:"Anya Taylor-Joy"},{id:11023,name:"Shawn Ashmore"},{id:16483,name:"Sylvester Stallone"},{id:54693,name:"Emma Stone"},{id:9273,name:"Amy Adams"},{id:2034418,name:"Jacob Elordi"},{id:19498,name:"Jon Bernthal"},{id:70851,name:"Jack Black"},{id:17276,name:"Gerard Butler"},{id:27972,name:"Josh Hutcherson"},{id:47296,name:"Jeffrey Dean Morgan"},{id:51797,name:"Nathan Fillion"},{id:2227,name:"Nicole Kidman"},{id:1425934,name:"Nicholas Galitzine"},{id:10882,name:"Rosamund Pike"},{id:18277,name:"Sandra Bullock"},{id:587020,name:"Theo James"},{id:2037,name:"Cillian Murphy"},{id:3223,name:"Robert Downey Jr."},{id:11701,name:"Angelina Jolie"},{id:131,name:"Jake Gyllenhaal"},{id:73457,name:"Chris Pratt"},{id:91671,name:"Colman Domingo"},{id:1372,name:"Karl Urban"},{id:524,name:"Natalie Portman"},{id:1222992,name:"Eiza González"},{id:1231,name:"Julianne Moore"},{id:64295,name:"Alan Ritchson"},{id:56734,name:"Chloë Grace Moretz"},{id:3896,name:"Liam Neeson"},{id:380,name:"Robert De Niro"},{id:85,name:"Johnny Depp"},{id:17303,name:"Ali Larter"},{id:1269,name:"Kevin Costner"},{id:990393,name:"Erin Moriarty"},{id:1590797,name:"Sadie Sink"},{id:6885,name:"Charlize Theron"},{id:6614,name:"Cole Hauser"},{id:516,name:"Annette Bening"},{id:190,name:"Clint Eastwood"},{id:71580,name:"Benedict Cumberbatch"},{id:6193,name:"Leonardo DiCaprio"},{id:2231,name:"Samuel L. Jackson"},{id:6886,name:"Christina Ricci"},{id:2524,name:"Tom Hardy"},{id:26723,name:"Katheryn Winnick"},{id:933238,name:"Rebecca Ferguson"},{id:62220,name:"Lauren Cohan"},{id:73421,name:"Joaquin Phoenix"},{id:6968,name:"Hugh Jackman"},{id:2888,name:"Will Smith"},{id:10859,name:"Ryan Reynolds"},{id:16828,name:"Chris Evans"},{id:74568,name:"Chris Hemsworth"},{id:90633,name:"Gal Gadot"},{id:72129,name:"Jennifer Lawrence"},{id:1373737,name:"Florence Pugh"},{id:36592,name:"Saoirse Ronan"},{id:1023139,name:"Adam Driver"},{id:135651,name:"Michael B. Jordan"},{id:60073,name:"Brie Larson"},{id:17605,name:"Idris Elba"},{id:8784,name:"Daniel Craig"},{id:934,name:"Russell Crowe"},{id:72466,name:"Colin Farrell"},{id:13240,name:"Mark Wahlberg"},{id:206,name:"Jim Carrey"},{id:3,name:"Harrison Ford"},{id:1158,name:"Al Pacino"},{id:204,name:"Kate Winslet"},{id:1204,name:"Julia Roberts"},{id:112,name:"Cate Blanchett"},{id:19492,name:"Viola Davis"},{id:134,name:"Jamie Foxx"},{id:3291,name:"Hugh Grant"}];
   const stage=document.getElementById('stage');
+
+  // --- i18n (self-contained; i18n.js isn't loaded on game pages) ---
+  function _lang(){ try{ var l=localStorage.getItem('clLang'); return (l&&/^[a-z]{2}-[A-Z]{2}$/.test(l))?l.slice(0,2):'en'; }catch(_){ return 'en'; } }
+  var L = {
+    daily:       { en:'Daily', es:'Diario', fr:'Quotidien', de:'Täglich', pt:'Diário' },
+    practice:    { en:'Practice', es:'Práctica', fr:'Entraînement', de:'Übung', pt:'Treino' },
+    streak:      { en:'streak', es:'racha', fr:'série', de:'Serie', pt:'sequência' },
+    best:        { en:'best', es:'mejor', fr:'record', de:'Bestwert', pt:'recorde' },
+    played:      { en:'played', es:'jugadas', fr:'jouées', de:'gespielt', pt:'jogadas' },
+    won:         { en:'won', es:'ganadas', fr:'gagnées', de:'gewonnen', pt:'vitórias' },
+    tagline:     { en:'Whose filmography is this?', es:'¿De quién es esta filmografía?', fr:'À qui est cette filmographie ?', de:'Wessen Filmografie ist das?', pt:'De quem é esta filmografia?' },
+    whoseFilms:  { en:'Whose films are these?', es:'¿De quién son estas películas?', fr:'À qui sont ces films ?', de:'Wessen Filme sind das?', pt:'De quem são estes filmes?' },
+    placeholder: { en:'Name the actor…', es:'Nombra al actor…', fr:'Nommez l’acteur…', de:'Nenne den Schauspieler…', pt:'Nomeie o ator…' },
+    revealOne:   { en:'Reveal one more', es:'Revelar uno más', fr:'Révéler un de plus', de:'Noch eins zeigen', pt:'Revelar mais um' },
+    left:        { en:'left', es:'restantes', fr:'restants', de:'übrig', pt:'restantes' },
+    guess:       { en:'Guess', es:'Adivinar', fr:'Deviner', de:'Raten', pt:'Adivinhar' },
+    nope:        { en:'nope.', es:'no es.', fr:'non.', de:'nein.', pt:'não é.' },
+    gotIt:       { en:'Got it!', es:'¡Acertaste!', fr:'Trouvé !', de:'Erraten!', pt:'Acertou!' },
+    soClose:     { en:'So close!', es:'¡Por poco!', fr:'Si près !', de:'So knapp!', pt:'Quase!' },
+    solvedAt:    { en:'solved at', es:'resuelto en', fr:'résolu en', de:'gelöst mit', pt:'resolvido em' },
+    posters:     { en:'posters', es:'pósters', fr:'affiches', de:'Postern', pt:'pôsteres' },
+    theAnswer:   { en:'the answer', es:'la respuesta', fr:'la réponse', de:'die Lösung', pt:'a resposta' },
+    share:       { en:'Share', es:'Compartir', fr:'Partager', de:'Teilen', pt:'Compartilhar' },
+    newCareer:   { en:'New career', es:'Nueva carrera', fr:'Nouvelle carrière', de:'Neue Karriere', pt:'Nova carreira' },
+    copied:      { en:'Copied ✓', es:'Copiado ✓', fr:'Copié ✓', de:'Kopiert ✓', pt:'Copiado ✓' },
+    solvedToday: { en:'Solved today', es:'Resuelto hoy', fr:'Résolu aujourd’hui', de:'Heute gelöst', pt:'Resolvido hoje' },
+    todaysAnswer:{ en:'Today’s answer', es:'La respuesta de hoy', fr:'La réponse du jour', de:'Die Lösung von heute', pt:'A resposta de hoje' },
+    comeBack:    { en:'come back tomorrow', es:'vuelve mañana', fr:'revenez demain', de:'komm morgen wieder', pt:'volte amanhã' },
+    loadFail:    { en:'Couldn’t load a career. Reload?', es:'No se pudo cargar una carrera. ¿Recargar?', fr:'Impossible de charger une carrière. Recharger ?', de:'Karriere konnte nicht geladen werden. Neu laden?', pt:'Não foi possível carregar uma carreira. Recarregar?' },
+    errorPrefix: { en:'Error: ', es:'Error: ', fr:'Erreur : ', de:'Fehler: ', pt:'Erro: ' },
+    backTo:      { en:'Back to CineLinks', es:'Volver a CineLinks', fr:'Retour à CineLinks', de:'Zurück zu CineLinks', pt:'Voltar para CineLinks' },
+    footData:    { en:'Posters & data from TMDB · part of', es:'Pósters y datos de TMDB · parte de', fr:'Affiches et données de TMDB · fait partie de', de:'Poster und Daten von TMDB · Teil von', pt:'Pôsteres e dados do TMDB · parte de' },
+    actorRole:   { en:'Actor', es:'Actor', fr:'Acteur', de:'Schauspieler', pt:'Ator' }
+  };
+  function TR(k){ var m=L[k]; if(!m||typeof m!=='object') return k; var l=_lang(); return (l==='en'?null:m[l])||m.en||k; }
+
   const isDaily=!/[?&]practice=1/.test(location.search);
-  document.getElementById('modeLbl').textContent=isDaily?'Daily':'Practice';
+  document.getElementById('modeLbl').textContent=isDaily?TR('daily'):TR('practice');
+  (function(){
+    var tg=document.querySelector('.tag'); if(tg) tg.textContent=TR('tagline');
+    var hm=document.querySelector('.cl-home'); if(hm) hm.setAttribute('aria-label',TR('backTo'));
+    var ft=document.querySelector('.foot'); if(ft) ft.innerHTML=TR('footData')+' <a href="/">CineLinks</a>';
+  })();
 
   // ── helpers ───────────────────────────────────────────────
   const norm=s=>(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim();
@@ -131,7 +172,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
   }
   function statsHTML(s){
     const wr=s.played?Math.round(100*s.wins/s.played):0;
-    return '<div class="stats"><div class="stat"><b>'+s.streak+'</b>streak</div><div class="stat"><b>'+s.max+'</b>best</div><div class="stat"><b>'+s.played+'</b>played</div><div class="stat"><b>'+wr+'%</b>won</div></div>';
+    return '<div class="stats"><div class="stat"><b>'+s.streak+'</b>'+TR('streak')+'</div><div class="stat"><b>'+s.max+'</b>'+TR('best')+'</div><div class="stat"><b>'+s.played+'</b>'+TR('played')+'</div><div class="stat"><b>'+wr+'%</b>'+TR('won')+'</div></div>';
   }
 
   // ── pick a target actor + build the reveal set ────────────
@@ -218,9 +259,9 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
       '<div class="board">'+cells+'</div>'+
       '<div class="dots">'+dots+'</div>'+
       (over?'':
-        '<div class="hint">Whose films are these?</div>'+
-        '<div class="guess"><input id="gi" type="text" autocomplete="off" placeholder="Name the actor…"><div class="ac" id="ac" style="display:none"></div></div>'+
-        '<div class="row">'+(shown<total?'<button class="btn" id="skip">Reveal one more ('+(total-shown)+' left)</button>':'')+'<button class="btn gold" id="go">Guess</button></div>'+
+        '<div class="hint">'+TR('whoseFilms')+'</div>'+
+        '<div class="guess"><input id="gi" type="text" autocomplete="off" placeholder="'+TR('placeholder')+'"><div class="ac" id="ac" style="display:none"></div></div>'+
+        '<div class="row">'+(shown<total?'<button class="btn" id="skip">'+TR('revealOne')+' ('+(total-shown)+' '+TR('left')+')</button>':'')+'<button class="btn gold" id="go">'+TR('guess')+'</button></div>'+
         '<div class="miss" id="miss"></div>')+
       '<div class="result'+(over?' show':'')+'" id="result"></div>';
     if(over) renderResult(); else wireInputs();
@@ -244,7 +285,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
       items=(res.results||[]).filter(x=>x.media_type==='person'&&x.profile_path).slice(0,6);
       if(!items.length){ac.style.display='none';return;}
       ac.innerHTML=items.map((p,i)=>
-        '<div class="ac-item" data-i="'+i+'"><img src="'+IMG+'w185'+p.profile_path+'" alt=""><div><div class="nm">'+p.name+'</div><div class="kf">'+((p.known_for||[]).slice(0,2).map(k=>k.title||k.name).filter(Boolean).join(', ')||'Actor')+'</div></div></div>').join('');
+        '<div class="ac-item" data-i="'+i+'"><img src="'+IMG+'w185'+p.profile_path+'" alt=""><div><div class="nm">'+p.name+'</div><div class="kf">'+((p.known_for||[]).slice(0,2).map(k=>k.title||k.name).filter(Boolean).join(', ')||TR('actorRole'))+'</div></div></div>').join('');
       sel=-1; ac.style.display='block';
       [...ac.children].forEach(el=>el.onclick=()=>submit(items[+el.dataset.i].name));
     },240);
@@ -280,7 +321,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     shown++; render();
     if(window.Fx){ const gi=document.getElementById('gi'); if(gi) Fx.play(gi,'fx-shake',450); }
     const m=document.getElementById('miss');
-    if(m&&name) m.textContent='“'+name+'” — nope.';
+    if(m&&name) m.textContent='“'+name+'” '+TR('nope');
   }
 
   function renderResult(){
@@ -297,17 +338,17 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     const squares=guesses.map(g=>g.win?'🟩':'🟥').join('');
     const share='🎬 CineReel'+(isDaily?' #'+dayN:'')+'\n'+squares+(won?' '+score+'/'+total:' X/'+total)+'\nhttps://cinelinks.vercel.app/cinereel.html';
     document.getElementById('result').innerHTML=
-      '<h2 class="'+(won?'win':'')+'">'+(won?'Got it!':'So close!')+'</h2>'+
+      '<h2 class="'+(won?'win':'')+'">'+(won?TR('gotIt'):TR('soClose'))+'</h2>'+
       '<div class="who"><img src="'+face(p.profile_path)+'" alt=""><div><div class="nm">'+p.name+'</div>'+
-        '<div class="sub">'+(won?('solved at '+score+'/'+total+' posters'):'the answer')+'</div></div></div>'+
+        '<div class="sub">'+(won?(TR('solvedAt')+' '+score+'/'+total+' '+TR('posters')):TR('theAnswer'))+'</div></div></div>'+
       (stats?statsHTML(stats):'')+
-      '<div class="row"><button class="btn" id="shareBtn">Share</button><button class="btn gold" id="again">'+(isDaily?'Practice':'New career')+'</button></div>';
+      '<div class="row"><button class="btn" id="shareBtn">'+TR('share')+'</button><button class="btn gold" id="again">'+(isDaily?TR('practice'):TR('newCareer'))+'</button></div>';
     const who=document.querySelector('#result .who img'); if(who) who.classList.add('fx-pop');
     if(won && window.Fx) setTimeout(()=>Fx.confetti({count:90}),160);
     document.getElementById('again').onclick=()=>{location.href='/cinereel.html'+(isDaily?'?practice=1':'?practice=1&r='+Date.now());};
     document.getElementById('shareBtn').onclick=()=>{
       if(navigator.share){navigator.share({text:share}).catch(()=>{});}
-      else{navigator.clipboard&&navigator.clipboard.writeText(share);const b=document.getElementById('shareBtn');b.textContent='Copied ✓';}
+      else{navigator.clipboard&&navigator.clipboard.writeText(share);const b=document.getElementById('shareBtn');b.textContent=TR('copied');}
     };
   }
 
@@ -318,11 +359,11 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     stage.innerHTML=
       (grid?'<div class="board">'+grid+'</div>':'')+
       '<div class="result show">'+
-      '<h2 class="'+(d.won?'win':'')+'">'+(d.won?'Solved today':'Today’s answer')+'</h2>'+
+      '<h2 class="'+(d.won?'win':'')+'">'+(d.won?TR('solvedToday'):TR('todaysAnswer'))+'</h2>'+
       '<div class="who"><img src="'+face(d.photo)+'" alt=""><div><div class="nm">'+d.name+'</div>'+
-      '<div class="sub">'+(d.won?('solved at '+score+'/'+total+' posters'):'come back tomorrow')+'</div></div></div>'+
+      '<div class="sub">'+(d.won?(TR('solvedAt')+' '+score+'/'+total+' '+TR('posters')):TR('comeBack'))+'</div></div></div>'+
       statsHTML(loadStats())+
-      '<div class="row"><button class="btn gold" id="again">Practice</button></div></div>';
+      '<div class="row"><button class="btn gold" id="again">'+TR('practice')+'</button></div></div>';
     document.getElementById('again').onclick=()=>{location.href='/cinereel.html?practice=1';};
   }
 
@@ -331,9 +372,9 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     try{
       if(isDaily){const d=loadDone(); if(d&&d.day===utcDay()&&d.finished){renderReplay(d);return;}}
       T=await pickTarget();
-      if(!T){stage.innerHTML='<div class="loading">Couldn’t load a career. Reload?</div>';return;}
+      if(!T){stage.innerHTML='<div class="loading">'+TR('loadFail')+'</div>';return;}
       shown=Math.min(START,T.reveal.length); guesses=[]; over=false; render();
-    }catch(e){stage.innerHTML='<div class="loading">Error: '+e.message+'</div>';}
+    }catch(e){stage.innerHTML='<div class="loading">'+TR('errorPrefix')+e.message+'</div>';}
   })();
 })();
 </script>

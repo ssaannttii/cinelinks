@@ -150,6 +150,68 @@ const IMGBASE = 'https://image.tmdb.org/t/p/';
 const EPOCH = Math.floor(Date.UTC(2026, 5, 23) / 86400000); // #1 = 2026-06-23
 const MAX_GUESSES = 6;
 
+// --- i18n (self-contained; i18n.js isn't loaded on game pages) ---
+function _lang(){ try{ var l=localStorage.getItem('clLang'); return (l&&/^[a-z]{2}-[A-Z]{2}$/.test(l))?l.slice(0,2):'en'; }catch(_){ return 'en'; } }
+var L = {
+  // static UI
+  subtitle:        { en:'Guess the film from its synopsis & clues. Fewer guesses, better.', es:'Adivina la película por su sinopsis y pistas. Cuantos menos intentos, mejor.', fr:'Devine le film d’après son synopsis et ses indices. Moins d’essais, c’est mieux.', de:'Errate den Film anhand seiner Handlung und Hinweise. Weniger Versuche, besser.', pt:'Adivinhe o filme pela sinopse e pistas. Quanto menos palpites, melhor.' },
+  loading:         { en:'Loading', es:'Cargando', fr:'Chargement', de:'Wird geladen', pt:'Carregando' },
+  backToCineLinks: { en:'Back to CineLinks', es:'Volver a CineLinks', fr:'Retour à CineLinks', de:'Zurück zu CineLinks', pt:'Voltar para CineLinks' },
+  errLoad:         { en:'Couldn\'t load today\'s puzzle. Please try again later.', es:'No se pudo cargar el puzle de hoy. Inténtalo de nuevo más tarde.', fr:'Impossible de charger le puzzle du jour. Réessaie plus tard.', de:'Das heutige Rätsel konnte nicht geladen werden. Bitte später erneut versuchen.', pt:'Não foi possível carregar o desafio de hoje. Tente novamente mais tarde.' },
+  placeholder:     { en:'Name the film…', es:'Nombra la película…', fr:'Nomme le film…', de:'Nenne den Film…', pt:'Diga o nome do filme…' },
+  skipClue:        { en:'Skip clue', es:'Saltar pista', fr:'Passer l’indice', de:'Hinweis überspringen', pt:'Pular dica' },
+  guess:           { en:'Guess', es:'Adivinar', fr:'Deviner', de:'Raten', pt:'Adivinhar' },
+  footerCredit:    { en:'Data & images by', es:'Datos e imágenes de', fr:'Données et images par', de:'Daten und Bilder von', pt:'Dados e imagens por' },
+  footerNotEndorsed:{ en:'Not endorsed by TMDB.', es:'No respaldado por TMDB.', fr:'Non approuvé par TMDB.', de:'Nicht von TMDB unterstützt.', pt:'Não endossado pelo TMDB.' },
+  privacy:         { en:'Privacy', es:'Privacidad', fr:'Confidentialité', de:'Datenschutz', pt:'Privacidade' },
+  // clue labels
+  lblSynopsisOpening:{ en:'Synopsis (opening)', es:'Sinopsis (inicio)', fr:'Synopsis (début)', de:'Handlung (Anfang)', pt:'Sinopse (início)' },
+  lblKeywords:     { en:'Keywords', es:'Palabras clave', fr:'Mots-clés', de:'Schlagwörter', pt:'Palavras-chave' },
+  lblGenre:        { en:'Genre', es:'Género', fr:'Genre', de:'Genre', pt:'Gênero' },
+  lblYear:         { en:'Year', es:'Año', fr:'Année', de:'Jahr', pt:'Ano' },
+  lblFullSynopsis: { en:'Full synopsis', es:'Sinopsis completa', fr:'Synopsis complet', de:'Vollständige Handlung', pt:'Sinopse completa' },
+  lblTagline:      { en:'Tagline', es:'Eslogan', fr:'Slogan', de:'Slogan', pt:'Slogan' },
+  lblCast:         { en:'Cast', es:'Reparto', fr:'Distribution', de:'Besetzung', pt:'Elenco' },
+  lblMainCast:     { en:'Main cast', es:'Reparto principal', fr:'Distribution principale', de:'Hauptbesetzung', pt:'Elenco principal' },
+  lblPoster:       { en:'Poster (blurred)', es:'Póster (difuminado)', fr:'Affiche (floutée)', de:'Poster (unscharf)', pt:'Pôster (desfocado)' },
+  // clue bodies / fallbacks
+  noSynopsis:      { en:'No synopsis on TMDB - here\'s a free clue 🙂', es:'Sin sinopsis en TMDB: aquí tienes una pista gratis 🙂', fr:'Pas de synopsis sur TMDB : voici un indice gratuit 🙂', de:'Keine Handlung auf TMDB: hier ein Gratis-Tipp 🙂', pt:'Sem sinopse no TMDB: aqui vai uma dica grátis 🙂' },
+  noKeywords:      { en:'No keywords on TMDB', es:'Sin palabras clave en TMDB', fr:'Pas de mots-clés sur TMDB', de:'Keine Schlagwörter auf TMDB', pt:'Sem palavras-chave no TMDB' },
+  noPoster:        { en:'No poster', es:'Sin póster', fr:'Pas d’affiche', de:'Kein Poster', pt:'Sem pôster' },
+  // guess rows
+  skipped:         { en:'Skipped a clue', es:'Pista saltada', fr:'Indice passé', de:'Hinweis übersprungen', pt:'Dica pulada' },
+  wrongGuess:      { en:'Wrong guess', es:'Intento fallido', fr:'Mauvaise réponse', de:'Falscher Tipp', pt:'Palpite errado' },
+  // toasts
+  notIt:           { en:'Not it - new clue revealed', es:'No es: nueva pista revelada', fr:'Ce n’est pas ça : nouvel indice révélé', de:'Falsch: neuer Hinweis freigeschaltet', pt:'Não é: nova dica revelada' },
+  copied:          { en:'Copied to clipboard', es:'Copiado al portapapeles', fr:'Copié dans le presse-papiers', de:'In die Zwischenablage kopiert', pt:'Copiado para a área de transferência' },
+  copyPrefix:      { en:'Copy: ', es:'Copia: ', fr:'Copier : ', de:'Kopieren: ', pt:'Copiar: ' },
+  pickFromList:    { en:'Pick a film from the list', es:'Elige una película de la lista', fr:'Choisis un film dans la liste', de:'Wähle einen Film aus der Liste', pt:'Escolha um filme da lista' },
+  // results
+  solvedIn:        { en:'Solved in {n}!', es:'¡Resuelto en {n}!', fr:'Résolu en {n} !', de:'Gelöst in {n}!', pt:'Resolvido em {n}!' },
+  outOfGuesses:    { en:'Out of guesses', es:'Sin intentos', fr:'Plus d’essais', de:'Keine Versuche mehr', pt:'Sem tentativas' },
+  best:            { en:'best', es:'mejor', fr:'record', de:'Bestwert', pt:'recorde' },
+  streak:          { en:'Streak', es:'Racha', fr:'Série', de:'Serie', pt:'Sequência' },
+  newFilm:         { en:'New film', es:'Nueva película', fr:'Nouveau film', de:'Neuer Film', pt:'Novo filme' },
+  share:           { en:'Share', es:'Compartir', fr:'Partager', de:'Teilen', pt:'Compartilhar' },
+  // mode switch / badge
+  practice:        { en:'Practice', es:'Práctica', fr:'Entraînement', de:'Übung', pt:'Treino' },
+  dailyNum:        { en:'Daily #', es:'Diario #', fr:'Quotidien #', de:'Täglich #', pt:'Diário #' },
+  dailyArrow:      { en:'Daily →', es:'Diario →', fr:'Quotidien →', de:'Täglich →', pt:'Diário →' },
+  practiceArrow:   { en:'Practice →', es:'Práctica →', fr:'Entraînement →', de:'Übung →', pt:'Treino →' },
+  // how-to
+  htTitle:         { en:'How to play CineClue', es:'Cómo jugar a CineClue', fr:'Comment jouer à CineClue', de:'So spielst du CineClue', pt:'Como jogar CineClue' },
+  htStep1:         { en:'Guess the day’s film. You start with the <b>opening of its plot</b> (title hidden as ▒▒▒).', es:'Adivina la película del día. Empiezas con el <b>inicio de su trama</b> (el título aparece oculto como ▒▒▒).', fr:'Devine le film du jour. Tu commences avec le <b>début de son intrigue</b> (le titre est masqué par ▒▒▒).', de:'Errate den Film des Tages. Du beginnst mit dem <b>Anfang der Handlung</b> (der Titel ist als ▒▒▒ verdeckt).', pt:'Adivinhe o filme do dia. Você começa com o <b>início do enredo</b> (o título aparece oculto como ▒▒▒).' },
+  htStep2:         { en:'Type to search and pick a title - you have <b>6 tries</b>.', es:'Escribe para buscar y elige un título: tienes <b>6 intentos</b>.', fr:'Tape pour rechercher et choisis un titre : tu as <b>6 essais</b>.', de:'Tippe zum Suchen und wähle einen Titel: du hast <b>6 Versuche</b>.', pt:'Digite para buscar e escolha um título: você tem <b>6 tentativas</b>.' },
+  htStep3:         { en:'Every wrong guess or skip reveals a new, easier clue.', es:'Cada fallo o pista saltada revela una pista nueva y más fácil.', fr:'Chaque erreur ou indice passé révèle un nouvel indice plus facile.', de:'Jeder falsche Tipp oder übersprungene Hinweis zeigt einen neuen, leichteren Hinweis.', pt:'Cada erro ou dica pulada revela uma nova dica mais fácil.' },
+  htStep4:         { en:'Order: synopsis → keywords → genre &amp; year → full synopsis → cast → poster.', es:'Orden: sinopsis → palabras clave → género y año → sinopsis completa → reparto → póster.', fr:'Ordre : synopsis → mots-clés → genre et année → synopsis complet → distribution → affiche.', de:'Reihenfolge: Handlung → Schlagwörter → Genre und Jahr → vollständige Handlung → Besetzung → Poster.', pt:'Ordem: sinopse → palavras-chave → gênero e ano → sinopse completa → elenco → pôster.' },
+  htStep5:         { en:'Fewer guesses = better. <b>Daily</b> keeps your streak; <b>Practice</b> is unlimited.', es:'Menos intentos = mejor. <b>Diario</b> mantiene tu racha; <b>Práctica</b> es ilimitado.', fr:'Moins d’essais = mieux. <b>Quotidien</b> conserve ta série ; <b>Entraînement</b> est illimité.', de:'Weniger Versuche = besser. <b>Täglich</b> hält deine Serie; <b>Übung</b> ist unbegrenzt.', pt:'Menos palpites = melhor. <b>Diário</b> mantém sua sequência; <b>Treino</b> é ilimitado.' },
+  htQuote:         { en:'A thief who steals secrets through dream-sharing…', es:'Un ladrón que roba secretos compartiendo sueños…', fr:'Un voleur qui dérobe des secrets en partageant les rêves…', de:'Ein Dieb, der Geheimnisse durch geteilte Träume stiehlt…', pt:'Um ladrão que rouba segredos compartilhando sonhos…' },
+  htKeywords:      { en:'dream · heist · subconscious', es:'sueño · atraco · subconsciente', fr:'rêve · casse · subconscient', de:'Traum · Coup · Unterbewusstsein', pt:'sonho · assalto · subconsciente' },
+  htGenre:         { en:'Action · Sci-Fi · 2010', es:'Acción · Ciencia ficción · 2010', fr:'Action · Science-fiction · 2010', de:'Action · Science-Fiction · 2010', pt:'Ação · Ficção científica · 2010' },
+  htConclusion:    { en:'Clues stack up until you guess:', es:'Las pistas se acumulan hasta que aciertas:', fr:'Les indices s’accumulent jusqu’à ce que tu trouves :', de:'Die Hinweise stapeln sich, bis du errätst:', pt:'As dicas se acumulam até você acertar:' }
+};
+function T(k){ var m=L[k]; if(!m||typeof m!=='object') return k; var l=_lang(); return (l==='en'?null:m[l])||m.en||k; }
+
 function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function api(path){ return fetch('/api/tmdb?path=' + path).then(r => r.json()); }
 function dayNumber(){ const n = new Date(); return Math.floor(Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate()) / 86400000); }
@@ -251,14 +313,14 @@ function buildClues(t){
   const ov = maskSpoilers(t.d.overview || '', ttl, chars);
   const frac = p => { if(!ov) return ''; const n = Math.max(24, Math.round(ov.length * p)); return ov.slice(0, n) + (n < ov.length ? '…' : ''); };
   return [
-    { label: 'Synopsis (opening)', html: '<span class="clue-body">' + (ov ? esc(frac(0.3)) : 'No synopsis on TMDB - here\'s a free clue 🙂') + '</span>' },
-    { label: 'Keywords', html: kws.length ? kws.map(k => '<span class="clue-chip">' + esc(k) + '</span>').join('') : '<span class="clue-body">No keywords on TMDB</span>' },
-    { label: mediumL + ' · Genre · Year', html: '<span class="clue-body">' + esc([mediumL, genres, yr, lengthL].filter(Boolean).join('  ·  ')) + '</span>' },
+    { label: T('lblSynopsisOpening'), html: '<span class="clue-body">' + (ov ? esc(frac(0.3)) : T('noSynopsis')) + '</span>' },
+    { label: T('lblKeywords'), html: kws.length ? kws.map(k => '<span class="clue-chip">' + esc(k) + '</span>').join('') : '<span class="clue-body">' + T('noKeywords') + '</span>' },
+    { label: mediumL + ' · ' + T('lblGenre') + ' · ' + T('lblYear'), html: '<span class="clue-body">' + esc([mediumL, genres, yr, lengthL].filter(Boolean).join('  ·  ')) + '</span>' },
     ov
-      ? { label: 'Full synopsis', html: '<span class="clue-body">' + esc(ov) + '</span>' }
-      : { label: makers ? (Media.makerLabel(t.type) + (tagline ? ' · Tagline' : '')) : 'Tagline', html: '<span class="clue-body">' + esc(makers) + (tagline ? ' - <em>"' + esc(maskTitle(tagline, ttl)) + '"</em>' : '') + '</span>' },
-    { label: makers ? (Media.makerLabel(t.type) + ' · Cast') : 'Main cast', html: '<span class="clue-body">' + (esc([makers, cast.join(', ')].filter(Boolean).join('  ·  ')) || '-') + '</span>' },
-    { label: 'Poster (blurred)', html: pUrl ? '<canvas class="clue-poster" width="300" height="450" data-url="' + pUrl + '" data-blur="12"></canvas>' : '<span class="clue-body">No poster</span>' }
+      ? { label: T('lblFullSynopsis'), html: '<span class="clue-body">' + esc(ov) + '</span>' }
+      : { label: makers ? (Media.makerLabel(t.type) + (tagline ? ' · ' + T('lblTagline') : '')) : T('lblTagline'), html: '<span class="clue-body">' + esc(makers) + (tagline ? ' - <em>"' + esc(maskTitle(tagline, ttl)) + '"</em>' : '') + '</span>' },
+    { label: makers ? (Media.makerLabel(t.type) + ' · ' + T('lblCast')) : T('lblMainCast'), html: '<span class="clue-body">' + (esc([makers, cast.join(', ')].filter(Boolean).join('  ·  ')) || '-') + '</span>' },
+    { label: T('lblPoster'), html: pUrl ? '<canvas class="clue-poster" width="300" height="450" data-url="' + pUrl + '" data-blur="12"></canvas>' : '<span class="clue-body">' + T('noPoster') + '</span>' }
   ];
 }
 
@@ -322,7 +384,7 @@ function renderGuesses(){
   const el = document.getElementById('guesses');
   el.innerHTML = results.map(r =>
     '<div class="grow wrong"><span class="gico">' + (r === 'skip' ? '⏭️' : '❌') + '</span>' +
-    (r === 'skip' ? 'Skipped a clue' : 'Wrong guess') + '</div>'
+    (r === 'skip' ? T('skipped') : T('wrongGuess')) + '</div>'
   ).join('');
 }
 
@@ -337,7 +399,7 @@ function advance(kind){ // 'wrong' | 'skip'
 function makeGuess(movie){
   if(finished) return;
   if(Media.sameTarget(movie, target)){ finish(true); return; }
-  toast('Not it - new clue revealed');
+  toast(T('notIt'));
   if(window.Fx) Fx.play(document.getElementById('guessInput'), 'fx-shake', 450);
   advance('wrong');
 }
@@ -380,13 +442,13 @@ function renderResult(streak){
     el.style.backgroundSize = 'cover'; el.style.backgroundPosition = 'center';
   }
   const verdict = solved
-    ? '<div class="result-verdict win">Solved in ' + (solved ? results.indexOf('win') + 1 : MAX_GUESSES) + '!</div>'
-    : '<div class="result-verdict lose">Out of guesses</div>';
-  const bestPart = streak.best > streak.current ? ' · best <strong>' + streak.best + '</strong>' : '';
-  const streakLine = PRACTICE ? '' : '<div class="result-streak">🔥 Streak <strong>' + streak.current + '</strong>' + bestPart + '</div>';
+    ? '<div class="result-verdict win">' + T('solvedIn').replace('{n}', (solved ? results.indexOf('win') + 1 : MAX_GUESSES)) + '</div>'
+    : '<div class="result-verdict lose">' + T('outOfGuesses') + '</div>';
+  const bestPart = streak.best > streak.current ? ' · ' + T('best') + ' <strong>' + streak.best + '</strong>' : '';
+  const streakLine = PRACTICE ? '' : '<div class="result-streak">🔥 ' + T('streak') + ' <strong>' + streak.current + '</strong>' + bestPart + '</div>';
   const actions = PRACTICE
-    ? '<button class="btn btn-gold" id="againBtn">New film</button><button class="btn" id="shareBtn">Share</button>'
-    : '<button class="btn btn-gold" id="shareBtn">Share</button><a class="btn" href="/" style="display:flex;align-items:center;justify-content:center;text-decoration:none">CineLinks</a>';
+    ? '<button class="btn btn-gold" id="againBtn">' + T('newFilm') + '</button><button class="btn" id="shareBtn">' + T('share') + '</button>'
+    : '<button class="btn btn-gold" id="shareBtn">' + T('share') + '</button><a class="btn" href="/" style="display:flex;align-items:center;justify-content:center;text-decoration:none">CineLinks</a>';
   el.innerHTML =
     (target.posterPath ? '<img class="result-poster" src="' + poster(target.posterPath, 'w342') + '" alt="">' : '') +
     verdict +
@@ -405,7 +467,7 @@ function renderResult(streak){
 
 function shareText(){
   const n = solved ? (results.indexOf('win') + 1) : 'X';
-  const head = PRACTICE ? '🔍 CineClue (Practice)' : ('🔍 CineClue #' + PUZZLE);
+  const head = PRACTICE ? ('🔍 CineClue (' + T('practice') + ')') : ('🔍 CineClue #' + PUZZLE);
   const st = (!PRACTICE && solved) ? loadStreak() : null;
   const streak = (st && st.current > 1) ? '  🔥' + st.current : '';
   return head + '  ' + n + '/' + MAX_GUESSES + streak + '\n' + emojiGrid() + '\nhttps://cinelinks.vercel.app/cineclue.html';
@@ -413,8 +475,8 @@ function shareText(){
 function share(){
   const text = shareText();
   if(navigator.share){ navigator.share({ text }).catch(()=>{}); return; }
-  if(navigator.clipboard){ navigator.clipboard.writeText(text).then(()=>toast('Copied to clipboard')).catch(()=>toast(text)); }
-  else toast('Copy: ' + text);
+  if(navigator.clipboard){ navigator.clipboard.writeText(text).then(()=>toast(T('copied'))).catch(()=>toast(text)); }
+  else toast(T('copyPrefix') + text);
 }
 
 // ── Streak + persistence ───────────────────────────────────────────────────
@@ -478,16 +540,29 @@ function pick(m){ closeSuggest(); const inp = document.getElementById('guessInpu
 function submitTyped(){
   if(activeIdx >= 0 && suggestItems[activeIdx]){ pick(suggestItems[activeIdx]); return; }
   if(suggestItems.length){ pick(suggestItems[0]); return; }
-  toast('Pick a film from the list');
+  toast(T('pickFromList'));
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
 function showError(){ document.getElementById('loading').style.display = 'none'; document.getElementById('error').style.display = 'block'; }
 
+function applyStaticI18n(){
+  var sub = document.querySelector('.subtitle'); if(sub) sub.textContent = T('subtitle');
+  var err = document.getElementById('error'); if(err) err.textContent = T('errLoad');
+  var inp = document.getElementById('guessInput'); if(inp) inp.placeholder = T('placeholder');
+  var sk = document.getElementById('skipBtn'); if(sk) sk.textContent = T('skipClue');
+  var gb = document.getElementById('guessBtn'); if(gb) gb.textContent = T('guess');
+  var ld = document.getElementById('loading'); if(ld) ld.setAttribute('aria-label', T('loading'));
+  var home = document.querySelector('.cl-home'); if(home) home.setAttribute('aria-label', T('backToCineLinks'));
+  var ft = document.querySelector('.footer');
+  if(ft) ft.innerHTML = T('footerCredit') + ' <a href="https://www.themoviedb.org/" target="_blank" rel="noopener">TMDB</a>. ' + T('footerNotEndorsed') + ' · <a href="/privacy.html" style="color:inherit">' + T('privacy') + '</a>';
+}
+
 async function init(){
-  document.getElementById('dateBadge').textContent = PRACTICE ? 'Practice' : ('Daily #' + PUZZLE);
+  applyStaticI18n();
+  document.getElementById('dateBadge').textContent = PRACTICE ? T('practice') : (T('dailyNum') + PUZZLE);
   const sw = document.getElementById('modeSwitch');
-  if(sw){ sw.textContent = PRACTICE ? 'Daily →' : 'Practice →'; sw.href = PRACTICE ? 'cineclue.html' : 'cineclue.html?practice=1'; }
+  if(sw){ sw.textContent = PRACTICE ? T('dailyArrow') : T('practiceArrow'); sw.href = PRACTICE ? 'cineclue.html' : 'cineclue.html?practice=1'; }
   let t;
   try{ t = await loadTarget(); }catch(e){ showError(); return; }
   target = { id: t.d.id, type: t.type, title: Media.title(t.d, t.type), year: Media.year(t.d, t.type), posterPath: t.d.poster_path, backdropPath: t.d.backdrop_path, genres: (t.d.genres || []).slice(0, 3).map(g => g.name).join(' · ') };
@@ -527,19 +602,19 @@ init();
 </script>
 <script>
 window.HOWTO = {
-  key: 'cineclue', title: 'How to play CineClue', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>',
+  key: 'cineclue', title: T('htTitle'), icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>',
   steps: [
-    'Guess the day’s film. You start with the <b>opening of its plot</b> (title hidden as ▒▒▒).',
-    'Type to search and pick a title - you have <b>6 tries</b>.',
-    'Every wrong guess or skip reveals a new, easier clue.',
-    'Order: synopsis → keywords → genre &amp; year → full synopsis → cast → poster.',
-    'Fewer guesses = better. <b>Daily</b> keeps your streak; <b>Practice</b> is unlimited.'
+    T('htStep1'),
+    T('htStep2'),
+    T('htStep3'),
+    T('htStep4'),
+    T('htStep5')
   ],
   example: '<div style="display:flex;flex-direction:column;gap:6px">' +
-      '<span class="ht-chip">📖 “A thief who steals secrets through dream-sharing…”</span>' +
-      '<span class="ht-chip">🔑 dream · heist · subconscious</span>' +
-      '<span class="ht-chip">🎭 Action · Sci-Fi · 2010</span>' +
-    '</div><p>Clues stack up until you guess: <b style="color:#f0f0f0">Inception</b> 🎉</p>'
+      '<span class="ht-chip">📖 “' + T('htQuote') + '”</span>' +
+      '<span class="ht-chip">🔑 ' + T('htKeywords') + '</span>' +
+      '<span class="ht-chip">🎭 ' + T('htGenre') + '</span>' +
+    '</div><p>' + T('htConclusion') + ' <b style="color:#f0f0f0">Inception</b> 🎉</p>'
 };
 </script>
 <script defer src="/ads.js"></script>

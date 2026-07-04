@@ -108,6 +108,47 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 <script>
 (function(){
   'use strict';
+
+  // --- i18n (self-contained; i18n.js isn't loaded on game pages) ---
+  function _lang(){ try{ var l=localStorage.getItem('clLang'); return (l&&/^[a-z]{2}-[A-Z]{2}$/.test(l))?l.slice(0,2):'en'; }catch(_){ return 'en'; } }
+  var L = {
+    tag:            { en:'Find the four hidden connections.', es:'Encuentra las cuatro conexiones ocultas.', fr:'Trouve les quatre connexions cachées.', de:'Finde die vier verborgenen Verbindungen.', pt:'Encontre as quatro conexões ocultas.' },
+    homeAria:       { en:'Back to CineLinks', es:'Volver a CineLinks', fr:'Retour à CineLinks', de:'Zurück zu CineLinks', pt:'Voltar para CineLinks' },
+    buildingAria:   { en:'Building puzzle', es:'Creando puzle', fr:'Création du puzzle', de:'Rätsel wird erstellt', pt:'Criando desafio' },
+    footData:       { en:'Data from TMDB · part of ', es:'Datos de TMDB · parte de ', fr:'Données de TMDB · fait partie de ', de:'Daten von TMDB · Teil von ', pt:'Dados do TMDB · parte de ' },
+    daily:          { en:'Daily', es:'Diario', fr:'Quotidien', de:'Täglich', pt:'Diário' },
+    practice:       { en:'Practice', es:'Práctica', fr:'Entraînement', de:'Übung', pt:'Treino' },
+    mistakesRemaining:{ en:'Mistakes remaining', es:'Errores restantes', fr:'Erreurs restantes', de:'Verbleibende Fehler', pt:'Erros restantes' },
+    shuffle:        { en:'Shuffle', es:'Mezclar', fr:'Mélanger', de:'Mischen', pt:'Embaralhar' },
+    deselect:       { en:'Deselect', es:'Deseleccionar', fr:'Désélectionner', de:'Abwählen', pt:'Desmarcar' },
+    submit:         { en:'Submit', es:'Enviar', fr:'Valider', de:'Bestätigen', pt:'Enviar' },
+    oneAway:        { en:'One away…', es:'Te falta uno…', fr:'Plus qu’un…', de:'Nur noch einer…', pt:'Falta um…' },
+    realConnection: { en:'Real connection, but not today’s four', es:'Conexión real, pero no las cuatro de hoy', fr:'Vraie connexion, mais pas les quatre du jour', de:'Echte Verbindung, aber nicht die vier von heute', pt:'Conexão real, mas não as quatro de hoje' },
+    solvedIt:       { en:'Solved it! 🎬', es:'¡Resuelto! 🎬', fr:'Résolu ! 🎬', de:'Gelöst! 🎬', pt:'Resolvido! 🎬' },
+    outOfGuesses:   { en:'Out of guesses', es:'Sin intentos', fr:'Plus d’essais', de:'Keine Versuche mehr', pt:'Sem tentativas' },
+    foundPre:       { en:'Found all four with ', es:'Encontraste las cuatro con ', fr:'Trouvé les quatre avec ', de:'Alle vier mit ', pt:'Encontrou as quatro com ' },
+    foundSuf:       { en:'.', es:'.', fr:'.', de:' gefunden.', pt:'.' },
+    mistakeSing:    { en:'mistake', es:'error', fr:'erreur', de:'Fehler', pt:'erro' },
+    mistakePlur:    { en:'mistakes', es:'errores', fr:'erreurs', de:'Fehlern', pt:'erros' },
+    hereWere:       { en:'Here were the four connections.', es:'Estas eran las cuatro conexiones.', fr:'Voici les quatre connexions.', de:'Das waren die vier Verbindungen.', pt:'Estas eram as quatro conexões.' },
+    trapPre:        { en:'🎬 Trap of the day: ', es:'🎬 Trampa del día: ', fr:'🎬 Piège du jour : ', de:'🎬 Falle des Tages: ', pt:'🎬 Cilada do dia: ' },
+    trapSeg1:       { en:' looked like a ', es:' parecía una película de ', fr:' ressemblait à un film de ', de:' sah aus wie ein Film mit ', pt:' parecia um filme de ' },
+    trapSeg2:       { en:' film, but it belonged with ', es:', pero pertenecía a ', fr:', mais il appartenait à ', de:', gehörte aber zu ', pt:', mas pertencia a ' },
+    trapSeg3:       { en:'.', es:'.', fr:'.', de:'.', pt:'.' },
+    statStreak:     { en:'streak', es:'racha', fr:'série', de:'serie', pt:'sequência' },
+    statBest:       { en:'best', es:'mejor', fr:'record', de:'bestwert', pt:'recorde' },
+    statSolved:     { en:'solved', es:'resueltos', fr:'résolus', de:'gelöst', pt:'resolvidos' },
+    share:          { en:'Share', es:'Compartir', fr:'Partager', de:'Teilen', pt:'Compartilhar' },
+    newPuzzle:      { en:'New puzzle', es:'Nuevo puzle', fr:'Nouveau puzzle', de:'Neues Rätsel', pt:'Novo desafio' },
+    copied:         { en:'Copied!', es:'¡Copiado!', fr:'Copié !', de:'Kopiert!', pt:'Copiado!' },
+    copyFailed:     { en:'Copy failed', es:'Error al copiar', fr:'Échec de la copie', de:'Kopieren fehlgeschlagen', pt:'Falha ao copiar' },
+    couldNotBuild:  { en:'Could not build a puzzle. Please try again later.', es:'No se pudo crear el puzle. Inténtalo más tarde.', fr:'Impossible de créer le puzzle. Réessaie plus tard.', de:'Rätsel konnte nicht erstellt werden. Bitte später erneut versuchen.', pt:'Não foi possível criar o desafio. Tente novamente mais tarde.' },
+    sameFranchise:  { en:'Same franchise: ', es:'Misma franquicia: ', fr:'Même franchise : ', de:'Gleiche Reihe: ', pt:'Mesma franquia: ' },
+    starring:       { en:'Starring ', es:'Protagonizada por ', fr:'Avec ', de:'Mit ', pt:'Estrelado por ' },
+    directedBy:     { en:'Directed by ', es:'Dirigida por ', fr:'Réalisé par ', de:'Regie: ', pt:'Dirigido por ' }
+  };
+  function T(k){ var m=L[k]; if(!m||typeof m!=='object') return k; var l=_lang(); return (l==='en'?null:m[l])||m.en||k; }
+
   const PRACTICE = /[?&]practice=1/.test(location.search);
   const IMG='/api/tmdb?path=';
 
@@ -344,10 +385,10 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
       const sg=cleanGroup(SAGAS,'s',f=>f[2]||f[1]); if(!sg) continue;
       const tg=cleanGroup(THEMES,'t',f=>f[1]); if(!tg) continue;
       const raw=[
-        {type:'saga', label:'Same franchise: '+sg.pool.n, tiles:sg.tiles},
+        {type:'saga', label:T('sameFranchise')+sg.pool.n, tiles:sg.tiles},
         {type:'theme', label:tg.pool.n, tiles:tg.tiles},
-        {type:'actor', label:'Starring '+aname, tiles:aGroup},
-        {type:'director', label:'Directed by '+dname, tiles:dirPick.map(f=>({id:f.id,title:shorten(f.title)}))}
+        {type:'actor', label:T('starring')+aname, tiles:aGroup},
+        {type:'director', label:T('directedBy')+dname, tiles:dirPick.map(f=>({id:f.id,title:shorten(f.title)}))}
       ];
       const all=raw.flatMap(g=>g.tiles);
       if(new Set(all.map(t=>t.id)).size<16) continue;            // defensive: 16 distinct tiles
@@ -391,10 +432,10 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     }
     if(!dTiles) return null;
     return {raw:[
-      {type:'saga', label:'Same franchise: '+saga.n, tiles:sagaTiles},
+      {type:'saga', label:T('sameFranchise')+saga.n, tiles:sagaTiles},
       {type:'theme', label:theme.n, tiles:themeTiles},
-      {type:'actor', label:'Starring '+aName, tiles:aTiles},
-      {type:'director', label:'Directed by '+dName, tiles:dTiles}
+      {type:'actor', label:T('starring')+aName, tiles:aTiles},
+      {type:'director', label:T('directedBy')+dName, tiles:dTiles}
     ], trap:null};
   }
 
@@ -476,11 +517,11 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
       h+='<div class="tile" data-id="'+id+'" style="'+dl+'">'+esc(t.title)+'</div>';
     });
     h+='</div>';
-    h+='<div class="mistakes">Mistakes remaining <span class="dots" id="dots">'+dotsHtml()+'</span></div>';
+    h+='<div class="mistakes">'+T('mistakesRemaining')+' <span class="dots" id="dots">'+dotsHtml()+'</span></div>';
     h+='<div class="controls">'+
-       '<button class="btn" id="shuffleBtn">Shuffle</button>'+
-       '<button class="btn" id="deselBtn" disabled>Deselect</button>'+
-       '<button class="btn btn-go" id="goBtn" disabled>Submit</button>'+
+       '<button class="btn" id="shuffleBtn">'+T('shuffle')+'</button>'+
+       '<button class="btn" id="deselBtn" disabled>'+T('deselect')+'</button>'+
+       '<button class="btn btn-go" id="goBtn" disabled>'+T('submit')+'</button>'+
        '</div>';
     stage.innerHTML=h;
     document.querySelectorAll('.tile[data-id]').forEach(el=>el.addEventListener('click',()=>onTile(el.dataset.id)));
@@ -592,8 +633,8 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
       selected.forEach(id=>{ const el=document.querySelector('.tile[data-id="'+id+'"]'); if(el){ el.classList.add('wrong'); setTimeout(()=>el.classList.remove('wrong'),400);} });
       mistakes++;
       const dots=document.getElementById('dots'); if(dots) dots.innerHTML=dotsHtml();
-      if(max===3) toast('One away…');
-      else if(sharedConnection(selected)) toast('Real connection — but not today’s four');
+      if(max===3) toast(T('oneAway'));
+      else if(sharedConnection(selected)) toast(T('realConnection'));
       saveDaily();
       if(mistakes>=MAX_MIST){
         const have=new Set(solved.map(s=>s.key));
@@ -613,12 +654,12 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     const sa='<div class="solved-area">'+order.map(k=>solved.find(s=>s.key===k)).filter(Boolean).map((s,i)=>solvedRow(s, won?'win':'')).join('')+'</div>';
     const st=getLS(STKEY)||{streak:0,best:0,won:0,played:0};
     let h=sa+'<div class="result">';
-    h+='<h2>'+(won?'Solved it! 🎬':'Out of guesses')+'</h2>';
-    h+='<p>'+(won?('Found all four with '+mistakes+' mistake'+(mistakes===1?'':'s')+'.'):'Here were the four connections.')+'</p>';
-    if(puzzle.trap&&puzzle.trap.films&&puzzle.trap.films.length){ h+='<p class="trapline">🎬 Trap of the day: <b>'+esc(puzzle.trap.films[0])+'</b> looked like a '+esc(puzzle.trap.actor)+' film — but it belonged with '+esc(puzzle.trap.director)+'.</p>'; }
-    if(!PRACTICE) h+='<div class="statline"><div class="stat"><b>'+st.streak+'</b>streak</div><div class="stat"><b>'+st.best+'</b>best</div><div class="stat"><b>'+st.won+'</b>solved</div></div>';
-    h+='<div class="controls"><button class="btn btn-go" id="shareBtn">Share</button>';
-    h+=PRACTICE?'<button class="btn" id="againBtn">New puzzle</button>':'<a class="btn" href="?practice=1" style="display:flex;align-items:center;justify-content:center;text-decoration:none">Practice</a>';
+    h+='<h2>'+(won?T('solvedIt'):T('outOfGuesses'))+'</h2>';
+    h+='<p>'+(won?(T('foundPre')+mistakes+' '+(mistakes===1?T('mistakeSing'):T('mistakePlur'))+T('foundSuf')):T('hereWere'))+'</p>';
+    if(puzzle.trap&&puzzle.trap.films&&puzzle.trap.films.length){ h+='<p class="trapline">'+T('trapPre')+'<b>'+esc(puzzle.trap.films[0])+'</b>'+T('trapSeg1')+esc(puzzle.trap.actor)+T('trapSeg2')+esc(puzzle.trap.director)+T('trapSeg3')+'</p>'; }
+    if(!PRACTICE) h+='<div class="statline"><div class="stat"><b>'+st.streak+'</b>'+T('statStreak')+'</div><div class="stat"><b>'+st.best+'</b>'+T('statBest')+'</div><div class="stat"><b>'+st.won+'</b>'+T('statSolved')+'</div></div>';
+    h+='<div class="controls"><button class="btn btn-go" id="shareBtn">'+T('share')+'</button>';
+    h+=PRACTICE?'<button class="btn" id="againBtn">'+T('newPuzzle')+'</button>':'<a class="btn" href="?practice=1" style="display:flex;align-items:center;justify-content:center;text-decoration:none">'+T('practice')+'</a>';
     h+='</div></div>';
     stage.innerHTML=h;
     document.getElementById('shareBtn').onclick=doShare;
@@ -628,14 +669,22 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     const head='CineGroup'+(PRACTICE?'':' #'+(day-20000))+(won?' '+(mistakes)+'/'+MAX_MIST:' ✗');
     const txt=head+'\n'+shareGrid()+'\ncinelinks.vercel.app';
     if(navigator.share){ navigator.share({text:txt}).catch(()=>{}); }
-    else { navigator.clipboard.writeText(txt).then(()=>toast('Copied!')).catch(()=>toast('Copy failed')); }
+    else { navigator.clipboard.writeText(txt).then(()=>toast(T('copied'))).catch(()=>toast(T('copyFailed'))); }
   }
 
   // ---------- mode switch link ----------
   const ms=document.getElementById('modeSwitch');
-  document.getElementById('modeLbl').textContent=PRACTICE?'Practice':'Daily';
-  ms.textContent=PRACTICE?'Daily →':'Practice →';
+  document.getElementById('modeLbl').textContent=PRACTICE?T('practice'):T('daily');
+  ms.textContent=(PRACTICE?T('daily'):T('practice'))+' →';
   ms.href=PRACTICE?'/cinegroup.html':'?practice=1';
+
+  // ---------- static copy i18n ----------
+  (function(){
+    var tagEl=document.querySelector('.tag'); if(tagEl) tagEl.textContent=T('tag');
+    var homeEl=document.querySelector('.cl-home'); if(homeEl) homeEl.setAttribute('aria-label',T('homeAria'));
+    var loadEl=document.querySelector('#stage .loading'); if(loadEl) loadEl.setAttribute('aria-label',T('buildingAria'));
+    var footEl=document.querySelector('.foot'); if(footEl) footEl.innerHTML=T('footData')+'<a href="/">CineLinks</a>';
+  })();
 
   // ---------- boot ----------
   async function boot(){
@@ -645,7 +694,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     if(!PRACTICE){ const cp=getLS(PKEY); if(cp && cp.day===day && cp.puzzle && cp.puzzle.groups && cp.puzzle.groups[0] && cp.puzzle.groups[0].key){ puzzle=cp.puzzle; } }
     if(!puzzle){
       puzzle=await generateWithRetry(seed);
-      if(!puzzle){ stage.innerHTML='<div class="loading">Could not build a puzzle. Please try again later.</div>'; return; }
+      if(!puzzle){ stage.innerHTML='<div class="loading">'+T('couldNotBuild')+'</div>'; return; }
       if(!PRACTICE) setLS(PKEY,{day,puzzle});
     }
     buildTileMap();

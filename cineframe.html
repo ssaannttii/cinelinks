@@ -132,7 +132,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     <div class="result hidden" id="result"></div>
   </div>
 
-  <div class="footer">
+  <div class="footer" id="footer">
     Data &amp; images by <a href="https://www.themoviedb.org/" target="_blank" rel="noopener">TMDB</a>. Not endorsed by TMDB. · <a href="/privacy.html" style="color:inherit">Privacy</a>
   </div>
 </div>
@@ -143,6 +143,47 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 <script src="/lib/media.js"></script>
 <script src="/lib/pool.js"></script>
 <script>
+// --- i18n (self-contained; i18n.js isn't loaded on game pages) ---
+function _lang(){ try{ var l=localStorage.getItem('clLang'); return (l&&/^[a-z]{2}-[A-Z]{2}$/.test(l))?l.slice(0,2):'en'; }catch(_){ return 'en'; } }
+var L = {
+  backToCineLinks:  { en:'Back to CineLinks', es:'Volver a CineLinks', fr:'Retour à CineLinks', de:'Zurück zu CineLinks', pt:'Voltar para CineLinks' },
+  loading:          { en:'Loading', es:'Cargando', fr:'Chargement', de:'Lädt', pt:'Carregando' },
+  subtitle:         { en:'Guess the film from the frame. It zooms out and sharpens with each guess.', es:'Adivina la película a partir del fotograma. Se aleja y se enfoca con cada intento.', fr:'Devinez le film à partir de l’image. Elle dézoome et se précise à chaque essai.', de:'Errate den Film anhand des Standbilds. Es zoomt heraus und wird mit jedem Versuch schärfer.', pt:'Adivinhe o filme pelo fotograma. Ele se afasta e fica mais nítido a cada tentativa.' },
+  errLoad:          { en:"Couldn't load today's puzzle. Please try again later.", es:'No se pudo cargar el desafío de hoy. Inténtalo de nuevo más tarde.', fr:'Impossible de charger le défi du jour. Réessayez plus tard.', de:'Das heutige Rätsel konnte nicht geladen werden. Bitte versuche es später erneut.', pt:'Não foi possível carregar o desafio de hoje. Tente novamente mais tarde.' },
+  placeholder:      { en:'Name the film…', es:'Nombra la película…', fr:'Nommez le film…', de:'Nenne den Film…', pt:'Diga o filme…' },
+  skipFrame:        { en:'Skip frame', es:'Saltar fotograma', fr:'Passer l’image', de:'Bild überspringen', pt:'Pular fotograma' },
+  guess:            { en:'Guess', es:'Adivinar', fr:'Deviner', de:'Raten', pt:'Adivinhar' },
+  skipped:          { en:'Skipped', es:'Saltado', fr:'Passé', de:'Übersprungen', pt:'Pulado' },
+  wrongGuess:       { en:'Wrong guess', es:'Fallo', fr:'Mauvaise réponse', de:'Falsch geraten', pt:'Errou' },
+  notIt:            { en:'Not it - frame sharpened', es:'No es esa: fotograma más nítido', fr:'Ce n’est pas ça : image plus nette', de:'Nicht richtig: Bild schärfer', pt:'Não é esse: fotograma mais nítido' },
+  answer:           { en:'Answer', es:'Respuesta', fr:'Réponse', de:'Antwort', pt:'Resposta' },
+  frame:            { en:'Frame', es:'Fotograma', fr:'Image', de:'Bild', pt:'Fotograma' },
+  solvedIn:         { en:'Solved in {n}!', es:'¡Resuelto en {n}!', fr:'Résolu en {n} !', de:'Gelöst in {n}!', pt:'Resolvido em {n}!' },
+  outOfGuesses:     { en:'Out of guesses', es:'Sin intentos', fr:'Plus d’essais', de:'Keine Versuche mehr', pt:'Sem tentativas' },
+  best:             { en:'best', es:'mejor', fr:'record', de:'Bestwert', pt:'recorde' },
+  streak:           { en:'Streak', es:'Racha', fr:'Série', de:'Serie', pt:'Sequência' },
+  newFilm:          { en:'New film', es:'Nueva película', fr:'Nouveau film', de:'Neuer Film', pt:'Novo filme' },
+  share:            { en:'Share', es:'Compartir', fr:'Partager', de:'Teilen', pt:'Compartilhar' },
+  copied:           { en:'Copied to clipboard', es:'Copiado al portapapeles', fr:'Copié dans le presse-papiers', de:'In die Zwischenablage kopiert', pt:'Copiado para a área de transferência' },
+  copyPrefix:       { en:'Copy: ', es:'Copiar: ', fr:'Copier : ', de:'Kopieren: ', pt:'Copiar: ' },
+  pickFromList:     { en:'Pick a film from the list', es:'Elige una película de la lista', fr:'Choisissez un film dans la liste', de:'Wähle einen Film aus der Liste', pt:'Escolha um filme da lista' },
+  practice:         { en:'Practice', es:'Práctica', fr:'Entraînement', de:'Übung', pt:'Treino' },
+  dailyNum:         { en:'Daily #', es:'Diario #', fr:'Quotidien #', de:'Täglich #', pt:'Diário #' },
+  dailyArrow:       { en:'Daily →', es:'Diario →', fr:'Quotidien →', de:'Täglich →', pt:'Diário →' },
+  practiceArrow:    { en:'Practice →', es:'Práctica →', fr:'Entraînement →', de:'Übung →', pt:'Treino →' },
+  footerData:       { en:'Data & images by', es:'Datos e imágenes de', fr:'Données et images par', de:'Daten und Bilder von', pt:'Dados e imagens por' },
+  footerNotEndorsed:{ en:'Not endorsed by TMDB.', es:'No respaldado por TMDB.', fr:'Non approuvé par TMDB.', de:'Nicht von TMDB unterstützt.', pt:'Não endossado pela TMDB.' },
+  privacy:          { en:'Privacy', es:'Privacidad', fr:'Confidentialité', de:'Datenschutz', pt:'Privacidade' },
+  howtoTitle:       { en:'How to play CineFrame', es:'Cómo jugar a CineFrame', fr:'Comment jouer à CineFrame', de:'So spielst du CineFrame', pt:'Como jogar CineFrame' },
+  howtoStep1:       { en:'Guess the day’s film from a tight, heavily-blurred crop of one frame.', es:'Adivina la película del día a partir de un recorte muy ampliado y borroso de un fotograma.', fr:'Devinez le film du jour à partir d’un gros plan très flou d’une seule image.', de:'Errate den Film des Tages anhand eines eng zugeschnittenen, stark verschwommenen Bildausschnitts.', pt:'Adivinhe o filme do dia a partir de um recorte bem fechado e desfocado de um fotograma.' },
+  howtoStep2:       { en:'Type to search and pick a title - you have <b>6 tries</b>.', es:'Escribe para buscar y elige un título: tienes <b>6 intentos</b>.', fr:'Tapez pour rechercher et choisissez un titre : vous avez <b>6 essais</b>.', de:'Tippe zum Suchen und wähle einen Titel: du hast <b>6 Versuche</b>.', pt:'Digite para buscar e escolha um título: você tem <b>6 tentativas</b>.' },
+  howtoStep3:       { en:'Every wrong guess or skip <b>zooms out and sharpens</b> the frame a little more.', es:'Cada fallo o salto <b>aleja y enfoca</b> un poco más el fotograma.', fr:'Chaque erreur ou saut <b>dézoome et affine</b> un peu plus l’image.', de:'Jeder falsche Tipp oder Übersprung <b>zoomt heraus und schärft</b> das Bild ein wenig mehr.', pt:'Cada erro ou pulo <b>afasta e deixa mais nítido</b> o fotograma um pouco mais.' },
+  howtoStep4:       { en:'Early frames are obscure on purpose; the recognizable shots come later.', es:'Los primeros fotogramas son oscuros a propósito; las tomas reconocibles llegan después.', fr:'Les premières images sont volontairement obscures ; les plans reconnaissables viennent plus tard.', de:'Die ersten Bilder sind absichtlich unauffällig; die wiedererkennbaren Aufnahmen kommen später.', pt:'Os primeiros fotogramas são obscuros de propósito; as cenas reconhecíveis vêm depois.' },
+  howtoStep5:       { en:'Fewer guesses = better. <b>Daily</b> keeps your streak; <b>Practice</b> is unlimited.', es:'Menos intentos = mejor. <b>Diario</b> mantiene tu racha; <b>Práctica</b> es ilimitado.', fr:'Moins d’essais = mieux. <b>Quotidien</b> garde votre série ; <b>Entraînement</b> est illimité.', de:'Weniger Versuche = besser. <b>Täglich</b> hält deine Serie; <b>Übung</b> ist unbegrenzt.', pt:'Menos tentativas = melhor. <b>Diário</b> mantém sua sequência; <b>Treino</b> é ilimitado.' },
+  howtoCaption:     { en:'The frame goes from blurry to sharp as your guesses run out.', es:'El fotograma pasa de borroso a nítido a medida que se agotan tus intentos.', fr:'L’image passe du flou au net à mesure que vos essais s’épuisent.', de:'Das Bild wird von unscharf zu scharf, während deine Versuche zur Neige gehen.', pt:'O fotograma passa de desfocado a nítido conforme suas tentativas acabam.' }
+};
+function T(k){ var m=L[k]; if(!m||typeof m!=='object') return k; var l=_lang(); return (l==='en'?null:m[l])||m.en||k; }
+
 const IMGBASE = 'https://image.tmdb.org/t/p/';
 const EPOCH = Math.floor(Date.UTC(2026, 5, 23) / 86400000); // #1 = 2026-06-23
 const MAX_GUESSES = 6;
@@ -302,7 +343,7 @@ function drawBlurred(canvas, url, blurPx, zoom){
 function renderFrame(reveal){
   const f = frames[stage];
   document.getElementById('frame').innerHTML =
-    '<div class="frame-cap">' + (reveal ? 'Answer' : ('Frame · ' + (stage + 1) + ' / ' + MAX_GUESSES)) + '</div>' +
+    '<div class="frame-cap">' + (reveal ? T('answer') : (T('frame') + ' · ' + (stage + 1) + ' / ' + MAX_GUESSES)) + '</div>' +
     '<div class="frame-wrap"><canvas class="frame-img" id="frameCanvas" width="780" height="439"></canvas></div>';
   // On reveal, rack all the way to a crisp, full-frame image as the payoff.
   drawBlurred(document.getElementById('frameCanvas'), f.url, reveal ? 0 : f.blur, reveal ? 1 : f.zoom);
@@ -310,7 +351,7 @@ function renderFrame(reveal){
 function renderGuesses(){
   document.getElementById('guesses').innerHTML = results.map(r =>
     '<div class="grow"><span class="gico">' + (r === 'skip' ? '⏭️' : '❌') + '</span>' +
-    (r === 'skip' ? 'Skipped' : 'Wrong guess') + '</div>'
+    (r === 'skip' ? T('skipped') : T('wrongGuess')) + '</div>'
   ).join('');
 }
 
@@ -324,7 +365,7 @@ function advance(kind){
 function makeGuess(movie){
   if(finished) return;
   if(Media.sameTarget(movie, target)){ finish(true); return; }
-  toast('Not it - frame sharpened');
+  toast(T('notIt'));
   if(window.Fx) Fx.play(document.getElementById('guessInput'), 'fx-shake', 450);
   advance('wrong');
 }
@@ -358,13 +399,13 @@ function renderResult(streak){
     el.style.backgroundSize = 'cover'; el.style.backgroundPosition = 'center';
   }
   const verdict = solved
-    ? '<div class="result-verdict win">Solved in ' + (results.indexOf('win') + 1) + '!</div>'
-    : '<div class="result-verdict lose">Out of guesses</div>';
-  const bestPart = streak.best > streak.current ? ' · best <strong>' + streak.best + '</strong>' : '';
-  const streakLine = PRACTICE ? '' : '<div class="result-streak">🔥 Streak <strong>' + streak.current + '</strong>' + bestPart + '</div>';
+    ? '<div class="result-verdict win">' + T('solvedIn').replace('{n}', results.indexOf('win') + 1) + '</div>'
+    : '<div class="result-verdict lose">' + T('outOfGuesses') + '</div>';
+  const bestPart = streak.best > streak.current ? ' · ' + T('best') + ' <strong>' + streak.best + '</strong>' : '';
+  const streakLine = PRACTICE ? '' : '<div class="result-streak">🔥 ' + T('streak') + ' <strong>' + streak.current + '</strong>' + bestPart + '</div>';
   const actions = PRACTICE
-    ? '<button class="btn btn-gold" id="againBtn">New film</button><button class="btn" id="shareBtn">Share</button>'
-    : '<button class="btn btn-gold" id="shareBtn">Share</button><a class="btn" href="/" style="display:flex;align-items:center;justify-content:center;text-decoration:none">CineLinks</a>';
+    ? '<button class="btn btn-gold" id="againBtn">' + T('newFilm') + '</button><button class="btn" id="shareBtn">' + T('share') + '</button>'
+    : '<button class="btn btn-gold" id="shareBtn">' + T('share') + '</button><a class="btn" href="/" style="display:flex;align-items:center;justify-content:center;text-decoration:none">CineLinks</a>';
   el.innerHTML =
     (target.posterPath ? '<img class="result-poster" src="' + poster(target.posterPath, 'w342') + '" alt="">' : '') +
     verdict +
@@ -383,7 +424,7 @@ function renderResult(streak){
 
 function shareText(){
   const n = solved ? (results.indexOf('win') + 1) : 'X';
-  const head = PRACTICE ? '🎞️ CineFrame (Practice)' : ('🎞️ CineFrame #' + PUZZLE);
+  const head = PRACTICE ? ('🎞️ CineFrame (' + T('practice') + ')') : ('🎞️ CineFrame #' + PUZZLE);
   const st = (!PRACTICE && solved) ? loadStreak() : null;
   const streak = (st && st.current > 1) ? '  🔥' + st.current : '';
   return head + '  ' + n + '/' + MAX_GUESSES + streak + '\n' + emojiGrid() + '\nhttps://cinelinks.vercel.app/cineframe.html';
@@ -391,8 +432,8 @@ function shareText(){
 function share(){
   const text = shareText();
   if(navigator.share){ navigator.share({ text }).catch(()=>{}); return; }
-  if(navigator.clipboard){ navigator.clipboard.writeText(text).then(()=>toast('Copied to clipboard')).catch(()=>toast(text)); }
-  else toast('Copy: ' + text);
+  if(navigator.clipboard){ navigator.clipboard.writeText(text).then(()=>toast(T('copied'))).catch(()=>toast(text)); }
+  else toast(T('copyPrefix') + text);
 }
 
 // ── Streak + persistence ───────────────────────────────────────────────────
@@ -453,16 +494,29 @@ function pick(m){ closeSuggest(); const inp = document.getElementById('guessInpu
 function submitTyped(){
   if(activeIdx >= 0 && suggestItems[activeIdx]){ pick(suggestItems[activeIdx]); return; }
   if(suggestItems.length){ pick(suggestItems[0]); return; }
-  toast('Pick a film from the list');
+  toast(T('pickFromList'));
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
+function applyStaticI18n(){
+  var q = function(s){ return document.querySelector(s); };
+  var home = q('.cl-home'); if(home) home.setAttribute('aria-label', T('backToCineLinks'));
+  var load = document.getElementById('loading'); if(load) load.setAttribute('aria-label', T('loading'));
+  var sub = q('.subtitle'); if(sub) sub.textContent = T('subtitle');
+  var err = document.getElementById('error'); if(err) err.textContent = T('errLoad');
+  var inp = document.getElementById('guessInput'); if(inp) inp.setAttribute('placeholder', T('placeholder'));
+  var sk = document.getElementById('skipBtn'); if(sk) sk.textContent = T('skipFrame');
+  var gb = document.getElementById('guessBtn'); if(gb) gb.textContent = T('guess');
+  var ft = document.getElementById('footer');
+  if(ft) ft.innerHTML = T('footerData') + ' <a href="https://www.themoviedb.org/" target="_blank" rel="noopener">TMDB</a>. ' + T('footerNotEndorsed') + ' · <a href="/privacy.html" style="color:inherit">' + T('privacy') + '</a>';
+}
 function showError(){ document.getElementById('loading').style.display = 'none'; document.getElementById('error').style.display = 'block'; }
 
 async function init(){
-  document.getElementById('dateBadge').textContent = PRACTICE ? 'Practice' : ('Daily #' + PUZZLE);
+  applyStaticI18n();
+  document.getElementById('dateBadge').textContent = PRACTICE ? T('practice') : (T('dailyNum') + PUZZLE);
   const sw = document.getElementById('modeSwitch');
-  if(sw){ sw.textContent = PRACTICE ? 'Daily →' : 'Practice →'; sw.href = PRACTICE ? 'cineframe.html' : 'cineframe.html?practice=1'; }
+  if(sw){ sw.textContent = PRACTICE ? T('dailyArrow') : T('practiceArrow'); sw.href = PRACTICE ? 'cineframe.html' : 'cineframe.html?practice=1'; }
   let t;
   try{ t = await loadTarget(); }catch(e){ showError(); return; }
   target = { id: t.d.id, type: t.type, title: Media.title(t.d, t.type), year: Media.year(t.d, t.type), posterPath: t.d.poster_path, backdropPath: t.d.backdrop_path, genres: (t.d.genres || []).slice(0, 3).map(g => g.name).join(' · ') };
@@ -497,13 +551,13 @@ init();
 </script>
 <script>
 window.HOWTO = {
-  key: 'cineframe', title: 'How to play CineFrame', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="8.5" cy="8.5" r="1.8"/><path d="m21 15-5-5L5 21"/></svg>',
+  key: 'cineframe', title: T('howtoTitle'), icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="8.5" cy="8.5" r="1.8"/><path d="m21 15-5-5L5 21"/></svg>',
   steps: [
-    'Guess the day’s film from a tight, heavily-blurred crop of one frame.',
-    'Type to search and pick a title - you have <b>6 tries</b>.',
-    'Every wrong guess or skip <b>zooms out and sharpens</b> the frame a little more.',
-    'Early frames are obscure on purpose; the recognizable shots come later.',
-    'Fewer guesses = better. <b>Daily</b> keeps your streak; <b>Practice</b> is unlimited.'
+    T('howtoStep1'),
+    T('howtoStep2'),
+    T('howtoStep3'),
+    T('howtoStep4'),
+    T('howtoStep5')
   ],
   example: '<div class="ht-row" style="gap:8px">' +
       '<span style="display:inline-block;width:48px;height:32px;border-radius:6px;background:linear-gradient(135deg,#e8a000,#506a87);filter:blur(4px)"></span>' +
@@ -511,7 +565,7 @@ window.HOWTO = {
       '<span style="display:inline-block;width:48px;height:32px;border-radius:6px;background:linear-gradient(135deg,#e8a000,#506a87);filter:blur(2px)"></span>' +
       '<span class="ht-arrow">→</span>' +
       '<span style="display:inline-block;width:48px;height:32px;border-radius:6px;background:linear-gradient(135deg,#e8a000,#506a87)"></span>' +
-    '</div><p>The frame goes from blurry to sharp as your guesses run out.</p>'
+    '</div><p>' + T('howtoCaption') + '</p>'
 };
 </script>
 <script defer src="/ads.js"></script>

@@ -5,6 +5,27 @@
 // window.CINECLUE_POOL (the daily pool) and lib/media.js (movie/TV normalisation).
 (function () {
   'use strict';
+  // Self-contained i18n (i18n.js isn't loaded on game pages). Collapses es-ES/es-MX -> es.
+  function _lang(){ try{ var l=localStorage.getItem('clLang'); return (l&&/^[a-z]{2}-[A-Z]{2}$/.test(l))?l.slice(0,2):'en'; }catch(_){ return 'en'; } }
+  var GT_L = {
+    skippedClue:{en:'Skipped a clue',es:'Pista saltada',fr:'Indice pass\u00e9',de:'Hinweis \u00fcbersprungen',pt:'Dica pulada'},
+    wrongGuess:{en:'Wrong guess',es:'Fallo',fr:'Rat\u00e9',de:'Daneben',pt:'Errou'},
+    notIt:{en:'Not it: next clue revealed',es:'No es: nueva pista revelada',fr:'Non\u00a0: nouvel indice r\u00e9v\u00e9l\u00e9',de:'Falsch: neuer Hinweis',pt:'N\u00e3o \u00e9: nova dica revelada'},
+    solvedIn:{en:'Solved in {n}!',es:'Resuelto en {n}!',fr:'R\u00e9solu en {n}\u00a0!',de:'Gel\u00f6st in {n}!',pt:'Resolvido em {n}!'},
+    outOfGuesses:{en:'Out of guesses',es:'Sin intentos',fr:'Plus d\u2019essais',de:'Keine Versuche mehr',pt:'Sem tentativas'},
+    best:{en:'best',es:'mejor',fr:'record',de:'Bestwert',pt:'recorde'},
+    streakW:{en:'Streak',es:'Racha',fr:'S\u00e9rie',de:'Serie',pt:'Sequ\u00eancia'},
+    newTitle:{en:'New title',es:'Nuevo t\u00edtulo',fr:'Nouveau titre',de:'Neuer Titel',pt:'Novo t\u00edtulo'},
+    share:{en:'Share',es:'Compartir',fr:'Partager',de:'Teilen',pt:'Compartilhar'},
+    copied:{en:'Copied to clipboard',es:'Copiado al portapapeles',fr:'Copi\u00e9 dans le presse-papiers',de:'In die Zwischenablage kopiert',pt:'Copiado para a \u00e1rea de transfer\u00eancia'},
+    copyPrefix:{en:'Copy: ',es:'Copia: ',fr:'Copie\u00a0: ',de:'Kopieren: ',pt:'Copie: '},
+    pickTitle:{en:'Pick a title from the list',es:'Elige un t\u00edtulo de la lista',fr:'Choisis un titre dans la liste',de:'W\u00e4hle einen Titel aus der Liste',pt:'Escolhe um t\u00edtulo da lista'},
+    practice:{en:'Practice',es:'Pr\u00e1ctica',fr:'Entra\u00eenement',de:'\u00dcbung',pt:'Treino'},
+    dailyNum:{en:'Daily #',es:'Diario #',fr:'Quotidien #',de:'T\u00e4glich #',pt:'Di\u00e1rio #'},
+    dailyArrow:{en:'Daily \u2192',es:'Diario \u2192',fr:'Quotidien \u2192',de:'T\u00e4glich \u2192',pt:'Di\u00e1rio \u2192'},
+    practiceArrow:{en:'Practice \u2192',es:'Pr\u00e1ctica \u2192',fr:'Entra\u00eenement \u2192',de:'\u00dcbung \u2192',pt:'Treino \u2192'}
+  };
+  function GT(k){ var m=GT_L[k]; if(!m) return k; var l=_lang(); return (l==='en'?null:m[l])||m.en||k; }
   const CFG = window.CINE_GAME || {};
   const MODE = CFG.mode || 'clue';
   const SALT = CFG.salt | 0;
@@ -239,7 +260,7 @@
     const el = document.getElementById('guesses');
     el.innerHTML = results.filter(r => r !== 'win').map(r =>
       '<div class="grow wrong"><span class="gico">' + (r === 'skip' ? '⏭️' : '❌') + '</span>' +
-      (r === 'skip' ? 'Skipped a clue' : 'Wrong guess') + '</div>'
+      (r === 'skip' ? GT('skippedClue') : GT('wrongGuess')) + '</div>'
     ).join('');
   }
 
@@ -252,7 +273,7 @@
   function makeGuess(movie) {
     if (finished) return;
     if (Media.sameTarget(movie, target)) { finish(true); return; }
-    toast('Not it — next clue revealed');
+    toast(GT('notIt'));
     if (window.Fx) Fx.play(document.getElementById('guessInput'), 'fx-shake', 450);
     advance('wrong');
   }
@@ -286,12 +307,12 @@
       el.style.backgroundPosition = 'center';
     }
     const verdict = solved
-      ? '<div class="result-verdict win">Solved in ' + (results.indexOf('win') + 1) + '!</div>'
-      : '<div class="result-verdict lose">Out of guesses</div>';
-    const bestPart = streak.best > streak.current ? ' · best <strong>' + streak.best + '</strong>' : '';
-    const streakLine = PRACTICE ? '' : '<div class="result-streak">🔥 Streak <strong>' + streak.current + '</strong>' + bestPart + '</div>';
+      ? '<div class="result-verdict win">' + GT('solvedIn').replace('{n}', (results.indexOf('win') + 1)) + '</div>'
+      : '<div class="result-verdict lose">' + GT('outOfGuesses') + '</div>';
+    const bestPart = streak.best > streak.current ? ' · ' + GT('best') + ' <strong>' + streak.best + '</strong>' : '';
+    const streakLine = PRACTICE ? '' : '<div class="result-streak">🔥 ' + GT('streakW') + ' <strong>' + streak.current + '</strong>' + bestPart + '</div>';
     const actions = PRACTICE
-      ? '<button class="btn btn-gold" id="againBtn">New title</button><button class="btn" id="shareBtn">Share</button>'
+      ? '<button class="btn btn-gold" id="againBtn">' + GT('newTitle') + '</button><button class="btn" id="shareBtn">' + GT('share') + '</button>'
       : '<button class="btn btn-gold" id="shareBtn">Share</button><a class="btn" href="/" style="display:flex;align-items:center;justify-content:center;text-decoration:none">CineLinks</a>';
     el.innerHTML =
       (target.posterPath ? '<img class="result-poster" src="' + poster(target.posterPath, 'w342') + '" alt="">' : '') +
@@ -323,8 +344,8 @@
   function share() {
     const text = shareText();
     if (navigator.share) { navigator.share({ text }).catch(() => {}); return; }
-    if (navigator.clipboard) { navigator.clipboard.writeText(text).then(() => toast('Copied to clipboard')).catch(() => toast(text)); }
-    else toast('Copy: ' + text);
+    if (navigator.clipboard) { navigator.clipboard.writeText(text).then(() => toast(GT('copied'))).catch(() => toast(text)); }
+    else toast(GT('copyPrefix') + text);
   }
 
   function loadStreak() { try { const s = JSON.parse(localStorage.getItem(STREAK_KEY)); if (s) return { current: s.current | 0, best: s.best | 0, last: s.last | 0 }; } catch (_) {} return { current: 0, best: 0, last: 0 }; }
@@ -386,16 +407,16 @@
   function submitTyped() {
     if (activeIdx >= 0 && suggestItems[activeIdx]) { pick(suggestItems[activeIdx]); return; }
     if (suggestItems.length) { pick(suggestItems[0]); return; }
-    toast('Pick a title from the list');
+    toast(GT('pickTitle'));
   }
   function highlight() { document.querySelectorAll('.suggest-item').forEach((n, i) => n.classList.toggle('active', i === activeIdx)); }
 
   function showError() { document.getElementById('loading').style.display = 'none'; document.getElementById('error').style.display = 'block'; }
 
   async function init() {
-    document.getElementById('dateBadge').textContent = PRACTICE ? 'Practice' : ('Daily #' + PUZZLE);
+    document.getElementById('dateBadge').textContent = PRACTICE ? GT('practice') : (GT('dailyNum') + PUZZLE);
     const sw = document.getElementById('modeSwitch');
-    if (sw) { sw.textContent = PRACTICE ? 'Daily →' : 'Practice →'; sw.href = PRACTICE ? PAGE : (PAGE + '?practice=1'); }
+    if (sw) { sw.textContent = PRACTICE ? GT('dailyArrow') : GT('practiceArrow'); sw.href = PRACTICE ? PAGE : (PAGE + '?practice=1'); }
     let t;
     try { t = await loadTarget(); } catch (e) { showError(); return; }
     target = { id: t.d.id, type: t.type, title: Media.title(t.d, t.type), year: Media.year(t.d, t.type), posterPath: t.d.poster_path, backdropPath: t.d.backdrop_path, genres: (t.d.genres || []).slice(0, 3).map(g => g.name).join(' · ') };

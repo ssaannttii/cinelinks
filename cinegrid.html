@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CineGrid — Fill the cast grid</title>
+<title>CineGrid: Fill the cast grid</title>
 <meta name="description" content="A daily 3×3 film grid: name a movie that pairs each actor with each other. Instant reveal, build a streak, chase the perfect grid.">
 <meta name="theme-color" content="#0d0d0d">
 <link rel="icon" type="image/png" href="/logo.png">
@@ -154,6 +154,51 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 <script src="/fx.js"></script>
 <script>
 (function(){
+  // --- i18n (self-contained; i18n.js isn't loaded on game pages) ---
+  function _lang(){ try{ var l=localStorage.getItem('clLang'); return (l&&/^[a-z]{2}-[A-Z]{2}$/.test(l))?l.slice(0,2):'en'; }catch(_){ return 'en'; } }
+  var L = {
+    tag:          { en:'Name a film that pairs each actor', es:'Nombra una película que una a cada actor', fr:'Nommez un film qui réunit chaque acteur', de:'Nenne einen Film, der jedes Schauspielerpaar verbindet', pt:'Diga um filme que une cada ator' },
+    titleTag:     { en:'Fill the cast grid', es:'Completa la cuadrícula de reparto', fr:'Complétez la grille du casting', de:'Fülle das Besetzungsgitter', pt:'Complete a grade do elenco' },
+    daily:        { en:'Daily', es:'Diario', fr:'Quotidien', de:'Täglich', pt:'Diário' },
+    practice:     { en:'Practice', es:'Práctica', fr:'Entraînement', de:'Übung', pt:'Treino' },
+    correct:      { en:'Correct', es:'Correctas', fr:'Correct', de:'Richtig', pt:'Corretas' },
+    lives:        { en:'Lives', es:'Vidas', fr:'Vies', de:'Leben', pt:'Vidas' },
+    perRow:       { en:'Per row', es:'Por fila', fr:'Par ligne', de:'Pro Reihe', pt:'Por linha' },
+    tapHint:      { en:'Tap a square, name a film both actors are in.', es:'Toca una casilla y nombra una película en la que salgan ambos actores.', fr:'Touchez une case et nommez un film où jouent les deux acteurs.', de:'Tippe ein Feld an und nenne einen Film mit beiden Schauspielern.', pt:'Toque em um quadrado e diga um filme com os dois atores.' },
+    streak:       { en:'streak', es:'racha', fr:'série', de:'Serie', pt:'sequência' },
+    namePrompt:   { en:'Name a film', es:'Nombra una película', fr:'Nommez un film', de:'Nenne einen Film', pt:'Diga um filme' },
+    searchPh:     { en:'Search any movie…', es:'Busca cualquier película…', fr:'Cherchez un film…', de:'Suche einen Film…', pt:'Busque qualquer filme…' },
+    showOptions:  { en:'Stuck? Show options', es:'¿Atascado? Ver opciones', fr:'Bloqué ? Voir les options', de:'Feststecken? Optionen zeigen', pt:'Travou? Ver opções' },
+    cancel:       { en:'Cancel', es:'Cancelar', fr:'Annuler', de:'Abbrechen', pt:'Cancelar' },
+    loadingOptions:{ en:'Loading options…', es:'Cargando opciones…', fr:'Chargement des options…', de:'Optionen werden geladen…', pt:'Carregando opções…' },
+    onlyOne:      { en:'Only ONE of these has both actors, pick it.', es:'Solo UNA de estas tiene a los dos actores, elígela.', fr:'Un SEUL de ces films réunit les deux acteurs, choisissez-le.', de:'Nur EINER davon hat beide Schauspieler, wähle ihn.', pt:'Apenas UM destes tem os dois atores, escolha-o.' },
+    noShared:     { en:'Hmm, no easy shared title, try searching.', es:'Mmm, no hay un título compartido fácil, prueba a buscar.', fr:'Hmm, pas de titre commun évident, essayez de chercher.', de:'Hmm, kein einfacher gemeinsamer Titel, versuche zu suchen.', pt:'Hmm, nenhum título em comum fácil, tente buscar.' },
+    loadFail:     { en:'Couldn’t load options, try again.', es:'No se pudieron cargar las opciones, inténtalo de nuevo.', fr:'Impossible de charger les options, réessayez.', de:'Optionen konnten nicht geladen werden, versuche es erneut.', pt:'Não foi possível carregar as opções, tente novamente.' },
+    deepCut:      { en:'Deep cut!', es:'¡Joya oculta!', fr:'Pépite !', de:'Geheimtipp!', pt:'Pérola rara!' },
+    nicePull:     { en:'Nice pull', es:'¡Buen tiro!', fr:'Bien vu !', de:'Gut gezogen!', pt:'Boa escolha!' },
+    notMatch:     { en:'Not a match', es:'No coincide', fr:'Pas de match', de:'Kein Treffer', pt:'Não combina' },
+    perfectGrid:  { en:'Perfect grid!', es:'¡Cuadrícula perfecta!', fr:'Grille parfaite !', de:'Perfektes Gitter!', pt:'Grade perfeita!' },
+    solid:        { en:'Solid!', es:'¡Bien!', fr:'Solide !', de:'Stark!', pt:'Mandou bem!' },
+    close:        { en:'close', es:'cerca', fr:'presque', de:'knapp', pt:'quase' },
+    everySquare:  { en:'Every square. Flawless.', es:'Todas las casillas. Impecable.', fr:'Chaque case. Sans faute.', de:'Jedes Feld. Makellos.', pt:'Todos os quadrados. Impecável.' },
+    niceWork:     { en:'Nice work, replay to chase 9/9.', es:'Buen trabajo, repite para buscar el 9/9.', fr:'Beau travail, rejouez pour viser le 9/9.', de:'Gut gemacht, spiele nochmal für 9/9.', pt:'Bom trabalho, jogue de novo para buscar o 9/9.' },
+    toughBoard:   { en:'Tough board, give Practice a spin.', es:'Tablero difícil, prueba el modo Práctica.', fr:'Grille difficile, essayez l’Entraînement.', de:'Schwieriges Brett, probier die Übung aus.', pt:'Grade difícil, experimente o Treino.' },
+    bestStreak:   { en:'best streak', es:'mejor racha', fr:'meilleure série', de:'beste Serie', pt:'melhor sequência' },
+    rarity:       { en:'rarity', es:'rareza', fr:'rareté', de:'Seltenheit', pt:'raridade' },
+    share:        { en:'Share', es:'Compartir', fr:'Partager', de:'Teilen', pt:'Compartilhar' },
+    practiceGrid: { en:'Practice grid', es:'Cuadrícula de práctica', fr:'Grille d’entraînement', de:'Übungsgitter', pt:'Grade de treino' },
+    newGrid:      { en:'New grid', es:'Nueva cuadrícula', fr:'Nouvelle grille', de:'Neues Gitter', pt:'Nova grade' },
+    copied:       { en:'Copied ✓', es:'Copiado ✓', fr:'Copié ✓', de:'Kopiert ✓', pt:'Copiado ✓' },
+    toggleSound:  { en:'Toggle sound', es:'Activar/silenciar sonido', fr:'Activer/couper le son', de:'Ton umschalten', pt:'Ativar/desativar som' },
+    soundTitle:   { en:'Sound', es:'Sonido', fr:'Son', de:'Ton', pt:'Som' },
+    backTo:       { en:'Back to', es:'Volver a', fr:'Retour à', de:'Zurück zu', pt:'Voltar a' },
+    buildingGrid: { en:'Building grid', es:'Construyendo la cuadrícula', fr:'Construction de la grille', de:'Gitter wird erstellt', pt:'Montando a grade' },
+    errorPrefix:  { en:'Error: ', es:'Error: ', fr:'Erreur : ', de:'Fehler: ', pt:'Erro: ' },
+    footPre:      { en:'Posters & data from', es:'Pósters y datos de', fr:'Affiches et données de', de:'Poster und Daten von', pt:'Pôsteres e dados de' },
+    footPart:     { en:'part of', es:'parte de', fr:'fait partie de', de:'Teil von', pt:'parte de' }
+  };
+  function T(k){ var m=L[k]; if(!m||typeof m!=='object') return k; var l=_lang(); return (l==='en'?null:m[l])||m.en||k; }
+
   const IMG='https://image.tmdb.org/t/p/';
   const LIVES=5; // wrong guesses you can afford before the grid ends
   // Generation pool: well-connected leads. Grids are built live from a 3×3 biclique
@@ -165,7 +210,23 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 
   const stage=document.getElementById('stage');
   const isDaily=!/[?&]practice=1/.test(location.search);
-  document.getElementById('modeLbl').textContent=isDaily?'Daily':'Practice';
+  document.getElementById('modeLbl').textContent=isDaily?T('daily'):T('practice');
+  // static DOM copy (elements exist above this script in the body)
+  (function applyStaticI18n(){
+    try{
+      document.title='CineGrid: '+T('titleTag');
+      var q=function(s){return document.querySelector(s);};
+      var tagEl=q('.tag'); if(tagEl)tagEl.textContent=T('tag');
+      var home=q('.cl-home'); if(home)home.setAttribute('aria-label',T('backTo')+' CineLinks');
+      var snd=document.getElementById('sndBtn'); if(snd){ snd.setAttribute('aria-label',T('toggleSound')); snd.setAttribute('title',T('soundTitle')); }
+      var load=q('#stage .loading'); if(load)load.setAttribute('aria-label',T('buildingGrid'));
+      var h3=q('#modal .sheet h3'); if(h3)h3.textContent=T('namePrompt');
+      var mi=document.getElementById('mInput'); if(mi)mi.setAttribute('placeholder',T('searchPh'));
+      var mh=document.getElementById('mHint'); if(mh)mh.textContent='💡 '+T('showOptions');
+      var mc=document.getElementById('mClose'); if(mc)mc.textContent=T('cancel');
+      var foot=q('.foot'); if(foot)foot.innerHTML=T('footPre')+' TMDB · '+T('footPart')+' <a href="/">CineLinks</a>';
+    }catch(_){}
+  })();
   function api(p){return fetch('/api/tmdb?path='+p+'&language=en-US').then(r=>r.json());}
   function utcDay(){const n=new Date();return Math.floor(Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),n.getUTCDate())/864e5);}
   function loadState(){try{return JSON.parse(localStorage.getItem('cinegridState'));}catch(_){return null;}}
@@ -215,12 +276,12 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     const cc=correctCount();
     let hearts=''; for(let i=0;i<LIVES;i++){ hearts+='<span class="hp'+(i>=livesLeft?' gone':'')+'" data-h="'+i+'">❤️</span>'; }
     let html='<div class="bar">'+
-      '<span class="seg">Correct <b>'+cc+'/9</b></span>'+
-      '<span class="seg">Lives <span class="lives" id="lives">'+hearts+'</span></span>'+
+      '<span class="seg">'+T('correct')+' <b>'+cc+'/9</b></span>'+
+      '<span class="seg">'+T('lives')+' <span class="lives" id="lives">'+hearts+'</span></span>'+
       '</div>';
     html+='<div class="prog'+(cc===9?' win':'')+'"><i style="width:'+(cc/9*100)+'%"></i></div>';
-    html+='<div class="rowfb">'+(rowFb?('Per row — '+rowFb.join(' · ')):(!over?'Tap a square, name a film both actors are in.':''))+
-      ' <span class="combo'+(combo>=2&&!over?' show':'')+'" id="combo">🔥 '+combo+' streak</span></div>';
+    html+='<div class="rowfb">'+(rowFb?(T('perRow')+': '+rowFb.join(' · ')):(!over?T('tapHint'):''))+
+      ' <span class="combo'+(combo>=2&&!over?' show':'')+'" id="combo">🔥 '+combo+' '+T('streak')+'</span></div>';
     html+='<div class="grid">';
     html+='<div class="corner"></div>';
     GRID[1].forEach(function(id){ html+='<div class="hdr col"><img src="'+face(id)+'" alt=""><span class="hn">'+NAMES[id]+'</span></div>'; });
@@ -285,7 +346,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
   // Hint: a few options where ONLY ONE pairs both actors; the rest have just one of them.
   function hint(){
     if(openIdx<0) return; sfx('tap');
-    const p=cellPair(openIdx); mFeed.textContent='Loading options…';
+    const p=cellPair(openIdx); mFeed.textContent=T('loadingOptions');
     const tried=triedByCell[openIdx]||new Set();
     Promise.all([api('person/'+p.rid+'/combined_credits'),api('person/'+p.cid+'/combined_credits')]).then(function(a){
       const A=(a[0].cast||[]).filter(function(c){return c.media_type==='movie'&&c.poster_path&&(c.vote_count||0)>=300&&!tried.has(c.id);});
@@ -300,9 +361,9 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
       sample(onlyA,3).forEach(function(o){opts.push(o);}); // decoys → less of a giveaway
       sample(onlyB,3).forEach(function(o){opts.push(o);});
       const seen=new Set(); const final=opts.filter(function(o){ if(!o||seen.has(o.id))return false; seen.add(o.id); return true; }).sort(function(){return Math.random()-0.5;});
-      mFeed.textContent=shared.length?'Only ONE of these has both actors — pick it.':'Hmm, no easy shared title — try searching.';
+      mFeed.textContent=shared.length?T('onlyOne'):T('noShared');
       mResults.innerHTML=rowItems(final); wireItems();
-    }).catch(function(){ mFeed.textContent='Couldn’t load options, try again.'; });
+    }).catch(function(){ mFeed.textContent=T('loadFail'); });
   }
 
   function creditsOf(mid){ return creditsCache[mid] ? Promise.resolve(creditsCache[mid]) : api('movie/'+mid+'/credits').then(function(cr){ const s=new Set((cr.cast||[]).map(function(c){return c.id;})); creditsCache[mid]=s; return s; }); }
@@ -323,8 +384,8 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
       const tier=rareTier(d.v);
       flashCells[idx]='bounce'; render();
       const el=stage.querySelector('.cell[data-i="'+idx+'"]');
-      if(tier==='elite'){ sfx('reveal','elite'); if(window.Fx)Fx.burstFrom(el,{count:30,power:.9}); floatOff(idx,'💎 Deep cut!','gold'); }
-      else if(tier==='rare'){ sfx('reveal','rare'); floatOff(idx,'✨ Nice pull','gold'); }
+      if(tier==='elite'){ sfx('reveal','elite'); if(window.Fx)Fx.burstFrom(el,{count:30,power:.9}); floatOff(idx,'💎 '+T('deepCut'),'gold'); }
+      else if(tier==='rare'){ sfx('reveal','rare'); floatOff(idx,'✨ '+T('nicePull'),'gold'); }
       else if(combo>=2){ sfx('streak',combo); floatOff(idx,'🔥 '+combo+'!','green'); }
       else { sfx('goalReach'); }
       haptic(combo>=3?[10,20,10]:14);
@@ -336,7 +397,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
       const wasLives=livesLeft; livesLeft--; combo=0;
       flashCells[idx]='shake'; sfx('deadEnd'); haptic([14,40,14]); render();
       const hp=stage.querySelector('.hp[data-h="'+(wasLives-1)+'"]'); if(hp&&window.Fx)Fx.play(hp,'lose',500);
-      floatOff(idx,'✕ Not a match','');
+      floatOff(idx,'✕ '+T('notMatch'),'');
       await wait(720);
       cells[idx]=null; rowFb=rowFeedback();
       if(livesLeft<=0){ finish(false); busy=false; return; }
@@ -387,16 +448,16 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     const win=filled===9;
     const dayN=utcDay()-Math.floor(Date.UTC(2026,0,1)/864e5);
     let sq=''; for(let i=0;i<9;i++){ sq+=(cells[i]&&cells[i].status==='correct')?'🟩':'⬛'; if(i%3===2&&i<8)sq+='\n'; }
-    const headline=win?'Perfect grid! 🎯':(filled>=6?'Solid! '+filled+'/9':(filled>=3?filled+'/9 — close':filled+'/9'));
-    const shareText='🎬 CineGrid'+(isDaily?' #'+dayN:'')+'\n'+sq+'\n'+filled+'/9'+(bestCombo>=2?' · 🔥'+bestCombo+' streak':'')+' · rarity '+rar+'\nhttps://cinelinks.vercel.app/cinegrid.html';
+    const headline=win?(T('perfectGrid')+' 🎯'):(filled>=6?T('solid')+' '+filled+'/9':(filled>=3?filled+'/9, '+T('close'):filled+'/9'));
+    const shareText='🎬 CineGrid'+(isDaily?' #'+dayN:'')+'\n'+sq+'\n'+filled+'/9'+(bestCombo>=2?' · 🔥'+bestCombo+' '+T('streak'):'')+' · '+T('rarity')+' '+rar+'\nhttps://cinelinks.vercel.app/cinegrid.html';
     document.getElementById('result').innerHTML=
       '<h2 class="'+(win?'win':'')+'">'+headline+'</h2>'+
-      '<div class="sub">'+(win?'Every square. Flawless.':(filled?'Nice work — replay to chase 9/9.':'Tough board — give Practice a spin.'))+'</div>'+
-      '<div class="stats"><div class="stat"><b id="rsFilled">0/9</b>correct</div><div class="stat"><b id="rsBest">0</b>best streak</div><div class="stat"><b id="rsRar">0</b>rarity</div></div>'+
-      '<div class="row-btns"><button class="btn" id="shareBtn">Share</button><button class="btn gold" id="again">'+(isDaily?'Practice grid':'New grid')+'</button></div>';
+      '<div class="sub">'+(win?T('everySquare'):(filled?T('niceWork'):T('toughBoard')))+'</div>'+
+      '<div class="stats"><div class="stat"><b id="rsFilled">0/9</b>'+T('correct')+'</div><div class="stat"><b id="rsBest">0</b>'+T('bestStreak')+'</div><div class="stat"><b id="rsRar">0</b>'+T('rarity')+'</div></div>'+
+      '<div class="row-btns"><button class="btn" id="shareBtn">'+T('share')+'</button><button class="btn gold" id="again">'+(isDaily?T('practiceGrid'):T('newGrid'))+'</button></div>';
     if(window.Fx&&Fx.countUp){ Fx.countUp(document.getElementById('rsFilled'),filled,{suffix:'/9',ms:650}); Fx.countUp(document.getElementById('rsBest'),bestCombo,{ms:700}); Fx.countUp(document.getElementById('rsRar'),rar,{ms:850}); }
     document.getElementById('again').onclick=function(){ sfx('tap'); location.href='/cinegrid.html'+(isDaily?'?practice=1':'?practice=1&r='+Date.now()); };
-    document.getElementById('shareBtn').onclick=function(){ sfx('tap'); if(navigator.share){navigator.share({text:shareText}).catch(function(){});} else { try{navigator.clipboard.writeText(shareText);}catch(_){ } const b=document.getElementById('shareBtn'); b.textContent='Copied ✓'; } };
+    document.getElementById('shareBtn').onclick=function(){ sfx('tap'); if(navigator.share){navigator.share({text:shareText}).catch(function(){});} else { try{navigator.clipboard.writeText(shareText);}catch(_){ } const b=document.getElementById('shareBtn'); b.textContent=T('copied'); } };
   }
 
   // ── sound toggle ──
@@ -417,7 +478,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
       cells=[null,null,null,null,null,null,null,null,null];
       await loadPhotos();
       render();
-    }catch(e){ stage.innerHTML='<div class="loading">Error: '+e.message+'</div>'; }
+    }catch(e){ stage.innerHTML='<div class="loading">'+T('errorPrefix')+e.message+'</div>'; }
   })();
   async function loadPhotos(){ const ids=[].concat(GRID[0],GRID[1]); await Promise.all(ids.map(function(id){ return api('person/'+id).then(function(d){ photos[id]=d.profile_path; }).catch(function(){}); })); }
 })();

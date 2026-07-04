@@ -145,7 +145,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     <div class="result hidden" id="result"></div>
   </div>
 
-  <div class="footer">
+  <div class="footer" id="footerText">
     Data &amp; images by <a href="https://www.themoviedb.org/" target="_blank" rel="noopener">TMDB</a>. Not endorsed by TMDB. · <a href="/privacy.html" style="color:inherit">Privacy</a>
   </div>
 </div>
@@ -162,6 +162,50 @@ const IMGBASE = 'https://image.tmdb.org/t/p/';
 const EPOCH = Math.floor(Date.UTC(2026, 5, 23) / 86400000);
 const DECK = 11;   // 1 anchor + 10 to place
 const PASS = 6;    // daily counts toward your streak at 6/10 or better
+
+// --- i18n (self-contained; i18n.js isn't loaded on game pages) ---
+function _lang(){ try{ var l=localStorage.getItem('clLang'); return (l&&/^[a-z]{2}-[A-Z]{2}$/.test(l))?l.slice(0,2):'en'; }catch(_){ return 'en'; } }
+var L = {
+  subtitle:     { en:'Place each film on the timeline by its release year.', es:'Coloca cada película en la línea de tiempo por su año de estreno.', fr:'Placez chaque film sur la frise chronologique selon son année de sortie.', de:'Ordne jeden Film nach seinem Erscheinungsjahr auf dem Zeitstrahl ein.', pt:'Coloque cada filme na linha do tempo pelo seu ano de lançamento.' },
+  loadingAria:  { en:'Dealing deck', es:'Repartiendo baraja', fr:'Distribution du paquet', de:'Deck wird ausgeteilt', pt:'Distribuindo o baralho' },
+  errorText:    { en:"Couldn't load today's deck. Please try again later.", es:'No se pudo cargar la baraja de hoy. Inténtalo de nuevo más tarde.', fr:'Impossible de charger le paquet du jour. Réessayez plus tard.', de:'Das heutige Deck konnte nicht geladen werden. Bitte versuche es später erneut.', pt:'Não foi possível carregar o baralho de hoje. Tente novamente mais tarde.' },
+  tlHint:       { en:'Tap the line where the film belongs', es:'Toca la línea donde va la película', fr:'Touchez la ligne où le film doit aller', de:'Tippe auf die Stelle, wo der Film hingehört', pt:'Toque na linha onde o filme se encaixa' },
+  older:        { en:'Older', es:'Más antigua', fr:'Plus ancien', de:'Älter', pt:'Mais antigo' },
+  newer:        { en:'Newer', es:'Más reciente', fr:'Plus récent', de:'Neuer', pt:'Mais recente' },
+  olderAria:    { en:'place as the oldest', es:'colocar como la más antigua', fr:'placer comme le plus ancien', de:'als ältesten einordnen', pt:'colocar como o mais antigo' },
+  newerAria:    { en:'place as the newest', es:'colocar como la más reciente', fr:'placer comme le plus récent', de:'als neuesten einordnen', pt:'colocar como o mais recente' },
+  backTo:       { en:'Back to CineLinks', es:'Volver a CineLinks', fr:'Retour à CineLinks', de:'Zurück zu CineLinks', pt:'Voltar para CineLinks' },
+  finalScore:   { en:'Final score', es:'Puntuación final', fr:'Score final', de:'Endstand', pt:'Pontuação final' },
+  placed:       { en:'Placed', es:'Colocadas', fr:'Placés', de:'Platziert', pt:'Colocados' },
+  placeHere:    { en:'place here', es:'colocar aquí', fr:'placer ici', de:'hier einordnen', pt:'colocar aqui' },
+  film:         { en:'Film', es:'Película', fr:'Film', de:'Film', pt:'Filme' },
+  of:           { en:'of', es:'de', fr:'sur', de:'von', pt:'de' },
+  whenReleased: { en:'When was it released?', es:'¿En qué año se estrenó?', fr:'En quelle année est-il sorti ?', de:'Wann ist er erschienen?', pt:'Em que ano foi lançado?' },
+  verdictFlawless: { en:'Flawless!', es:'¡Impecable!', fr:'Sans faute !', de:'Makellos!', pt:'Impecável!' },
+  verdictNice:  { en:'Nicely placed!', es:'¡Bien colocado!', fr:'Bien joué !', de:'Gut platziert!', pt:'Bem colocado!' },
+  verdictTough: { en:'Tough deck', es:'Baraja difícil', fr:'Paquet coriace', de:'Schwieriges Deck', pt:'Baralho difícil' },
+  best:         { en:'best', es:'mejor', fr:'record', de:'Bestwert', pt:'recorde' },
+  streak:       { en:'Streak', es:'Racha', fr:'Série', de:'Serie', pt:'Sequência' },
+  newDeck:      { en:'New deck', es:'Nueva baraja', fr:'Nouveau paquet', de:'Neues Deck', pt:'Novo baralho' },
+  share:        { en:'Share', es:'Compartir', fr:'Partager', de:'Teilen', pt:'Compartilhar' },
+  practiceWord: { en:'Practice', es:'Práctica', fr:'Entraînement', de:'Übung', pt:'Treino' },
+  dailyHash:    { en:'Daily #', es:'Diario #', fr:'Quotidien #', de:'Täglich #', pt:'Diário #' },
+  dailyArrow:   { en:'Daily →', es:'Diario →', fr:'Quotidien →', de:'Täglich →', pt:'Diário →' },
+  practiceArrow:{ en:'Practice →', es:'Práctica →', fr:'Entraînement →', de:'Übung →', pt:'Treino →' },
+  copied:       { en:'Copied to clipboard', es:'Copiado al portapapeles', fr:'Copié dans le presse-papiers', de:'In die Zwischenablage kopiert', pt:'Copiado para a área de transferência' },
+  copyPrefix:   { en:'Copy: ', es:'Copia: ', fr:'Copier : ', de:'Kopieren: ', pt:'Copiar: ' },
+  howtoTitle:   { en:'How to play CineLine', es:'Cómo jugar a CineLine', fr:'Comment jouer à CineLine', de:'So spielst du CineLine', pt:'Como jogar CineLine' },
+  htStep1:      { en:'Each film appears with its <b>release year hidden</b>.', es:'Cada película aparece con su <b>año de estreno oculto</b>.', fr:'Chaque film apparaît avec son <b>année de sortie masquée</b>.', de:'Jeder Film erscheint mit <b>verstecktem Erscheinungsjahr</b>.', pt:'Cada filme aparece com seu <b>ano de lançamento oculto</b>.' },
+  htStep2:      { en:'Tap the <b>gap</b> where it belongs: older films near the top, newer near the bottom.', es:'Toca el <b>hueco</b> donde encaja: las películas antiguas arriba, las nuevas abajo.', fr:'Touchez l’<b>espace</b> où il doit aller : les films anciens en haut, les récents en bas.', de:'Tippe auf die <b>Lücke</b>, wo er hingehört: ältere Filme oben, neuere unten.', pt:'Toque no <b>espaço</b> onde ele se encaixa: filmes antigos no topo, novos embaixo.' },
+  htStep3:      { en:'Right spot turns green; a wrong one drops into its correct place in red, and either way you move on.', es:'El acierto se pone verde; un fallo cae en su lugar correcto en rojo, y en ambos casos sigues adelante.', fr:'Le bon emplacement devient vert ; une erreur tombe à sa vraie place en rouge, et dans les deux cas vous continuez.', de:'Die richtige Stelle wird grün; eine falsche rutscht rot an ihren richtigen Platz, und so oder so geht es weiter.', pt:'O acerto fica verde; um erro cai no lugar certo em vermelho, e de qualquer forma você segue em frente.' },
+  htStep4:      { en:'Place all 10. Your score is how many you nailed; <b>6/10+</b> keeps your daily streak.', es:'Coloca las 10. Tu puntuación es cuántas acertaste; <b>6/10+</b> mantiene tu racha diaria.', fr:'Placez les 10. Votre score est le nombre de bonnes réponses ; <b>6/10+</b> conserve votre série quotidienne.', de:'Ordne alle 10 ein. Dein Ergebnis ist, wie viele du getroffen hast; <b>6/10+</b> hält deine tägliche Serie.', pt:'Coloque os 10. Sua pontuação é quantos você acertou; <b>6/10+</b> mantém sua sequência diária.' },
+  htStep5:      { en:'<b>Daily</b> is one shared deck a day; <b>Practice</b> deals a random one.', es:'El <b>Diario</b> es una baraja compartida al día; la <b>Práctica</b> reparte una al azar.', fr:'Le <b>Quotidien</b> est un paquet partagé par jour ; l’<b>Entraînement</b> en distribue un au hasard.', de:'Das <b>Tägliche</b> ist ein geteiltes Deck pro Tag; die <b>Übung</b> teilt ein zufälliges aus.', pt:'O <b>Diário</b> é um baralho compartilhado por dia; o <b>Treino</b> reparte um aleatório.' },
+  htExample:    { en:'Drop the mystery film into the right gap by year.', es:'Suelta la película misteriosa en el hueco correcto según el año.', fr:'Déposez le film mystère dans le bon espace selon l’année.', de:'Lege den Rätselfilm nach Jahr in die richtige Lücke.', pt:'Solte o filme misterioso no espaço certo pelo ano.' },
+  dataBy:       { en:'Data & images by', es:'Datos e imágenes de', fr:'Données et images par', de:'Daten und Bilder von', pt:'Dados e imagens por' },
+  notEndorsed:  { en:'Not endorsed by TMDB.', es:'No respaldado por TMDB.', fr:'Non approuvé par TMDB.', de:'Nicht von TMDB unterstützt.', pt:'Não endossado pela TMDB.' },
+  privacy:      { en:'Privacy', es:'Privacidad', fr:'Confidentialité', de:'Datenschutz', pt:'Privacidade' }
+};
+function T(k){ var m=L[k]; if(!m||typeof m!=='object') return k; var l=_lang(); return (l==='en'?null:m[l])||m.en||k; }
 
 function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function api(path){ return fetch('/api/tmdb?path=' + path).then(r => r.json()); }
@@ -219,10 +263,10 @@ function renderProgress(){
   const placedCount = Math.min(pendingIdx - 1, total);
   if(finished){
     const already = renderProgress._c; renderProgress._c = true;       // count up once
-    document.getElementById('progress').innerHTML = 'Final score <b id="lineScore">' + (already ? score : 0) + ' / ' + total + '</b>';
+    document.getElementById('progress').innerHTML = T('finalScore') + ' <b id="lineScore">' + (already ? score : 0) + ' / ' + total + '</b>';
     if(!already && window.Fx && Fx.countUp) Fx.countUp(document.getElementById('lineScore'), score, { suffix: ' / ' + total, ms: 700 });
   } else {
-    document.getElementById('progress').innerHTML = 'Placed <b>' + placedCount + ' / ' + total + '</b>';
+    document.getElementById('progress').innerHTML = T('placed') + ' <b>' + placedCount + ' / ' + total + '</b>';
   }
 }
 
@@ -230,7 +274,7 @@ function renderTimeline(){
   const sorted = sortedPlaced(); // oldest → newest (top → bottom)
   let h = '';
   for(let i = 0; i <= sorted.length; i++){
-    h += '<button class="tl-slot' + (finished ? ' done' : '') + '" data-slot="' + i + '"' + (finished ? ' disabled' : '') + ' aria-label="place here">place here</button>';
+    h += '<button class="tl-slot' + (finished ? ' done' : '') + '" data-slot="' + i + '"' + (finished ? ' disabled' : '') + ' aria-label="' + T('placeHere') + '">' + T('placeHere') + '</button>';
     if(i < sorted.length){
       const c = sorted[i];
       const flash = (c === lastPlaced) ? (c._res === 'correct' ? ' fx-bounce' : ' fx-shake') : '';
@@ -254,10 +298,10 @@ function renderCurrent(){
   const el = document.getElementById('current');
   el.style.display = 'block';
   el.innerHTML =
-    '<div class="cc-label">Film ' + pendingIdx + ' of ' + (deck.length - 1) + '</div>' +
+    '<div class="cc-label">' + T('film') + ' ' + pendingIdx + ' ' + T('of') + ' ' + (deck.length - 1) + '</div>' +
     '<div class="cc-card">' +
       (c.poster ? '<img src="' + poster(c.poster, 'w342') + '" alt="">' : '') +
-      '<div><div class="cc-title">' + esc(c.title) + '</div><div class="cc-q">When was it released?</div></div>' +
+      '<div><div class="cc-title">' + esc(c.title) + '</div><div class="cc-q">' + T('whenReleased') + '</div></div>' +
     '</div>';
 }
 
@@ -319,12 +363,12 @@ function renderResult(streak){
   const el = document.getElementById('result');
   el.classList.remove('hidden');
   const total = deck.length - 1;
-  const verdict = score === total ? 'Flawless!' : score >= PASS ? 'Nicely placed!' : 'Tough deck';
-  const bestPart = streak.best > streak.current ? ' · best <strong>' + streak.best + '</strong>' : '';
-  const streakLine = PRACTICE ? '' : '<div class="result-streak">🔥 Streak <strong>' + streak.current + '</strong>' + bestPart + '</div>';
+  const verdict = score === total ? T('verdictFlawless') : score >= PASS ? T('verdictNice') : T('verdictTough');
+  const bestPart = streak.best > streak.current ? ' · ' + T('best') + ' <strong>' + streak.best + '</strong>' : '';
+  const streakLine = PRACTICE ? '' : '<div class="result-streak">🔥 ' + T('streak') + ' <strong>' + streak.current + '</strong>' + bestPart + '</div>';
   const actions = PRACTICE
-    ? '<button class="btn btn-gold" id="againBtn">New deck</button><button class="btn" id="shareBtn">Share</button>'
-    : '<button class="btn btn-gold" id="shareBtn">Share</button><a class="btn" href="/">CineLinks</a>';
+    ? '<button class="btn btn-gold" id="againBtn">' + T('newDeck') + '</button><button class="btn" id="shareBtn">' + T('share') + '</button>'
+    : '<button class="btn btn-gold" id="shareBtn">' + T('share') + '</button><a class="btn" href="/">CineLinks</a>';
   el.innerHTML =
     '<div class="result-verdict ' + (score >= PASS ? 'win' : 'lose') + '">' + score + ' / ' + total + '</div>' +
     '<div class="result-sub">' + verdict + '</div>' +
@@ -340,7 +384,7 @@ function renderResult(streak){
 
 function shareText(){
   const total = deck.length - 1;
-  const head = PRACTICE ? '🕰️ CineLine (Practice)' : ('🕰️ CineLine #' + PUZZLE);
+  const head = PRACTICE ? ('🕰️ CineLine (' + T('practiceWord') + ')') : ('🕰️ CineLine #' + PUZZLE);
   const st = (!PRACTICE && solved) ? loadStreak() : null;
   const streak = (st && st.current > 1) ? '  🔥' + st.current : '';
   return head + '  ' + score + '/' + total + streak + '\n' + emojiGrid() + '\nhttps://cinelinks.vercel.app/cineline.html';
@@ -348,8 +392,8 @@ function shareText(){
 function share(){
   const text = shareText();
   if(navigator.share){ navigator.share({ text }).catch(()=>{}); return; }
-  if(navigator.clipboard){ navigator.clipboard.writeText(text).then(()=>toast('Copied to clipboard')).catch(()=>toast(text)); }
-  else toast('Copy: ' + text);
+  if(navigator.clipboard){ navigator.clipboard.writeText(text).then(()=>toast(T('copied'))).catch(()=>toast(text)); }
+  else toast(T('copyPrefix') + text);
 }
 
 function loadStreak(){ try{ const s = JSON.parse(localStorage.getItem(STREAK_KEY)); if(s) return { current:s.current|0, best:s.best|0, last:s.last|0 }; }catch(_){} return { current:0, best:0, last:0 }; }
@@ -375,12 +419,25 @@ function loadState(){
   return null;
 }
 
-function showError(){ document.getElementById('loading').style.display = 'none'; document.getElementById('error').style.display = 'block'; }
+function showError(){ document.getElementById('loading').style.display = 'none'; const e = document.getElementById('error'); e.textContent = T('errorText'); e.style.display = 'block'; }
+
+function applyStaticI18n(){
+  const home = document.querySelector('.cl-home'); if(home) home.setAttribute('aria-label', T('backTo'));
+  const sub = document.querySelector('.subtitle'); if(sub) sub.textContent = T('subtitle');
+  const ld = document.getElementById('loading'); if(ld) ld.setAttribute('aria-label', T('loadingAria'));
+  const err = document.getElementById('error'); if(err) err.textContent = T('errorText');
+  const hint = document.getElementById('tlHint'); if(hint) hint.textContent = T('tlHint');
+  const eo = document.getElementById('edgeOlder'); if(eo){ eo.textContent = T('older'); eo.setAttribute('aria-label', T('olderAria')); }
+  const en = document.getElementById('edgeNewer'); if(en){ en.textContent = T('newer'); en.setAttribute('aria-label', T('newerAria')); }
+  const ft = document.getElementById('footerText');
+  if(ft) ft.innerHTML = T('dataBy') + ' <a href="https://www.themoviedb.org/" target="_blank" rel="noopener">TMDB</a>. ' + T('notEndorsed') + ' · <a href="/privacy.html" style="color:inherit">' + T('privacy') + '</a>';
+}
 
 async function init(){
-  document.getElementById('dateBadge').textContent = PRACTICE ? 'Practice' : ('Daily #' + PUZZLE);
+  applyStaticI18n();
+  document.getElementById('dateBadge').textContent = PRACTICE ? T('practiceWord') : (T('dailyHash') + PUZZLE);
   const sw = document.getElementById('modeSwitch');
-  if(sw){ sw.textContent = PRACTICE ? 'Daily →' : 'Practice →'; sw.href = PRACTICE ? 'cineline.html' : 'cineline.html?practice=1'; }
+  if(sw){ sw.textContent = PRACTICE ? T('dailyArrow') : T('practiceArrow'); sw.href = PRACTICE ? 'cineline.html' : 'cineline.html?practice=1'; }
 
   // Already played today's daily? Show the finished board (no replay).
   if(!PRACTICE){
@@ -414,19 +471,19 @@ init();
 </script>
 <script>
 window.HOWTO = {
-  key: 'cineline', title: 'How to play CineLine', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>',
+  key: 'cineline', title: T('howtoTitle'), icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>',
   steps: [
-    'Each film appears with its <b>release year hidden</b>.',
-    'Tap the <b>gap</b> where it belongs — older films near the top, newer near the bottom.',
-    'Right spot turns green; a wrong one drops into its correct place in red — either way you move on.',
-    'Place all 10. Your score is how many you nailed; <b>6/10+</b> keeps your daily streak.',
-    '<b>Daily</b> is one shared deck a day; <b>Practice</b> deals a random one.'
+    T('htStep1'),
+    T('htStep2'),
+    T('htStep3'),
+    T('htStep4'),
+    T('htStep5')
   ],
   example: '<div class="ht-row" style="gap:8px;align-items:flex-end">' +
       '<span class="ht-chip">🎬 1977</span><span class="ht-arrow">→</span>' +
       '<span class="ht-chip">🎬 ?</span><span class="ht-arrow">→</span>' +
       '<span class="ht-chip">🎬 1999</span>' +
-    '</div><p>Drop the mystery film into the right gap by year.</p>'
+    '</div><p>' + T('htExample') + '</p>'
 };
 </script>
 <script defer src="/ads.js"></script>

@@ -149,22 +149,59 @@ window.CINE_GAME = {
   emoji: '🎭', name: 'CineCast', shareUrl: 'https://cinelinks.vercel.app/cinecast.html'
 };
 </script>
+<script>
+// --- i18n (self-contained; i18n.js isn't loaded on game pages) ---
+function _lang(){ try{ var l=localStorage.getItem('clLang'); return (l&&/^[a-z]{2}-[A-Z]{2}$/.test(l))?l.slice(0,2):'en'; }catch(_){ return 'en'; } }
+var L = {
+  subtitle:         { en:'Guess the film or series from its cast, revealed one by one.', es:'Adivina la película o serie por su reparto, revelado uno a uno.', fr:'Devinez le film ou la série d’après son casting, révélé un à un.', de:'Errate den Film oder die Serie an der Besetzung, nach und nach enthüllt.', pt:'Adivinhe o filme ou a série pelo elenco, revelado um a um.' },
+  placeholder:      { en:'Name the film or show…', es:'Nombra la película o serie…', fr:'Nommez le film ou la série…', de:'Nenne den Film oder die Serie…', pt:'Diga o filme ou a série…' },
+  skip:             { en:'Skip clue', es:'Saltar pista', fr:'Passer l’indice', de:'Hinweis überspringen', pt:'Pular dica' },
+  guess:            { en:'Guess', es:'Adivinar', fr:'Deviner', de:'Raten', pt:'Adivinhar' },
+  errText:          { en:"Couldn't load today's puzzle. Please try again later.", es:'No se pudo cargar el puzle de hoy. Inténtalo de nuevo más tarde.', fr:'Impossible de charger le puzzle du jour. Réessayez plus tard.', de:'Das heutige Rätsel konnte nicht geladen werden. Bitte später erneut versuchen.', pt:'Não foi possível carregar o desafio de hoje. Tente novamente mais tarde.' },
+  loadingAria:      { en:'Loading', es:'Cargando', fr:'Chargement', de:'Wird geladen', pt:'Carregando' },
+  backAria:         { en:'Back to CineLinks', es:'Volver a CineLinks', fr:'Retour à CineLinks', de:'Zurück zu CineLinks', pt:'Voltar para CineLinks' },
+  footerBy:         { en:'Data & images by', es:'Datos e imágenes de', fr:'Données et images par', de:'Daten und Bilder von', pt:'Dados e imagens por' },
+  footerNotEndorsed:{ en:'Not endorsed by TMDB.', es:'Sin respaldo de TMDB.', fr:'Non approuvé par TMDB.', de:'Nicht von TMDB unterstützt.', pt:'Sem endosso da TMDB.' },
+  privacy:          { en:'Privacy', es:'Privacidad', fr:'Confidentialité', de:'Datenschutz', pt:'Privacidade' },
+  howtoTitle:       { en:'How to play CineCast', es:'Cómo jugar a CineCast', fr:'Comment jouer à CineCast', de:'So spielst du CineCast', pt:'Como jogar CineCast' },
+  howtoStep1:       { en:'Guess the day’s film or series from its <b>cast</b>.', es:'Adivina la película o serie del día por su <b>reparto</b>.', fr:'Devinez le film ou la série du jour d’après son <b>casting</b>.', de:'Errate den Film oder die Serie des Tages an der <b>Besetzung</b>.', pt:'Adivinhe o filme ou a série do dia pelo <b>elenco</b>.' },
+  howtoStep2:       { en:'You start with one lesser-known actor - type to search and pick a title (<b>6 tries</b>).', es:'Empiezas con un actor poco conocido: escribe para buscar y elige un título (<b>6 intentos</b>).', fr:'Vous commencez avec un acteur peu connu : tapez pour rechercher et choisissez un titre (<b>6 essais</b>).', de:'Du startest mit einem weniger bekannten Schauspieler: tippe zum Suchen und wähle einen Titel (<b>6 Versuche</b>).', pt:'Você começa com um ator menos conhecido: digite para buscar e escolha um título (<b>6 tentativas</b>).' },
+  howtoStep3:       { en:'Each wrong guess or skip reveals another, more famous cast member.', es:'Cada fallo o salto revela otro miembro del reparto más famoso.', fr:'Chaque erreur ou passe révèle un autre membre du casting plus célèbre.', de:'Jeder Fehlversuch oder übersprungene Hinweis zeigt ein bekannteres Besetzungsmitglied.', pt:'Cada erro ou dica pulada revela outro membro do elenco mais famoso.' },
+  howtoStep4:       { en:'The last clue shows the top billing and the poster.', es:'La última pista muestra los papeles principales y el póster.', fr:'Le dernier indice montre les têtes d’affiche et l’affiche.', de:'Der letzte Hinweis zeigt die Hauptdarsteller und das Poster.', pt:'A última dica mostra o elenco principal e o pôster.' },
+  howtoStep5:       { en:'Fewer guesses = better. <b>Daily</b> keeps your streak; <b>Practice</b> is unlimited.', es:'Menos intentos = mejor. <b>Diario</b> mantiene tu racha; <b>Práctica</b> es ilimitado.', fr:'Moins d’essais = mieux. <b>Quotidien</b> garde votre série ; <b>Entraînement</b> est illimité.', de:'Weniger Versuche = besser. <b>Täglich</b> hält deine Serie; <b>Übung</b> ist unbegrenzt.', pt:'Menos tentativas = melhor. <b>Diário</b> mantém sua sequência; <b>Treino</b> é ilimitado.' },
+  howtoExTop:       { en:'🎭 + top billing…', es:'🎭 + reparto principal…', fr:'🎭 + têtes d’affiche…', de:'🎭 + Hauptbesetzung…', pt:'🎭 + elenco principal…' },
+  howtoExP:         { en:'Names build up until you guess the title 🎉', es:'Los nombres se acumulan hasta que adivinas el título 🎉', fr:'Les noms s’accumulent jusqu’à ce que vous trouviez le titre 🎉', de:'Die Namen häufen sich, bis du den Titel errätst 🎉', pt:'Os nomes se acumulam até você acertar o título 🎉' }
+};
+function T(k){ var m=L[k]; if(!m||typeof m!=='object') return k; var l=_lang(); return (l==='en'?null:m[l])||m.en||k; }
+(function applyI18n(){
+  function txt(sel, val){ var el=document.querySelector(sel); if(el) el.textContent=val; }
+  var back=document.querySelector('.cl-home'); if(back) back.setAttribute('aria-label', T('backAria'));
+  txt('.subtitle', T('subtitle'));
+  var gi=document.getElementById('guessInput'); if(gi) gi.setAttribute('placeholder', T('placeholder'));
+  txt('#skipBtn', T('skip'));
+  txt('#guessBtn', T('guess'));
+  var ld=document.getElementById('loading'); if(ld) ld.setAttribute('aria-label', T('loadingAria'));
+  txt('#error', T('errText'));
+  var ft=document.querySelector('.footer');
+  if(ft) ft.innerHTML = T('footerBy') + ' <a href="https://www.themoviedb.org/" target="_blank" rel="noopener">TMDB</a>. ' + T('footerNotEndorsed') + ' · <a href="/privacy.html" style="color:inherit">' + T('privacy') + '</a>';
+})();
+</script>
 <script src="/cineguess.js"></script>
 <script>
 window.HOWTO = {
-  key: 'cinecast', title: 'How to play CineCast', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 5.2a3.3 3.3 0 0 1 0 6M21.5 20a6 6 0 0 0-4.2-5.7"/></svg>',
+  key: 'cinecast', title: T('howtoTitle'), icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 5.2a3.3 3.3 0 0 1 0 6M21.5 20a6 6 0 0 0-4.2-5.7"/></svg>',
   steps: [
-    'Guess the day’s film or series from its <b>cast</b>.',
-    'You start with one lesser-known actor - type to search and pick a title (<b>6 tries</b>).',
-    'Each wrong guess or skip reveals another, more famous cast member.',
-    'The last clue shows the top billing and the poster.',
-    'Fewer guesses = better. <b>Daily</b> keeps your streak; <b>Practice</b> is unlimited.'
+    T('howtoStep1'),
+    T('howtoStep2'),
+    T('howtoStep3'),
+    T('howtoStep4'),
+    T('howtoStep5')
   ],
   example: '<div style="display:flex;flex-direction:column;gap:6px">' +
       '<span class="ht-chip">🎭 Ned Beatty</span>' +
       '<span class="ht-chip">🎭 Burt Reynolds</span>' +
-      '<span class="ht-chip">🎭 + top billing…</span>' +
-    '</div><p>Names build up until you guess the title 🎉</p>'
+      '<span class="ht-chip">' + T('howtoExTop') + '</span>' +
+    '</div><p>' + T('howtoExP') + '</p>'
 };
 </script>
 <script defer src="/ads.js"></script>
