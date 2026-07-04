@@ -263,7 +263,7 @@
   ]};}
 
   var state=load()||defaultTemplate();
-  var rarity='legendary',sel=null,tilt=true,zoom=1,showFx=true;
+  var rarity='legendary',sel=null,tilt=true,zoom=1,showFx=true,exportPosterOverride=null;
   var card=document.getElementById('card'),cw=document.getElementById('cardwrap');
   var selBox=document.getElementById('sel');
   var hist=[],hi=-1;
@@ -275,7 +275,7 @@
   function redo(){if(hi<hist.length-1){hi++;state=clone(hist[hi]);sel=null;renderAll();updHistBtns();persist();}}
   function updHistBtns(){document.getElementById('undo').disabled=hi<=0;document.getElementById('redo').disabled=hi>=hist.length-1;}
 
-  function posterUrl(){var s=document.getElementById('posterSel'),v=s.value;return (v.slice(0,5)==='data:')?v:TMDB+v;}
+  function posterUrl(){if(exportPosterOverride)return exportPosterOverride;var s=document.getElementById('posterSel'),v=s.value;return (v.slice(0,5)==='data:')?v:TMDB+v;}
   function cardData(){return {name:document.getElementById('nameIn').value,no:document.getElementById('noIn').value,type:document.getElementById('typeIn').value,n:+document.getElementById('nIn').value||1,isNew:document.getElementById('newIn').checked};}
 
   // ── render the card from the template ──
@@ -446,7 +446,7 @@
     function live(id,fn){
       var sl=box.querySelector('#'+id), ni=box.querySelector('#n_'+id);
       if(!sl&&!ni)return;
-      function apply(val){ var v=+val; if(sl)sl.value=v; if(ni&&document.activeElement!==ni)ni.value=v; fn({value:v}); render(); positionSel(); persist(); }
+      function apply(val){ if(sl)sl.value=val; if(ni&&document.activeElement!==ni)ni.value=val; fn({value:val}); render(); positionSel(); persist(); }
       if(sl){ sl.addEventListener('input',function(){apply(sl.value);}); sl.addEventListener('change',commit); }
       if(ni){ ni.addEventListener('input',function(){apply(ni.value);}); ni.addEventListener('change',commit); }
     }
@@ -640,16 +640,22 @@
     var prevSel=sel,prevZoom=zoom;
     try{
       await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+      // Bake the poster into a data URI: the card loads it as a background-image
+      // WITHOUT crossorigin, so the cached response has no CORS headers and
+      // html2canvas can't re-read it → blank poster. fetch()+FileReader gives us
+      // a same-document data URI it CAN paint. (Uploaded posters are already data URIs.)
+      var pv=posterUrl();
+      if(/^https?:/.test(pv)){ try{ var blob=await fetch(pv,{mode:'cors',cache:'no-store'}).then(function(r){return r.blob();}); exportPosterOverride=await new Promise(function(res,rej){var rd=new FileReader();rd.onload=function(){res(rd.result);};rd.onerror=rej;rd.readAsDataURL(blob);}); }catch(_){ /* keep the url; may still work */ } }
       sel=null;zoom=1;cw.style.transform='';card.classList.remove('tilted');card.classList.add('flat');
       card.style.setProperty('--rx','0deg');card.style.setProperty('--ry','0deg');
       render();positionSel();
       var holo=card.querySelector('.holo');if(holo)holo.style.display='none';
-      await new Promise(function(r){setTimeout(r,60);});
-      var canvas=await html2canvas(card,{backgroundColor:null,scale:3,useCORS:true,logging:false});
-      if(holo)holo.style.display='';
+      await new Promise(function(r){setTimeout(r,90);});
+      var canvas=await html2canvas(card,{backgroundColor:null,scale:3,useCORS:true,allowTaint:false,logging:false});
+      if(holo)holo.style.display='';exportPosterOverride=null;
       var a=document.createElement('a');a.download=(document.getElementById('nameIn').value||'card').replace(/[^\w-]+/g,'_')+'.png';a.href=canvas.toDataURL('image/png');a.click();
-    }catch(e){alert('PNG export failed: '+(e&&e.message||e)+'\\n(Cross-origin sample posters can block it — upload your own poster to export.)');}
-    sel=prevSel;zoom=prevZoom;cw.style.transform='scale('+zoom+')';document.getElementById('zoom').value=zoom;
+    }catch(e){alert('PNG export failed: '+(e&&e.message||e));}
+    exportPosterOverride=null;sel=prevSel;zoom=prevZoom;cw.style.transform='scale('+zoom+')';document.getElementById('zoom').value=zoom;
     renderAll();btn.textContent=label;btn.disabled=false;
   };
   document.getElementById('undo').onclick=undo;document.getElementById('redo').onclick=redo;
