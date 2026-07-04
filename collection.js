@@ -1278,6 +1278,62 @@
     }
   });
 
+  // ── Card Studio bridge ────────────────────────────────────────────────
+  // A template exported from /studio.html can drive the live "authentic" card.
+  // It stores an ordered `layers` list; built-in layers (poster/scrim/corner/
+  // star/frame/foil/tags/text) get position/opacity/blend/z overrides, and any
+  // custom image/text/fill layers are injected. No template = untouched card.
+  function activeCardTemplate() {
+    try { var s = localStorage.getItem('cl_card_template'); return s ? JSON.parse(s) : null; } catch (_) { return null; }
+  }
+  function tplGet(layers, id) { for (var i = 0; i < layers.length; i++) { if (layers[i].id === id || layers[i].type === id) return { L: layers[i], z: i }; } return null; }
+  // inline style override for a built-in layer (id = studio layer id) — '' if none
+  function tplOv(layers, id, rarity) {
+    if (!layers) return '';
+    var g = tplGet(layers, id); if (!g) return '';
+    var L = g.L; if (L.visible === false) return 'display:none;';
+    var s = 'z-index:' + g.z + ';', rc = L.rect;
+    if (rc) s += 'left:' + rc.x + '%;top:' + rc.y + '%;width:' + rc.w + '%;height:' + rc.h + '%;right:auto;bottom:auto;';
+    var o = (L.opacity && typeof L.opacity === 'object') ? L.opacity[rarity] : L.opacity;
+    if (o != null) s += 'opacity:' + o + ';';
+    if (L.blend && L.blend !== 'normal') s += 'mix-blend-mode:' + L.blend + ';';
+    if (L.rot) s += 'transform:rotate(' + L.rot + 'deg);';
+    return s;
+  }
+  // HTML for the studio's custom (added) layers: image / text / fill
+  function tplCustom(layers, rarity, cd) {
+    if (!layers) return '';
+    var builtin = { poster: 1, scrim: 1, corner: 1, star: 1, frame: 1, foil: 1, tags: 1, textblock: 1 };
+    return layers.map(function (L, z) {
+      if (builtin[L.type]) return '';
+      var rc = L.rect || { x: 0, y: 0, w: 100, h: 100 };
+      var o = (L.opacity && typeof L.opacity === 'object') ? L.opacity[rarity] : (L.opacity == null ? 1 : L.opacity);
+      var base = 'position:absolute;pointer-events:none;left:' + rc.x + '%;top:' + rc.y + '%;width:' + rc.w + '%;height:' + rc.h + '%;z-index:' + z + ';opacity:' + o + ';' +
+        (L.blend && L.blend !== 'normal' ? 'mix-blend-mode:' + L.blend + ';' : '') + (L.rot ? 'transform:rotate(' + L.rot + 'deg);' : '');
+      if (L.type === 'image') {
+        if (L.tint && L.tint !== 'none') { var col = L.tint === 'rarity' ? 'var(--cr)' : L.tint, ms = L.fit || 'contain'; base += 'background:' + col + ';-webkit-mask:url(' + L.src + ') center/' + ms + ' no-repeat;mask:url(' + L.src + ') center/' + ms + ' no-repeat;'; }
+        else base += 'background:url(' + L.src + ') center/' + (L.fit || 'contain') + ' no-repeat;';
+        return '<div style="' + base + '"></div>';
+      }
+      if (L.type === 'fill') {
+        base += 'border-radius:' + (L.radius || 0) + '%;';
+        if (L.fillType === 'linear') base += 'background:linear-gradient(' + (L.angle || 135) + 'deg,' + (L.c1 || '#e8c24a') + ',' + (L.c2 || '#7a5610') + ');';
+        else if (L.fillType === 'radial') base += 'background:radial-gradient(circle,' + (L.c1 || '#e8c24a') + ',' + (L.c2 || '#1a1206') + ');';
+        else base += 'background:' + (L.tint === 'rarity' ? 'var(--cr)' : (L.c1 || '#e8c24a')) + ';';
+        return '<div style="' + base + '"></div>';
+      }
+      if (L.type === 'text') {
+        base += 'display:flex;align-items:center;justify-content:' + (L.align === 'left' ? 'flex-start' : L.align === 'right' ? 'flex-end' : 'center') + ';line-height:1.05;font-family:' + (L.font || 'inherit') + ';font-size:' + (L.size || 8) + 'cqw;font-weight:' + (L.weight || 800) + ';letter-spacing:' + (L.tracking || 0) + 'em;text-align:' + (L.align || 'center') + ';' + (L.upper ? 'text-transform:uppercase;' : '');
+        if (L.colorMode === 'metal') base += 'background:linear-gradient(180deg,var(--m1),var(--cr) 52%,var(--m1));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;';
+        else if (L.colorMode === 'rarity') base += 'color:var(--cr);';
+        else base += 'color:' + (L.color || '#fff') + ';';
+        var val = L.bind === 'name' ? cd.name : L.bind === 'number' ? cd.no : (L.text || '');
+        return '<div style="' + base + '">' + esc(val) + '</div>';
+      }
+      return '';
+    }).join('');
+  }
+
   // ── Built-in theme #3: "authentic" — premium licensed-card look (navy + foil) ──
   defineTheme({
     name: 'authentic', label: 'Authentic',
@@ -1432,17 +1488,21 @@
       var nm = ctx.esc(c.name);
       // Card mastery: copies upgrade the card visibly (×3 bronze, ×5 silver, ×10 gold)
       var mst = (c.n || 1) >= 10 ? 'm3' : (c.n || 1) >= 5 ? 'm2' : (c.n || 1) >= 3 ? 'm1' : '';
-      return '<div class="auth auth-' + c.rarity + (person ? ' person' : '') + (c.shine ? ' cl-shine' : '') + '" style="--cr:' + rar.ring + ';--m1:' + (METAL[c.rarity] || '#fff') + ';animation-delay:' + Math.min(i, 16) * 22 + 'ms" title="' + nm + ' · ' + rar.label + ' · ' + no + (c.shine ? ' · Shined' : '') + '">' +
+      // Card Studio template (if applied): O() = per-layer inline override, tplCustom = added layers
+      var TL = activeCardTemplate(); TL = (TL && TL.layers) ? TL.layers : null;
+      function O(id) { return TL ? (' style="' + tplOv(TL, id, c.rarity) + '"') : ''; }
+      return '<div class="auth auth-' + c.rarity + (person ? ' person' : '') + (c.shine ? ' cl-shine' : '') + (TL ? ' auth-tpl' : '') + '" style="--cr:' + rar.ring + ';--m1:' + (METAL[c.rarity] || '#fff') + ';animation-delay:' + Math.min(i, 16) * 22 + 'ms" title="' + nm + ' · ' + rar.label + ' · ' + no + (c.shine ? ' · Shined' : '') + '">' +
         '<div class="auth-card">' +
-          (p ? '<img class="auth-bgimg" src="' + ctx.esc(p) + '" alt="" loading="lazy">' : '<div class="auth-noimg"></div>') +
-          '<div class="auth-scrim"></div><div class="auth-corner"></div><div class="auth-star"></div>' +
-          '<div class="auth-tags">' + (c.shine ? '<span class="cl-shine-t">&#10024;</span>' : '') + (mst ? '<span class="auth-mst ' + mst + '" title="Mastery ×' + c.n + '">&#9733;</span>' : '') + (c.n > 1 ? '<span class="auth-dp">×' + c.n + '</span>' : '') + (c.isNew ? '<span class="auth-nw">New</span>' : '') + '</div>' +
-          '<div class="auth-text">' +
+          (p ? '<img class="auth-bgimg" src="' + ctx.esc(p) + '" alt="" loading="lazy"' + O('poster') + '>' : '<div class="auth-noimg"></div>') +
+          '<div class="auth-scrim"' + O('scrim') + '></div><div class="auth-corner"' + O('corner') + '></div><div class="auth-star"' + O('star') + '></div>' +
+          '<div class="auth-tags"' + O('tags') + '>' + (c.shine ? '<span class="cl-shine-t">&#10024;</span>' : '') + (mst ? '<span class="auth-mst ' + mst + '" title="Mastery ×' + c.n + '">&#9733;</span>' : '') + (c.n > 1 ? '<span class="auth-dp">×' + c.n + '</span>' : '') + (c.isNew ? '<span class="auth-nw">New</span>' : '') + '</div>' +
+          '<div class="auth-text"' + O('text') + '>' +
             '<div class="auth-name' + nmCls + '">' + nm + '</div>' +
             '<div class="auth-meta"><span class="auth-gem"></span><span class="auth-rar">' + rar.label + '</span><span class="sep">·</span><span>' + typeUp + '</span><span class="sep">·</span><span class="auth-no">' + no + '</span></div>' +
           '</div>' +
-          '<div class="auth-frame"></div><div class="auth-foil"></div><div class="auth-glit"></div><div class="auth-shade"></div><div class="auth-sheen"></div><div class="auth-glare"></div><div class="auth-refl"></div>' +
+          '<div class="auth-frame"' + O('frame') + '></div><div class="auth-foil"' + O('foil') + '></div><div class="auth-glit"></div><div class="auth-shade"></div><div class="auth-sheen"></div><div class="auth-glare"></div><div class="auth-refl"></div>' +
           '<div class="auth-rim auth-rim-t"></div><div class="auth-rim auth-rim-b"></div><div class="auth-rim auth-rim-l"></div><div class="auth-rim auth-rim-r"></div>' +
+          (TL ? tplCustom(TL, c.rarity, { name: nm, no: no }) : '') +
         '</div>' +
       '</div>';
     },
@@ -2752,6 +2812,10 @@
     addDust: function (n) { var s = load() || blank(); s.dust = Math.max(0, (s.dust || 0) + (+n || 0)); save(s); refreshOpen(); return s.dust; },
     forge: forgeCard, forgeCost: forgeCost, toggleShowcase: toggleShowcase, showcase: showcaseCards,
     reset: reset, grant: grant, addXp: addXp, setLevel: setLevel, exportData: exportData, importData: importData, seed: function () { return grant(SEED.map(function (s) { return s; })); },
+    // Card Studio: force an exported design onto the live cards
+    applyTemplate: function (tpl) { try { var o = typeof tpl === 'string' ? JSON.parse(tpl) : tpl; if (!o || !Array.isArray(o.layers)) return false; localStorage.setItem('cl_card_template', JSON.stringify(o)); refreshOpen(); return true; } catch (_) { return false; } },
+    clearTemplate: function () { try { localStorage.removeItem('cl_card_template'); } catch (_) {} refreshOpen(); },
+    cardTemplate: activeCardTemplate,
     debug: debug,
     themes: { register: defineTheme, use: useTheme, list: function () { return Object.keys(THEMES).map(function (n) { return { name: n, label: THEMES[n].label || n }; }); }, current: activeThemeName }
   };
