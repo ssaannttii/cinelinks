@@ -337,9 +337,10 @@
       el.textContent=val;
     }
     else if(L.type==='textblock'){
-      var nlen=(cd.name||'').length,nmSize=nlen>22?7.5:nlen>14?9:10.9;
+      var nlen=(cd.name||'').length,nmSize=L.size||(nlen>22?7.5:nlen>14?9:10.9);   // manual size overrides the length-based auto
       el.style.padding='0 7.3cqw 6.7cqw';el.style.left='0';el.style.right='0';el.style.width='100%';
-      el.innerHTML='<div class="nm" style="font-size:'+nmSize+'cqw;'+titleStyle(L)+'">'+esc(cd.name||'Card Name')+'</div>'+
+      var nmStyle='font-size:'+nmSize+'cqw;'+(L.font?'font-family:'+L.font+';':'')+(L.weight?'font-weight:'+L.weight+';':'')+(L.tracking!=null?'letter-spacing:'+L.tracking+'em;':'')+(L.upper===false?'text-transform:none;':'')+(L.align?'text-align:'+L.align+';':'')+titleStyle(L);
+      el.innerHTML='<div class="nm" style="'+nmStyle+'">'+esc(cd.name||'Card Name')+'</div>'+
         '<div class="mt"><span class="gem"></span><span class="rar">'+r.label+'</span><span class="sep">·</span><span>'+(cd.type==='person'?'Actor':cd.type==='tv'?'Series':'Film')+'</span><span class="sep">·</span><span class="no">'+esc(cd.no||'#000')+'</span></div>';
     }
     else if(L.type==='tags'){
@@ -417,6 +418,12 @@
       h+='<label class="chk"><input type="checkbox" id="pUpper"'+(L.upper?' checked':'')+'> uppercase</label>';
     }
     if(L.type==='textblock'){
+      // title typography (shared across rarities); colour is per-rarity below
+      h+='<div class="field"><label>Title font</label><select id="pTFont"><option value="">card default</option>'+FONTS.map(function(f){return '<option'+(L.font===f?' selected':'')+'>'+f+'</option>';}).join('')+'</select></div>';
+      h+='<div class="grid2">'+num('Size cqw','pTSize',L.size||0,0,20,0.5)+num('Weight','pTWeight',L.weight||900,100,900,100)+num('Tracking em','pTTrack',L.tracking==null?.01:L.tracking,-.1,.4,.01)+'</div>';
+      h+='<div class="grid2"><div class="field"><label>Align</label><select id="pTAlign"><option value="center"'+((L.align||'center')==='center'?' selected':'')+'>center</option><option value="left"'+(L.align==='left'?' selected':'')+'>left</option><option value="right"'+(L.align==='right'?' selected':'')+'>right</option></select></div>'+
+        '<div class="field"><label class="chk" style="margin-top:18px"><input type="checkbox" id="pTUpper" '+(L.upper!==false?'checked':'')+'> uppercase</label></div></div>';
+      h+='<p class="hint" style="margin-top:0">Size 0 = auto-fit by name length.</p>';
       var tc=titleCfg(L,rarity),tm=tc.mode||'metal';
       h+='<div class="field"><label>Name colour <b>· '+rarity+'</b></label><select id="pTMode"><option value="metal"'+(tm==='metal'?' selected':'')+'>metal gradient (default)</option><option value="rarity"'+(tm==='rarity'?' selected':'')+'>rarity colour</option><option value="solid"'+(tm==='solid'?' selected':'')+'>solid</option><option value="gradient"'+(tm==='gradient'?' selected':'')+'>custom gradient</option></select></div>';
       if(tm==='solid')h+='<div class="row"><input type="color" id="pTColor" value="'+(tc.color||'#ffffff')+'"><span class="hint" style="margin:0">title colour</span></div>';
@@ -468,6 +475,13 @@
     var opAll=box.querySelector('#pOpAll');if(opAll)opAll.onclick=function(){var v=(L.opacity&&typeof L.opacity==='object')?L.opacity[rarity]:(L.opacity==null?1:L.opacity);L.opacity=op(v);render();renderProps();commit();};
     live('pFit',function(e){L.fit=e.value;});
     live('pFillT',function(e){L.fillType=e.value;});
+    // name-plate title typography
+    var tfont=box.querySelector('#pTFont');if(tfont)tfont.onchange=function(){L.font=tfont.value||undefined;render();commit();};
+    live('pTSize',function(e){L.size=(+e.value)||undefined;});    // 0 → auto-fit
+    live('pTWeight',function(e){L.weight=+e.value;});
+    live('pTTrack',function(e){L.tracking=+e.value;});
+    var talign=box.querySelector('#pTAlign');if(talign)talign.onchange=function(){L.align=talign.value;render();commit();};
+    var tupper=box.querySelector('#pTUpper');if(tupper)tupper.onchange=function(){L.upper=tupper.checked;render();commit();};
     live('pC1',function(e){L.c1=e.value;});live('pC2',function(e){L.c2=e.value;});
     live('pAng',function(e){L.angle=+e.value;});live('pRad',function(e){L.radius=+e.value;});
     live('pBind',function(e){L.bind=e.value;});

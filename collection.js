@@ -1297,11 +1297,20 @@
   function tplTitleStyle(layers, rarity) {
     if (!layers) return '';
     var g = tplGet(layers, 'textblock') || tplGet(layers, 'text'); if (!g) return '';
-    var c = titleCfgFor(g.L, rarity), m = c.mode; if (!m || m === 'metal') return '';
-    if (m === 'solid') return ' style="background:none;-webkit-text-fill-color:' + (c.color || '#fff') + ';color:' + (c.color || '#fff') + '"';
-    if (m === 'rarity') return ' style="background:none;-webkit-text-fill-color:var(--cr);color:var(--cr)"';
-    if (m === 'gradient') return ' style="background:linear-gradient(' + (c.angle == null ? 180 : c.angle) + 'deg,' + (c.c1 || '#fff3c4') + ',' + (c.c2 || '#e8a000') + ');-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent"';
-    return '';
+    var L = g.L, s = '';
+    // typography (shared) — overrides the default name-plate CSS on .auth-name
+    if (L.font) s += 'font-family:' + L.font + ';';
+    if (L.size) s += 'font-size:' + L.size + 'cqw;';
+    if (L.weight) s += 'font-weight:' + L.weight + ';';
+    if (L.tracking != null) s += 'letter-spacing:' + L.tracking + 'em;';
+    if (L.upper === false) s += 'text-transform:none;';
+    if (L.align) s += 'text-align:' + L.align + ';';
+    // colour treatment (per rarity)
+    var c = titleCfgFor(L, rarity), m = c.mode;
+    if (m === 'solid') s += 'background:none;-webkit-text-fill-color:' + (c.color || '#fff') + ';color:' + (c.color || '#fff') + ';';
+    else if (m === 'rarity') s += 'background:none;-webkit-text-fill-color:var(--cr);color:var(--cr);';
+    else if (m === 'gradient') s += 'background:linear-gradient(' + (c.angle == null ? 180 : c.angle) + 'deg,' + (c.c1 || '#fff3c4') + ',' + (c.c2 || '#e8a000') + ');-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;';
+    return s ? (' style="' + s + '"') : '';
   }
   // inline style override for a built-in layer (id = studio layer id) — '' if none
   function tplOv(layers, id, rarity) {
