@@ -54,7 +54,7 @@
   .stagebar .seg button.on{color:#1a1200;background:var(--gold);border-color:transparent}
   .stagebar .seg button.on.c-rare{background:#7aa6e8}.stagebar .seg button.on.c-elite{background:#b58ad6}.stagebar .seg button.on.c-legendary{background:#e8c24a}.stagebar .seg button.on.c-common{background:#9a9a9a}
   .stagebar label{font-size:.66rem;color:var(--dim);display:flex;align-items:center;gap:4px}
-  .cardwrap{position:relative;perspective:1200px;transition:transform .12s}
+  .cardwrap{position:relative;perspective:1200px;transform-origin:top center}
   /* ── FAITHFUL card (mirrors collection.js "authentic") ── */
   .card{position:relative;width:340px;aspect-ratio:5/7;container-type:inline-size;border-radius:13px;overflow:hidden;isolation:isolate;background:#0a1830;box-shadow:0 30px 80px rgba(0,0,0,.6);transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .1s ease-out}
   .card.flat{transition:none}
@@ -108,7 +108,11 @@
   .sec{margin-bottom:14px;border-bottom:1px solid rgba(255,255,255,.05);padding-bottom:12px}
   .sec>.lbl{font-size:.62rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:#c9a24a;margin:0 0 8px}
   .field{margin:7px 0}
-  .field>label{display:flex;justify-content:space-between;font-size:.7rem;color:var(--dim);margin-bottom:3px}
+  .field>label{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:.7rem;color:var(--dim);margin-bottom:3px}
+  .numin{width:54px;font:inherit;font-size:.72rem;font-weight:800;color:var(--gold2);background:var(--panel2);border:1px solid var(--bdr);border-radius:5px;padding:1px 5px;text-align:right;-moz-appearance:textfield}
+  .numin::-webkit-outer-spin-button,.numin::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .mini-all{font:inherit;font-size:.58rem;font-weight:800;color:var(--dim);background:var(--panel2);border:1px solid var(--bdr);border-radius:5px;padding:2px 6px;cursor:pointer}
+  .mini-all:hover{color:var(--gold2);border-color:rgba(232,194,74,.5)}
   .field>label b{color:var(--gold2);font-variant-numeric:tabular-nums}
   input[type=range]{width:100%;accent-color:var(--gold)}
   input[type=text],input[type=number],select,textarea.small{width:100%;font:inherit;font-size:.78rem;color:var(--ink);background:var(--panel2);border:1px solid var(--bdr);border-radius:7px;padding:6px 8px}
@@ -177,16 +181,17 @@
     </div>
     <div class="cardwrap" id="cardwrap">
       <div class="card leg" id="card"></div>
-      <div id="sel" style="display:none">
-        <div class="body"></div>
-        <div class="rot"></div>
-        <div class="hd corner" data-h="nw"></div><div class="hd edge" data-h="n"></div><div class="hd corner" data-h="ne"></div>
-        <div class="hd edge" data-h="w"></div><div class="hd edge" data-h="e"></div>
-        <div class="hd corner" data-h="sw"></div><div class="hd edge" data-h="s"></div><div class="hd corner" data-h="se"></div>
-      </div>
-      <div class="guide v" id="gv" style="display:none"></div>
-      <div class="guide h" id="gh" style="display:none"></div>
     </div>
+    <!-- selection + guides live OUTSIDE the (zoom-scaled) cardwrap so they stay pixel-accurate and handles keep a constant size at any zoom -->
+    <div id="sel" style="display:none">
+      <div class="body"></div>
+      <div class="rot"></div>
+      <div class="hd corner" data-h="nw"></div><div class="hd edge" data-h="n"></div><div class="hd corner" data-h="ne"></div>
+      <div class="hd edge" data-h="w"></div><div class="hd edge" data-h="e"></div>
+      <div class="hd corner" data-h="sw"></div><div class="hd edge" data-h="s"></div><div class="hd corner" data-h="se"></div>
+    </div>
+    <div class="guide v" id="gv" style="display:none"></div>
+    <div class="guide h" id="gh" style="display:none"></div>
   </div>
 
   <!-- inspector -->
@@ -382,11 +387,13 @@
     var L=state.layers[sel];nm.textContent='· '+(L.name||KIND[L.type]);
     var curOp=(L.opacity&&typeof L.opacity==='object')?L.opacity[rarity]:(L.opacity==null?1:L.opacity);
     var h='';
-    h+='<div class="field"><label>Opacity <b>'+(+curOp).toFixed(2)+' · '+rarity+'</b></label><input type="range" id="pOp" min="0" max="1" step="0.01" value="'+curOp+'"></div>';
+    h+='<div class="field"><label>Opacity · '+rarity+' <span class="row" style="gap:5px"><input type="number" class="numin" id="n_pOp" value="'+(+curOp).toFixed(2)+'" min="0" max="1" step="0.01"><button class="mini-all" id="pOpAll" title="Copy this opacity to all four rarities">all</button></span></label><input type="range" id="pOp" min="0" max="1" step="0.01" value="'+curOp+'"></div>';
     h+='<div class="field"><label>Show on rarity</label><div class="rseg" id="pRar">'+['common','rare','elite','legendary'].map(function(r){var on=!L.rarities||L.rarities.indexOf(r)>=0;return '<button data-rr="'+r+'" class="'+(on?'on c-'+r:'')+'">'+r[0].toUpperCase()+'</button>';}).join('')+'</div></div>';
     h+='<div class="field"><label>Blend</label><select id="pBlend">'+BLENDS.map(function(b){return '<option'+(L.blend===b?' selected':'')+'>'+b+'</option>';}).join('')+'</select></div>';
     h+='<div class="grid2">'+num('X','pX',L.rect.x,-30,110)+num('Y','pY',L.rect.y,-30,110)+num('W','pW',L.rect.w,1,140)+num('H','pH',L.rect.h,1,140)+'</div>';
-    h+='<div class="field"><label>Rotation <b>'+(L.rot||0)+'°</b></label><input type="range" id="pRot" min="-180" max="180" step="1" value="'+(L.rot||0)+'"></div>';
+    h+='<div class="row" style="margin-top:2px"><button class="btn sm" id="pCenX">⊹ Center X</button><button class="btn sm" id="pCenY">⊹ Center Y</button></div>';
+    h+=num('Rotation','pRot',L.rot||0,-180,180,1);
+    h+='<p class="hint">Handles: <b>⌥</b> scale from center · <b>⇧</b> keep ratio</p>';
     if(L.type==='image'||L.type==='poster')h+='<div class="field"><label>Fit</label><select id="pFit"><option value="cover"'+(L.fit==='cover'?' selected':'')+'>cover</option><option value="contain"'+(L.fit==='contain'?' selected':'')+'>contain</option></select></div>';
     if(L.type==='image'||L.type==='corner'||L.type==='fill')h+=tintField(L);
     if(L.type==='fill'){
@@ -425,13 +432,21 @@
     box.innerHTML=h;
     bindProps(box,L);
   }
-  function num(lbl,id,v,mn,mx,st){return '<div class="field"><label>'+lbl+' <b class="v-'+id+'">'+v+'</b></label><input type="range" id="'+id+'" min="'+mn+'" max="'+mx+'" step="'+(st||0.5)+'" value="'+v+'"></div>';}
+  function num(lbl,id,v,mn,mx,st){return '<div class="field"><label>'+lbl+' <input type="number" class="numin" id="n_'+id+'" value="'+v+'" min="'+mn+'" max="'+mx+'" step="'+(st||0.5)+'"></label><input type="range" id="'+id+'" min="'+mn+'" max="'+mx+'" step="'+(st||0.5)+'" value="'+v+'"></div>';}
   function tintField(L){var tv=L.tint||'none';return '<div class="field"><label>Tint</label><div class="row"><select id="pTint" style="flex:1"><option value="none"'+(tv==='none'?' selected':'')+'>original</option><option value="rarity"'+(tv==='rarity'?' selected':'')+'>rarity colour</option><option value="custom"'+(tv!=='none'&&tv!=='rarity'?' selected':'')+'>custom</option></select><input type="color" id="pTintC" value="'+(tv!=='none'&&tv!=='rarity'?tv:'#e8c24a')+'"></div></div>';}
   function rgbHex(c){if(!c)return '#000000';if(c[0]==='#')return c.slice(0,7);var m=String(c).match(/\d+/g);if(!m)return '#000000';return '#'+m.slice(0,3).map(function(n){return ('0'+(+n).toString(16)).slice(-2);}).join('');}
 
   function bindProps(box,L){
     function commit(){pushHist();persist();}
-    function live(id,fn,commitOnChange){var e=box.querySelector('#'+id);if(!e)return;var ev=e.type==='range'?'input':'change';e.addEventListener(ev,function(){fn(e);var v=box.querySelector('.v-'+id);if(v)v.textContent=e.value;render();positionSel();persist();});e.addEventListener('change',commit);}
+    // wire a slider AND its paired number input (id 'n_<id>'), keeping both in sync;
+    // typing a digit sets the value just like dragging the bar
+    function live(id,fn){
+      var sl=box.querySelector('#'+id), ni=box.querySelector('#n_'+id);
+      if(!sl&&!ni)return;
+      function apply(val){ var v=+val; if(sl)sl.value=v; if(ni&&document.activeElement!==ni)ni.value=v; fn({value:v}); render(); positionSel(); persist(); }
+      if(sl){ sl.addEventListener('input',function(){apply(sl.value);}); sl.addEventListener('change',commit); }
+      if(ni){ ni.addEventListener('input',function(){apply(ni.value);}); ni.addEventListener('change',commit); }
+    }
     live('pOp',function(e){if(typeof L.opacity!=='object')L.opacity=op(+e.value);L.opacity[rarity]=+e.value;});
     var rseg=box.querySelector('#pRar');if(rseg)rseg.querySelectorAll('button').forEach(function(b){b.onclick=function(){
       var all=['common','rare','elite','legendary'];var cur=L.rarities?L.rarities.slice():all.slice();var r=b.dataset.rr;
@@ -441,7 +456,10 @@
     };});
     live('pBlend',function(e){L.blend=e.value;});
     ['X','Y','W','H'].forEach(function(k){live('p'+k,function(e){L.rect[k.toLowerCase()]=+e.value;});});
-    live('pRot',function(e){L.rot=+e.value;var b=box.querySelector('#pRot').previousElementSibling;});
+    live('pRot',function(e){L.rot=+e.value;});
+    var cenX=box.querySelector('#pCenX');if(cenX)cenX.onclick=function(){L.rect.x=Math.round((100-L.rect.w)/2*10)/10;render();positionSel();renderProps();commit();};
+    var cenY=box.querySelector('#pCenY');if(cenY)cenY.onclick=function(){L.rect.y=Math.round((100-L.rect.h)/2*10)/10;render();positionSel();renderProps();commit();};
+    var opAll=box.querySelector('#pOpAll');if(opAll)opAll.onclick=function(){var v=(L.opacity&&typeof L.opacity==='object')?L.opacity[rarity]:(L.opacity==null?1:L.opacity);L.opacity=op(v);render();renderProps();commit();};
     live('pFit',function(e){L.fit=e.value;});
     live('pFillT',function(e){L.fillType=e.value;});
     live('pC1',function(e){L.c1=e.value;});live('pC2',function(e){L.c2=e.value;});
@@ -461,8 +479,7 @@
     var tco=box.querySelector('#pTColor');if(tco)tco.oninput=function(){setT({color:tco.value});render();persist();};
     var tc1=box.querySelector('#pTC1');if(tc1)tc1.oninput=function(){setT({c1:tc1.value});render();persist();};
     var tc2=box.querySelector('#pTC2');if(tc2)tc2.oninput=function(){setT({c2:tc2.value});render();persist();};
-    var tang=box.querySelector('#pTAng');if(tang)tang.addEventListener('input',function(){setT({angle:+tang.value});var v=box.querySelector('.v-pTAng');if(v)v.textContent=tang.value;render();persist();});
-    if(tang)tang.addEventListener('change',function(){pushHist();persist();});
+    live('pTAng',function(e){setT({angle:+e.value});});
     var tall=box.querySelector('#pTAll');if(tall)tall.onclick=function(){setT({});var cur=JSON.parse(JSON.stringify(L.title[rarity]));['common','rare','elite','legendary'].forEach(function(r){L.title[r]=JSON.parse(JSON.stringify(cur));});render();pushHist();persist();};
     var tint=box.querySelector('#pTint');if(tint){tint.onchange=function(){var v=tint.value;L.tint=(v==='custom')?box.querySelector('#pTintC').value:v;render();commit();};box.querySelector('#pTintC').oninput=function(e){if(tint.value==='custom'){L.tint=e.target.value;render();persist();}};}
     var sh=box.querySelector('#pShadow');if(sh)sh.onchange=function(){L.shadow=sh.checked?{x:0,y:2,blur:6,color:'rgba(0,0,0,.6)'}:null;render();renderProps();commit();};
@@ -488,7 +505,7 @@
   // ── selection box + transform (move / resize / rotate) ──
   function positionSel(){
     if(sel==null||!state.layers[sel]||state.layers[sel].visible===false){selBox.style.display='none';return;}
-    var L=state.layers[sel],rc=L.rect,cr=card.getBoundingClientRect(),wr=cw.getBoundingClientRect();
+    var L=state.layers[sel],rc=L.rect,cr=card.getBoundingClientRect(),wr=stage.getBoundingClientRect();
     var x=cr.left-wr.left+rc.x/100*cr.width, y=cr.top-wr.top+rc.y/100*cr.height;
     selBox.style.display='block';
     selBox.style.left=x+'px';selBox.style.top=y+'px';selBox.style.width=(rc.w/100*cr.width)+'px';selBox.style.height=(rc.h/100*cr.height)+'px';
@@ -521,7 +538,7 @@
     render();positionSel();renderProps();
   }
   function endDrag(){if(drag){hideGuides();drag=null;pushHist();persist();}}
-  function snap(L,nx,ny){hideGuides();var t=1.2;var cxNow=nx+L.rect.w/2, cyNow=ny+L.rect.h/2;var gv=document.getElementById('gv'),gh=document.getElementById('gh');var m=cardMetrics(),cr=m.cr,wr=cw.getBoundingClientRect();
+  function snap(L,nx,ny){hideGuides();var t=1.2;var cxNow=nx+L.rect.w/2, cyNow=ny+L.rect.h/2;var gv=document.getElementById('gv'),gh=document.getElementById('gh');var m=cardMetrics(),cr=m.cr,wr=stage.getBoundingClientRect();
     // vertical centre / edges
     var vt=[[50,'c'],[0,'l'],[100,'r']];for(var i=0;i<vt.length;i++){var tgt=vt[i][0];var refC=tgt, refL=tgt-L.rect.w/2, refR=tgt-L.rect.w/2;
       if(Math.abs(cxNow-tgt)<t){nx=tgt-L.rect.w/2;gv.style.display='block';gv.style.left=(cr.left-wr.left+tgt/100*cr.width)+'px';break;}
@@ -540,13 +557,16 @@
     var d=drag,m=d.m,a=(L.rot||0)*Math.PI/180,ca=Math.cos(a),sa=Math.sin(a);
     var dxp=e.clientX-d.sx, dyp=e.clientY-d.sy;
     var ldx=dxp*ca+dyp*sa, ldy=-dxp*sa+dyp*ca;               // delta in the layer's local frame (px)
-    var hx=d.hx,hy=d.hy;
-    var rw=d.rw+hx*ldx, rh=d.rh+hy*ldy;                       // px sizes
-    if(e.shiftKey&&hx&&hy){var ratio=d.rw/d.rh;rh=rw/ratio;}
+    var hx=d.hx,hy=d.hy, center=e.altKey, k=center?2:1;      // ⌥ = scale symmetrically from the centre
+    var rw=d.rw+hx*ldx*k, rh=d.rh+hy*ldy*k;                   // px sizes
+    if(e.shiftKey&&hx&&hy){var ratio=d.rw/d.rh;rh=rw/ratio;}  // ⇧ = keep aspect ratio (corner handles)
     rw=Math.max(6,rw);rh=Math.max(6,rh);
-    var cxShiftL=hx*(rw-d.rw)/2, cyShiftL=hy*(rh-d.rh)/2;      // centre shift in local frame
-    var cxs=cxShiftL*ca - cyShiftL*sa, cys=cxShiftL*sa + cyShiftL*ca; // → screen frame
-    var ncx=d.cx+cxs, ncy=d.cy+cys;
+    var ncx,ncy;
+    if(center){ ncx=d.cx; ncy=d.cy; }                         // centre stays put
+    else{
+      var cxShiftL=hx*(rw-d.rw)/2, cyShiftL=hy*(rh-d.rh)/2;   // opposite handle stays put
+      ncx=d.cx + (cxShiftL*ca - cyShiftL*sa); ncy=d.cy + (cxShiftL*sa + cyShiftL*ca);
+    }
     L.rect.w=Math.round(rw/m.cw*1000)/10;L.rect.h=Math.round(rh/m.ch*1000)/10;
     L.rect.x=Math.round((ncx-rw/2)/m.cw*1000)/10;L.rect.y=Math.round((ncy-rh/2)/m.ch*1000)/10;
   }
@@ -588,7 +608,7 @@
   var psel=document.getElementById('posterSel');psel.innerHTML=POSTERS.map(function(p){return '<option value="'+p[1]+'">'+p[0]+'</option>';}).join('')+'<option value="__up">Upload poster…</option>';
   psel.onchange=function(){if(psel.value==='__up'){var f=document.createElement('input');f.type='file';f.accept='image/*';f.onchange=function(){var file=f.files[0];if(!file)return;var rd=new FileReader();rd.onload=function(){var o=document.createElement('option');o.value=rd.result;o.textContent=file.name;psel.insertBefore(o,psel.firstChild);psel.value=rd.result;render();};rd.readAsDataURL(file);};f.click();}else render();};
   ['nameIn','noIn','typeIn','nIn','newIn'].forEach(function(id){var e=document.getElementById(id);e.addEventListener(e.type==='checkbox'?'change':'input',function(){render();positionSel();});});
-  document.getElementById('zoom').oninput=function(e){zoom=+e.value;cw.style.transform='scale('+zoom+')';positionSel();};
+  var zoomEl=document.getElementById('zoom');zoomEl.oninput=function(){zoom=+zoomEl.value;cw.style.transform='scale('+zoom+')';positionSel();};
   document.getElementById('tglGrid').onchange=function(e){document.getElementById('gv');card.style.backgroundImage='';document.getElementById('stage').classList.toggle('showgrid',e.target.checked);gridOverlay(e.target.checked);};
   document.getElementById('tglFx').onchange=function(e){showFx=e.target.checked;render();};
   function gridOverlay(on){var id='studioGrid',ex=document.getElementById(id);if(ex)ex.remove();if(!on)return;var g=document.createElement('div');g.id=id;g.style.cssText='position:absolute;inset:0;pointer-events:none;z-index:800;background-image:linear-gradient(rgba(255,255,255,.14) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.14) 1px,transparent 1px);background-size:10% 10%';card.appendChild(g);}
