@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>CineLinks · Card Studio</title>
+<link rel="stylesheet" href="/fx.css">
+<style>
+  :root{
+    --bg:#0b0b0d; --panel:#141416; --panel2:#1b1b1e; --bdr:rgba(255,255,255,.09);
+    --ink:#f3f0e8; --dim:#9a978e; --gold:#e8a000; --gold2:#f5c542; --fui:'Schibsted Grotesk',system-ui,-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:radial-gradient(120% 70% at 50% -20%,rgba(232,160,0,.10),transparent 55%),var(--bg);color:var(--ink);font-family:var(--fui);-webkit-font-smoothing:antialiased}
+  a{color:var(--gold2)}
+  .top{display:flex;align-items:center;gap:14px;padding:12px 18px;border-bottom:1px solid var(--bdr);position:sticky;top:0;z-index:10;background:rgba(11,11,13,.86);backdrop-filter:blur(12px)}
+  .top h1{font-size:1rem;font-weight:900;letter-spacing:.02em;margin:0}
+  .top h1 b{color:var(--gold)}
+  .top .sub{font-size:.72rem;color:var(--dim)}
+  .top .sp{flex:1}
+  .btn{font:inherit;font-size:.78rem;font-weight:800;color:var(--ink);background:var(--panel2);border:1px solid var(--bdr);border-radius:9px;padding:7px 13px;cursor:pointer;transition:.15s}
+  .btn:hover{border-color:rgba(232,194,74,.5)}
+  .btn.gold{background:var(--gold);color:#1a1200;border-color:transparent}
+  .btn.gold:hover{background:var(--gold2)}
+  .btn.sm{padding:4px 9px;font-size:.72rem;border-radius:7px}
+  .btn.danger{color:#ffb0b0;border-color:rgba(255,120,120,.3)}
+
+  .wrap{display:grid;grid-template-columns:1fr 360px;gap:0;height:calc(100vh - 53px)}
+  @media(max-width:900px){.wrap{grid-template-columns:1fr;height:auto}}
+
+  /* ── stage ── */
+  .stage{display:flex;align-items:center;justify-content:center;padding:32px;position:relative;overflow:auto;
+    background:radial-gradient(80% 60% at 50% 40%,rgba(255,255,255,.03),transparent 70%),
+    repeating-conic-gradient(#101012 0% 25%,#0d0d0f 0% 50%) 50%/28px 28px}
+  .cardwrap{position:relative;perspective:1100px}
+  .card{position:relative;width:min(74vw,380px);aspect-ratio:5/7;container-type:inline-size;border-radius:16px;overflow:hidden;isolation:isolate;background:#0a1830;box-shadow:0 30px 80px rgba(0,0,0,.6);transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .1s ease-out;cursor:grab}
+  .card.dragging{cursor:grabbing;transition:none}
+  .lyr{position:absolute;pointer-events:none}
+  .lyr.sel-outline{outline:2px dashed rgba(245,197,66,.9);outline-offset:-1px}
+  /* built-in kinds */
+  .k-scrim{background:linear-gradient(180deg,rgba(6,11,22,.34),transparent 20%,transparent 56%,rgba(6,11,22,.74) 78%,rgba(4,9,18,.96))}
+  .k-corner{background:linear-gradient(135deg,var(--m1),var(--cr) 58%,transparent 60%);clip-path:polygon(0 0,100% 0,0 100%)}
+  .k-star{background:conic-gradient(from 0deg,#ff9a9a,#fff39a,#9affb0,#9ad9ff,#c39aff,#ff9af0,#ff9a9a);clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);filter:drop-shadow(0 1px 3px rgba(0,0,0,.6))}
+  .k-frame{border-radius:16px;box-shadow:inset 0 0 0 .7cqw rgba(0,0,0,.55),inset 0 0 0 2cqw var(--cr),inset 0 0 0 2.7cqw rgba(0,0,0,.45)}
+  .k-frame::after{content:"";position:absolute;inset:0;border-radius:16px;padding:1.9cqw;background:linear-gradient(140deg,rgba(255,255,255,.5),transparent 36%,transparent 60%,rgba(255,255,255,.3));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;mix-blend-mode:overlay;opacity:var(--rail,.5)}
+  .k-foil{background:repeating-linear-gradient(115deg,rgba(255,119,115,.4),rgba(255,237,95,.4) 11%,rgba(168,255,150,.4) 21%,rgba(131,255,247,.4) 31%,rgba(120,148,255,.4) 42%,rgba(216,117,255,.4) 52%,rgba(255,119,115,.4) 62%);background-size:280% 280%;background-position:var(--fx,50%) var(--fy,50%);mix-blend-mode:color-dodge;filter:brightness(.92) contrast(1.12)}
+  .k-glare{background:radial-gradient(circle at var(--gx,50%) var(--gy,50%),rgba(255,255,255,.42),rgba(255,255,255,.08) 30%,transparent 52%);mix-blend-mode:overlay}
+  .k-textblock{left:0;right:0;bottom:0;width:100%!important;height:auto!important;padding:0 7.3cqw 6.7cqw;text-align:center}
+  .k-textblock .nm{font-weight:900;font-size:10.9cqw;line-height:1.02;letter-spacing:.01em;text-transform:uppercase;background:linear-gradient(180deg,var(--m1),var(--cr) 52%,var(--m1));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;filter:drop-shadow(0 .7cqw 1.4cqw rgba(0,0,0,.9));margin-bottom:3.3cqw}
+  .k-textblock .mt{display:flex;align-items:center;justify-content:center;gap:4cqw;font-size:5.3cqw;font-weight:800;letter-spacing:.05em;text-transform:uppercase}
+  .k-textblock .gem{width:4.7cqw;height:4.7cqw;border-radius:1.3cqw;transform:rotate(45deg);background:var(--cr);box-shadow:0 0 4cqw var(--cr)}
+  .k-textblock .rar{color:var(--cr)}
+  .k-textblock .sep{color:rgba(255,255,255,.32)}
+  .k-textblock .no{color:rgba(255,255,255,.82);font-family:ui-monospace,Menlo,monospace}
+
+  /* ── inspector ── */
+  .side{border-left:1px solid var(--bdr);background:var(--panel);overflow-y:auto;padding:14px 14px 60px}
+  @media(max-width:900px){.side{border-left:none;border-top:1px solid var(--bdr)}}
+  .sec{margin-bottom:16px}
+  .sec>.lbl{font-size:.64rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#c9a24a;margin:0 0 8px}
+  .row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .seg{display:flex;gap:4px;background:var(--panel2);border:1px solid var(--bdr);border-radius:10px;padding:3px}
+  .seg button{flex:1;font:inherit;font-size:.72rem;font-weight:800;color:var(--dim);background:none;border:0;border-radius:7px;padding:6px 4px;cursor:pointer}
+  .seg button.on{background:var(--gold);color:#1a1200}
+  .seg button.on.c-rare{background:#7aa6e8}.seg button.on.c-elite{background:#b58ad6}.seg button.on.c-legendary{background:#e8c24a}.seg button.on.c-common{background:#8a8a8a}
+  input[type=text],select{width:100%;font:inherit;font-size:.8rem;color:var(--ink);background:var(--panel2);border:1px solid var(--bdr);border-radius:8px;padding:7px 9px}
+  input[type=color]{width:34px;height:28px;padding:0;border:1px solid var(--bdr);border-radius:6px;background:none}
+  .field{margin:8px 0}
+  .field label{display:flex;justify-content:space-between;font-size:.72rem;color:var(--dim);margin-bottom:3px}
+  .field label b{color:var(--gold2);font-variant-numeric:tabular-nums}
+  input[type=range]{width:100%;accent-color:var(--gold)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}
+
+  .layers{display:flex;flex-direction:column;gap:5px}
+  .layer{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:9px;background:var(--panel2);border:1px solid var(--bdr);cursor:pointer;font-size:.78rem}
+  .layer.sel{border-color:rgba(232,194,74,.6);background:rgba(232,160,0,.08)}
+  .layer .vis{width:16px;text-align:center;opacity:.85;cursor:pointer}
+  .layer .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700}
+  .layer .badge{font-size:.58rem;font-weight:800;color:var(--dim);text-transform:uppercase;letter-spacing:.05em}
+  .layer .ord{display:flex;flex-direction:column;line-height:.7}
+  .layer .ord button{font:inherit;font-size:.6rem;background:none;border:0;color:var(--dim);cursor:pointer;padding:0 2px}
+
+  .drop{margin-top:8px;border:1.5px dashed var(--bdr);border-radius:12px;padding:16px;text-align:center;color:var(--dim);font-size:.76rem;cursor:pointer;transition:.15s}
+  .drop:hover,.drop.over{border-color:var(--gold);color:var(--gold2);background:rgba(232,160,0,.05)}
+  textarea{width:100%;height:120px;font:12px/1.4 ui-monospace,Menlo,monospace;color:#cfe;background:#0e0e10;border:1px solid var(--bdr);border-radius:9px;padding:9px;resize:vertical}
+  .hint{font-size:.68rem;color:var(--dim);line-height:1.45;margin-top:6px}
+  .props-empty{font-size:.76rem;color:var(--dim);padding:10px 2px}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1><b>Card</b> Studio</h1>
+  <span class="sub">design layers · drop your own PNG/SVG · export a template</span>
+  <span class="sp"></span>
+  <button class="btn sm" id="btnReset">Reset</button>
+  <button class="btn sm" id="btnImport">Import</button>
+  <button class="btn gold sm" id="btnExport">Export JSON</button>
+</div>
+
+<div class="wrap">
+  <div class="stage">
+    <div class="cardwrap">
+      <div class="card" id="card"></div>
+    </div>
+  </div>
+
+  <div class="side">
+    <!-- preview controls -->
+    <div class="sec">
+      <p class="lbl">Preview</p>
+      <div class="seg" id="rarSeg">
+        <button data-r="common">Common</button>
+        <button data-r="rare">Rare</button>
+        <button data-r="elite">Elite</button>
+        <button data-r="legendary" class="on">Legend</button>
+      </div>
+      <div class="grid2" style="margin-top:8px">
+        <div class="field"><label>Sample poster</label><select id="posterSel"></select></div>
+        <div class="field"><label>Holo tilt</label><select id="tiltSel"><option value="1">Follow cursor</option><option value="0">Static</option></select></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>Name</label><input type="text" id="nameIn" value="Interstellar"></div>
+        <div class="field"><label>Number</label><input type="text" id="noIn" value="#014"></div>
+      </div>
+    </div>
+
+    <!-- layers -->
+    <div class="sec">
+      <p class="lbl">Layers <span style="color:var(--dim);font-weight:700">(top = front)</span></p>
+      <div class="layers" id="layerList"></div>
+      <div class="drop" id="drop">Drop a PNG / SVG here, or click to upload an overlay</div>
+      <input type="file" id="file" accept="image/png,image/svg+xml,image/webp,image/jpeg" style="display:none" multiple>
+      <p class="hint">Uploaded art is embedded in the exported JSON as a data URI, so the template is self-contained. For production, extract big textures to <code>/card/*.webp</code> and reference them by path.</p>
+    </div>
+
+    <!-- selected layer props -->
+    <div class="sec">
+      <p class="lbl">Layer properties</p>
+      <div id="props"><div class="props-empty">Select a layer to edit it.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- import/export dialog -->
+<div id="io" style="display:none;position:fixed;inset:0;z-index:50;align-items:center;justify-content:center;background:rgba(0,0,0,.75);backdrop-filter:blur(6px)">
+  <div style="width:min(92vw,560px);background:var(--panel);border:1px solid var(--bdr);border-radius:16px;padding:18px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <b id="ioTitle">Template JSON</b>
+      <button class="btn sm" id="ioClose">Close</button>
+    </div>
+    <textarea id="ioText" spellcheck="false"></textarea>
+    <div class="row" style="margin-top:10px;justify-content:flex-end">
+      <button class="btn sm" id="ioCopy">Copy</button>
+      <button class="btn gold sm" id="ioLoad" style="display:none">Load into studio</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var TMDB='https://image.tmdb.org/t/p/w500';
+  var RARITY={legendary:{ring:'#e8c24a',m:'#fff3c4',rail:.85,label:'Legendary'},elite:{ring:'#b58ad6',m:'#f0e2ff',rail:.62,label:'Elite'},rare:{ring:'#7aa6e8',m:'#dcebff',rail:.5,label:'Rare'},common:{ring:'rgba(255,255,255,.22)',m:'#ffffff',rail:.26,label:'Common'}};
+  var POSTERS=[
+    ['Interstellar','/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg'],
+    ['The Dark Knight','/qJ2tW6WMUDux911r6m7haRef0WH.jpg'],
+    ['Dune','/cDbNAY0KM84cxXhmj8f0dLWza3t.jpg'],
+    ['Blade Runner 2049','/gajva2L0rPYkEWjzgFlBXCAVBE5.jpg'],
+    ['The Matrix','/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg'],
+    ['Pulp Fiction','/d5iIlFn5s0ImszYzBPb8JPIfbXD.jpg']
+  ];
+  var BLENDS=['normal','multiply','screen','overlay','soft-light','color-dodge','hard-light','lighten','difference'];
+  var KIND_LABEL={poster:'poster',scrim:'scrim',corner:'corner',star:'holo star',frame:'frame',foil:'foil',glare:'glare',textblock:'text',image:'image'};
+  // A layer's opacity is stored per-rarity so you can tune the same asset differently
+  // across tiers (the pro move: one greyscale foil, tinted + faded per rarity).
+  function op(v){return {common:v,rare:v,elite:v,legendary:v};}
+
+  // Faithful default = today's "authentic" card, expressed as data. Add image
+  // layers on top, retint/reposition anything, export, wire into the game later.
+  function defaultTemplate(){
+    return { name:'authentic', ratio:'5/7', layers:[
+      {id:'poster', type:'poster', rect:{x:0,y:0,w:100,h:100}, rot:0, blend:'normal', opacity:op(1), fit:'cover'},
+      {id:'scrim',  type:'scrim',  rect:{x:0,y:0,w:100,h:100}, rot:0, blend:'normal', opacity:op(1)},
+      {id:'corner', type:'corner', rect:{x:0,y:0,w:30,h:21},   rot:0, blend:'normal', opacity:op(.95), tint:'rarity'},
+      {id:'star',   type:'star',   rect:{x:4.5,y:4.5,w:12,h:12},rot:0, blend:'normal', opacity:op(1)},
+      {id:'frame',  type:'frame',  rect:{x:0,y:0,w:100,h:100}, rot:0, blend:'normal', opacity:op(1), tint:'rarity'},
+      {id:'foil',   type:'foil',   rect:{x:0,y:0,w:100,h:100}, rot:0, blend:'color-dodge', opacity:{common:0,rare:.16,elite:.24,legendary:.34}, follow:'foil'},
+      {id:'glare',  type:'glare',  rect:{x:0,y:0,w:100,h:100}, rot:0, blend:'overlay', opacity:op(.5), follow:'glare'},
+      {id:'text',   type:'textblock', rect:{x:0,y:60,w:100,h:40}, rot:0, blend:'normal', opacity:op(1)}
+    ]};
+  }
+
+  var state = load() || defaultTemplate();
+  var rarity = 'legendary', sel = null, tilt = 1;
+  var cardEl = document.getElementById('card');
+
+  function load(){ try{ var s=localStorage.getItem('cl_studio'); return s?JSON.parse(s):null; }catch(_){ return null; } }
+  function persist(){ try{ localStorage.setItem('cl_studio', JSON.stringify(state)); }catch(_){ } }
+  function uid(){ return 'l'+Math.random().toString(36).slice(2,8); }
+  function curPoster(){ var s=document.getElementById('posterSel'); var v=s.value; if(v.slice(0,5)==='data:'||v[0]==='/'||v.slice(0,4)==='blob'||v.slice(0,4)==='http') return v.slice(0,5)==='data:'?v:(v[0]==='/'?TMDB+v:v); return TMDB+v; }
+
+  // ── render the card from the template ──
+  function render(){
+    var r=RARITY[rarity];
+    cardEl.style.setProperty('--cr', r.ring);
+    cardEl.style.setProperty('--m1', r.m);
+    cardEl.style.setProperty('--rail', r.rail);
+    cardEl.innerHTML='';
+    state.layers.forEach(function(L,idx){
+      if(L.visible===false) return;
+      var el=document.createElement('div');
+      el.className='lyr k-'+L.type;
+      el.dataset.i=idx;
+      var rc=L.rect||{x:0,y:0,w:100,h:100};
+      el.style.left=rc.x+'%'; el.style.top=rc.y+'%'; el.style.width=rc.w+'%'; el.style.height=rc.h+'%';
+      el.style.zIndex=idx;
+      el.style.opacity=(L.opacity&&typeof L.opacity==='object')?L.opacity[rarity]:(L.opacity==null?1:L.opacity);
+      if(L.blend&&L.blend!=='normal') el.style.mixBlendMode=L.blend;
+      if(L.rot) el.style.transform='rotate('+L.rot+'deg)';
+      if(L.type==='poster'){
+        var pv=curPoster();
+        el.style.backgroundImage='url('+pv+')';
+        el.style.backgroundSize=L.fit||'cover'; el.style.backgroundPosition='center top'; el.style.backgroundRepeat='no-repeat';
+        el.style.background='#0a1830 url('+pv+') center top/'+(L.fit||'cover')+' no-repeat';
+      } else if(L.type==='image'){
+        if(L.tint&&L.tint!=='none'){
+          el.style.background=(L.tint==='rarity')?'var(--cr)':L.tint;
+          el.style.webkitMaskImage=el.style.maskImage='url('+L.src+')';
+          var ms=(L.fit||'cover'); el.style.webkitMaskSize=el.style.maskSize=ms; el.style.webkitMaskPosition=el.style.maskPosition='center'; el.style.webkitMaskRepeat=el.style.maskRepeat='no-repeat';
+        } else {
+          el.style.background='url('+L.src+') center/'+(L.fit||'cover')+' no-repeat';
+        }
+      } else if(L.type==='textblock'){
+        el.innerHTML='<div class="nm">'+esc(document.getElementById('nameIn').value||'Card Name')+'</div>'+
+          '<div class="mt"><span class="gem"></span><span class="rar">'+r.label+'</span><span class="sep">·</span><span>Film</span><span class="sep">·</span><span class="no">'+esc(document.getElementById('noIn').value||'#000')+'</span></div>';
+      } else if(L.type==='corner'||L.type==='star'||L.type==='frame'||L.type==='foil'||L.type==='glare'||L.type==='scrim'){
+        // tint override for corner (uses --cr already); nothing else needed
+      }
+      if(sel===idx) el.classList.add('sel-outline');
+      cardEl.appendChild(el);
+    });
+  }
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+
+  // ── layer list ──
+  function renderLayers(){
+    var list=document.getElementById('layerList'); list.innerHTML='';
+    // show top-most first
+    state.layers.slice().reverse().forEach(function(L){
+      var idx=state.layers.indexOf(L);
+      var row=document.createElement('div');
+      row.className='layer'+(sel===idx?' sel':'');
+      row.innerHTML='<span class="vis" data-vis="'+idx+'">'+(L.visible===false?'🚫':'👁')+'</span>'+
+        '<span class="nm">'+esc(L.name||KIND_LABEL[L.type]||L.type)+'</span>'+
+        '<span class="badge">'+(KIND_LABEL[L.type]||L.type)+'</span>'+
+        '<span class="ord"><button data-up="'+idx+'">▲</button><button data-dn="'+idx+'">▼</button></span>';
+      row.addEventListener('click',function(e){ if(e.target.dataset.vis!=null||e.target.dataset.up!=null||e.target.dataset.dn!=null) return; sel=idx; renderAll(); });
+      list.appendChild(row);
+    });
+    list.querySelectorAll('[data-vis]').forEach(function(b){ b.addEventListener('click',function(){ var i=+b.dataset.vis; state.layers[i].visible=state.layers[i].visible===false?true:false; renderAll(); }); });
+    list.querySelectorAll('[data-up]').forEach(function(b){ b.addEventListener('click',function(){ move(+b.dataset.up,1); }); });
+    list.querySelectorAll('[data-dn]').forEach(function(b){ b.addEventListener('click',function(){ move(+b.dataset.dn,-1); }); });
+  }
+  function move(i,dir){ var j=i+dir; if(j<0||j>=state.layers.length) return; var a=state.layers; var t=a[i]; a[i]=a[j]; a[j]=t; if(sel===i)sel=j; else if(sel===j)sel=i; renderAll(); }
+
+  // ── property panel ──
+  function renderProps(){
+    var box=document.getElementById('props');
+    if(sel==null||!state.layers[sel]){ box.innerHTML='<div class="props-empty">Select a layer to edit it.</div>'; return; }
+    var L=state.layers[sel];
+    var isImg=L.type==='image';
+    var canTint=isImg||L.type==='corner';
+    var curOp=(L.opacity&&typeof L.opacity==='object')?L.opacity[rarity]:(L.opacity==null?1:L.opacity);
+    var h='';
+    h+='<div class="field"><label>Name</label><input type="text" id="pName" value="'+esc(L.name||KIND_LABEL[L.type])+'"></div>';
+    h+='<div class="field"><label>Opacity <b>'+(+curOp).toFixed(2)+' · '+rarity+'</b></label><input type="range" id="pOp" min="0" max="1" step="0.01" value="'+curOp+'"></div>';
+    h+='<div class="field"><label>Blend mode</label><select id="pBlend">'+BLENDS.map(function(b){return '<option'+(L.blend===b?' selected':'')+'>'+b+'</option>';}).join('')+'</select></div>';
+    h+='<div class="grid2">'+
+       '<div class="field"><label>X <b>'+L.rect.x+'%</b></label><input type="range" id="pX" min="-20" max="100" step="0.5" value="'+L.rect.x+'"></div>'+
+       '<div class="field"><label>Y <b>'+L.rect.y+'%</b></label><input type="range" id="pY" min="-20" max="100" step="0.5" value="'+L.rect.y+'"></div>'+
+       '<div class="field"><label>W <b>'+L.rect.w+'%</b></label><input type="range" id="pW" min="1" max="140" step="0.5" value="'+L.rect.w+'"></div>'+
+       '<div class="field"><label>H <b>'+L.rect.h+'%</b></label><input type="range" id="pH" min="1" max="140" step="0.5" value="'+L.rect.h+'"></div>'+
+       '</div>';
+    h+='<div class="field"><label>Rotation <b>'+(L.rot||0)+'°</b></label><input type="range" id="pRot" min="-180" max="180" step="1" value="'+(L.rot||0)+'"></div>';
+    if(isImg){
+      h+='<div class="field"><label>Fit</label><select id="pFit"><option value="cover"'+(L.fit==='cover'?' selected':'')+'>cover</option><option value="contain"'+(L.fit==='contain'?' selected':'')+'>contain</option></select></div>';
+    }
+    if(canTint){
+      var tv=L.tint||'none';
+      h+='<div class="field"><label>Tint</label><div class="row"><select id="pTint" style="flex:1"><option value="none"'+(tv==='none'?' selected':'')+'>none (original art)</option><option value="rarity"'+(tv==='rarity'?' selected':'')+'>rarity colour</option><option value="custom"'+(tv!=='none'&&tv!=='rarity'?' selected':'')+'>custom…</option></select><input type="color" id="pTintC" value="'+(tv!=='none'&&tv!=='rarity'?tv:'#e8c24a')+'"></div></div>';
+      h+='<p class="hint">Tinting masks the art and paints it with the colour — author overlays in white/grey + alpha so one file works for every rarity.</p>';
+    }
+    if(isImg) h+='<button class="btn danger sm" id="pDel" style="margin-top:10px">Delete layer</button>';
+    box.innerHTML=h;
+
+    box.querySelector('#pName').addEventListener('input',function(e){L.name=e.target.value;renderLayers();persist();});
+    box.querySelector('#pOp').addEventListener('input',function(e){ if(typeof L.opacity!=='object')L.opacity=op(+e.target.value); L.opacity[rarity]=+e.target.value; upd(); });
+    box.querySelector('#pBlend').addEventListener('change',function(e){L.blend=e.target.value;upd();});
+    ['X','Y','W','H'].forEach(function(k){ box.querySelector('#p'+k).addEventListener('input',function(e){ L.rect[k.toLowerCase()]=+e.target.value; upd(); }); });
+    box.querySelector('#pRot').addEventListener('input',function(e){L.rot=+e.target.value;upd();});
+    if(box.querySelector('#pFit')) box.querySelector('#pFit').addEventListener('change',function(e){L.fit=e.target.value;render();persist();});
+    if(box.querySelector('#pTint')){
+      box.querySelector('#pTint').addEventListener('change',function(e){ var v=e.target.value; L.tint=(v==='custom')?box.querySelector('#pTintC').value:v; render();persist(); });
+      box.querySelector('#pTintC').addEventListener('input',function(e){ if(box.querySelector('#pTint').value==='custom'){L.tint=e.target.value;render();persist();} });
+    }
+    if(box.querySelector('#pDel')) box.querySelector('#pDel').addEventListener('click',function(){ state.layers.splice(sel,1); sel=null; renderAll(); });
+  }
+  function upd(){ render(); renderProps(); persist(); }
+  function renderAll(){ render(); renderLayers(); renderProps(); persist(); }
+
+  // ── add uploaded image as a new top layer ──
+  function addImage(dataUri,name){
+    var L={id:uid(),type:'image',name:name||'overlay',src:dataUri,rect:{x:0,y:0,w:100,h:100},rot:0,blend:'normal',opacity:op(1),fit:'contain',tint:'none'};
+    state.layers.push(L); sel=state.layers.length-1; renderAll();
+  }
+  function handleFiles(files){
+    Array.prototype.forEach.call(files,function(f){
+      if(!/^image\//.test(f.type)) return;
+      var rd=new FileReader();
+      rd.onload=function(){ addImage(rd.result, f.name.replace(/\.[^.]+$/,'')); };
+      rd.readAsDataURL(f);
+    });
+  }
+
+  // ── holo tilt: cursor drives the foil/glare + a subtle 3D rotate ──
+  function bindTilt(){
+    cardEl.addEventListener('pointermove',function(e){
+      if(dragging) return;
+      var r=cardEl.getBoundingClientRect();
+      var px=(e.clientX-r.left)/r.width, py=(e.clientY-r.top)/r.height;
+      cardEl.style.setProperty('--fx',(px*200).toFixed(1)+'%');
+      cardEl.style.setProperty('--fy',(py*200).toFixed(1)+'%');
+      cardEl.style.setProperty('--gx',(px*100).toFixed(1)+'%');
+      cardEl.style.setProperty('--gy',(py*100).toFixed(1)+'%');
+      if(tilt){ cardEl.style.setProperty('--ry',((px-.5)*16).toFixed(1)+'deg'); cardEl.style.setProperty('--rx',((.5-py)*16).toFixed(1)+'deg'); }
+    });
+    cardEl.addEventListener('pointerleave',function(){ cardEl.style.setProperty('--rx','0deg'); cardEl.style.setProperty('--ry','0deg'); });
+  }
+
+  // ── drag the selected layer on the canvas ──
+  var dragging=false, dsx=0,dsy=0,drx=0,dry=0;
+  cardEl.addEventListener('pointerdown',function(e){
+    var lyr=e.target.closest('.lyr'); if(!lyr) return;
+    var i=+lyr.dataset.i; sel=i; renderLayers(); renderProps();
+    var L=state.layers[i]; if(!L) return;
+    dragging=true; cardEl.classList.add('dragging'); cardEl.setPointerCapture(e.pointerId);
+    dsx=e.clientX; dsy=e.clientY; drx=L.rect.x; dry=L.rect.y;
+    render();
+    e.preventDefault();
+  });
+  cardEl.addEventListener('pointermove',function(e){
+    if(!dragging||sel==null) return;
+    var r=cardEl.getBoundingClientRect();
+    var L=state.layers[sel];
+    L.rect.x=Math.round((drx+(e.clientX-dsx)/r.width*100)*2)/2;
+    L.rect.y=Math.round((dry+(e.clientY-dsy)/r.height*100)*2)/2;
+    render(); renderProps();
+  });
+  window.addEventListener('pointerup',function(){ if(dragging){ dragging=false; cardEl.classList.remove('dragging'); persist(); } });
+
+  // ── wire controls ──
+  document.getElementById('rarSeg').querySelectorAll('button').forEach(function(b){
+    b.addEventListener('click',function(){ rarity=b.dataset.r; document.querySelectorAll('#rarSeg button').forEach(function(x){x.className='';}); b.className='on c-'+rarity; renderAll(); });
+  });
+  var psel=document.getElementById('posterSel');
+  psel.innerHTML=POSTERS.map(function(p){return '<option value="'+p[1]+'">'+p[0]+'</option>';}).join('')+'<option value="__up">Upload poster…</option>';
+  psel.addEventListener('change',function(){ if(psel.value==='__up'){ pickPoster(); } else render(); });
+  function pickPoster(){ var f=document.createElement('input'); f.type='file'; f.accept='image/*'; f.onchange=function(){ var file=f.files[0]; if(!file)return; var rd=new FileReader(); rd.onload=function(){ var o=document.createElement('option'); o.value=rd.result; o.textContent=file.name; psel.insertBefore(o,psel.firstChild); psel.value=rd.result; render(); }; rd.readAsDataURL(file); }; f.click(); }
+  document.getElementById('tiltSel').addEventListener('change',function(e){ tilt=+e.target.value; if(!tilt){cardEl.style.setProperty('--rx','0deg');cardEl.style.setProperty('--ry','0deg');} });
+  document.getElementById('nameIn').addEventListener('input',render);
+  document.getElementById('noIn').addEventListener('input',render);
+
+  var drop=document.getElementById('drop'), fileIn=document.getElementById('file');
+  drop.addEventListener('click',function(){ fileIn.click(); });
+  fileIn.addEventListener('change',function(){ handleFiles(fileIn.files); fileIn.value=''; });
+  ['dragover','dragenter'].forEach(function(ev){ drop.addEventListener(ev,function(e){ e.preventDefault(); drop.classList.add('over'); }); });
+  ['dragleave','drop'].forEach(function(ev){ drop.addEventListener(ev,function(e){ e.preventDefault(); drop.classList.remove('over'); }); });
+  drop.addEventListener('drop',function(e){ if(e.dataTransfer&&e.dataTransfer.files) handleFiles(e.dataTransfer.files); });
+
+  document.getElementById('btnReset').addEventListener('click',function(){ if(confirm('Reset to the default card template? Your layers here will be lost.')){ state=defaultTemplate(); sel=null; renderAll(); } });
+
+  // import / export dialog
+  var io=document.getElementById('io');
+  function openIO(title,text,loadable){ document.getElementById('ioTitle').textContent=title; document.getElementById('ioText').value=text; document.getElementById('ioLoad').style.display=loadable?'':'none'; io.style.display='flex'; }
+  document.getElementById('btnExport').addEventListener('click',function(){ openIO('Template JSON (copy or save)', JSON.stringify(state,null,2), false); });
+  document.getElementById('btnImport').addEventListener('click',function(){ openIO('Paste a template JSON, then Load', '', true); });
+  document.getElementById('ioClose').addEventListener('click',function(){ io.style.display='none'; });
+  io.addEventListener('click',function(e){ if(e.target===io) io.style.display='none'; });
+  document.getElementById('ioCopy').addEventListener('click',function(){ var t=document.getElementById('ioText'); t.select(); try{navigator.clipboard.writeText(t.value);}catch(_){} });
+  document.getElementById('ioLoad').addEventListener('click',function(){ try{ var o=JSON.parse(document.getElementById('ioText').value); if(!o||!Array.isArray(o.layers)) throw 0; state=o; sel=null; io.style.display='none'; renderAll(); }catch(_){ alert('That is not a valid template JSON.'); } });
+
+  // boot
+  document.querySelector('#rarSeg button[data-r="legendary"]').className='on c-legendary';
+  bindTilt();
+  renderAll();
+})();
+</script>
+</body>
+</html>
