@@ -1194,6 +1194,11 @@
       // its stable GPU layer — transforming it every frame under the blend layers is what
       // re-rasterised it and flashed the card background through ("petardeo" to black).
       '@media(pointer:fine){.auth-card.tilted .auth-bgimg{transform:translate3d(calc(var(--px,0) * -2.4cqw),calc(var(--py,0) * -2.4cqw),0) scale(1.06)}}' +
+      // The depth canvas replaces the <img>; it must carry the SAME 1.06 overscan the
+      // img has when tilted, otherwise the poster visibly shrinks 6% at the img->canvas
+      // swap and then the depth zoom eases in (the "jump between two zooms"). The shader
+      // does the parallax itself, so the canvas only needs the scale, not the translate.
+      '@media(pointer:fine){.auth-card.tilted .auth-bgcv,.ctc-inner.tilted .auth-bgcv{transform:scale(1.06)}}' +
       '.auth-card.tilted .auth-star{transform:translate(calc(var(--px,0) * 3.6cqw),calc(var(--py,0) * 3.6cqw))}' +
       '.auth-card.tilted .auth-corner{transform:translate(calc(var(--px,0) * 2.6cqw),calc(var(--py,0) * 2.6cqw))}' +
       '.auth-card.tilted .auth-tags{transform:translate(calc(var(--px,0) * 3cqw),calc(var(--py,0) * 3cqw))}' +
