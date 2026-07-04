@@ -1387,7 +1387,8 @@ function applyI18n() {
   if (_secs[0]) _secs[0].textContent = t('sectionDaily');
   if (_secs[1]) _secs[1].textContent = t('sectionRating');
   document.querySelectorAll('.new-tag').forEach(el => el.textContent = t('newTag'));
-  const _descMap = { cl:'descCl', guess:'descGuess', clue:'descClue', frame:'descFrame', cast:'descCast', plot:'descPlot', line:'descLine', reel:'descReel', grid:'descGrid', chain:'descChain', grp:'descGroup', trumps:'descTrumps' };
+  const _descMap = { cl:'descCl', guess:'descGuess', clue:'descClue', frame:'descFrame', cast:'descCast', plot:'descPlot', line:'descLine', reel:'descReel', grid:'descGrid', chain:'descChain', grp:'descGroup', trumps:'descTrumps', rating:'descRating' };
+  document.querySelectorAll('.hero-eyebrow').forEach(el => el.textContent = t('todaysDaily'));
   document.querySelectorAll('.game-done[data-done]').forEach(el => { const k = _descMap[el.dataset.done]; if (k) { const card = el.closest('.game-card'); const d = card && card.querySelector('.game-desc'); if (d) d.textContent = t(k); } });
   const _cBtn = document.querySelector('.archive-btn[onclick*="creator"]'); if (_cBtn) _cBtn.textContent = t('navCreate');
   const _sLink = document.querySelector('a.archive-btn[href="/stats.html"]'); if (_sLink) _sLink.textContent = t('navStats');
