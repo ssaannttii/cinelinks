@@ -298,7 +298,7 @@
         // Depth-scaled zoom-in: on hover, pull UVs toward the crop centre MORE where the
         // depth map reads "near" — so the subject magnifies out of the frame while the
         // background barely moves (a true parallax pop, not a flat scale).
-        'vec2 ctr=off+cov*.5;float dz=depAt(uv);uv=mix(uv,ctr,zoom*.05*smoothstep(.05,1.,dz));' +
+        'vec2 ctr=off+cov*.5;float dz=depAt(uv);uv=mix(uv,ctr,zoom*.25*smoothstep(.05,1.,dz));' +
         'float dep=depAt(uv);' +
         'vec2 suv=clamp(uv-tilt*(dep-.42)*.055,vec2(.002),vec2(.998));' +
         'for(int i=0;i<2;i++){' +
