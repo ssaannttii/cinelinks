@@ -1957,15 +1957,31 @@ function assignGamePosters() {
       shawshank: '/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg', gladiator: '/ty8TGRuvJLPUmAR1H1nRIsgwvim.jpg',
       forrest: '/saHP97rTPS5eLmrLQEcANmKrsFl.jpg', jurassicpark: '/oU7Oq2kFAAlGqbU4VoAE36g4hoI.jpg',
       parasite: '/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg', dune: '/cDbNAY0KM84cxXhmj8f0dLWza3t.jpg',
-      alien: '/vfrQk5IPloGg1v9Rzbh2Eg3VGyM.jpg', bladerunner: '/63N9uy8nd9j7Eog2axPQ8lbr3Wj.jpg'
+      alien: '/vfrQk5IPloGg1v9Rzbh2Eg3VGyM.jpg', bladerunner: '/63N9uy8nd9j7Eog2axPQ8lbr3Wj.jpg',
+      // extra posters so no title has to be shared between two game cards on the same day
+      endgame: '/ulzhLuWrPK07P1YkdWQLZnQh1JL.jpg', avengers: '/RYMX2wcKCBAr24UyPD7xwmjaTn.jpg',
+      topgun: '/n0YuM4f5lvGAP6MAW2kBIzugXnc.jpg', avatar: '/gKY6q7SjCkAU6FqvqWybDYgUKIF.jpg',
+      lionking: '/dzBtMocZuJbjLOXvrl4zGYigDzh.jpg', frozen2: '/mINJaa34MtknCYl5AjtNJzWj8cD.jpg',
+      jurassicworld: '/rhr4y79GpxQF9IsfJItRXVaoGs4.jpg', lotr1: '/6oom5QYQ2yQTMJIbnvbkBL9cHo6.jpg',
+      lotr3: '/rCzpDGLbOoPwLjy3OAm5NUPOTrC.jpg', empire: '/7BuH8itoSrLExs2YZSsM01Qk2no.jpg',
+      spiderman: '/1g0dhYtq4irTY1GPXvft6k4YLjm.jpg', joker: '/udDclJoHjfjb8Ekgsd4FDteOkCU.jpg',
+      thebatman: '/74xTEgt7R36Fpooo50r9T25onhq.jpg', wonderwoman: '/gfJGlDaHuWimErCr5Ql0I8x9QSy.jpg',
+      toystory: '/uXDfjJbdP4ijW5hWSBrPrlKpxab.jpg', findingnemo: '/eHuGQ10FUzK1mdOY69wF5pGgEf5.jpg',
+      django: '/7oWY8VDWW7thTzWh3OKYRkWUlD5.jpg', killbill: '/v7TaX8kXMXs5yFFGR41guUDNcnB.jpg',
+      terminator: '/qvktm0BHcnmDpul4Hz01GIazWPr.jpg', bladerunner2049: '/gajva2L0rPYkEWjzgFlBXCAVBE5.jpg',
+      johnwick: '/fZPSd91yGE9fCcCe6OoQr6E3Bev.jpg', madmax: '/hA2ple9q4qnwxp3hKVNhroipsir.jpg',
+      whiplash: '/7fn624j5lj3xTme2SgiLCeuedmO.jpg', prestige: '/tRNlZbgNCNOpLpbPEz5L8G8A0JN.jpg',
+      departed: '/nT97ifVT2J1yMQmeq20Qblg61T.jpg', oceans11: '/hQQCdZrsHtZyR6NbKH2YyCqd2fR.jpg',
+      grandbudapest: '/eWdyYQreja6JGCzqHWXpWHDrrPo.jpg'
     };
-    const YEAR = { jaws: 1975, alien: 1979, bladerunner: 1982, bttf: 1985, goodfellas: 1990, jurassicpark: 1993, pulp: 1994, shawshank: 1994, forrest: 1994, titanic: 1997, matrix: 1999, fightclub: 1999, gladiator: 2000, darkknight: 2008, inception: 2010, interstellar: 2014, lalaland: 2016, parasite: 2019, dune: 2021, godfather: 1972 };
+    const YEAR = { jaws: 1975, alien: 1979, bladerunner: 1982, bttf: 1985, goodfellas: 1990, jurassicpark: 1993, pulp: 1994, shawshank: 1994, forrest: 1994, titanic: 1997, matrix: 1999, fightclub: 1999, gladiator: 2000, darkknight: 2008, inception: 2010, interstellar: 2014, lalaland: 2016, parasite: 2019, dune: 2021, godfather: 1972,
+      terminator: 1984, lionking: 1994, toystory: 1995, empire: 1980, findingnemo: 2003, lotr1: 2001, lotr3: 2003, oceans11: 2001, departed: 2006, prestige: 2006, avatar: 2009, avengers: 2012, django: 2012, killbill: 2003, johnwick: 2014, madmax: 2015, whiplash: 2014, grandbudapest: 2014, jurassicworld: 2015, wonderwoman: 2017, bladerunner2049: 2017, joker: 2019, endgame: 2019, frozen2: 2019, spiderman: 2021, thebatman: 2022, topgun: 2022 };
     const ALL = Object.keys(POST);
     const COLLAGE = {
-      line:   { c: 'cc-strip', n: 5,  sort: true, pool: ['jaws', 'alien', 'bladerunner', 'bttf', 'goodfellas', 'jurassicpark', 'pulp', 'titanic', 'matrix', 'gladiator', 'darkknight', 'inception', 'interstellar', 'dune'] }, // eras on a timeline
+      line:   { c: 'cc-strip', n: 5,  sort: true, pool: ['godfather', 'jaws', 'alien', 'terminator', 'bladerunner', 'bttf', 'goodfellas', 'jurassicpark', 'pulp', 'titanic', 'matrix', 'gladiator', 'lotr1', 'departed', 'prestige', 'darkknight', 'inception', 'madmax', 'joker', 'dune'] }, // eras on a timeline
       grp:    { c: 'cc-grid',  n: 8,  pool: ALL },                                                                    // a board of titles
-      trumps: { c: 'cc-deck',  n: 3,  pool: ['darkknight', 'interstellar', 'gladiator', 'inception', 'matrix', 'dune', 'godfather', 'shawshank'] }, // a hand of cards
-      chain:  { c: 'cc-chain', n: 4,  pool: ['jurassicpark', 'jaws', 'alien', 'matrix', 'bttf', 'godfather', 'dune', 'bladerunner'] },              // an overlapping chain
+      trumps: { c: 'cc-deck',  n: 3,  pool: ['darkknight', 'interstellar', 'gladiator', 'inception', 'matrix', 'dune', 'godfather', 'shawshank', 'endgame', 'avengers', 'joker', 'lotr3', 'topgun', 'thebatman'] }, // a hand of cards
+      chain:  { c: 'cc-chain', n: 4,  pool: ['jurassicpark', 'jaws', 'alien', 'matrix', 'bttf', 'godfather', 'dune', 'bladerunner', 'terminator', 'johnwick', 'departed', 'spiderman', 'avengers', 'lotr1'] },              // an overlapping chain
       grid:   { c: 'cc-board', n: 15, pool: ALL }                                                                     // a 5-wide board
     };
     const day = (typeof dateKey === 'function' ? dateKey() : '') || '';
@@ -1973,15 +1989,28 @@ function assignGamePosters() {
     function pick(arr, s) { return arr[seed(s) % arr.length]; }
     function shuffle(arr, s) { var a = arr.slice(), r = seed(s) + 1; for (var i = a.length - 1; i > 0; i--) { r = (r * 1103515245 + 12345) & 0x7fffffff; var j = r % (i + 1); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
     function cardFor(k) { var b = document.querySelector('.game-done[data-done="' + k + '"]'); return b && b.closest('.game-card'); }
+    // A single image must never land on two different game cards the same day. Every
+    // path placed anywhere goes in `used`, and each card draws only from what's left.
+    var used = {};
+    // Single-still cards: keep the daily rotation, but skip any still already shown.
     Object.keys(POOLS).forEach(k => {
       var card = cardFor(k);
-      if (card && !card.style.getPropertyValue('--poster')) card.style.setProperty('--poster', 'url(' + P + pick(POOLS[k], day + '|' + k) + ')');
+      if (!card || card.style.getPropertyValue('--poster')) return;
+      var order = shuffle(POOLS[k], day + '|' + k);
+      var url = order.filter(function (u) { return !used[u]; })[0] || order[0];
+      used[url] = true;
+      card.style.setProperty('--poster', 'url(' + P + url + ')');
     });
-    Object.keys(COLLAGE).forEach(k => {
+    // Collage cards: constrained pools first, then the ALL-pool boards, so a small
+    // pool never starves after the big boards have eaten the shared titles.
+    ['line', 'trumps', 'chain', 'grp', 'grid'].forEach(k => {
       var card = cardFor(k);
       if (!card || card.querySelector('.card-collage')) return;
       var cfg = COLLAGE[k];
-      var films = shuffle(cfg.pool, day + '|' + k).slice(0, cfg.n);
+      var films = [];
+      shuffle(cfg.pool, day + '|' + k).forEach(function (n) { if (films.length < cfg.n && !used[POST[n]]) { films.push(n); used[POST[n]] = true; } });
+      // if a pool ran dry, top up from any still-unused poster so the collage stays full
+      if (films.length < cfg.n) shuffle(ALL, day + '|top|' + k).forEach(function (n) { if (films.length < cfg.n && !used[POST[n]]) { films.push(n); used[POST[n]] = true; } });
       if (cfg.sort) films.sort(function (a, b) { return (YEAR[a] || 0) - (YEAR[b] || 0); });
       var ths = films.map(function (n) { return '<div class="th" style="background-image:url(' + TH + POST[n] + ')"></div>'; }).join('');
       var el = document.createElement('div');
