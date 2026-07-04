@@ -306,6 +306,11 @@
           'suv=clamp(uv-tilt*(dep-.42)*.055,vec2(.002),vec2(.998));' +
         '}' +
         'vec3 c=texture2D(img,suv).rgb;' +
+        // Fake ambient occlusion: darken where the depth map has a steep gradient (the
+        // silhouette edges of the popped-out subject), scaled by the zoom so the contact
+        // shading only appears as the card lifts. Sharper on a real depth map.
+        'float ao=abs(depAt(suv+vec2(.006,0.))-depAt(suv-vec2(.006,0.)))+abs(depAt(suv+vec2(0.,.006))-depAt(suv-vec2(0.,.006)));' +
+        'c*=1.-clamp(ao*2.4,0.,.5)*zoom;' +
         'if(fAmp>0.){' +
           'float t=(suv.x*.9+suv.y*.4)*3.5+foilx;' +
           'vec3 rb=.5+.5*cos(6.2832*(t+vec3(0.,.33,.67)));' +
