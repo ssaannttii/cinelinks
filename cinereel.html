@@ -156,19 +156,23 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
       .sort((a,b)=>b.score-a.score); // most identifying first
   }
   // Build a real difficulty ramp: the signature lead is revealed LAST, and the earlier
-  // posters are pulled from a DEEPER band of their filmography (supporting turns, films
-  // less associated with them) so a famous face isn't given away on poster 1. films is
-  // sorted most-identifying first; we sample the earlier reveals across a deep band and
-  // order them least-identifying -> most, then cap it with the giveaway signature.
+  // posters are pulled from DEEP in their filmography (supporting turns, films far less
+  // associated with them) so a famous face is never given away on poster 1. films is
+  // sorted most-identifying first (rank 0 = signature). We place poster 1 at their deepest
+  // curated credit (~20th) and curve up toward the signature, with a gamma>1 that keeps
+  // the first posters clustered in the obscure band. Signature is appended separately so
+  // it is always the final, guaranteed-solvable reveal.
   function revealSet(films){
     if(films.length<=REVEALS) return films.slice().reverse();
-    const sig=films[0];
-    const depth=Math.min(films.length, Math.max(REVEALS*2, 14));
-    const rest=films.slice(1, depth);                 // desc-identifying candidates
-    const need=REVEALS-1, idx=[], step=(rest.length-1)/(need-1);
-    for(let i=0;i<need;i++){ let j=Math.round(i*step); while(idx.indexOf(j)>=0) j++; idx.push(Math.min(j, rest.length-1)); }
-    const out=idx.map(j=>rest[j]).reverse();          // least-identifying first
-    return [...out, sig];                             // signature revealed last
+    const maxRank=Math.min(films.length-1, Math.max(REVEALS*3-1, 19)); // deepest cut (~20th credit)
+    const gamma=1.4, need=REVEALS-1, idx=[];
+    for(let k=0;k<need;k++){
+      const frac=(need-k)/need;                       // k=0 -> deepest, later k -> shallower (never 0)
+      let j=Math.max(1, Math.round(maxRank*Math.pow(frac,gamma)));
+      while(idx.indexOf(j)>=0) j++;                   // dedupe by shifting toward the signature
+      idx.push(Math.min(j, films.length-1));
+    }
+    return [...idx.map(function(j){return films[j];}), films[0]]; // deep-first, signature last
   }
   // recent actors seen in Practice — skipped next time so it doesn't repeat
   function seenIds(){try{return JSON.parse(localStorage.getItem('cinereelSeen')||'[]');}catch(_){return[];}}
