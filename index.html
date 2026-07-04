@@ -204,6 +204,12 @@ body{font-family:var(--fui);background:radial-gradient(circle at 50% -10%,rgba(2
 .game-card.hero::before{opacity:.36}
 .game-card.hero:hover::before{opacity:.48}
 .game-card>*{position:relative;z-index:1}
+/* Inline library icons (Lucide-style) replacing emoji across the home. */
+.mode svg{width:15px;height:15px;vertical-align:-3px;margin-right:5px}
+.goal-banner-icon svg{width:20px;height:20px;display:block}
+.share-opt-icon svg{width:17px;height:17px;display:block;margin:0 auto}
+.cardwin-chip svg{width:14px;height:14px;vertical-align:-2px;margin-right:3px}
+#soundToggle svg{width:18px;height:18px;display:block}
 @media(prefers-reduced-motion:reduce){.game-card::before{transition:none}}
 @keyframes cardCele{0%{box-shadow:0 0 0 0 rgba(91,189,122,0)}16%{transform:scale(1.035);box-shadow:0 0 0 2px rgba(127,212,154,.6),0 18px 54px rgba(91,189,122,.42)}100%{transform:scale(1);box-shadow:0 0 0 0 rgba(91,189,122,0)}}
 @keyframes badgePop{0%{transform:scale(0) rotate(-14deg);opacity:0}55%{transform:scale(1.45) rotate(5deg);opacity:1}78%{transform:scale(.92)}100%{transform:scale(1) rotate(0)}}
@@ -1048,7 +1054,7 @@ body{font-family:var(--fui);background:radial-gradient(circle at 50% -10%,rgba(2
     </div>
     <div id="pathRow" class="path-row"></div>
     <div id="goalBanner" class="goal-banner">
-      <span class="goal-banner-icon">🎯</span>
+      <span class="goal-banner-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.6"/></svg></span>
       <span class="goal-banner-text">The goal is in reach - <strong id="goalBannerName"></strong> is here!</span>
     </div>
     <div id="secLbl" class="sec-lbl">CONNECTIONS</div>
@@ -1100,7 +1106,7 @@ body{font-family:var(--fui);background:radial-gradient(circle at 50% -10%,rgba(2
           <button class="share-opt" onclick="game.shareNative()"><span class="share-opt-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></span>Share…</button>
           <button class="share-opt" onclick="game.shareTwitter()"><span class="share-opt-icon">𝕏</span>Post on X</button>
           <button class="share-opt" onclick="game.shareWhatsApp()"><span class="share-opt-icon">💬</span>WhatsApp</button>
-          <button class="share-opt" onclick="game.copyLink()"><span class="share-opt-icon">🔗</span><span id="copyLinkLabel">Copy link</span></button>
+          <button class="share-opt" onclick="game.copyLink()"><span class="share-opt-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"/></svg></span><span id="copyLinkLabel">Copy link</span></button>
           <button class="share-opt" onclick="game.openShareCard()"><span class="share-opt-icon">📸</span>Save as image</button>
         </div>
       </div>
@@ -2071,7 +2077,7 @@ function cardWinPulse(key, doScroll) {
     card.classList.remove('cardwin'); void card.offsetWidth; card.classList.add('cardwin');
     const sweep = document.createElement('div'); sweep.className = 'cele-sweep cardwin-sweep';
     card.appendChild(sweep); setTimeout(() => sweep.remove(), 1200);
-    const chip = document.createElement('div'); chip.className = 'cardwin-chip'; chip.innerHTML = '🎴 New card';
+    const chip = document.createElement('div'); chip.className = 'cardwin-chip'; chip.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="3" width="12" height="16" rx="2.2"/><path d="M15.5 21H6a2 2 0 0 1-2-2V7.5"/></svg> New card';
     card.appendChild(chip); setTimeout(() => chip.remove(), 1750);
     setTimeout(() => card.classList.remove('cardwin'), 1300);
   };
@@ -2253,11 +2259,11 @@ function _emberBurst(host) {
 function clToggleSound() {
   var on = window.Sfx ? Sfx.toggle() : false;
   var b = document.getElementById('soundToggle');
-  if (b) { b.innerHTML = on ? '🔊' : '🔇'; b.classList.toggle('muted', !on); }
+  if (b) { b.innerHTML = on ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5.5a9 9 0 0 1 0 13"/></svg>' : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="m22 9-6 6M16 9l6 6"/></svg>'; b.classList.toggle('muted', !on); }
 }
 function _clSyncSoundBtn() {
   var b = document.getElementById('soundToggle'); if (!b || !window.Sfx) return;
-  var on = Sfx.enabled; b.innerHTML = on ? '🔊' : '🔇'; b.classList.toggle('muted', !on);
+  var on = Sfx.enabled; b.innerHTML = on ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5.5a9 9 0 0 1 0 13"/></svg>' : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="m22 9-6 6M16 9l6 6"/></svg>'; b.classList.toggle('muted', !on);
 }
 window.addEventListener('load', _clSyncSoundBtn);
 // Light tactile click on any button / mode control (grid cards are excluded — they
@@ -4305,7 +4311,7 @@ if ('serviceWorker' in navigator) {
 </script>
 <script>
 window.HOWTO = {
-  key: 'cinelinks', noAuto: true, title: 'How to play CineLinks', icon: '🔗',
+  key: 'cinelinks', noAuto: true, title: 'How to play CineLinks', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"/></svg>',
   steps: [
     'Get from the <b>start</b> to the <b>target</b> in as few clicks as possible.',
     'From a <b>person</b>, pick one of their movies or shows.',

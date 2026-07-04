@@ -11,10 +11,11 @@
   var css = '\
 #ht-ov{position:fixed;inset:0;z-index:1200;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(6,6,6,.74);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);opacity:0;transition:opacity .22s ease}\
 #ht-ov.show{opacity:1}\
-.ht-card{background:linear-gradient(180deg,#1c1c1c,#161616);border:1px solid rgba(232,160,0,.22);border-radius:18px;max-width:440px;width:100%;max-height:86vh;overflow-y:auto;padding:22px 22px 20px;color:#f0f0f0;font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;box-shadow:0 30px 80px rgba(0,0,0,.6);transform:translateY(14px) scale(.97);transition:transform .26s cubic-bezier(.2,.9,.3,1)}\
+.ht-card{background:linear-gradient(180deg,#1c1c1c,#161616);border:1px solid rgba(232,160,0,.22);border-radius:18px;max-width:440px;width:100%;max-height:86vh;overflow-y:auto;padding:22px 22px 20px;color:#f0f0f0;font-family:var(--fui,'Schibsted Grotesk',-apple-system,sans-serif);box-shadow:0 30px 80px rgba(0,0,0,.6);transform:translateY(14px) scale(.97);transition:transform .26s cubic-bezier(.2,.9,.3,1)}\
 #ht-ov.show .ht-card{transform:none}\
 .ht-head{display:flex;align-items:center;gap:11px;margin-bottom:16px}\
-.ht-ic{width:40px;height:40px;flex-shrink:0;border-radius:11px;background:rgba(232,160,0,.14);display:flex;align-items:center;justify-content:center;font-size:1.25rem}\
+.ht-ic{width:40px;height:40px;flex-shrink:0;border-radius:11px;background:rgba(232,160,0,.14);display:flex;align-items:center;justify-content:center;color:var(--gold,#e8a000)}\
+.ht-ic svg{width:22px;height:22px}\
 .ht-title{font-size:1.12rem;font-weight:800;letter-spacing:-.01em;margin:0;flex:1}\
 .ht-x{background:none;border:none;color:#8d8d8d;font-size:1.25rem;line-height:1;cursor:pointer;padding:2px 4px;border-radius:6px}\
 .ht-x:hover{color:#f0f0f0}\

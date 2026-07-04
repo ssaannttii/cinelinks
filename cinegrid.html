@@ -123,6 +123,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 .cl-home{position:fixed;top:13px;left:13px;z-index:50;display:inline-flex;align-items:center;gap:5px;color:var(--mut);text-decoration:none;font-size:.78rem;font-weight:700;background:rgba(20,20,20,.6);border:1px solid var(--bdr);border-radius:999px;padding:7px 13px;backdrop-filter:blur(8px)}
 .cl-home:hover{color:var(--gold);border-color:rgba(232,160,0,.45)}
 .snd{position:fixed;top:13px;right:13px;z-index:50;width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;color:var(--mut);font-size:1rem;background:rgba(20,20,20,.6);border:1px solid var(--bdr);border-radius:999px;backdrop-filter:blur(8px);cursor:pointer}
+.snd svg{width:19px;height:19px}
 .snd:hover{color:var(--gold);border-color:rgba(232,160,0,.45)}
 @media(min-width:760px){.wrap{max-width:600px}.logo{font-size:2.5rem}.tag{font-size:1rem}.kicker{font-size:.78rem}.grid{max-width:540px;grid-template-columns:84px 1fr 1fr 1fr;gap:7px}.hdr img{width:54px;height:54px}.hdr.row img{width:50px;height:50px}.hdr .hn{font-size:.66rem;max-width:104px}.hint{font-size:.92rem}.bar{font-size:.86rem}.prog,.grid{max-width:540px}}
 </style>
@@ -131,7 +132,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 </head>
 <body>
 <a href="/" class="cl-home" aria-label="Back to CineLinks">← CineLinks</a>
-<button class="snd" id="sndBtn" aria-label="Toggle sound" title="Sound">🔊</button>
+<button class="snd" id="sndBtn" aria-label="Toggle sound" title="Sound"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5.5a9 9 0 0 1 0 13"/></svg></button>
 <div class="wrap" id="cinegrid-app">
   <div class="logo">Cine<b>Grid</b></div>
   <div class="tag">Name a film that pairs each actor</div>
@@ -400,7 +401,9 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 
   // ── sound toggle ──
   const sndBtn=document.getElementById('sndBtn');
-  function paintSnd(){ try{ sndBtn.textContent=(window.Sfx&&Sfx.enabled)?'🔊':'🔇'; }catch(_){ sndBtn.textContent='🔊'; } }
+  var SND_ON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5.5a9 9 0 0 1 0 13"/></svg>';
+  var SND_OFF='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="m22 9-6 6M16 9l6 6"/></svg>';
+  function paintSnd(){ try{ sndBtn.innerHTML=(window.Sfx&&Sfx.enabled)?SND_ON:SND_OFF; }catch(_){ sndBtn.innerHTML=SND_ON; } }
   sndBtn.onclick=function(){ try{ if(window.Sfx&&Sfx.toggle)Sfx.toggle(); }catch(_){} paintSnd(); };
   setTimeout(paintSnd,400);
 
