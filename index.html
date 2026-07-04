@@ -88,8 +88,8 @@ body{font-family:var(--fui);background:radial-gradient(circle at 50% -10%,rgba(2
 /* Challenge creator */
 .creator-btn{width:100%;margin-top:8px;padding:10px;border-radius:10px;border:1px dashed rgba(232,160,0,.35);background:transparent;color:var(--mut);font-family:inherit;font-size:.82rem;font-weight:600;cursor:pointer;transition:border-color .15s,color .15s,background .15s}
 .creator-btn:hover{border-color:var(--gold);color:var(--gold);background:rgba(232,160,0,.05)}
-.archive-btn{width:100%;margin-top:8px;padding:9px;border-radius:10px;border:1px solid var(--bdr);background:transparent;color:var(--mut);font-family:inherit;font-size:.8rem;font-weight:600;cursor:pointer;transition:border-color .15s,color .15s,background .15s}
-.archive-btn:hover{border-color:rgba(232,160,0,.5);color:var(--gold);background:rgba(232,160,0,.04)}
+.archive-btn{width:100%;margin-top:8px;padding:10px;border-radius:12px;border:0;background:rgba(255,255,255,.045);color:var(--mut);font-family:inherit;font-size:.8rem;font-weight:600;cursor:pointer;transition:color .15s,background .15s}
+.archive-btn:hover{color:var(--gold);background:rgba(232,160,0,.1)}
 .games{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
 /* Meta bar: portfolio streak + one-tap "share my whole day" (the retention/virality layer). */
 .meta-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;background:linear-gradient(110deg,rgba(232,160,0,.1),rgba(255,255,255,.03));border:0;border-radius:15px;padding:12px 15px;margin:0 0 12px;text-align:left;box-shadow:0 6px 20px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.05)}
@@ -386,9 +386,9 @@ body{font-family:var(--fui);background:radial-gradient(circle at 50% -10%,rgba(2
 .site-foot .dot{margin:0 8px;opacity:.5}
 .credits-title{font-size:.65rem;font-weight:600;letter-spacing:.1em;color:var(--mut);text-transform:uppercase;margin-bottom:10px}
 .lang-picker{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:18px;padding-top:16px;border-top:1px solid var(--bdr)}
-.lang-btn{padding:7px 6px;border-radius:8px;border:1px solid var(--bdr);background:transparent;color:var(--mut);font-family:inherit;font-size:.68rem;font-weight:600;cursor:pointer;transition:border-color .15s,color .15s,background .15s;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.lang-btn:hover{border-color:rgba(232,160,0,.4);color:var(--txt)}
-.lang-btn.active{border-color:var(--gold);color:var(--gold);background:rgba(232,160,0,.08)}
+.lang-btn{padding:8px 6px;border-radius:10px;border:0;background:rgba(255,255,255,.045);color:var(--mut);font-family:inherit;font-size:.68rem;font-weight:600;cursor:pointer;transition:color .15s,background .15s;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lang-btn:hover{background:rgba(255,255,255,.09);color:var(--txt)}
+.lang-btn.active{color:var(--gold);background:rgba(232,160,0,.16);box-shadow:inset 0 0 0 1px rgba(232,160,0,.4)}
 .tmdb-credit{display:flex;align-items:center;gap:12px;color:var(--mut);font-size:.72rem;line-height:1.45}
 .tmdb-logo{width:58px;height:auto;display:block;flex-shrink:0}
 .tmdb-credit a{color:var(--txt);text-decoration:none}
