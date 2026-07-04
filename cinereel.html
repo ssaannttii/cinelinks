@@ -155,11 +155,20 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
       .map(c=>({title:c.title||c.name,year:(c.release_date||c.first_air_date||'').slice(0,4),votes:c.vote_count,order:c.order,score:ident(c.vote_count,c.order),poster:c.poster_path}))
       .sort((a,b)=>b.score-a.score); // most identifying first
   }
-  // Their SIX most identifying films (fame × how central they are), revealed one at
-  // a time from the least-known of those six up to their signature lead. Every poster
-  // is a real, known role of theirs — the ramp just goes deep-ish hit → iconic.
+  // Build a real difficulty ramp: the signature lead is revealed LAST, and the earlier
+  // posters are pulled from a DEEPER band of their filmography (supporting turns, films
+  // less associated with them) so a famous face isn't given away on poster 1. films is
+  // sorted most-identifying first; we sample the earlier reveals across a deep band and
+  // order them least-identifying -> most, then cap it with the giveaway signature.
   function revealSet(films){
-    return films.slice(0,REVEALS).reverse();
+    if(films.length<=REVEALS) return films.slice().reverse();
+    const sig=films[0];
+    const depth=Math.min(films.length, Math.max(REVEALS*2, 14));
+    const rest=films.slice(1, depth);                 // desc-identifying candidates
+    const need=REVEALS-1, idx=[], step=(rest.length-1)/(need-1);
+    for(let i=0;i<need;i++){ let j=Math.round(i*step); while(idx.indexOf(j)>=0) j++; idx.push(Math.min(j, rest.length-1)); }
+    const out=idx.map(j=>rest[j]).reverse();          // least-identifying first
+    return [...out, sig];                             // signature revealed last
   }
   // recent actors seen in Practice — skipped next time so it doesn't repeat
   function seenIds(){try{return JSON.parse(localStorage.getItem('cinereelSeen')||'[]');}catch(_){return[];}}
