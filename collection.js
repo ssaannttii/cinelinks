@@ -821,25 +821,26 @@
 
   // ── Achievements / Mastery (trophy case — prestige badges, no XP so the
   //    rarity/XP economy stays honest and an existing save isn't retro-inflated) ──
+  function AI(p){ return '<svg viewBox="0 0 24 24" width="1em" height="1em" style="vertical-align:-.15em" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' + p + '</svg>'; }
   var ACHV = [
-    { id: 'first', icon: '🎬', name: 'First Frame', desc: 'Collect your first card', goal: function (c) { return [c.st.count, 1]; } },
-    { id: 'coll25', icon: '📚', name: 'Collector', desc: 'Collect 25 cards', goal: function (c) { return [c.st.count, 25]; } },
-    { id: 'coll50', icon: '🗃️', name: 'Curator', desc: 'Collect 50 cards', goal: function (c) { return [c.st.count, 50]; } },
-    { id: 'coll100', icon: '🏛️', name: 'Archivist', desc: 'Collect 100 cards', goal: function (c) { return [c.st.count, 100]; } },
-    { id: 'coll200', icon: '🏰', name: 'Vault Keeper', desc: 'Collect 200 cards', goal: function (c) { return [c.st.count, 200]; } },
-    { id: 'people10', icon: '⭐', name: 'Star Power', desc: 'Collect 10 people', goal: function (c) { return [c.st.people, 10]; } },
-    { id: 'films25', icon: '🍿', name: 'Cinephile', desc: 'Collect 25 films', goal: function (c) { return [c.st.films, 25]; } },
-    { id: 'rare1', icon: '🔷', name: 'Rare Find', desc: 'Own a Rare card', goal: function (c) { return [c.st.byRarity.rare, 1]; } },
-    { id: 'elite1', icon: '💠', name: 'Elite', desc: 'Own an Elite card', goal: function (c) { return [c.st.byRarity.elite, 1]; } },
-    { id: 'leg1', icon: '👑', name: 'Legend', desc: 'Own a Legendary card', goal: function (c) { return [c.st.byRarity.legendary, 1]; } },
-    { id: 'leg5', icon: '🌟', name: 'Hall of Fame', desc: 'Own 5 Legendaries', goal: function (c) { return [c.st.byRarity.legendary, 5]; } },
-    { id: 'spectrum', icon: '🌈', name: 'Full Spectrum', desc: 'Own every rarity tier', goal: function (c) { var b = c.st.byRarity; var n = ['common', 'rare', 'elite', 'legendary'].filter(function (r) { return b[r] > 0; }).length; return [n, 4]; } },
-    { id: 'set1', icon: '🧩', name: 'Set Theorist', desc: 'Complete your first set', goal: function (c) { return [c.sd, 1]; } },
-    { id: 'set3', icon: '🏆', name: 'Completionist', desc: 'Complete 3 sets', goal: function (c) { return [c.sd, 3]; } },
-    { id: 'lvl5', icon: '📈', name: 'Rising Star', desc: 'Reach level 5', goal: function (c) { return [c.st.level, 5]; } },
-    { id: 'lvl10', icon: '🎖️', name: 'Veteran', desc: 'Reach level 10', goal: function (c) { return [c.st.level, 10]; } },
-    { id: 'style', icon: '🎴', name: 'Style Icon', desc: 'Equip a non-default card back', goal: function (c) { return [c.cb !== 'classic' ? 1 : 0, 1]; } },
-    { id: 'shine1', icon: '✨', name: 'Polished', desc: 'Shine a card with dust', goal: function (c) { return [c.sh, 1]; } }
+    { id: 'first', icon: AI('<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 11h18M7 7l-2 4M12 7l-2 4M17 7l-2 4"/>'), name: 'First Frame', desc: 'Collect your first card', goal: function (c) { return [c.st.count, 1]; } },
+    { id: 'coll25', icon: AI('<path d="M12 3 3 7l9 4 9-4-9-4z"/><path d="m3 12 9 4 9-4M3 16.5l9 4 9-4"/>'), name: 'Collector', desc: 'Collect 25 cards', goal: function (c) { return [c.st.count, 25]; } },
+    { id: 'coll50', icon: AI('<rect x="3" y="4" width="18" height="4.5" rx="1"/><path d="M5 8.5V19a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8.5"/><path d="M9.5 12.5h5"/>'), name: 'Curator', desc: 'Collect 50 cards', goal: function (c) { return [c.st.count, 50]; } },
+    { id: 'coll100', icon: AI('<path d="M12 3 4 7h16z"/><path d="M4 10h16M6 10v9M10 10v9M14 10v9M18 10v9M3 21h18"/>'), name: 'Archivist', desc: 'Collect 100 cards', goal: function (c) { return [c.st.count, 100]; } },
+    { id: 'coll200', icon: AI('<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="12" cy="12" r="4"/><path d="M12 8v4l2 1.5"/>'), name: 'Vault Keeper', desc: 'Collect 200 cards', goal: function (c) { return [c.st.count, 200]; } },
+    { id: 'people10', icon: AI('<circle cx="9" cy="8" r="3.2"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 5.2a3.2 3.2 0 0 1 0 5.9M21 20a6 6 0 0 0-4-5.7"/>'), name: 'Star Power', desc: 'Collect 10 people', goal: function (c) { return [c.st.people, 10]; } },
+    { id: 'films25', icon: AI('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.4"/><circle cx="12" cy="5.6" r="1.2"/><circle cx="12" cy="18.4" r="1.2"/><circle cx="5.6" cy="12" r="1.2"/><circle cx="18.4" cy="12" r="1.2"/>'), name: 'Cinephile', desc: 'Collect 25 films', goal: function (c) { return [c.st.films, 25]; } },
+    { id: 'rare1', icon: AI('<path d="M6 3h12l3 5-9 12L3 8z"/><path d="M3 8h18M9.5 3 8 8l4 12 4-12-1.5-5"/>'), name: 'Rare Find', desc: 'Own a Rare card', goal: function (c) { return [c.st.byRarity.rare, 1]; } },
+    { id: 'elite1', icon: AI('<path d="M12 3 4 9l8 12 8-12z"/><path d="M4 9h16M9 9l3 12 3-12"/>'), name: 'Elite', desc: 'Own an Elite card', goal: function (c) { return [c.st.byRarity.elite, 1]; } },
+    { id: 'leg1', icon: AI('<path d="M3 8l3.5 3.2L12 5l5.5 6.2L21 8l-1.6 10.5H4.6z"/><path d="M5.5 18.5h13"/>'), name: 'Legend', desc: 'Own a Legendary card', goal: function (c) { return [c.st.byRarity.legendary, 1]; } },
+    { id: 'leg5', icon: AI('<path d="M12 3v4.5M12 16.5V21M4.5 12H9M15 12h4.5"/><path d="M12 8l1.4 2.6L16 12l-2.6 1.4L12 16l-1.4-2.6L8 12l2.6-1.4z"/>'), name: 'Hall of Fame', desc: 'Own 5 Legendaries', goal: function (c) { return [c.st.byRarity.legendary, 5]; } },
+    { id: 'spectrum', icon: AI('<path d="M4 18a8 8 0 0 1 16 0"/><path d="M7.2 18a4.8 4.8 0 0 1 9.6 0"/><path d="M10.3 18a1.7 1.7 0 0 1 3.4 0"/>'), name: 'Full Spectrum', desc: 'Own every rarity tier', goal: function (c) { var b = c.st.byRarity; var n = ['common', 'rare', 'elite', 'legendary'].filter(function (r) { return b[r] > 0; }).length; return [n, 4]; } },
+    { id: 'set1', icon: AI('<path d="M9.2 4.2a1.6 1.6 0 0 1 3.1 0c0 .9.7 1.3 1.5 1.3h1.6a1 1 0 0 1 1 1v1.6c0 .8.4 1.5 1.3 1.5a1.6 1.6 0 0 1 0 3.1c-.9 0-1.3.7-1.3 1.5V17a1 1 0 0 1-1 1h-1.6c-.8 0-1.5.5-1.5 1.3a1.6 1.6 0 0 1-3.1 0c0-.8-.7-1.3-1.5-1.3H6a1 1 0 0 1-1-1v-1.6c0-.8-.5-1.5-1.3-1.5a1.6 1.6 0 0 1 0-3.1c.8 0 1.3-.7 1.3-1.5V7a1 1 0 0 1 1-1h1.7c.8 0 1.5-.4 1.5-1.3z"/>'), name: 'Set Theorist', desc: 'Complete your first set', goal: function (c) { return [c.sd, 1]; } },
+    { id: 'set3', icon: AI('<path d="M7 4h10v3.5a5 5 0 0 1-10 0z"/><path d="M7 5.5H4V7a3 3 0 0 0 3 3M17 5.5h3V7a3 3 0 0 1-3 3"/><path d="M12 12.5V16M9 20h6M9.6 20l.5-4M14.4 20l-.5-4"/>'), name: 'Completionist', desc: 'Complete 3 sets', goal: function (c) { return [c.sd, 3]; } },
+    { id: 'lvl5', icon: AI('<path d="M3 17 9 11l4 4 8-8"/><path d="M16 7h5v5"/>'), name: 'Rising Star', desc: 'Reach level 5', goal: function (c) { return [c.st.level, 5]; } },
+    { id: 'lvl10', icon: AI('<circle cx="12" cy="9" r="5.5"/><path d="M8.5 13.5 7 21l5-2.5L17 21l-1.5-7.5"/>'), name: 'Veteran', desc: 'Reach level 10', goal: function (c) { return [c.st.level, 10]; } },
+    { id: 'style', icon: AI('<rect x="4" y="4" width="16" height="16" rx="2.4"/><circle cx="12" cy="12" r="3.2"/><path d="M12 4.5v15M4.5 12h15"/>'), name: 'Style Icon', desc: 'Equip a non-default card back', goal: function (c) { return [c.cb !== 'classic' ? 1 : 0, 1]; } },
+    { id: 'shine1', icon: AI('<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M18.5 14.5l.6 1.8 1.8.6-1.8.6-.6 1.8-.6-1.8-1.8-.6 1.8-.6z"/>'), name: 'Polished', desc: 'Shine a card with dust', goal: function (c) { return [c.sh, 1]; } }
   ];
   // Raw equipped card-back id (no unlock validation) — used for the 'style' achievement so
   // achievement evaluation never calls activeCardbackId()→cbUnlocked()→achvCount() (would recurse).
@@ -1267,7 +1268,7 @@
       '.cl-coll-title{font-size:1.3rem;font-weight:800;letter-spacing:-.01em;color:#f5f5f5;white-space:nowrap}.cl-coll-title span{color:#e8a000}' +
       '.cl-coll-sub{font-size:.7rem;font-weight:700;color:#8d8d8d;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
       '.cl-coll-hd-btns{display:flex;align-items:center;gap:6px;flex-shrink:0}' +
-      '.cl-coll-icon{background:none;border:none;color:#888;font-size:1.1rem;cursor:pointer;line-height:1;padding:2px 6px}.cl-coll-icon:hover{color:#f5f5f5}' +
+      '.cl-coll-icon{background:none;border:none;color:#888;font-size:1.1rem;cursor:pointer;line-height:1;padding:2px 6px}.cl-coll-icon:hover{color:#f5f5f5}.cl-coll-icon svg{width:17px;height:17px;display:block}' +
       '.cl-coll-dust{display:inline-flex;align-items:center;font-size:.78rem;font-weight:800;color:#bfe6ff;background:rgba(120,184,255,.12);border:1px solid rgba(150,205,255,.3);border-radius:99px;padding:3px 9px;margin-right:2px;white-space:nowrap}' +
       '.cl-coll-battle{color:#f5c542;background:rgba(232,160,0,.12);border-color:rgba(232,160,0,.4);text-decoration:none;cursor:pointer}' +
       '.cl-coll-battle:hover{background:rgba(232,160,0,.22)}' +
@@ -1323,7 +1324,7 @@
       '.cl-vsearch{flex:1 1 150px;min-width:130px;position:relative}' +
       '.cl-vsearch input{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:99px;color:#eee;font:inherit;font-size:.8rem;font-weight:600;padding:7px 12px 7px 30px;outline:none}' +
       '.cl-vsearch input:focus{border-color:rgba(232,160,0,.5)}' +
-      '.cl-vsearch::before{content:"🔍";position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:.72rem;opacity:.55}' +
+      '.cl-vsearch::before{content:"";position:absolute;left:10px;top:50%;transform:translateY(-50%);width:13px;height:13px;opacity:.5;background:center/contain no-repeat url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%23f5f5f5%27 stroke-width=%272%27 stroke-linecap=%27round%27%3E%3Ccircle cx=%2711%27 cy=%2711%27 r=%277%27/%3E%3Cpath d=%27m21 21-4.3-4.3%27/%3E%3C/svg%3E")}' +
       '.cl-coll-chip{display:inline-flex;align-items:center;gap:6px;font-size:.66rem;font-weight:800;letter-spacing:.03em;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:#cfcfcf;border-radius:99px;padding:6px 11px;cursor:pointer;text-transform:uppercase}' +
       '.cl-coll-chip.on{border-color:rgba(232,160,0,.6);background:rgba(232,160,0,.14);color:#e8a000}' +
       '.cl-coll-chip .gem{width:8px;height:8px;border-radius:2px;transform:rotate(45deg);background:var(--gc,#888);box-shadow:0 0 6px var(--gc,transparent)}' +
@@ -1511,8 +1512,8 @@
       '.ac-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:11px}' +
       '.ac-item{position:relative;border-radius:13px;padding:13px 11px 12px;text-align:center;background:#1d1d1d;border:1px solid rgba(255,255,255,.06)}' +
       '.ac-item.got{background:linear-gradient(165deg,#2a2410,#161204);border-color:rgba(232,194,74,.4);box-shadow:0 0 0 1px rgba(232,194,74,.12),0 10px 26px rgba(0,0,0,.4)}' +
-      '.ac-ic{font-size:1.9rem;line-height:1;filter:grayscale(1) opacity(.4)}' +
-      '.ac-item.got .ac-ic{filter:none;text-shadow:0 3px 14px rgba(232,194,74,.45)}' +
+      '.ac-ic{color:#e8c24a;font-size:1.9rem;line-height:1;filter:grayscale(1) opacity(.4)}.ac-ic svg{width:30px;height:30px}' +
+      '.ac-item.got .ac-ic{filter:drop-shadow(0 3px 10px rgba(232,194,74,.5))}' +
       '.ac-nm{font-size:.78rem;font-weight:800;color:#777;margin-top:7px}.ac-item.got .ac-nm{color:#f5d97a}' +
       '.ac-ds{font-size:.64rem;color:#777;margin-top:3px;line-height:1.25}.ac-item.got .ac-ds{color:#b9b9b9}' +
       '.ac-bar{height:5px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:8px}.ac-bar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#e8a000,#f5c542)}' +
@@ -1594,7 +1595,7 @@
     // optional debug gear (only when enabled)
     if (debugEnabled()) {
       var gear = document.createElement('button');
-      gear.className = 'cl-coll-icon'; gear.innerHTML = '⚙'; gear.title = 'Debug';
+      gear.className = 'cl-coll-icon'; gear.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>'; gear.title = 'Debug';
       gear.addEventListener('click', debug);
       document.getElementById('clCollHdBtns').insertBefore(gear, m.querySelector('.cl-coll-x'));
     }
@@ -2391,16 +2392,16 @@
         var finalXp = (load() || blank()).xp || 0, lvlNow = levelFromXp(finalXp);
         if (lvlNow > lvlBefore) { try { if (window.Sfx) window.Sfx.levelUp(); } catch (_) { /* noop */ } }
         else if (newSets.length) { try { if (window.Sfx) window.Sfx.allDone(); } catch (_) { /* noop */ } }
-        var setLines = newSets.map(function (st) { return '<div class="clr-sum-lvl">⭐ Set complete: ' + esc(st.name) + ' &middot; +' + st.bonus + ' XP</div>'; }).join('');
+        var setLines = newSets.map(function (st) { return '<div class="clr-sum-lvl"><svg viewBox="0 0 24 24" width="1em" height="1em" style="vertical-align:-.12em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.6 6 .8-4.4 4.2 1.1 6L12 17.8 6.7 19.6l1.1-6L3.4 9.4l6-.8z"/></svg> Set complete: ' + esc(st.name) + ' &middot; +' + st.bonus + ' XP</div>'; }).join('');
         var lvlLine = lvlNow > lvlBefore ? '<div class="clr-sum-lvl">Level up &mdash; level ' + lvlNow + '! 🎉</div>' : '';
         var newBacks = lvlNow > lvlBefore ? cardbacksUnlockedBetween(lvlBefore, lvlNow) : [];
-        var backLine = newBacks.map(function (cb) { return '<div class="clr-sum-lvl">🎴 Card back unlocked: ' + esc(cb.name) + '</div>'; }).join('');
+        var backLine = newBacks.map(function (cb) { return '<div class="clr-sum-lvl"><svg viewBox="0 0 24 24" width="1em" height="1em" style="vertical-align:-.12em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2.4"/><circle cx="12" cy="12" r="3.2"/></svg> Card back unlocked: ' + esc(cb.name) + '</div>'; }).join('');
         var newAchv = []; try { newAchv = syncAchievements(); } catch (_) { /* noop */ }
         if (newAchv.length) { try { if (window.Sfx) window.Sfx.allDone(); } catch (_) { /* noop */ } }
         var achLine = newAchv.slice(0, 3).map(function (a) { return '<div class="clr-sum-lvl">' + a.icon + ' Achievement: ' + esc(a.name) + '</div>'; }).join('') +
-          (newAchv.length > 3 ? '<div class="clr-sum-lvl">🏅 +' + (newAchv.length - 3) + ' more achievements</div>' : '');
+          (newAchv.length > 3 ? '<div class="clr-sum-lvl"><svg viewBox="0 0 24 24" width="1em" height="1em" style="vertical-align:-.12em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="5.5"/><path d="M8.5 13.5 7 21l5-2.5L17 21l-1.5-7.5"/></svg> +' + (newAchv.length - 3) + ' more achievements</div>' : '');
         // achievement-gated card backs (e.g. Mastery) newly crossed this win
-        if (newAchv.length) { var ac2 = achvCount(); backLine += cardbacksUnlockedByAchv(ac2 - newAchv.length, ac2).map(function (cb) { return '<div class="clr-sum-lvl">🎴 Card back unlocked: ' + esc(cb.name) + '</div>'; }).join(''); }
+        if (newAchv.length) { var ac2 = achvCount(); backLine += cardbacksUnlockedByAchv(ac2 - newAchv.length, ac2).map(function (cb) { return '<div class="clr-sum-lvl"><svg viewBox="0 0 24 24" width="1em" height="1em" style="vertical-align:-.12em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2.4"/><circle cx="12" cy="12" r="3.2"/></svg> Card back unlocked: ' + esc(cb.name) + '</div>'; }).join(''); }
         // _pendingDust bundles every source this session (dupes, level-ups, the
         // Daily Double, trophies) — so label it generically, not "from duplicates".
         var dustLine = _pendingDust > 0 ? '<div class="clr-sum-lvl">&#10024; +' + _pendingDust + ' dust earned</div>' : '';
