@@ -1283,8 +1283,13 @@
   // It stores an ordered `layers` list; built-in layers (poster/scrim/corner/
   // star/frame/foil/tags/text) get position/opacity/blend/z overrides, and any
   // custom image/text/fill layers are injected. No template = untouched card.
+  // Precedence: a local "Apply to game" override (cl_card_template, just this
+  // browser) wins; otherwise the site-wide design shipped in /card-template.json
+  // (published for every player). Empty layers = default cards.
+  var _globalTpl = null;
   function activeCardTemplate() {
-    try { var s = localStorage.getItem('cl_card_template'); return s ? JSON.parse(s) : null; } catch (_) { return null; }
+    try { var s = localStorage.getItem('cl_card_template'); if (s) { var o = JSON.parse(s); if (o && o.layers) return o; } } catch (_) { /* noop */ }
+    return _globalTpl;
   }
   function tplGet(layers, id) { for (var i = 0; i < layers.length; i++) { if (layers[i].id === id || layers[i].type === id) return { L: layers[i], z: i }; } return null; }
   // name-plate title treatment (per rarity) → inline override for .auth-name.
@@ -2863,6 +2868,13 @@
   };
   // Record already-earned achievements once on load (silent — no reveal spam for an existing save).
   try { window.addEventListener('load', function () { try { syncAchievements(); } catch (_) { /* noop */ } }); } catch (_) { /* noop */ }
+  // Pull the published site-wide card design (if any). Async: applies + re-renders
+  // once loaded. A local override still wins. Empty / missing file = default cards.
+  try {
+    fetch('/card-template.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+      if (j && Array.isArray(j.layers) && j.layers.length) { _globalTpl = j; try { refreshOpen(); } catch (_) { /* noop */ } }
+    }).catch(function () { /* no published design — fine */ });
+  } catch (_) { /* noop */ }
   if (debugEnabled()) { try { window.addEventListener('load', function () { try { debug(); } catch (_) { /* noop */ } }); } catch (_) { /* noop */ } }
   try { enableDebugGesture(); if (document.readyState === 'complete') depthDebugButton(); else window.addEventListener('load', depthDebugButton); } catch (_) { /* noop */ }
 })();

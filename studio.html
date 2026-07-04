@@ -151,7 +151,8 @@
   <button class="btn sm" id="btnImport">Import</button>
   <button class="btn sm" id="btnExport">Export JSON</button>
   <button class="btn sm" id="btnPng" title="Download the current card as a PNG image">⬇ Export PNG</button>
-  <button class="btn gold sm" id="btnApply" title="Force this design onto the live in-game cards (same browser)">⚡ Apply to game</button>
+  <button class="btn sm" id="btnApply" title="Preview on the live cards in THIS browser only (localStorage)">⚡ Apply (me)</button>
+  <button class="btn gold sm" id="btnPublish" title="Get the JSON to ship this design to every player">🌐 Publish (all)</button>
 </div>
 <div id="applied" style="display:none;position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:80;background:#132417;border:1px solid rgba(127,212,154,.5);color:#cde0d4;font-size:.82rem;font-weight:700;padding:11px 16px;border-radius:11px;box-shadow:0 18px 44px rgba(0,0,0,.5)"></div>
 
@@ -733,6 +734,21 @@
     appliedEl.innerHTML='⚡ Applied. Open any game and your cards use this design. &nbsp;<a href="#" id="revert" style="color:#ffb0b0">Revert</a>';
     appliedEl.style.display='block';clearTimeout(appliedT);appliedT=setTimeout(function(){appliedEl.style.display='none';},6000);
     var rv=document.getElementById('revert');if(rv)rv.onclick=function(e){e.preventDefault();try{localStorage.removeItem('cl_card_template');}catch(_){}appliedEl.textContent='↩ Reverted to the default in-game card.';clearTimeout(appliedT);appliedT=setTimeout(function(){appliedEl.style.display='none';},3000);};
+  };
+
+  // Publish to all players: the JSON below goes in the repo as /card-template.json,
+  // which every player's collection.js fetches. Warn about embedded (data URI) art:
+  // it ships to everyone, and a baked film poster would show on EVERY card.
+  document.getElementById('btnPublish').onclick=function(){
+    var json=JSON.stringify(state,null,2);
+    var kb=Math.round(json.length/1024);
+    var dataLayers=state.layers.filter(function(l){return typeof l.src==='string'&&/^data:/.test(l.src);});
+    if(dataLayers.length){
+      alert('Heads up: '+dataLayers.length+' layer(s) embed an image as a data URI ('+kb+' KB). This downloads for EVERY player.\n\n'+
+        '• Replace big/reusable art with a file path like "/card/frame.webp" (put the file in the repo).\n'+
+        '• A baked film POSTER would show on ALL cards — keep the built-in "poster" layer so each card uses its own film.');
+    }
+    openIO('Save this as  card-template.json  → commit & deploy for all players ('+kb+' KB)', json, false);
   };
 
   // boot
