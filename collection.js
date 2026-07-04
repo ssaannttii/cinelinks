@@ -54,6 +54,10 @@
   function posterUrl(p) { if (!p) return ''; return /^https?:/.test(p) ? p : IMG + p; }
   function typeLabel(c) { return c.type === 'person' ? CT('Person') : c.type === 'tv' ? CT('Series') : CT('Film'); }
   function reducedMotion() { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (_) { return false; } }
+  // Live-tunable depth-zoom params (driven by the ?cvdebug=1 slider panel). Defaults
+  // are the shipped values; the shader reads these each frame so sliders update live.
+  var DEPTH_CFG = window.CL_DEPTH_CFG = (window.CL_DEPTH_CFG || { zoom: 0.25, aoStr: 2.4, aoMax: 0.5, ease: 0.09, ovs: 1.06 });
+  try { if (/[?&]cvdebug=1\b/.test(location.search)) document.documentElement.style.setProperty('--ovs', DEPTH_CFG.ovs); } catch (_) { /* noop */ }
   // Shared cursor-tracking 3D tilt + glare/foil shift (mouse only). Used by themes.
   // Real fake-3D tilt: a per-element perspective rotation plus a "lift", with
   // cursor-following CSS vars that drive layered parallax (bg recedes, frame/text/
@@ -146,6 +150,47 @@
         }, 640);                                                      // grace: keep the canvas until the zoom has fully eased out, then swap the <img> back
       });
     });
+  }
+  // ?cvdebug=1 : floating panel with a live preview card + sliders to tune the depth
+  // zoom / fake-AO / overscan / ease and read off the best combination. Dev only.
+  function mountDepthDebug() {
+    try {
+      if (!/[?&]cvdebug=1\b/.test(location.search) || document.getElementById('cvDbg')) return;
+      var poster = posterUrl('/RYMX2wcKCBAr24UyPD7xwmjaTn.jpg');      // The Avengers (cast in front, deep bg)
+      function row(label, key, min, max, step) {
+        return '<label style="display:block;margin:9px 0 2px">' + label + ' <b id="cvv_' + key + '" style="color:#f5c542">' + DEPTH_CFG[key === 'ovs' ? 'ovs' : key] + '</b>' +
+          '<input type="range" data-k="' + key + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + DEPTH_CFG[key] + '" style="width:100%;accent-color:#e8a000;margin-top:3px"></label>';
+      }
+      var p = document.createElement('div');
+      p.id = 'cvDbg';
+      p.style.cssText = 'position:fixed;right:14px;bottom:14px;z-index:100000;width:250px;background:rgba(14,14,16,.97);border:1px solid #3a3a3a;border-radius:14px;padding:14px;color:#eee;font:12px/1.35 system-ui,-apple-system,sans-serif;box-shadow:0 24px 70px rgba(0,0,0,.65);backdrop-filter:blur(8px)';
+      p.innerHTML =
+        '<div style="font-weight:800;margin-bottom:10px;color:#e8a000;display:flex;justify-content:space-between;align-items:center">Depth zoom debug<span id="cvDbgX" style="cursor:pointer;opacity:.6">✕</span></div>' +
+        '<div style="width:150px;margin:0 auto 10px"><div class="auth auth-common" id="cvDbgPrevWrap"><div class="auth-card tilted" id="cvDbgPrev" style="--dz:1;position:relative;aspect-ratio:2/3;border-radius:12px;overflow:hidden;background:#111"><img class="auth-bgimg" crossorigin="anonymous" src="' + poster + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top"></div></div></div>' +
+        row('Depth zoom', 'zoom', 0, 0.6, 0.01) +
+        row('AO strength', 'aoStr', 0, 6, 0.1) +
+        row('AO max', 'aoMax', 0, 0.85, 0.02) +
+        row('Ease speed', 'ease', 0.02, 0.3, 0.01) +
+        row('Overscan', 'ovs', 1, 1.18, 0.005) +
+        '<button id="cvDbgCopy" style="margin-top:10px;width:100%;padding:8px;border-radius:9px;border:0;background:#e8a000;color:#1a1200;font-weight:800;cursor:pointer">Copy values</button>' +
+        '<div id="cvDbgOut" style="margin-top:7px;font-size:10px;color:#9a9a9e;word-break:break-all"></div>';
+      document.body.appendChild(p);
+      document.documentElement.style.setProperty('--ovs', DEPTH_CFG.ovs);
+      mountPosterDepth(document.getElementById('cvDbgPrevWrap'));      // preview canvas, always at --dz:1
+      p.addEventListener('input', function (e) {
+        var k = e.target.dataset.k; if (!k) return;
+        var v = parseFloat(e.target.value);
+        if (k === 'ovs') { DEPTH_CFG.ovs = v; document.documentElement.style.setProperty('--ovs', v); }
+        else DEPTH_CFG[k] = v;
+        var lbl = document.getElementById('cvv_' + k); if (lbl) lbl.textContent = v;
+      });
+      document.getElementById('cvDbgCopy').onclick = function () {
+        var s = 'zoom ' + DEPTH_CFG.zoom + ' · aoStr ' + DEPTH_CFG.aoStr + ' · aoMax ' + DEPTH_CFG.aoMax + ' · ease ' + DEPTH_CFG.ease + ' · ovs ' + DEPTH_CFG.ovs;
+        try { navigator.clipboard.writeText(s); } catch (_) { /* noop */ }
+        document.getElementById('cvDbgOut').textContent = s;
+      };
+      document.getElementById('cvDbgX').onclick = function () { p.remove(); };
+    } catch (_) { /* noop */ }
   }
   // Gyroscope tilt for a single hero card (detail / reveal) on touch devices: the
   // card shimmers and leans as you physically tilt the phone — the Pokémon-TCG-Pocket
@@ -285,7 +330,7 @@
       var FS = 'precision mediump float;varying vec2 v;' +
         'uniform sampler2D img;uniform sampler2D dmap;' +
         'uniform vec2 cov;uniform vec2 off;uniform vec2 tilt;uniform float hasD;' +
-        'uniform vec2 glr;uniform float foilx;uniform float fAmp;uniform float gAmp;uniform float zoom;' +
+        'uniform vec2 glr;uniform float foilx;uniform float fAmp;uniform float gAmp;uniform float zoom;uniform float zAmt;uniform float aoK;uniform float aoMx;' +
         'float pdepth(vec2 uv){vec2 f=vec2(.5,.62);' +            // focus (texture coords, y up): subject sits centre-upper
         'float d=distance(vec2(uv.x,(uv.y-.5)*1.15+.5),f);' +
         'return 1.-smoothstep(.12,.78,d);}' +                      // 1 = front (subject), 0 = back (edges)
@@ -298,7 +343,7 @@
         // Depth-scaled zoom-in: on hover, pull UVs toward the crop centre MORE where the
         // depth map reads "near" — so the subject magnifies out of the frame while the
         // background barely moves (a true parallax pop, not a flat scale).
-        'vec2 ctr=off+cov*.5;float dz=depAt(uv);uv=mix(uv,ctr,zoom*.25*smoothstep(.05,1.,dz));' +
+        'vec2 ctr=off+cov*.5;float dz=depAt(uv);uv=mix(uv,ctr,zoom*zAmt*smoothstep(.05,1.,dz));' +
         'float dep=depAt(uv);' +
         'vec2 suv=clamp(uv-tilt*(dep-.42)*.055,vec2(.002),vec2(.998));' +
         'for(int i=0;i<2;i++){' +
@@ -310,7 +355,7 @@
         // silhouette edges of the popped-out subject), scaled by the zoom so the contact
         // shading only appears as the card lifts. Sharper on a real depth map.
         'float ao=abs(depAt(suv+vec2(.006,0.))-depAt(suv-vec2(.006,0.)))+abs(depAt(suv+vec2(0.,.006))-depAt(suv-vec2(0.,.006)));' +
-        'c*=1.-clamp(ao*2.4,0.,.5)*zoom;' +
+        'c*=1.-clamp(ao*aoK,0.,aoMx)*zoom;' +
         'if(fAmp>0.){' +
           'float t=(suv.x*.9+suv.y*.4)*3.5+foilx;' +
           'vec3 rb=.5+.5*cos(6.2832*(t+vec3(0.,.33,.67)));' +
@@ -331,9 +376,10 @@
       gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
       var loc = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
       var u = {};
-      ['cov', 'off', 'tilt', 'hasD', 'glr', 'foilx', 'fAmp', 'gAmp', 'zoom', 'img', 'dmap'].forEach(function (n) { u[n] = gl.getUniformLocation(prog, n); });
+      ['cov', 'off', 'tilt', 'hasD', 'glr', 'foilx', 'fAmp', 'gAmp', 'zoom', 'zAmt', 'aoK', 'aoMx', 'img', 'dmap'].forEach(function (n) { u[n] = gl.getUniformLocation(prog, n); });
       gl.uniform1i(u.img, 0); gl.uniform1i(u.dmap, 1);
       gl.uniform1f(u.hasD, 0); gl.uniform1f(u.fAmp, 0); gl.uniform1f(u.gAmp, 0); gl.uniform1f(u.zoom, 0); gl.uniform2f(u.glr, 0.5, 0.5);
+      gl.uniform1f(u.zAmt, DEPTH_CFG.zoom); gl.uniform1f(u.aoK, DEPTH_CFG.aoStr); gl.uniform1f(u.aoMx, DEPTH_CFG.aoMax);
       function mkTex(unit, image) {
         gl.activeTexture(gl.TEXTURE0 + unit);
         var t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
@@ -396,9 +442,9 @@
             var tilted = inner.classList.contains('tilted');
             fA += ((tilted ? fMax : fMax * 0.5) - fA) * 0.12;         // idle keeps a soft foil, touch brings it up
             gA += ((coarse && tilted ? 0.5 : 0) - gA) * 0.15;
-            zA += (num('--dz', 0) - zA) * 0.09;                        // depth-scaled zoom eases smoothly in/out on hover (--dz set by the caller)
-            var key = px + ',' + py + ',' + gx + ',' + gy + ',' + fx + ',' + fA.toFixed(3) + ',' + gA.toFixed(3) + ',' + zA.toFixed(3);
-            if (key !== last) {                                       // redraw only when something moved
+            zA += (num('--dz', 0) - zA) * (DEPTH_CFG.ease || 0.09);    // depth-scaled zoom eases smoothly in/out on hover (--dz set by the caller)
+            var key = px + ',' + py + ',' + gx + ',' + gy + ',' + fx + ',' + fA.toFixed(3) + ',' + gA.toFixed(3) + ',' + zA.toFixed(3) + ',' + DEPTH_CFG.zoom + ',' + DEPTH_CFG.aoStr + ',' + DEPTH_CFG.aoMax;
+            if (key !== last) {                                       // redraw only when something moved (or a debug slider changed)
               last = key;
               gl.uniform2f(u.tilt, px, -py);
               gl.uniform2f(u.glr, gx, 1 - gy);
@@ -406,6 +452,7 @@
               gl.uniform1f(u.fAmp, fA < 0.005 ? 0 : fA);
               gl.uniform1f(u.gAmp, gA < 0.005 ? 0 : gA);
               gl.uniform1f(u.zoom, zA < 0.002 ? 0 : zA);
+              gl.uniform1f(u.zAmt, DEPTH_CFG.zoom); gl.uniform1f(u.aoK, DEPTH_CFG.aoStr); gl.uniform1f(u.aoMx, DEPTH_CFG.aoMax);
               gl.drawArrays(gl.TRIANGLES, 0, 3);
             }
             requestAnimationFrame(loop);
@@ -1198,12 +1245,12 @@
       // Poster parallax ONLY on fine pointers (desktop). On touch the photo stays put on
       // its stable GPU layer — transforming it every frame under the blend layers is what
       // re-rasterised it and flashed the card background through ("petardeo" to black).
-      '@media(pointer:fine){.auth-card.tilted .auth-bgimg{transform:translate3d(calc(var(--px,0) * -2.4cqw),calc(var(--py,0) * -2.4cqw),0) scale(1.06)}}' +
+      '@media(pointer:fine){.auth-card.tilted .auth-bgimg{transform:translate3d(calc(var(--px,0) * -2.4cqw),calc(var(--py,0) * -2.4cqw),0) scale(var(--ovs,1.06))}}' +
       // The depth canvas replaces the <img>; it must carry the SAME 1.06 overscan the
       // img has when tilted, otherwise the poster visibly shrinks 6% at the img->canvas
       // swap and then the depth zoom eases in (the "jump between two zooms"). The shader
       // does the parallax itself, so the canvas only needs the scale, not the translate.
-      '@media(pointer:fine){.auth-card.tilted .auth-bgcv,.ctc-inner.tilted .auth-bgcv{transform:scale(1.06)}}' +
+      '@media(pointer:fine){.auth-card.tilted .auth-bgcv,.ctc-inner.tilted .auth-bgcv{transform:scale(var(--ovs,1.06))}}' +
       '.auth-card.tilted .auth-star{transform:translate(calc(var(--px,0) * 3.6cqw),calc(var(--py,0) * 3.6cqw))}' +
       '.auth-card.tilted .auth-corner{transform:translate(calc(var(--px,0) * 2.6cqw),calc(var(--py,0) * 2.6cqw))}' +
       '.auth-card.tilted .auth-tags{transform:translate(calc(var(--px,0) * 3cqw),calc(var(--py,0) * 3cqw))}' +
@@ -2049,6 +2096,7 @@
     _filter = 'all'; _query = ''; _setOpen = null;
     render();
     document.getElementById('clCollModal').classList.add('open');
+    try { mountDepthDebug(); } catch (_) { /* noop */ }
     try { if (window.Track) window.Track('collection_open', stats()); } catch (_) { /* noop */ }
     // one-shot orientation tip on the first real visit
     try {
