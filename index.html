@@ -233,7 +233,14 @@ body{font-family:var(--fui);background:radial-gradient(circle at 50% -10%,rgba(2
 .cc-deck .th:first-child{margin-left:0;transform:rotate(-9deg)}
 .cc-deck .th:nth-child(2){transform:translateY(-5px);z-index:2}
 .cc-deck .th:nth-child(3){transform:rotate(9deg)}
-@media(max-width:560px){.cc-grid{width:50%}.cc-strip .th{width:46px;height:69px}.cc-deck .th{width:52px;height:76px}}
+.cc-chain{position:absolute;right:12px;top:50%;transform:translateY(-50%);display:flex}
+.cc-chain .th{width:55px;height:82px;border-radius:6px;margin-left:-32px;box-shadow:0 6px 16px rgba(0,0,0,.55)}
+.cc-chain .th:first-child{margin-left:0}
+.cc-chain .th:nth-child(odd){transform:rotate(-3.5deg)}
+.cc-chain .th:nth-child(even){transform:rotate(3.5deg)}
+.cc-board{position:absolute;right:0;top:0;bottom:0;width:62%;display:grid;grid-template-columns:repeat(5,1fr);gap:2px;padding:9px;align-content:center}
+.cc-board .th{aspect-ratio:2/3;border-radius:2px;box-shadow:0 2px 6px rgba(0,0,0,.4)}
+@media(max-width:560px){.cc-grid{width:50%}.cc-board{width:54%}.cc-strip .th{width:46px;height:69px}.cc-deck .th{width:52px;height:76px}.cc-chain .th{width:48px;height:72px;margin-left:-28px}}
 @media(prefers-reduced-motion:reduce){.game-card::before{transition:none}}
 @keyframes cardCele{0%{box-shadow:0 0 0 0 rgba(91,189,122,0)}16%{transform:scale(1.035);box-shadow:0 0 0 2px rgba(127,212,154,.6),0 18px 54px rgba(91,189,122,.42)}100%{transform:scale(1);box-shadow:0 0 0 0 rgba(91,189,122,0)}}
 @keyframes badgePop{0%{transform:scale(0) rotate(-14deg);opacity:0}55%{transform:scale(1.45) rotate(5deg);opacity:1}78%{transform:scale(.92)}100%{transform:scale(1) rotate(0)}}
@@ -1916,20 +1923,19 @@ function renderCollCard() {
 }
 // Three rotating "★ Today" chips steer the day's menu (pure guidance — any five
 // dailies complete the day). Deterministic by UTC day so everyone sees the same.
-// Cinematic imagery behind each game card. Most games get a single, non-answer,
-// thematically-matched landscape still that rotates DAILY (date-seeded, same for
-// everyone). Three games instead PREVIEW their own mechanic with a poster collage:
+// Cinematic imagery behind each game card. Some games get a single, non-answer
+// landscape still; five instead PREVIEW their own mechanic with a poster collage:
 // CineLine a chronological timeline strip, CineGroup a poster grid, Top Trumps a
-// fanned deck. All paths are validated TMDB stills/posters (never a daily answer).
+// fanned deck, CineChain an overlapping poster chain, CineGrid a 5-wide board. Both
+// the single stills and each collage's thumbnails rotate DAILY (date-seeded shuffle,
+// same for everyone). All paths are validated TMDB stills/posters (never an answer).
 function assignGamePosters() {
   try {
     const P = 'https://image.tmdb.org/t/p/w500', TH = 'https://image.tmdb.org/t/p/w342';
     const POOLS = {
       cl:     ['/nNmJRkg8wWnRmzQDe2FwKbPIsJV.jpg', '/43BEez1EGdmNpg8rcPUFToujlii.jpg', '/6WRrGYalXXveItfpnipYdayFkQB.jpg'], // Avengers, Ocean's Eleven, The Departed — ensemble casts
-      chain:  ['/odJ4hx6g6vBt4lBWKFD1tI8WS4x.jpg', '/nMKdUUepR0i5zn0y1T4CsSB5chy.jpg', '/aIGIYJTyOkEVUmEd3z5x6diYsFx.jpg'], // Top Gun, The Dark Knight, Jurassic — franchises
       guess:  ['/8ZTVqvKDQ8emSGUEMjsS4yHAwrp.jpg', '/43BEez1EGdmNpg8rcPUFToujlii.jpg', '/suaEOtk1N1sgg2MTM7oZd2cfVp3.jpg'], // Inception, Ocean's Eleven, Pulp Fiction — clue/cast
       reel:   ['/rzdPqYx7Um4FUZeD8wpXqjAUcEm.jpg', '/odJ4hx6g6vBt4lBWKFD1tI8WS4x.jpg', '/hND7xAaxxBgaIspp9iMsaEXOSTz.jpg'], // Titanic, Top Gun, Gladiator — star vehicles
-      grid:   ['/xJHokMbljvjADYdit5fK5VQsXEG.jpg', '/vL5LR6WdxWPjLPFRLe133jXWsh5.jpg', '/qJeU7KM4nT2C1WpOrwPcSDGFUWE.jpg'], // Interstellar, Avatar, La La Land — visual variety
       rating: ['/vL5LR6WdxWPjLPFRLe133jXWsh5.jpg', '/aIGIYJTyOkEVUmEd3z5x6diYsFx.jpg', '/xJWPZIYOEFIjZpBL7SVBGnzRYXp.jpg']  // Avatar, Jurassic, Frozen II — big hits
     };
     const POST = {
@@ -1939,29 +1945,36 @@ function assignGamePosters() {
       inception: '/edv5CZvWj09upOsy2Y6IwDhK8bt.jpg', interstellar: '/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg',
       goodfellas: '/aKuFiU82s5ISJpGZp7YkIr3kCUd.jpg', lalaland: '/uDO8zWDhfWwoFdKS4fzkUJt0Rf0.jpg',
       matrix: '/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg', fightclub: '/a26cQPRhJPX6GbWfQbvZdrrp9j9.jpg',
-      shawshank: '/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg', gladiator: '/ty8TGRuvJLPUmAR1H1nRIsgwvim.jpg'
+      shawshank: '/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg', gladiator: '/ty8TGRuvJLPUmAR1H1nRIsgwvim.jpg',
+      forrest: '/saHP97rTPS5eLmrLQEcANmKrsFl.jpg', jurassicpark: '/oU7Oq2kFAAlGqbU4VoAE36g4hoI.jpg',
+      parasite: '/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg', dune: '/cDbNAY0KM84cxXhmj8f0dLWza3t.jpg',
+      alien: '/vfrQk5IPloGg1v9Rzbh2Eg3VGyM.jpg', bladerunner: '/63N9uy8nd9j7Eog2axPQ8lbr3Wj.jpg'
     };
+    const YEAR = { jaws: 1975, alien: 1979, bladerunner: 1982, bttf: 1985, goodfellas: 1990, jurassicpark: 1993, pulp: 1994, shawshank: 1994, forrest: 1994, titanic: 1997, matrix: 1999, fightclub: 1999, gladiator: 2000, darkknight: 2008, inception: 2010, interstellar: 2014, lalaland: 2016, parasite: 2019, dune: 2021, godfather: 1972 };
+    const ALL = Object.keys(POST);
     const COLLAGE = {
-      line:   { c: 'cc-strip', f: ['godfather', 'jaws', 'bttf', 'titanic', 'darkknight'] },          // eras on a timeline
-      grp:    { c: 'cc-grid',  f: ['pulp', 'inception', 'interstellar', 'goodfellas', 'lalaland', 'matrix', 'fightclub', 'shawshank'] }, // a board of titles
-      trumps: { c: 'cc-deck',  f: ['darkknight', 'interstellar', 'gladiator'] }                        // a hand of cards
+      line:   { c: 'cc-strip', n: 5,  sort: true, pool: ['jaws', 'alien', 'bladerunner', 'bttf', 'goodfellas', 'jurassicpark', 'pulp', 'titanic', 'matrix', 'gladiator', 'darkknight', 'inception', 'interstellar', 'dune'] }, // eras on a timeline
+      grp:    { c: 'cc-grid',  n: 8,  pool: ALL },                                                                    // a board of titles
+      trumps: { c: 'cc-deck',  n: 3,  pool: ['darkknight', 'interstellar', 'gladiator', 'inception', 'matrix', 'dune', 'godfather', 'shawshank'] }, // a hand of cards
+      chain:  { c: 'cc-chain', n: 4,  pool: ['jurassicpark', 'jaws', 'alien', 'matrix', 'bttf', 'godfather', 'dune', 'bladerunner'] },              // an overlapping chain
+      grid:   { c: 'cc-board', n: 15, pool: ALL }                                                                     // a 5-wide board
     };
     const day = (typeof dateKey === 'function' ? dateKey() : '') || '';
-    function seededPick(key, arr) {
-      var s = day + '|' + key, h = 0;
-      for (var i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) | 0; }
-      return arr[Math.abs(h) % arr.length];
-    }
+    function seed(s) { var h = 0; for (var i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) | 0; } return Math.abs(h); }
+    function pick(arr, s) { return arr[seed(s) % arr.length]; }
+    function shuffle(arr, s) { var a = arr.slice(), r = seed(s) + 1; for (var i = a.length - 1; i > 0; i--) { r = (r * 1103515245 + 12345) & 0x7fffffff; var j = r % (i + 1); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
     function cardFor(k) { var b = document.querySelector('.game-done[data-done="' + k + '"]'); return b && b.closest('.game-card'); }
     Object.keys(POOLS).forEach(k => {
       var card = cardFor(k);
-      if (card && !card.style.getPropertyValue('--poster')) card.style.setProperty('--poster', 'url(' + P + seededPick(k, POOLS[k]) + ')');
+      if (card && !card.style.getPropertyValue('--poster')) card.style.setProperty('--poster', 'url(' + P + pick(POOLS[k], day + '|' + k) + ')');
     });
     Object.keys(COLLAGE).forEach(k => {
       var card = cardFor(k);
       if (!card || card.querySelector('.card-collage')) return;
       var cfg = COLLAGE[k];
-      var ths = cfg.f.map(function (n) { return '<div class="th" style="background-image:url(' + TH + POST[n] + ')"></div>'; }).join('');
+      var films = shuffle(cfg.pool, day + '|' + k).slice(0, cfg.n);
+      if (cfg.sort) films.sort(function (a, b) { return (YEAR[a] || 0) - (YEAR[b] || 0); });
+      var ths = films.map(function (n) { return '<div class="th" style="background-image:url(' + TH + POST[n] + ')"></div>'; }).join('');
       var el = document.createElement('div');
       el.className = 'card-collage';
       el.innerHTML = '<div class="' + cfg.c + '">' + ths + '</div>';
