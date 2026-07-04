@@ -1292,6 +1292,7 @@
     if (!layers) return '';
     var g = tplGet(layers, id); if (!g) return '';
     var L = g.L; if (L.visible === false) return 'display:none;';
+    if (L.rarities && L.rarities.indexOf(rarity) < 0) return '';   // layer scoped to other rarities → default built-in
     var s = 'z-index:' + g.z + ';', rc = L.rect;
     if (rc) s += 'left:' + rc.x + '%;top:' + rc.y + '%;width:' + rc.w + '%;height:' + rc.h + '%;right:auto;bottom:auto;';
     var o = (L.opacity && typeof L.opacity === 'object') ? L.opacity[rarity] : L.opacity;
@@ -1306,6 +1307,7 @@
     var builtin = { poster: 1, scrim: 1, corner: 1, star: 1, frame: 1, foil: 1, tags: 1, textblock: 1 };
     return layers.map(function (L, z) {
       if (builtin[L.type]) return '';
+      if (L.rarities && L.rarities.indexOf(rarity) < 0) return '';   // custom layer scoped to other rarities → hidden here
       var rc = L.rect || { x: 0, y: 0, w: 100, h: 100 };
       var o = (L.opacity && typeof L.opacity === 'object') ? L.opacity[rarity] : (L.opacity == null ? 1 : L.opacity);
       var base = 'position:absolute;pointer-events:none;left:' + rc.x + '%;top:' + rc.y + '%;width:' + rc.w + '%;height:' + rc.h + '%;z-index:' + z + ';opacity:' + o + ';' +

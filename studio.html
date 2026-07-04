@@ -119,6 +119,11 @@
   .row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
   .chk{display:flex;align-items:center;gap:6px;font-size:.74rem;color:var(--dim)}
   .props-empty{font-size:.76rem;color:var(--dim);padding:8px 2px}
+  .rseg{display:flex;gap:4px}
+  .rseg button{flex:1;font:inherit;font-size:.7rem;font-weight:800;color:var(--dim);background:var(--panel2);border:1px solid var(--bdr);border-radius:6px;padding:5px 0;cursor:pointer}
+  .rseg button.on{color:#1a1200;background:var(--gold)}
+  .rseg button.on.c-rare{background:#7aa6e8}.rseg button.on.c-elite{background:#b58ad6}.rseg button.on.c-legendary{background:#e8c24a}.rseg button.on.c-common{background:#9a9a9a}
+  .layer .scope{font-size:.5rem;font-weight:900;letter-spacing:.06em;color:#1a1200;background:var(--gold2);border-radius:4px;padding:1px 4px}
   .hint{font-size:.66rem;color:var(--dim);line-height:1.45;margin-top:6px}
   .kbd{font:inherit;font-size:.6rem;background:#000;border:1px solid var(--bdr);border-radius:4px;padding:1px 4px;color:var(--dim)}
 
@@ -263,6 +268,7 @@
     card.innerHTML='';
     state.layers.forEach(function(L,idx){
       if(L.visible===false)return;
+      if(L.rarities&&L.rarities.indexOf(rarity)<0)return;      // scoped to other rarities → not shown in this preview
       var el=document.createElement('div');el.className='lyr k-'+L.type;el.dataset.i=idx;
       var rc=L.rect;
       el.style.left=rc.x+'%';el.style.top=rc.y+'%';el.style.width=rc.w+'%';el.style.height=rc.h+'%';el.style.zIndex=idx;
@@ -329,7 +335,8 @@
       var row=document.createElement('div');
       row.className='layer'+(sel===idx?' sel':'')+(L.locked?' locked':'');
       row.draggable=true;row.dataset.i=idx;
-      row.innerHTML='<span class="g">⋮⋮</span><span class="nm">'+esc(L.name||KIND[L.type])+'</span><span class="mini">'+(KIND[L.type]||L.type)+'</span>'+
+      var scopeBadge=(L.rarities&&L.rarities.length<4)?'<span class="scope">'+L.rarities.map(function(r){return r[0].toUpperCase();}).join('')+'</span>':'';
+      row.innerHTML='<span class="g">⋮⋮</span><span class="nm">'+esc(L.name||KIND[L.type])+'</span>'+scopeBadge+'<span class="mini">'+(KIND[L.type]||L.type)+'</span>'+
         '<span class="t" data-lock="'+idx+'" title="Lock">'+(L.locked?'🔒':'🔓')+'</span>'+
         '<span class="t" data-vis="'+idx+'" title="Hide">'+(L.visible===false?'🚫':'👁')+'</span>';
       row.addEventListener('click',function(e){if(e.target.dataset.vis!=null||e.target.dataset.lock!=null)return;selectLayer(idx);});
@@ -363,6 +370,7 @@
     var curOp=(L.opacity&&typeof L.opacity==='object')?L.opacity[rarity]:(L.opacity==null?1:L.opacity);
     var h='';
     h+='<div class="field"><label>Opacity <b>'+(+curOp).toFixed(2)+' · '+rarity+'</b></label><input type="range" id="pOp" min="0" max="1" step="0.01" value="'+curOp+'"></div>';
+    h+='<div class="field"><label>Show on rarity</label><div class="rseg" id="pRar">'+['common','rare','elite','legendary'].map(function(r){var on=!L.rarities||L.rarities.indexOf(r)>=0;return '<button data-rr="'+r+'" class="'+(on?'on c-'+r:'')+'">'+r[0].toUpperCase()+'</button>';}).join('')+'</div></div>';
     h+='<div class="field"><label>Blend</label><select id="pBlend">'+BLENDS.map(function(b){return '<option'+(L.blend===b?' selected':'')+'>'+b+'</option>';}).join('')+'</select></div>';
     h+='<div class="grid2">'+num('X','pX',L.rect.x,-30,110)+num('Y','pY',L.rect.y,-30,110)+num('W','pW',L.rect.w,1,140)+num('H','pH',L.rect.h,1,140)+'</div>';
     h+='<div class="field"><label>Rotation <b>'+(L.rot||0)+'°</b></label><input type="range" id="pRot" min="-180" max="180" step="1" value="'+(L.rot||0)+'"></div>';
@@ -404,6 +412,12 @@
     function commit(){pushHist();persist();}
     function live(id,fn,commitOnChange){var e=box.querySelector('#'+id);if(!e)return;var ev=e.type==='range'?'input':'change';e.addEventListener(ev,function(){fn(e);var v=box.querySelector('.v-'+id);if(v)v.textContent=e.value;render();positionSel();persist();});e.addEventListener('change',commit);}
     live('pOp',function(e){if(typeof L.opacity!=='object')L.opacity=op(+e.value);L.opacity[rarity]=+e.value;});
+    var rseg=box.querySelector('#pRar');if(rseg)rseg.querySelectorAll('button').forEach(function(b){b.onclick=function(){
+      var all=['common','rare','elite','legendary'];var cur=L.rarities?L.rarities.slice():all.slice();var r=b.dataset.rr;
+      var i=cur.indexOf(r);if(i>=0){if(cur.length>1)cur.splice(i,1);}else cur.push(r);
+      L.rarities=(cur.length===4)?undefined:all.filter(function(x){return cur.indexOf(x)>=0;});
+      render();renderLayers();renderProps();commit();
+    };});
     live('pBlend',function(e){L.blend=e.value;});
     ['X','Y','W','H'].forEach(function(k){live('p'+k,function(e){L.rect[k.toLowerCase()]=+e.value;});});
     live('pRot',function(e){L.rot=+e.value;var b=box.querySelector('#pRot').previousElementSibling;});
