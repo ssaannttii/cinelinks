@@ -74,6 +74,10 @@
   .k-tags .nw{font-size:4.6cqw;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#06281a;background:#7fd49a;border-radius:3.3cqw;padding:1.3cqw 3.3cqw}
   .k-tags .dp{font-size:5.3cqw;font-weight:900;color:#1a1200;background:linear-gradient(135deg,#f5c542,#e8a000);border-radius:99px;padding:.7cqw 4.6cqw}
   .k-tags .mst{font-size:6.2cqw;line-height:1;font-weight:900;color:#f5c542;text-shadow:0 0 8px rgba(245,197,66,.8),0 1px 4px rgba(0,0,0,.7)}
+  .b-nw{font-size:4.6cqw;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#06281a;background:#7fd49a;border-radius:3.3cqw;padding:1.3cqw 3.3cqw}
+  .b-dp{font-size:5.3cqw;font-weight:900;color:#1a1200;background:linear-gradient(135deg,#f5c542,#e8a000);border-radius:99px;padding:.7cqw 4.6cqw}
+  .b-mst{font-size:6.2cqw;line-height:1;font-weight:900;color:#f5c542;text-shadow:0 0 8px rgba(245,197,66,.8),0 1px 4px rgba(0,0,0,.7)}
+  .b-ph{font-size:4cqw;font-weight:800;color:rgba(255,255,255,.32);border:1px dashed rgba(255,255,255,.25);border-radius:4px;padding:.8cqw 2cqw}
   .k-textblock{text-align:center}
   .k-textblock .nm{font-weight:900;line-height:1.02;letter-spacing:.01em;text-transform:uppercase;background:linear-gradient(180deg,var(--m1),var(--cr) 52%,var(--m1));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;filter:drop-shadow(0 .7cqw 1.4cqw rgba(0,0,0,.9));margin-bottom:3.3cqw}
   .k-textblock .mt{display:flex;align-items:center;justify-content:center;gap:4cqw;font-size:5.3cqw;font-weight:800;letter-spacing:.05em;text-transform:uppercase}
@@ -229,7 +233,7 @@
   var POSTERS=[['Interstellar','/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg','014'],['The Dark Knight','/qJ2tW6WMUDux911r6m7haRef0WH.jpg','008'],['Dune','/cDbNAY0KM84cxXhmj8f0dLWza3t.jpg','021'],['Blade Runner 2049','/gajva2L0rPYkEWjzgFlBXCAVBE5.jpg','017'],['The Matrix','/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg','099'],['Pulp Fiction','/d5iIlFn5s0ImszYzBPb8JPIfbXD.jpg','094']];
   var BLENDS=['normal','multiply','screen','overlay','soft-light','color-dodge','hard-light','lighten','darken','difference','luminosity'];
   var FONTS=['Schibsted Grotesk','Georgia, serif','ui-monospace, Menlo, monospace','Impact, sans-serif','system-ui, sans-serif','Fraunces, Georgia, serif'];
-  var KIND={poster:'poster',scrim:'scrim',corner:'corner',star:'holo star',frame:'frame',foil:'foil',tags:'badges',textblock:'name plate',image:'image',text:'text',fill:'fill'};
+  var KIND={poster:'poster',scrim:'scrim',corner:'corner',star:'holo star',frame:'frame',foil:'foil',tags:'badges',badgeStar:'badge',badgeCopies:'badge',badgeNew:'badge',textblock:'name plate',image:'image',text:'text',fill:'fill'};
   function op(v){return {common:v,rare:v,elite:v,legendary:v};}
   function clone(o){return JSON.parse(JSON.stringify(o));}
   // 'stretch' deforms the texture to fill the layer box (aspect ratio ignored)
@@ -258,7 +262,9 @@
     {id:'star',type:'star',name:'Holo star',rect:{x:4.5,y:4.5,w:12,h:8.6},rot:0,blend:'normal',opacity:op(1)},
     {id:'frame',type:'frame',name:'Frame',rect:{x:0,y:0,w:100,h:100},rot:0,blend:'normal',opacity:op(1)},
     {id:'foil',type:'foil',name:'Foil',rect:{x:0,y:0,w:100,h:100},rot:0,blend:'color-dodge',opacity:{common:0,rare:.16,elite:.24,legendary:.34}},
-    {id:'tags',type:'tags',name:'Badges',rect:{x:55,y:4.6,w:41,h:12},rot:0,blend:'normal',opacity:op(1)},
+    {id:'badgeStar',type:'badgeStar',name:'★ Mastery badge',rect:{x:58,y:4.6,w:11,h:9},rot:0,blend:'normal',opacity:op(1)},
+    {id:'badgeCopies',type:'badgeCopies',name:'×N Copies badge',rect:{x:69.5,y:4.6,w:13,h:8},rot:0,blend:'normal',opacity:op(1)},
+    {id:'badgeNew',type:'badgeNew',name:'New badge',rect:{x:82.5,y:4.6,w:14,h:8},rot:0,blend:'normal',opacity:op(1)},
     {id:'text',type:'textblock',name:'Name plate',rect:{x:0,y:60,w:100,h:40},rot:0,blend:'normal',opacity:op(1)}
   ]};}
 
@@ -346,6 +352,16 @@
     else if(L.type==='tags'){
       var h='';if(cd.n>=3)h+='<span class="mst">★</span>';if(cd.n>1)h+='<span class="dp">×'+cd.n+'</span>';if(cd.isNew)h+='<span class="nw">New</span>';
       el.innerHTML=h||'<span class="dp" style="opacity:.35">×N</span>';
+    }
+    else if(L.type==='badgeStar'||L.type==='badgeCopies'||L.type==='badgeNew'){
+      // one badge per layer → position each independently. Faint placeholder when the
+      // card data wouldn't show it, so you can still place it in the studio.
+      el.style.display='flex';el.style.alignItems='center';el.style.justifyContent='center';
+      var b='';
+      if(L.type==='badgeStar') b=cd.n>=3?'<span class="b-mst">★</span>':'<span class="b-ph">★</span>';
+      else if(L.type==='badgeCopies') b=cd.n>1?'<span class="b-dp">×'+cd.n+'</span>':'<span class="b-ph">×N</span>';
+      else b=cd.isNew?'<span class="b-nw">New</span>':'<span class="b-ph">New</span>';
+      el.innerHTML=b;
     }
     // corner/star/frame/foil/scrim need no inner content (pure CSS)
   }

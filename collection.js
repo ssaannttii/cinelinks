@@ -1519,11 +1519,25 @@
       // Card Studio template (if applied): O() = per-layer inline override, tplCustom = added layers
       var TL = activeCardTemplate(); TL = (TL && TL.layers) ? TL.layers : null;
       function O(id) { return TL ? (' style="' + tplOv(TL, id, c.rarity) + '"') : ''; }
+      // Badges: New / ×N copies / Mastery ★. A studio template can split them into
+      // three independently-placed layers (badgeStar/badgeCopies/badgeNew); otherwise
+      // they cluster in one flex row (default + legacy 'tags' templates).
+      var shineT = c.shine ? '<span class="cl-shine-t">&#10024;</span>' : '';
+      var starB = mst ? '<span class="auth-mst ' + mst + '" title="Mastery ×' + c.n + '">&#9733;</span>' : '';
+      var copiesB = c.n > 1 ? '<span class="auth-dp">×' + c.n + '</span>' : '';
+      var newB = c.isNew ? '<span class="auth-nw">New</span>' : '';
+      var tagsHtml;
+      if (TL && (tplGet(TL, 'badgeStar') || tplGet(TL, 'badgeCopies') || tplGet(TL, 'badgeNew'))) {
+        var badgeBox = function (id, inner) { var g = tplGet(TL, id); if (!g || g.L.visible === false || !inner) return ''; return '<div class="auth-badge" style="position:absolute;display:flex;align-items:center;justify-content:center;' + tplOv(TL, id, c.rarity) + '">' + inner + '</div>'; };
+        tagsHtml = badgeBox('badgeStar', shineT + starB) + badgeBox('badgeCopies', copiesB) + badgeBox('badgeNew', newB);
+      } else {
+        tagsHtml = '<div class="auth-tags"' + O('tags') + '>' + shineT + starB + copiesB + newB + '</div>';
+      }
       return '<div class="auth auth-' + c.rarity + (person ? ' person' : '') + (c.shine ? ' cl-shine' : '') + (TL ? ' auth-tpl' : '') + '" style="--cr:' + rar.ring + ';--m1:' + (METAL[c.rarity] || '#fff') + ';animation-delay:' + Math.min(i, 16) * 22 + 'ms" title="' + nm + ' · ' + rar.label + ' · ' + no + (c.shine ? ' · Shined' : '') + '">' +
         '<div class="auth-card">' +
           (p ? '<img class="auth-bgimg" src="' + ctx.esc(p) + '" alt="" loading="lazy"' + O('poster') + '>' : '<div class="auth-noimg"></div>') +
           '<div class="auth-scrim"' + O('scrim') + '></div><div class="auth-corner"' + O('corner') + '></div><div class="auth-star"' + O('star') + '></div>' +
-          '<div class="auth-tags"' + O('tags') + '>' + (c.shine ? '<span class="cl-shine-t">&#10024;</span>' : '') + (mst ? '<span class="auth-mst ' + mst + '" title="Mastery ×' + c.n + '">&#9733;</span>' : '') + (c.n > 1 ? '<span class="auth-dp">×' + c.n + '</span>' : '') + (c.isNew ? '<span class="auth-nw">New</span>' : '') + '</div>' +
+          tagsHtml +
           '<div class="auth-text"' + O('text') + '>' +
             '<div class="auth-name' + nmCls + '"' + (TL ? tplTitleStyle(TL, c.rarity) : '') + '>' + nm + '</div>' +
             '<div class="auth-meta"><span class="auth-gem"></span><span class="auth-rar">' + rar.label + '</span><span class="sep">·</span><span>' + typeUp + '</span><span class="sep">·</span><span class="auth-no">' + no + '</span></div>' +
