@@ -343,7 +343,10 @@
         // Depth-scaled zoom-in: on hover, pull UVs toward the crop centre MORE where the
         // depth map reads "near" — so the subject magnifies out of the frame while the
         // background barely moves (a true parallax pop, not a flat scale).
-        'vec2 ctr=off+cov*.5;float dz=depAt(uv);uv=mix(uv,ctr,zoom*zAmt*smoothstep(.05,1.,dz));' +
+        // Gate the depth zoom + AO on hasD: with a REAL depth map they pop the subject;
+        // on the procedural centre-blob fallback the zoom would just spherically inflate
+        // the middle (generic, ugly), so skip both there and keep only the flat overscan.
+        'vec2 ctr=off+cov*.5;float dz=depAt(uv);uv=mix(uv,ctr,zoom*zAmt*hasD*smoothstep(.05,1.,dz));' +
         'float dep=depAt(uv);' +
         'vec2 suv=clamp(uv-tilt*(dep-.42)*.055,vec2(.002),vec2(.998));' +
         'for(int i=0;i<2;i++){' +
@@ -355,7 +358,7 @@
         // silhouette edges of the popped-out subject), scaled by the zoom so the contact
         // shading only appears as the card lifts. Sharper on a real depth map.
         'float ao=abs(depAt(suv+vec2(.006,0.))-depAt(suv-vec2(.006,0.)))+abs(depAt(suv+vec2(0.,.006))-depAt(suv-vec2(0.,.006)));' +
-        'c*=1.-clamp(ao*aoK,0.,aoMx)*zoom;' +
+        'c*=1.-clamp(ao*aoK,0.,aoMx)*zoom*hasD;' +
         'if(fAmp>0.){' +
           'float t=(suv.x*.9+suv.y*.4)*3.5+foilx;' +
           'vec3 rb=.5+.5*cos(6.2832*(t+vec3(0.,.33,.67)));' +
