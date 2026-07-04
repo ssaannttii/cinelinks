@@ -877,6 +877,42 @@
       { id: 1396, type: 'tv', name: 'Breaking Bad' }, { id: 1438, type: 'tv', name: 'The Wire' },
       { id: 76331, type: 'tv', name: 'Succession' }, { id: 1104, type: 'tv', name: 'Mad Men' }
     ] },
+    { id: 'starwars', name: 'A Galaxy Far Away', members: [
+      { id: 11, type: 'movie', name: 'Star Wars' }, { id: 1891, type: 'movie', name: 'The Empire Strikes Back' },
+      { id: 1892, type: 'movie', name: 'Return of the Jedi' }, { id: 140607, type: 'movie', name: 'The Force Awakens' }
+    ] },
+    { id: 'jurassic', name: 'Isla Nublar', members: [
+      { id: 329, type: 'movie', name: 'Jurassic Park' }, { id: 135397, type: 'movie', name: 'Jurassic World' }
+    ] },
+    { id: 'gotham', name: 'Gotham Nights', members: [
+      { id: 414906, type: 'movie', name: 'The Batman' }, { id: 475557, type: 'movie', name: 'Joker' },
+      { id: 297762, type: 'movie', name: 'Wonder Woman' }
+    ] },
+    { id: 'pixar', name: 'Pixar Hearts', members: [
+      { id: 862, type: 'movie', name: 'Toy Story' }, { id: 12, type: 'movie', name: 'Finding Nemo' },
+      { id: 150540, type: 'movie', name: 'Inside Out' }, { id: 14160, type: 'movie', name: 'Up' }
+    ] },
+    { id: 'spielberg', name: 'Spielberg Signature', members: [
+      { id: 578, type: 'movie', name: 'Jaws' }, { id: 601, type: 'movie', name: 'E.T. the Extra-Terrestrial' },
+      { id: 85, type: 'movie', name: 'Raiders of the Lost Ark' }, { id: 857, type: 'movie', name: 'Saving Private Ryan' }
+    ] },
+    { id: 'tarantino', name: 'Tarantino Cuts', members: [
+      { id: 680, type: 'movie', name: 'Pulp Fiction' }, { id: 24, type: 'movie', name: 'Kill Bill: Vol. 1' },
+      { id: 68718, type: 'movie', name: 'Django Unchained' }, { id: 16869, type: 'movie', name: 'Inglourious Basterds' }
+    ] },
+    { id: 'scifi', name: 'Sci-Fi Legends', members: [
+      { id: 603, type: 'movie', name: 'The Matrix' }, { id: 78, type: 'movie', name: 'Blade Runner' },
+      { id: 348, type: 'movie', name: 'Alien' }, { id: 218, type: 'movie', name: 'The Terminator' }
+    ] },
+    { id: 'alist', name: 'A-List Leading Men', members: [
+      { id: 6193, type: 'person', name: 'Leonardo DiCaprio' }, { id: 287, type: 'person', name: 'Brad Pitt' },
+      { id: 500, type: 'person', name: 'Tom Cruise' }, { id: 5292, type: 'person', name: 'Denzel Washington' },
+      { id: 6384, type: 'person', name: 'Keanu Reeves' }
+    ] },
+    { id: 'newwave', name: 'New Hollywood', members: [
+      { id: 505710, type: 'person', name: 'Zendaya' }, { id: 234352, type: 'person', name: 'Margot Robbie' },
+      { id: 30614, type: 'person', name: 'Ryan Gosling' }
+    ] },
     { id: 'cinephile', name: 'Cinephile', goal: { kind: 'films', target: 25 } },
     { id: 'starstruck', name: 'Star-studded', goal: { kind: 'people', target: 15 } },
     { id: 'spectrum', name: 'Full Spectrum', goal: { kind: 'rarityAll' } },
@@ -901,7 +937,10 @@
         });
         // 100 XP per member: completing a 4-set ≈ two fresh legendaries — worth chasing
         // even at high level (50/member made set completion feel like pocket change).
-        return { id: set.id, name: set.name, kind: 'curated', owned: owned, total: set.members.length, pct: owned / set.members.length, complete: owned >= set.members.length, members: members, bonus: 100 * set.members.length };
+        // A set stays "undiscovered" (locked, forge disabled) until you own at least one
+        // member — so the wall of sets is a map of things to find, not a spoiler list.
+        var allPeople = set.members.every(function (m) { return m.type === 'person'; });
+        return { id: set.id, name: set.name, kind: 'curated', cat: allPeople ? 'people' : 'franchise', discovered: owned >= 1, owned: owned, total: set.members.length, pct: owned / set.members.length, complete: owned >= set.members.length, members: members, bonus: 100 * set.members.length };
       }
       var g = set.goal, cur = 0, tot = g.target || 1;
       if (g.kind === 'films') cur = films;
@@ -909,7 +948,7 @@
       else if (g.kind === 'count') cur = arr.length;
       else if (g.kind === 'rarity') cur = byR[g.rarity] || 0;
       else if (g.kind === 'rarityAll') { cur = ['common', 'rare', 'elite', 'legendary'].filter(function (r) { return byR[r] > 0; }).length; tot = 4; }
-      return { id: set.id, name: set.name, kind: 'milestone', goal: g, owned: Math.min(cur, tot), total: tot, pct: Math.min(1, cur / tot), complete: cur >= tot, bonus: 150 };
+      return { id: set.id, name: set.name, kind: 'milestone', cat: 'milestone', discovered: true, owned: Math.min(cur, tot), total: tot, pct: Math.min(1, cur / tot), complete: cur >= tot, bonus: 150 };
     });
   }
   function setsState() { return setsStateFrom(load() || blank()); }
@@ -925,7 +964,8 @@
     { id: 'crimson', name: 'Crimson', level: 13, css: 'cb-crimson' },
     { id: 'emerald', name: 'Emerald', level: 16, css: 'cb-emerald' },
     { id: 'prism', name: 'Prismatic', level: 20, css: 'cb-prism' },
-    { id: 'mastery', name: 'Mastery', achv: 12, css: 'cb-mastery' }
+    { id: 'mastery', name: 'Mastery', achv: 12, css: 'cb-mastery' },
+    { id: 'obsidian', name: 'Obsidian', achv: 22, css: 'cb-obsidian' }
   ];
   // Met trophy count (matches the trophy case). Safe from recursion because achievement
   // evaluation uses rawCardbackId(), not activeCardbackId() (see achCtx).
@@ -982,6 +1022,14 @@
     { id: 'spectrum', icon: AI('<path d="M4 18a8 8 0 0 1 16 0"/><path d="M7.2 18a4.8 4.8 0 0 1 9.6 0"/><path d="M10.3 18a1.7 1.7 0 0 1 3.4 0"/>'), name: 'Full Spectrum', desc: 'Own every rarity tier', goal: function (c) { var b = c.st.byRarity; var n = ['common', 'rare', 'elite', 'legendary'].filter(function (r) { return b[r] > 0; }).length; return [n, 4]; } },
     { id: 'set1', icon: AI('<path d="M9.2 4.2a1.6 1.6 0 0 1 3.1 0c0 .9.7 1.3 1.5 1.3h1.6a1 1 0 0 1 1 1v1.6c0 .8.4 1.5 1.3 1.5a1.6 1.6 0 0 1 0 3.1c-.9 0-1.3.7-1.3 1.5V17a1 1 0 0 1-1 1h-1.6c-.8 0-1.5.5-1.5 1.3a1.6 1.6 0 0 1-3.1 0c0-.8-.7-1.3-1.5-1.3H6a1 1 0 0 1-1-1v-1.6c0-.8-.5-1.5-1.3-1.5a1.6 1.6 0 0 1 0-3.1c.8 0 1.3-.7 1.3-1.5V7a1 1 0 0 1 1-1h1.7c.8 0 1.5-.4 1.5-1.3z"/>'), name: 'Set Theorist', desc: 'Complete your first set', goal: function (c) { return [c.sd, 1]; } },
     { id: 'set3', icon: AI('<path d="M7 4h10v3.5a5 5 0 0 1-10 0z"/><path d="M7 5.5H4V7a3 3 0 0 0 3 3M17 5.5h3V7a3 3 0 0 1-3 3"/><path d="M12 12.5V16M9 20h6M9.6 20l.5-4M14.4 20l-.5-4"/>'), name: 'Completionist', desc: 'Complete 3 sets', goal: function (c) { return [c.sd, 3]; } },
+    { id: 'set5', icon: AI('<rect x="3" y="3" width="7" height="7" rx="1.4"/><rect x="14" y="3" width="7" height="7" rx="1.4"/><rect x="3" y="14" width="7" height="7" rx="1.4"/><rect x="14" y="14" width="7" height="7" rx="1.4"/>'), name: 'Set Master', desc: 'Complete 5 sets', goal: function (c) { return [c.sd, 5]; } },
+    { id: 'allsets', icon: AI('<path d="M12 2l2.9 6 6.6.6-5 4.3 1.5 6.5L12 16.9 5.9 20l1.5-6.5-5-4.3 6.6-.6z"/>'), name: 'Grand Slam', desc: 'Complete every franchise & cast set', goal: function (c) { return [c.csTotal ? c.csDone : 0, c.csTotal || 1]; } },
+    { id: 'films50', icon: AI('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18M7 5v4M11 5v4M15 5v4M19 5v4M7 15h6"/>'), name: 'Film Buff', desc: 'Collect 50 films', goal: function (c) { return [c.st.films, 50]; } },
+    { id: 'people25', icon: AI('<circle cx="8" cy="8" r="3"/><path d="M2 20a6 6 0 0 1 12 0"/><circle cx="16.5" cy="8.5" r="2.6"/><path d="M14 14.4a5.5 5.5 0 0 1 8 5.1"/>'), name: 'Ensemble', desc: 'Collect 25 people', goal: function (c) { return [c.st.people, 25]; } },
+    { id: 'elite5', icon: AI('<path d="M12 3 4 9l8 12 8-12z"/><path d="M4 9h16M9 9l3 12 3-12"/><path d="M9.5 6.2 12 3l2.5 3.2"/>'), name: 'Elite Guard', desc: 'Own 5 Elite cards', goal: function (c) { return [c.st.byRarity.elite, 5]; } },
+    { id: 'leg10', icon: AI('<path d="M3 8l3.5 3.2L12 5l5.5 6.2L21 8l-1.6 10.5H4.6z"/><path d="M5.5 18.5h13"/><circle cx="12" cy="12" r="1.3"/>'), name: 'Immortal', desc: 'Own 10 Legendary cards', goal: function (c) { return [c.st.byRarity.legendary, 10]; } },
+    { id: 'copies5', icon: AI('<rect x="7" y="3" width="12" height="16" rx="2"/><path d="M5 6v13a2 2 0 0 0 2 2h9" opacity=".7"/><path d="M11 8h4M11 11h4"/>'), name: 'Deep Pull', desc: 'Pull 5 copies of one card', goal: function (c) { return [c.maxN, 5]; } },
+    { id: 'lvl20', icon: AI('<circle cx="12" cy="8.5" r="5"/><path d="M7 8.5l3.4 2.5L15.5 6"/><path d="M8 13 6.5 21l5.5-2.8L17.5 21 16 13"/>'), name: 'Master Curator', desc: 'Reach level 20', goal: function (c) { return [c.st.level, 20]; } },
     { id: 'lvl5', icon: AI('<path d="M3 17 9 11l4 4 8-8"/><path d="M16 7h5v5"/>'), name: 'Rising Star', desc: 'Reach level 5', goal: function (c) { return [c.st.level, 5]; } },
     { id: 'lvl10', icon: AI('<circle cx="12" cy="9" r="5.5"/><path d="M8.5 13.5 7 21l5-2.5L17 21l-1.5-7.5"/>'), name: 'Veteran', desc: 'Reach level 10', goal: function (c) { return [c.st.level, 10]; } },
     { id: 'style', icon: AI('<rect x="4" y="4" width="16" height="16" rx="2.4"/><circle cx="12" cy="12" r="3.2"/><path d="M12 4.5v15M4.5 12h15"/>'), name: 'Style Icon', desc: 'Equip a non-default card back', goal: function (c) { return [c.cb !== 'classic' ? 1 : 0, 1]; } },
@@ -993,8 +1041,11 @@
   function rawCardbackId() { var id = null; try { id = localStorage.getItem('cl_cardback'); } catch (_) {} return id || 'classic'; }
   function achCtx() {
     var st = stats(), s = load() || blank();
-    var sh = 0; Object.keys(s.cards || {}).forEach(function (k) { if (s.cards[k].shine) sh++; });
-    return { st: st, sd: s.setsDone ? Object.keys(s.setsDone).length : 0, cb: rawCardbackId(), sh: sh };
+    var sh = 0, maxN = 0;
+    Object.keys(s.cards || {}).forEach(function (k) { var c = s.cards[k]; if (c.shine) sh++; if ((c.n || 1) > maxN) maxN = c.n || 1; });
+    var cur = setsStateFrom(s).filter(function (x) { return x.kind === 'curated'; });
+    var csTotal = cur.length, csDone = cur.filter(function (x) { return x.complete; }).length;
+    return { st: st, sd: s.setsDone ? Object.keys(s.setsDone).length : 0, cb: rawCardbackId(), sh: sh, maxN: maxN, csDone: csDone, csTotal: csTotal };
   }
   function achMet(a, ctx) { var g = a.goal(ctx); return g[0] >= g[1]; }
   // Record newly-satisfied achievements; returns the list newly unlocked this call.
@@ -1628,6 +1679,38 @@
       '.cl-back-btn{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);color:#ccc;font:inherit;font-weight:700;font-size:.78rem;border-radius:999px;padding:6px 13px;cursor:pointer}' +
       '.cl-back-btn:hover{color:#fff}' +
       '.cl-set-htitle{font-weight:800;font-size:.9rem;color:#f0f0f0}' +
+      // ── premium collections view (poster-fan set cards + milestone rings) ──
+      '.cl-sx-hero{display:flex;align-items:center;gap:14px;padding:14px 15px;margin:6px 0 4px;border-radius:16px;background:linear-gradient(135deg,rgba(232,160,0,.15),rgba(20,20,22,.4));border:1px solid rgba(232,194,74,.24)}' +
+      '.cl-sx-hero-n{font-size:1.75rem;font-weight:900;color:#f5c542;line-height:1;font-variant-numeric:tabular-nums;flex-shrink:0}' +
+      '.cl-sx-hero-n i{font-style:normal;font-size:.9rem;color:#9a8a5a;font-weight:800}' +
+      '.cl-sx-hero-t b{display:block;font-size:1rem;font-weight:900;color:#f4ecd8;letter-spacing:.01em}' +
+      '.cl-sx-hero-t span{display:block;font-size:.72rem;color:#a89e88;margin-top:2px;line-height:1.4}' +
+      '.cl-sx-sec{display:flex;align-items:baseline;gap:9px;margin:18px 2px 10px}' +
+      '.cl-sx-sec>span{font-size:.68rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#c9a24a}' +
+      '.cl-sx-sec>em{font-style:normal;font-size:.64rem;color:#7a7362;font-weight:700}' +
+      '.cl-sx-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(210px,46vw),1fr));gap:12px}' +
+      '.cl-sx{position:relative;display:flex;flex-direction:column;gap:11px;padding:15px 14px 13px;border-radius:16px;background:linear-gradient(180deg,#1e1d1b,#161514);border:1px solid rgba(255,255,255,.08);cursor:pointer;text-align:left;font:inherit;color:#f0f0f0;overflow:hidden;transition:transform .18s cubic-bezier(.2,.8,.2,1),border-color .2s,box-shadow .2s}' +
+      '.cl-sx[data-set]:hover{transform:translateY(-3px);border-color:rgba(232,194,74,.5);box-shadow:0 14px 34px rgba(0,0,0,.45)}' +
+      '.cl-sx.done{border-color:rgba(232,194,74,.55);background:linear-gradient(180deg,rgba(232,160,0,.14),#161211)}' +
+      '.cl-sx.done::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 60% at 50% -10%,rgba(245,197,66,.22),transparent 60%)}' +
+      '.cl-sx.locked{cursor:default}' +
+      '.cl-sx-fan{position:relative;height:98px;display:flex;justify-content:center;align-items:flex-start;padding-top:6px}' +
+      '.cl-sx-p{width:58px;height:84px;margin:0 -15px;border-radius:8px;background:#0c0c0e center/cover no-repeat;border:1.5px solid rgba(255,255,255,.14);box-shadow:0 6px 15px rgba(0,0,0,.5);transform-origin:bottom center;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.18);font-weight:900;font-size:1.4rem}' +
+      '.cl-sx-p.own{border-color:rgba(232,194,74,.5)}' +
+      '.cl-sx-p.myst{background:repeating-linear-gradient(45deg,#141414,#141414 7px,#1a1a1a 7px,#1a1a1a 14px);color:rgba(255,255,255,.28)}' +
+      '.cl-sx-info{display:flex;flex-direction:column;gap:7px}' +
+      '.cl-sx-nm{font-weight:800;font-size:.9rem;color:#f2ead6;display:flex;align-items:center;gap:6px;line-height:1.2}' +
+      '.cl-sx-foot{display:flex;align-items:center;justify-content:space-between;gap:8px}' +
+      '.cl-sx-ct{font-size:.74rem;color:#b7ad95;font-weight:800;font-variant-numeric:tabular-nums}' +
+      '.cl-sx-rw{font-size:.6rem;font-weight:800;letter-spacing:.04em;color:#8fd6a0;background:rgba(120,200,140,.12);border:1px solid rgba(120,200,140,.32);border-radius:999px;padding:2px 8px;white-space:nowrap}' +
+      '.cl-sx-crown{color:#f5c542;font-size:1rem;filter:drop-shadow(0 2px 6px rgba(245,197,66,.55))}' +
+      '.cl-sx-crown.sm{font-size:.85rem}' +
+      '.cl-sx-hint{font-size:.68rem;color:#8a8272;font-weight:700}' +
+      '.cl-sx.mile{flex-direction:row;align-items:center;gap:13px;padding:13px 14px}' +
+      '.cl-sx-ring{--p:0;flex-shrink:0;width:56px;height:56px;border-radius:50%;background:conic-gradient(#f5c542 calc(var(--p)*1%),rgba(255,255,255,.09) 0)}' +
+      '.cl-sx-ring span{width:44px;height:44px;margin:6px;border-radius:50%;background:#161514;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.9rem;color:#f2ead6;font-variant-numeric:tabular-nums}' +
+      '.cl-sx-ring i{font-style:normal;font-size:.6rem;color:#8a8272}' +
+      '.cl-sx.mile .cl-sx-info{flex:1;min-width:0}' +
       '.cl-slot{position:relative;aspect-ratio:5/7;border-radius:13px;border:1.5px dashed rgba(255,255,255,.16);background:repeating-linear-gradient(45deg,#141414,#141414 9px,#181818 9px,#181818 18px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:8px}' +
       '.cl-slot-q{font-size:1.8rem;font-weight:900;color:rgba(255,255,255,.22)}' +
       '.cl-slot-nm{font-size:.64rem;font-weight:700;color:rgba(255,255,255,.45);line-height:1.2}' +
@@ -1653,6 +1736,8 @@
       '.clr-back.cb-prism .clr-mono,.cb-swatch.cb-prism .clr-mono{background:linear-gradient(100deg,#ff9a9a,#fff39a,#9affb0,#9ad9ff,#c39aff);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}' +
       '.clr-back.cb-mastery,.cb-swatch.cb-mastery{background:conic-gradient(from 45deg,#0b0b0b,#3a2a10,#e8c24a,#3a2a10,#0b0b0b,#1a1206,#0b0b0b);border-color:rgba(232,194,74,.7);box-shadow:inset 0 0 0 3px rgba(232,194,74,.38),0 0 22px rgba(232,194,74,.32)}' +
       '.clr-back.cb-mastery .clr-mono,.cb-swatch.cb-mastery .clr-mono{color:#fff;text-shadow:0 2px 18px rgba(232,194,74,.85)}' +
+      '.cb-obsidian,.cb-swatch.cb-obsidian{background:radial-gradient(120% 120% at 30% 20%,#25262b,#0a0a0c 60%),conic-gradient(from 120deg,#0a0a0c,#1c2733,#0a0a0c,#231a2e,#0a0a0c);background-blend-mode:screen;border-color:rgba(150,170,200,.6);box-shadow:inset 0 0 0 3px rgba(150,170,200,.28),0 0 22px rgba(120,150,190,.28)}' +
+      '.clr-back.cb-obsidian .clr-mono,.cb-swatch.cb-obsidian .clr-mono{background:linear-gradient(120deg,#dfe7f2,#9fb2c9);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;text-shadow:0 2px 14px rgba(150,180,220,.5)}' +
       '.cb-sub{font-size:.74rem;color:#9a9a9a;margin-bottom:14px}' +
       '.cb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:12px}' +
       '.cb-item{cursor:pointer;text-align:center}.cb-item.locked{cursor:default}' +
@@ -1827,8 +1912,9 @@
   function nextUnlock(st) {
     var lv = CARDBACKS.filter(function (cb) { return cb.level && cb.level > st.level; }).sort(function (a, b) { return a.level - b.level; })[0];
     if (lv) return 'Next: ' + lv.name + ' back &middot; Lvl ' + lv.level;
-    var ac = CARDBACKS.filter(function (cb) { return cb.achv; })[0];
-    if (ac && achvCount() < ac.achv) return 'Next: ' + ac.name + ' back &middot; ' + ac.achv + ' trophies';
+    var have = achvCount();
+    var ac = CARDBACKS.filter(function (cb) { return cb.achv && have < cb.achv; }).sort(function (a, b) { return a.achv - b.achv; })[0];
+    if (ac) return 'Next: ' + ac.name + ' back &middot; ' + ac.achv + ' trophies';
     return 'All card backs unlocked';
   }
   // Tier sections get physically larger cards as rarity climbs (presence = status);
@@ -2081,7 +2167,7 @@
     var states = setsState();
     if (_setOpen) {
       var set = null; states.forEach(function (s) { if (s.id === _setOpen) set = s; });
-      if (!set || set.kind !== 'curated') { _setOpen = null; renderSets(); return; }
+      if (!set || set.kind !== 'curated' || !set.discovered) { _setOpen = null; renderSets(); return; }
       var theme = activeTheme(); injectThemeCss(theme);
       grid.style.display = 'grid';
       grid.style.gridTemplateColumns = 'repeat(auto-fill,' + (theme.gridCols || 'minmax(110px,1fr)') + ')';
@@ -2126,17 +2212,64 @@
       return;
     }
     grid.style.display = 'block';
-    grid.innerHTML = states.map(function (s) {
-      return '<button class="cl-set' + (s.complete ? ' done' : '') + '" data-set="' + s.id + '">' +
-        '<div class="cl-set-tx"><div class="cl-set-nm">' + esc(s.name) + (s.complete ? '<span class="cl-set-done">&#10003; Complete</span>' : '') + '</div>' +
-        '<div class="cl-set-bar"><i style="width:' + Math.round(s.pct * 100) + '%"></i></div></div>' +
-        '<div class="cl-set-ct">' + s.owned + '/' + s.total + '</div>' +
-        (s.kind === 'curated' ? '<div class="cl-set-arrow">&#8250;</div>' : '') + '</button>';
-    }).join('');
-    Array.prototype.forEach.call(grid.querySelectorAll('.cl-set'), function (el) {
+    var curated = states.filter(function (s) { return s.kind === 'curated'; });
+    var found = curated.filter(function (s) { return s.discovered; });
+    var locked = curated.filter(function (s) { return !s.discovered; });
+    var miles = states.filter(function (s) { return s.kind === 'milestone'; });
+    // sort discovered: completed first, then by progress — the closest-to-done bubbles up
+    found.sort(function (a, b) { return (b.complete - a.complete) || (b.pct - a.pct); });
+    var doneN = curated.filter(function (s) { return s.complete; }).length;
+
+    // a fanned hand of member posters — owned = real poster, missing = silhouette slot
+    function fan(s, mystery) {
+      var m = (s.members || []).slice(0, 5);
+      var mid = (m.length - 1) / 2;
+      return '<div class="cl-sx-fan">' + m.map(function (mem, i) {
+        var rot = (i - mid) * 7, dy = Math.abs(i - mid) * 6;
+        var st = 'transform:rotate(' + rot.toFixed(1) + 'deg) translateY(' + dy.toFixed(0) + 'px);z-index:' + (10 - Math.abs(i - mid));
+        if (mystery) return '<span class="cl-sx-p myst" style="' + st + '">?</span>';
+        if (mem.owned && mem.card && mem.card.img) return '<span class="cl-sx-p own" style="' + st + ';background-image:url(' + posterUrl(mem.card.img) + ')"></span>';
+        return '<span class="cl-sx-p" style="' + st + '"></span>';
+      }).join('') + '</div>';
+    }
+    function premiumCard(s) {
+      var pctW = Math.round(s.pct * 100);
+      var badge = s.complete
+        ? '<span class="cl-sx-crown" title="Set complete">&#9733;</span>'
+        : '<span class="cl-sx-rw" title="XP awarded when you complete this set">+' + s.bonus + ' XP</span>';
+      return '<button class="cl-sx' + (s.complete ? ' done' : '') + '" data-set="' + s.id + '">' +
+        fan(s, false) +
+        '<div class="cl-sx-info"><div class="cl-sx-nm">' + esc(s.name) + '</div>' +
+        '<div class="cl-set-bar"><i style="width:' + pctW + '%"></i></div>' +
+        '<div class="cl-sx-foot"><span class="cl-sx-ct">' + s.owned + ' / ' + s.total + '</span>' + badge + '</div></div></button>';
+    }
+    function lockedCard(s) {
+      return '<div class="cl-sx locked" title="Collect any card from this set to unlock it">' +
+        fan(s, true) +
+        '<div class="cl-sx-info"><div class="cl-sx-nm">&#128274; ' + (s.cat === 'people' ? 'Cast set' : 'Film set') + '</div>' +
+        '<div class="cl-sx-hint">Undiscovered &middot; ' + s.total + ' cards</div></div></div>';
+    }
+    function milestoneCard(s) {
+      var pctW = Math.round(s.pct * 100);
+      return '<div class="cl-sx mile' + (s.complete ? ' done' : '') + '">' +
+        '<div class="cl-sx-ring" style="--p:' + pctW + '"><span>' + s.owned + '<i>/' + s.total + '</i></span></div>' +
+        '<div class="cl-sx-info"><div class="cl-sx-nm">' + esc(s.name) + (s.complete ? ' <span class="cl-sx-crown sm">&#9733;</span>' : '') + '</div>' +
+        '<div class="cl-set-bar"><i style="width:' + pctW + '%"></i></div>' +
+        '<div class="cl-sx-hint">' + (s.complete ? 'Complete' : 'Milestone reward: +' + s.bonus + ' XP') + '</div></div></div>';
+    }
+    function sec(title, note) { return '<div class="cl-sx-sec"><span>' + title + '</span>' + (note ? '<em>' + note + '</em>' : '') + '</div>'; }
+
+    var html = '<div class="cl-sx-hero"><div class="cl-sx-hero-n">' + doneN + '<i>/' + curated.length + '</i></div>' +
+      '<div class="cl-sx-hero-t"><b>Collections</b><span>Complete a set to bank a big XP bonus. Sets reveal once you collect one of their cards.</span></div></div>';
+    if (found.length) html += sec('Your sets', found.length + (found.length === 1 ? ' unlocked' : ' unlocked')) + '<div class="cl-sx-grid">' + found.map(premiumCard).join('') + '</div>';
+    if (miles.length) html += sec('Milestones') + '<div class="cl-sx-grid">' + miles.map(milestoneCard).join('') + '</div>';
+    if (locked.length) html += sec('Undiscovered', locked.length + ' to find') + '<div class="cl-sx-grid">' + locked.map(lockedCard).join('') + '</div>';
+    grid.innerHTML = html;
+
+    Array.prototype.forEach.call(grid.querySelectorAll('.cl-sx[data-set]'), function (el) {
       el.addEventListener('click', function () {
         var sid = el.getAttribute('data-set'), s = null; states.forEach(function (x) { if (x.id === sid) s = x; });
-        if (s && s.kind === 'curated') { _setOpen = sid; render(); }
+        if (s && s.kind === 'curated' && s.discovered) { try { if (window.Sfx) window.Sfx.tap(); } catch (_) { /* noop */ } _setOpen = sid; render(); }
       });
     });
   }
