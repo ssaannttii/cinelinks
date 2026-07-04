@@ -143,7 +143,7 @@
         clearTimeout(leaveT);
         leaveT = setTimeout(function () {
           if (inner.style.getPropertyValue('--dz') !== '1') { unmount(inner); if (activeInner === inner) activeInner = null; }
-        }, 220);                                                      // grace: swap the <img> back only after it has settled
+        }, 640);                                                      // grace: keep the canvas until the zoom has fully eased out, then swap the <img> back
       });
     });
   }
@@ -298,7 +298,7 @@
         // Depth-scaled zoom-in: on hover, pull UVs toward the crop centre MORE where the
         // depth map reads "near" — so the subject magnifies out of the frame while the
         // background barely moves (a true parallax pop, not a flat scale).
-        'vec2 ctr=off+cov*.5;float dz=depAt(uv);uv=mix(uv,ctr,zoom*.08*smoothstep(.05,1.,dz));' +
+        'vec2 ctr=off+cov*.5;float dz=depAt(uv);uv=mix(uv,ctr,zoom*.05*smoothstep(.05,1.,dz));' +
         'float dep=depAt(uv);' +
         'vec2 suv=clamp(uv-tilt*(dep-.42)*.055,vec2(.002),vec2(.998));' +
         'for(int i=0;i<2;i++){' +
@@ -391,7 +391,7 @@
             var tilted = inner.classList.contains('tilted');
             fA += ((tilted ? fMax : fMax * 0.5) - fA) * 0.12;         // idle keeps a soft foil, touch brings it up
             gA += ((coarse && tilted ? 0.5 : 0) - gA) * 0.15;
-            zA += (num('--dz', 0) - zA) * 0.14;                        // depth-scaled zoom eases in on hover (--dz set by the caller)
+            zA += (num('--dz', 0) - zA) * 0.09;                        // depth-scaled zoom eases smoothly in/out on hover (--dz set by the caller)
             var key = px + ',' + py + ',' + gx + ',' + gy + ',' + fx + ',' + fA.toFixed(3) + ',' + gA.toFixed(3) + ',' + zA.toFixed(3);
             if (key !== last) {                                       // redraw only when something moved
               last = key;
@@ -1184,11 +1184,11 @@
       '.auth-card:hover .auth-sheen,.auth-card.sheen-go .auth-sheen{animation:authSheen .7s ease-out}' +
       '@keyframes authSheen{0%{opacity:0;transform:translateX(-65%)}28%{opacity:.85}100%{opacity:0;transform:translateX(65%)}}' +
       // in-card depth parallax: while tilted the poster recedes (moves against the cursor) and the star/badges/title pop forward (move with it)
-      '.auth-bgimg,.auth-star,.auth-corner,.auth-tags,.auth-text{transition:transform .28s cubic-bezier(.2,.8,.2,1)}' +
+      '.auth-bgimg,.auth-bgcv,.auth-star,.auth-corner,.auth-tags,.auth-text{transition:transform .34s cubic-bezier(.2,.8,.2,1)}' +
       // While actively tilting, the layers track the finger every frame — a CSS transition
       // there re-interpolates each frame and stutters, so kill it and promote to GPU. The
       // .28s transition only applies on release (class removed) for a smooth settle.
-      '.auth-card.tilted .auth-bgimg,.auth-card.tilted .auth-star,.auth-card.tilted .auth-corner,.auth-card.tilted .auth-tags,.auth-card.tilted .auth-text{transition:none}' +
+      '.auth-card.tilted .auth-bgimg,.auth-card.tilted .auth-bgcv,.auth-card.tilted .auth-star,.auth-card.tilted .auth-corner,.auth-card.tilted .auth-tags,.auth-card.tilted .auth-text{transition:none}' +
       '.auth-card.tilted{will-change:transform}' +
       // Poster parallax ONLY on fine pointers (desktop). On touch the photo stays put on
       // its stable GPU layer — transforming it every frame under the blend layers is what
