@@ -41,7 +41,7 @@ body{font-family:var(--fui);background:radial-gradient(circle at 50% -10%,rgba(2
 #startScreen::before{content:"";position:absolute;inset:-20%;background:radial-gradient(circle at 22% 22%,rgba(232,160,0,.20),transparent 30%),radial-gradient(circle at 78% 14%,rgba(80,106,135,.20),transparent 32%),radial-gradient(circle at 84% 82%,rgba(232,160,0,.10),transparent 34%),linear-gradient(180deg,transparent,#0d0d0d 72%);pointer-events:none}
 .start-inner{width:100%;max-width:560px;text-align:center;position:relative;z-index:2;background:rgba(255,255,255,.05);backdrop-filter:blur(22px);border:1px solid rgba(255,255,255,.11);border-radius:18px;padding:36px 30px 30px;box-shadow:0 40px 110px rgba(0,0,0,.6)}
 #cineBackdrop{position:absolute;inset:0;z-index:0;background-size:cover;background-position:center;opacity:0;filter:blur(4px);transform:scale(1.06);transition:opacity 1.4s ease;pointer-events:none}
-#cineBackdrop.on{opacity:.10}
+#cineBackdrop.on{opacity:.17}
 #dailyGallery{margin:18px 0 2px;background:linear-gradient(180deg,rgba(232,160,0,.06),transparent),var(--s1);border:1px solid rgba(232,160,0,.18);border-radius:14px;padding:14px}
 .dg-title{font-size:.7rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:11px}
 .dg-grid{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
@@ -95,7 +95,8 @@ body{font-family:var(--fui);background:radial-gradient(circle at 50% -10%,rgba(2
 .meta-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;background:linear-gradient(110deg,rgba(232,160,0,.12),rgba(255,255,255,.04));border:1px solid rgba(232,160,0,.28);border-radius:14px;padding:11px 14px;margin:0 0 14px;text-align:left}
 .coll-card{display:flex;align-items:center;gap:12px;width:100%;background:linear-gradient(110deg,rgba(232,160,0,.16),rgba(122,166,232,.06) 70%,rgba(255,255,255,.03));border:1px solid rgba(232,160,0,.4);border-radius:14px;padding:12px 14px;margin:0 0 14px;text-align:left;cursor:pointer;font-family:inherit;color:var(--txt,#f0f0f0);transition:border-color .15s,transform .15s}
 .coll-card:hover{border-color:rgba(232,160,0,.65);transform:translateY(-1px)}
-.cc-ic{width:42px;height:42px;border-radius:11px;background:rgba(232,160,0,.16);display:flex;align-items:center;justify-content:center;font-size:1.35rem;flex-shrink:0}
+.cc-ic{width:42px;height:42px;border-radius:11px;background:rgba(232,160,0,.16);color:var(--gold);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.cc-ic svg{width:22px;height:22px}
 .cc-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
 .cc-name{font-weight:800;font-size:.98rem}
 .cc-sub{font-size:.72rem;color:#a89a7a;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -173,11 +174,13 @@ body{font-family:var(--fui);background:radial-gradient(circle at 50% -10%,rgba(2
 @keyframes scEmber{0%{opacity:0;transform:translate(0,0) scale(1)}12%{opacity:1}100%{opacity:0;transform:translate(var(--dx),-240px) scale(.25)}}
 @media(prefers-reduced-motion:reduce){.sc-flame,.streak-card{animation:none}.sc-ember{display:none}}
 .game-card{background:linear-gradient(150deg,rgba(var(--accent,255,255,255),.10),rgba(255,255,255,.022));border:1px solid rgba(var(--accent,255,255,255),.20);border-radius:14px;padding:14px;text-align:left;display:flex;flex-direction:column;gap:12px;transition:border-color .15s,background .15s,transform .15s}
-.game-card:hover{border-color:rgba(var(--accent,232,160,0),.5);transform:translateY(-1px)}
+.game-card:hover{border-color:rgba(var(--accent,232,160,0),.55);transform:translateY(-3px);box-shadow:0 16px 40px rgba(0,0,0,.42)}
 .game-card.done{border-color:rgba(91,189,122,.45);background:linear-gradient(180deg,rgba(91,189,122,.09),rgba(255,255,255,.04))}
 .game-card.done .game-ic{background:rgba(91,189,122,.16);color:#7fd49a}
 /* CineLinks = hero card: full width, bigger, the headline game */
-.game-card.hero{grid-column:1 / -1;background:linear-gradient(120deg,rgba(232,160,0,.13),rgba(255,255,255,.04));border-color:rgba(232,160,0,.32);padding:18px 18px 16px}
+.game-card.hero{grid-column:1 / -1;background:linear-gradient(100deg,rgba(10,10,11,.92) 0%,rgba(22,17,7,.6) 40%,rgba(232,160,0,.14) 100%);border-color:rgba(232,160,0,.44);padding:20px 20px 18px;min-height:170px;justify-content:flex-end;overflow:hidden}
+.hero-eyebrow{display:flex;align-items:center;gap:7px;font-size:.62rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+.hero-eyebrow::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--gold);box-shadow:0 0 8px var(--gold)}
 .game-card.hero.done{background:linear-gradient(120deg,rgba(91,189,122,.13),rgba(255,255,255,.04))}
 .game-card.hero .game-ic{width:50px;height:50px;font-size:1.7rem}
 .game-card.hero .game-name{font-size:1.3rem}
@@ -201,8 +204,8 @@ body{font-family:var(--fui);background:radial-gradient(circle at 50% -10%,rgba(2
    for the title. --poster is assigned per card in JS; content sits above it. */
 .game-card::before{content:"";position:absolute;inset:0;z-index:0;border-radius:14px;background:var(--poster) right center/cover no-repeat;opacity:.3;filter:saturate(1.22);pointer-events:none;transition:opacity .25s ease;-webkit-mask:linear-gradient(90deg,transparent 30%,rgba(0,0,0,.6) 64%,#000 100%);mask:linear-gradient(90deg,transparent 30%,rgba(0,0,0,.6) 64%,#000 100%)}
 .game-card:hover::before{opacity:.42}
-.game-card.hero::before{opacity:.36}
-.game-card.hero:hover::before{opacity:.48}
+.game-card.hero::before{opacity:.44;-webkit-mask:linear-gradient(90deg,transparent 2%,rgba(0,0,0,.5) 38%,#000 86%);mask:linear-gradient(90deg,transparent 2%,rgba(0,0,0,.5) 38%,#000 86%)}
+.game-card.hero:hover::before{opacity:.56}
 .game-card>*{position:relative;z-index:1}
 /* Inline library icons (Lucide-style) replacing emoji across the home. */
 .mode svg{width:15px;height:15px;vertical-align:-3px;margin-right:5px}
@@ -837,7 +840,7 @@ body{font-family:var(--fui);background:radial-gradient(circle at 50% -10%,rgba(2
     <div id="metaBar" class="meta-bar" style="display:none"></div>
 
     <button id="collCard" class="coll-card" style="display:none" type="button">
-      <span class="cc-ic">🃏</span>
+      <span class="cc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="11" height="16" rx="2"/><path d="M17 4h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-2"/><path d="M7 9h3M7 13h5"/></svg></span>
       <span class="cc-tx"><span class="cc-name">Your collection</span><span class="cc-sub" id="collCardSub"></span></span>
       <span class="cc-cta" id="collCardCta">Open →</span>
     </button>
@@ -845,6 +848,7 @@ body{font-family:var(--fui);background:radial-gradient(circle at 50% -10%,rgba(2
     <div class="games-section" id="sectionDaily">Daily puzzles</div>
     <div class="games">
       <div class="game-card hero" style="--accent:232,160,0">
+        <div class="hero-eyebrow">Today's daily</div>
         <div class="game-head"><span class="game-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"/></svg></span><span class="game-meta"><span class="game-name">CineLinks<span class="game-done" data-done="cl"></span></span><span class="game-desc">Connect actors → movies → TV in the fewest clicks</span></span></div>
         <div class="game-modes">
           <button class="mode mode-daily" onclick="game.startDaily()">Daily</button>
