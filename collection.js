@@ -108,6 +108,37 @@
       card.addEventListener('pointercancel', reset);
     });
   }
+  // Desktop grid: on hover, mount the depth-parallax canvas on the hovered card so the
+  // zoom-in is DEPTH-AWARE (the subject magnifies out of the frame via the depth map
+  // while the background stays put), then tear it down on leave to free the WebGL
+  // context. One card at a time, with a short delay so quick pass-overs don't spawn
+  // contexts. Driven by the `--dz` var the shader loop eases into the `zoom` uniform.
+  function gridDepthHover(grid, sel, innerSel) {
+    if (reducedMotion()) return;
+    try { if (matchMedia('(pointer: coarse)').matches) return; } catch (_) { return; }
+    Array.prototype.forEach.call(grid.querySelectorAll(sel), function (card) {
+      var inner = card.querySelector(innerSel); if (!inner) return;
+      var timer = 0;
+      card.addEventListener('pointerenter', function (e) {
+        if (e.pointerType && e.pointerType !== 'mouse') return;
+        clearTimeout(timer);
+        timer = setTimeout(function () {
+          inner.style.setProperty('--dz', '1');
+          if (!inner.querySelector('.auth-bgcv')) { try { mountPosterDepth(card); } catch (_) { /* keep the img */ } }
+        }, 85);
+      });
+      card.addEventListener('pointerleave', function () {
+        clearTimeout(timer);
+        inner.style.setProperty('--dz', '0');                        // zoom eases back out first
+        var cv = inner.querySelector('.auth-bgcv');
+        if (cv) setTimeout(function () {
+          if (inner.style.getPropertyValue('--dz') !== '1') {         // still un-hovered: restore the <img> and free the context
+            try { var im = inner.querySelector('.auth-bgimg, .ctc-art img'); if (im) im.style.visibility = ''; cv.remove(); } catch (_) { /* noop */ }
+          }
+        }, 280);
+      });
+    });
+  }
   // Gyroscope tilt for a single hero card (detail / reveal) on touch devices: the
   // card shimmers and leans as you physically tilt the phone — the Pokémon-TCG-Pocket
   // feel. Drives the same CSS vars as the pointer tilt. Returns a teardown fn (or
@@ -231,8 +262,8 @@
   function mountPosterDepth(holder) {
     try {
       if (reducedMotion() || !holder) return;
-      var inner = holder.querySelector('.auth-card'); if (!inner) return;
-      var img = inner.querySelector('.auth-bgimg'); if (!img || !img.src) return;
+      var inner = holder.querySelector('.auth-card, .ctc-inner'); if (!inner) return;
+      var img = inner.querySelector('.auth-bgimg, .ctc-art img'); if (!img || !img.src) return;
       var cv = document.createElement('canvas');
       cv.className = 'auth-bgcv';
       cv.style.cssText = 'position:absolute;inset:-1px;width:calc(100% + 2px);height:calc(100% + 2px);z-index:0;pointer-events:none';
@@ -246,7 +277,7 @@
       var FS = 'precision mediump float;varying vec2 v;' +
         'uniform sampler2D img;uniform sampler2D dmap;' +
         'uniform vec2 cov;uniform vec2 off;uniform vec2 tilt;uniform float hasD;' +
-        'uniform vec2 glr;uniform float foilx;uniform float fAmp;uniform float gAmp;' +
+        'uniform vec2 glr;uniform float foilx;uniform float fAmp;uniform float gAmp;uniform float zoom;' +
         'float pdepth(vec2 uv){vec2 f=vec2(.5,.62);' +            // focus (texture coords, y up): subject sits centre-upper
         'float d=distance(vec2(uv.x,(uv.y-.5)*1.15+.5),f);' +
         'return 1.-smoothstep(.12,.78,d);}' +                      // 1 = front (subject), 0 = back (edges)
@@ -256,6 +287,10 @@
         // the depth of the pixel actually sampled, so background pixels next to a
         // silhouette stop grabbing foreground colours (the "duplicated edge").
         'void main(){vec2 uv=v*cov+off;' +
+        // Depth-scaled zoom-in: on hover, pull UVs toward the crop centre MORE where the
+        // depth map reads "near" — so the subject magnifies out of the frame while the
+        // background barely moves (a true parallax pop, not a flat scale).
+        'vec2 ctr=off+cov*.5;float dz=depAt(uv);uv=mix(uv,ctr,zoom*.14*smoothstep(.05,1.,dz));' +
         'float dep=depAt(uv);' +
         'vec2 suv=clamp(uv-tilt*(dep-.42)*.055,vec2(.002),vec2(.998));' +
         'for(int i=0;i<2;i++){' +
@@ -283,9 +318,9 @@
       gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
       var loc = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
       var u = {};
-      ['cov', 'off', 'tilt', 'hasD', 'glr', 'foilx', 'fAmp', 'gAmp', 'img', 'dmap'].forEach(function (n) { u[n] = gl.getUniformLocation(prog, n); });
+      ['cov', 'off', 'tilt', 'hasD', 'glr', 'foilx', 'fAmp', 'gAmp', 'zoom', 'img', 'dmap'].forEach(function (n) { u[n] = gl.getUniformLocation(prog, n); });
       gl.uniform1i(u.img, 0); gl.uniform1i(u.dmap, 1);
-      gl.uniform1f(u.hasD, 0); gl.uniform1f(u.fAmp, 0); gl.uniform1f(u.gAmp, 0); gl.uniform2f(u.glr, 0.5, 0.5);
+      gl.uniform1f(u.hasD, 0); gl.uniform1f(u.fAmp, 0); gl.uniform1f(u.gAmp, 0); gl.uniform1f(u.zoom, 0); gl.uniform2f(u.glr, 0.5, 0.5);
       function mkTex(unit, image) {
         gl.activeTexture(gl.TEXTURE0 + unit);
         var t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
@@ -299,8 +334,8 @@
       // Foil/glare in-shader on touch only — desktop keeps the (richer) DOM blend
       // layers it already renders fine. Intensity scales with rarity / shine.
       var coarse = false; try { coarse = matchMedia('(pointer: coarse)').matches || /[?&]cvholo=1\b/.test(location.search); } catch (_) { /* noop */ }
-      var wrap = holder.querySelector('.auth');
-      var rar = (wrap && (wrap.className.match(/auth-(common|rare|elite|legendary)/) || [])[1]) || 'common';
+      var wrap = holder.querySelector('.auth, .ctc') || holder;
+      var rar = (wrap && (wrap.className.match(/(?:auth|ctc)-(common|rare|elite|legendary)/) || [])[1]) || 'common';
       var shine = !!(wrap && /cl-shine/.test(wrap.className));
       var fMax = !coarse ? 0 : shine ? 0.34 : rar === 'legendary' ? 0.27 : rar === 'elite' ? 0.2 : rar === 'rare' ? 0.13 : 0.06;
       var im = new Image();
@@ -335,7 +370,7 @@
             };
             dm.src = '/depth/' + base;
           }
-          var last = '', fA = 0, gA = 0;
+          var last = '', fA = 0, gA = 0, zA = 0;
           function num(nme, dflt) { var s = inner.style.getPropertyValue(nme); var f = parseFloat(s); return isNaN(f) ? dflt : f; }
           (function loop() {
             if (!cv.isConnected) {                                    // view closed / re-rendered: free the context
@@ -348,7 +383,8 @@
             var tilted = inner.classList.contains('tilted');
             fA += ((tilted ? fMax : fMax * 0.5) - fA) * 0.12;         // idle keeps a soft foil, touch brings it up
             gA += ((coarse && tilted ? 0.5 : 0) - gA) * 0.15;
-            var key = px + ',' + py + ',' + gx + ',' + gy + ',' + fx + ',' + fA.toFixed(3) + ',' + gA.toFixed(3);
+            zA += (num('--dz', 0) - zA) * 0.14;                        // depth-scaled zoom eases in on hover (--dz set by the caller)
+            var key = px + ',' + py + ',' + gx + ',' + gy + ',' + fx + ',' + fA.toFixed(3) + ',' + gA.toFixed(3) + ',' + zA.toFixed(3);
             if (key !== last) {                                       // redraw only when something moved
               last = key;
               gl.uniform2f(u.tilt, px, -py);
@@ -356,6 +392,7 @@
               gl.uniform1f(u.foilx, fx * 2.2);
               gl.uniform1f(u.fAmp, fA < 0.005 ? 0 : fA);
               gl.uniform1f(u.gAmp, gA < 0.005 ? 0 : gA);
+              gl.uniform1f(u.zoom, zA < 0.002 ? 0 : zA);
               gl.drawArrays(gl.TRIANGLES, 0, 3);
             }
             requestAnimationFrame(loop);
@@ -1054,7 +1091,7 @@
           '<div class="ctc-plate"><div class="ctc-name">' + ctx.esc(c.name) + '</div><div class="ctc-type">' + ctx.typeLabel(c) + '</div></div>' +
         '</div></div></div></div>';
     },
-    mount: function (grid) { tiltMount(grid, '.ctc', '.ctc-inner'); }
+    mount: function (grid) { tiltMount(grid, '.ctc', '.ctc-inner'); gridDepthHover(grid, '.ctc', '.ctc-inner'); }
   });
 
   // ── Built-in theme #2: "classic" simple poster tile (lightweight fallback) ──
@@ -1242,7 +1279,7 @@
         '</div>' +
       '</div>';
     },
-    mount: function (grid) { tiltMount(grid, '.auth', '.auth-card'); }
+    mount: function (grid) { tiltMount(grid, '.auth', '.auth-card'); gridDepthHover(grid, '.auth', '.auth-card'); }
   });
 
   // ─────────────────────────── gallery shell ─────────────────────────────
