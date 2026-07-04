@@ -226,12 +226,17 @@
   var KIND={poster:'poster',scrim:'scrim',corner:'corner',star:'holo star',frame:'frame',foil:'foil',tags:'badges',textblock:'name plate',image:'image',text:'text',fill:'fill'};
   function op(v){return {common:v,rare:v,elite:v,legendary:v};}
   function clone(o){return JSON.parse(JSON.stringify(o));}
-  // name-plate title treatment: metal (default) / rarity colour / solid / custom gradient
+  // name-plate title treatment, PER RARITY: metal (default) / rarity colour / solid / custom gradient
+  function titleCfg(L,r){
+    if(L.title&&L.title[r])return L.title[r];
+    if(L.titleMode)return {mode:L.titleMode,color:L.titleColor,c1:L.titleC1,c2:L.titleC2,angle:L.titleAngle};
+    return {mode:'metal'};
+  }
   function titleStyle(L){
-    var m=L.titleMode||'metal';
-    if(m==='solid')return 'background:none;-webkit-text-fill-color:'+(L.titleColor||'#ffffff')+';color:'+(L.titleColor||'#ffffff')+';';
+    var c=titleCfg(L,rarity),m=c.mode||'metal';
+    if(m==='solid')return 'background:none;-webkit-text-fill-color:'+(c.color||'#ffffff')+';color:'+(c.color||'#ffffff')+';';
     if(m==='rarity')return 'background:none;-webkit-text-fill-color:var(--cr);color:var(--cr);';
-    if(m==='gradient')return 'background:linear-gradient('+(L.titleAngle==null?180:L.titleAngle)+'deg,'+(L.titleC1||'#fff3c4')+','+(L.titleC2||'#e8a000')+');-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;';
+    if(m==='gradient')return 'background:linear-gradient('+(c.angle==null?180:c.angle)+'deg,'+(c.c1||'#fff3c4')+','+(c.c2||'#e8a000')+');-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;';
     return '';
   }
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
@@ -399,11 +404,12 @@
       h+='<label class="chk"><input type="checkbox" id="pUpper"'+(L.upper?' checked':'')+'> uppercase</label>';
     }
     if(L.type==='textblock'){
-      var tm=L.titleMode||'metal';
-      h+='<div class="field"><label>Name colour</label><select id="pTMode"><option value="metal"'+(tm==='metal'?' selected':'')+'>metal gradient (default)</option><option value="rarity"'+(tm==='rarity'?' selected':'')+'>rarity colour</option><option value="solid"'+(tm==='solid'?' selected':'')+'>solid</option><option value="gradient"'+(tm==='gradient'?' selected':'')+'>custom gradient</option></select></div>';
-      if(tm==='solid')h+='<div class="row"><input type="color" id="pTColor" value="'+(L.titleColor||'#ffffff')+'"><span class="hint" style="margin:0">title colour</span></div>';
-      if(tm==='gradient'){h+='<div class="row"><input type="color" id="pTC1" value="'+(L.titleC1||'#fff3c4')+'"><input type="color" id="pTC2" value="'+(L.titleC2||'#e8a000')+'"><span class="hint" style="margin:0">gradient stops</span></div>'+'<div class="field">'+num('Angle','pTAng',L.titleAngle==null?180:L.titleAngle,0,360)+'</div>';}
-      h+='<p class="hint">Only the title. The meta row (rarity · type · nº) keeps the card style.</p>';
+      var tc=titleCfg(L,rarity),tm=tc.mode||'metal';
+      h+='<div class="field"><label>Name colour <b>· '+rarity+'</b></label><select id="pTMode"><option value="metal"'+(tm==='metal'?' selected':'')+'>metal gradient (default)</option><option value="rarity"'+(tm==='rarity'?' selected':'')+'>rarity colour</option><option value="solid"'+(tm==='solid'?' selected':'')+'>solid</option><option value="gradient"'+(tm==='gradient'?' selected':'')+'>custom gradient</option></select></div>';
+      if(tm==='solid')h+='<div class="row"><input type="color" id="pTColor" value="'+(tc.color||'#ffffff')+'"><span class="hint" style="margin:0">title colour</span></div>';
+      if(tm==='gradient'){h+='<div class="row"><input type="color" id="pTC1" value="'+(tc.c1||'#fff3c4')+'"><input type="color" id="pTC2" value="'+(tc.c2||'#e8a000')+'"><span class="hint" style="margin:0">gradient stops</span></div>'+'<div class="field">'+num('Angle','pTAng',tc.angle==null?180:tc.angle,0,360)+'</div>';}
+      h+='<button class="btn sm" id="pTAll" style="margin-top:2px">Copy this to all rarities</button>';
+      h+='<p class="hint">Per rarity — switch the C/R/E/L preview to style each tier. Meta row keeps the card style.</p>';
     }
     // effects (all layers)
     h+='<div class="sec" style="margin-top:12px;border:0;padding:0"><p class="lbl">Effects</p>';
@@ -446,11 +452,18 @@
     live('pAlign',function(e){L.align=e.value;});
     live('pCMode',function(e){L.colorMode=e.value;});live('pColor',function(e){L.color=e.value;L.colorMode='solid';});
     var up=box.querySelector('#pUpper');if(up)up.onchange=function(){L.upper=up.checked;render();commit();};
-    var tmo=box.querySelector('#pTMode');if(tmo)tmo.onchange=function(){L.titleMode=tmo.value;render();renderProps();commit();};
-    var tco=box.querySelector('#pTColor');if(tco)tco.oninput=function(){L.titleColor=tco.value;render();persist();};
-    var tc1=box.querySelector('#pTC1');if(tc1)tc1.oninput=function(){L.titleC1=tc1.value;render();persist();};
-    var tc2=box.querySelector('#pTC2');if(tc2)tc2.oninput=function(){L.titleC2=tc2.value;render();persist();};
-    live('pTAng',function(e){L.titleAngle=+e.value;});
+    function setT(patch){
+      if(!L.title){L.title={};['common','rare','elite','legendary'].forEach(function(r){L.title[r]=titleCfg(L,r);});}
+      delete L.titleMode;delete L.titleColor;delete L.titleC1;delete L.titleC2;delete L.titleAngle;   // drop legacy flat fields
+      Object.assign(L.title[rarity],patch);
+    }
+    var tmo=box.querySelector('#pTMode');if(tmo)tmo.onchange=function(){setT({mode:tmo.value});render();renderProps();commit();};
+    var tco=box.querySelector('#pTColor');if(tco)tco.oninput=function(){setT({color:tco.value});render();persist();};
+    var tc1=box.querySelector('#pTC1');if(tc1)tc1.oninput=function(){setT({c1:tc1.value});render();persist();};
+    var tc2=box.querySelector('#pTC2');if(tc2)tc2.oninput=function(){setT({c2:tc2.value});render();persist();};
+    var tang=box.querySelector('#pTAng');if(tang)tang.addEventListener('input',function(){setT({angle:+tang.value});var v=box.querySelector('.v-pTAng');if(v)v.textContent=tang.value;render();persist();});
+    if(tang)tang.addEventListener('change',function(){pushHist();persist();});
+    var tall=box.querySelector('#pTAll');if(tall)tall.onclick=function(){setT({});var cur=JSON.parse(JSON.stringify(L.title[rarity]));['common','rare','elite','legendary'].forEach(function(r){L.title[r]=JSON.parse(JSON.stringify(cur));});render();pushHist();persist();};
     var tint=box.querySelector('#pTint');if(tint){tint.onchange=function(){var v=tint.value;L.tint=(v==='custom')?box.querySelector('#pTintC').value:v;render();commit();};box.querySelector('#pTintC').oninput=function(e){if(tint.value==='custom'){L.tint=e.target.value;render();persist();}};}
     var sh=box.querySelector('#pShadow');if(sh)sh.onchange=function(){L.shadow=sh.checked?{x:0,y:2,blur:6,color:'rgba(0,0,0,.6)'}:null;render();renderProps();commit();};
     live('pShX',function(e){L.shadow.x=+e.value;});live('pShY',function(e){L.shadow.y=+e.value;});live('pShB',function(e){L.shadow.blur=+e.value;});

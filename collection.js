@@ -1287,14 +1287,20 @@
     try { var s = localStorage.getItem('cl_card_template'); return s ? JSON.parse(s) : null; } catch (_) { return null; }
   }
   function tplGet(layers, id) { for (var i = 0; i < layers.length; i++) { if (layers[i].id === id || layers[i].type === id) return { L: layers[i], z: i }; } return null; }
-  // name-plate title treatment override for .auth-name ('' = keep the default metal gradient)
-  function tplTitleStyle(layers) {
+  // name-plate title treatment (per rarity) → inline override for .auth-name.
+  // '' = keep the default metal gradient. Legacy flat titleMode fields still read.
+  function titleCfgFor(L, r) {
+    if (L.title && L.title[r]) return L.title[r];
+    if (L.titleMode) return { mode: L.titleMode, color: L.titleColor, c1: L.titleC1, c2: L.titleC2, angle: L.titleAngle };
+    return { mode: 'metal' };
+  }
+  function tplTitleStyle(layers, rarity) {
     if (!layers) return '';
     var g = tplGet(layers, 'textblock') || tplGet(layers, 'text'); if (!g) return '';
-    var L = g.L, m = L.titleMode; if (!m || m === 'metal') return '';
-    if (m === 'solid') return ' style="background:none;-webkit-text-fill-color:' + (L.titleColor || '#fff') + ';color:' + (L.titleColor || '#fff') + '"';
+    var c = titleCfgFor(g.L, rarity), m = c.mode; if (!m || m === 'metal') return '';
+    if (m === 'solid') return ' style="background:none;-webkit-text-fill-color:' + (c.color || '#fff') + ';color:' + (c.color || '#fff') + '"';
     if (m === 'rarity') return ' style="background:none;-webkit-text-fill-color:var(--cr);color:var(--cr)"';
-    if (m === 'gradient') return ' style="background:linear-gradient(' + (L.titleAngle == null ? 180 : L.titleAngle) + 'deg,' + (L.titleC1 || '#fff3c4') + ',' + (L.titleC2 || '#e8a000') + ');-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent"';
+    if (m === 'gradient') return ' style="background:linear-gradient(' + (c.angle == null ? 180 : c.angle) + 'deg,' + (c.c1 || '#fff3c4') + ',' + (c.c2 || '#e8a000') + ');-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent"';
     return '';
   }
   // inline style override for a built-in layer (id = studio layer id) — '' if none
@@ -1509,7 +1515,7 @@
           '<div class="auth-scrim"' + O('scrim') + '></div><div class="auth-corner"' + O('corner') + '></div><div class="auth-star"' + O('star') + '></div>' +
           '<div class="auth-tags"' + O('tags') + '>' + (c.shine ? '<span class="cl-shine-t">&#10024;</span>' : '') + (mst ? '<span class="auth-mst ' + mst + '" title="Mastery ×' + c.n + '">&#9733;</span>' : '') + (c.n > 1 ? '<span class="auth-dp">×' + c.n + '</span>' : '') + (c.isNew ? '<span class="auth-nw">New</span>' : '') + '</div>' +
           '<div class="auth-text"' + O('text') + '>' +
-            '<div class="auth-name' + nmCls + '"' + (TL ? tplTitleStyle(TL) : '') + '>' + nm + '</div>' +
+            '<div class="auth-name' + nmCls + '"' + (TL ? tplTitleStyle(TL, c.rarity) : '') + '>' + nm + '</div>' +
             '<div class="auth-meta"><span class="auth-gem"></span><span class="auth-rar">' + rar.label + '</span><span class="sep">·</span><span>' + typeUp + '</span><span class="sep">·</span><span class="auth-no">' + no + '</span></div>' +
           '</div>' +
           '<div class="auth-frame"' + O('frame') + '></div><div class="auth-foil"' + O('foil') + '></div><div class="auth-glit"></div><div class="auth-shade"></div><div class="auth-sheen"></div><div class="auth-glare"></div><div class="auth-refl"></div>' +
