@@ -146,6 +146,7 @@
   <button class="btn sm" id="btnReset">Reset</button>
   <button class="btn sm" id="btnImport">Import</button>
   <button class="btn sm" id="btnExport">Export JSON</button>
+  <button class="btn sm" id="btnPng" title="Download the current card as a PNG image">⬇ Export PNG</button>
   <button class="btn gold sm" id="btnApply" title="Force this design onto the live in-game cards (same browser)">⚡ Apply to game</button>
 </div>
 <div id="applied" style="display:none;position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:80;background:#132417;border:1px solid rgba(127,212,154,.5);color:#cde0d4;font-size:.82rem;font-weight:700;padding:11px 16px;border-radius:11px;box-shadow:0 18px 44px rgba(0,0,0,.5)"></div>
@@ -225,12 +226,14 @@
   'use strict';
   var TMDB='https://image.tmdb.org/t/p/w500';
   var RARITY={legendary:{ring:'#e8c24a',m:'#fff3c4',rail:.85,label:'Legendary'},elite:{ring:'#b58ad6',m:'#f0e2ff',rail:.62,label:'Elite'},rare:{ring:'#7aa6e8',m:'#dcebff',rail:.5,label:'Rare'},common:{ring:'rgba(255,255,255,.22)',m:'#ffffff',rail:.26,label:'Common'}};
-  var POSTERS=[['Interstellar','/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg'],['The Dark Knight','/qJ2tW6WMUDux911r6m7haRef0WH.jpg'],['Dune','/cDbNAY0KM84cxXhmj8f0dLWza3t.jpg'],['Blade Runner 2049','/gajva2L0rPYkEWjzgFlBXCAVBE5.jpg'],['The Matrix','/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg'],['Pulp Fiction','/d5iIlFn5s0ImszYzBPb8JPIfbXD.jpg']];
+  var POSTERS=[['Interstellar','/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg','014'],['The Dark Knight','/qJ2tW6WMUDux911r6m7haRef0WH.jpg','008'],['Dune','/cDbNAY0KM84cxXhmj8f0dLWza3t.jpg','021'],['Blade Runner 2049','/gajva2L0rPYkEWjzgFlBXCAVBE5.jpg','017'],['The Matrix','/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg','099'],['Pulp Fiction','/d5iIlFn5s0ImszYzBPb8JPIfbXD.jpg','094']];
   var BLENDS=['normal','multiply','screen','overlay','soft-light','color-dodge','hard-light','lighten','darken','difference','luminosity'];
   var FONTS=['Schibsted Grotesk','Georgia, serif','ui-monospace, Menlo, monospace','Impact, sans-serif','system-ui, sans-serif','Fraunces, Georgia, serif'];
   var KIND={poster:'poster',scrim:'scrim',corner:'corner',star:'holo star',frame:'frame',foil:'foil',tags:'badges',textblock:'name plate',image:'image',text:'text',fill:'fill'};
   function op(v){return {common:v,rare:v,elite:v,legendary:v};}
   function clone(o){return JSON.parse(JSON.stringify(o));}
+  // 'stretch' deforms the texture to fill the layer box (aspect ratio ignored)
+  function fitCss(f,def){return f==='stretch'?'100% 100%':(f||def||'cover');}
   // name-plate title treatment, PER RARITY: metal (default) / rarity colour / solid / custom gradient
   function titleCfg(L,r){
     if(L.title&&L.title[r])return L.title[r];
@@ -313,10 +316,10 @@
     positionSel();
   }
   function renderKind(el,L,r,cd){
-    if(L.type==='poster'){el.style.background='#0a1830 url('+posterUrl()+') center top/'+(L.fit||'cover')+' no-repeat';}
+    if(L.type==='poster'){el.style.background='#0a1830 url('+posterUrl()+') center top/'+fitCss(L.fit,'cover')+' no-repeat';}
     else if(L.type==='image'){
-      if(L.tint&&L.tint!=='none'){el.style.background=(L.tint==='rarity')?'var(--cr)':L.tint;var ms=L.fit||'contain';el.style.webkitMaskImage=el.style.maskImage='url('+L.src+')';el.style.webkitMaskSize=el.style.maskSize=ms;el.style.webkitMaskPosition=el.style.maskPosition='center';el.style.webkitMaskRepeat=el.style.maskRepeat='no-repeat';}
-      else{el.style.background='url('+L.src+') center/'+(L.fit||'contain')+' no-repeat';}
+      if(L.tint&&L.tint!=='none'){el.style.background=(L.tint==='rarity')?'var(--cr)':L.tint;var ms=fitCss(L.fit,'contain');el.style.webkitMaskImage=el.style.maskImage='url('+L.src+')';el.style.webkitMaskSize=el.style.maskSize=ms;el.style.webkitMaskPosition=el.style.maskPosition='center';el.style.webkitMaskRepeat=el.style.maskRepeat='no-repeat';}
+      else{el.style.background='url('+L.src+') center/'+fitCss(L.fit,'contain')+' no-repeat';}
     }
     else if(L.type==='fill'){
       var rad=L.radius||0;el.style.borderRadius=rad+'%';
@@ -394,7 +397,7 @@
     h+='<div class="row" style="margin-top:2px"><button class="btn sm" id="pCenX">⊹ Center X</button><button class="btn sm" id="pCenY">⊹ Center Y</button></div>';
     h+=num('Rotation','pRot',L.rot||0,-180,180,1);
     h+='<p class="hint">Handles: <b>⌥</b> scale from center · <b>⇧</b> keep ratio</p>';
-    if(L.type==='image'||L.type==='poster')h+='<div class="field"><label>Fit</label><select id="pFit"><option value="cover"'+(L.fit==='cover'?' selected':'')+'>cover</option><option value="contain"'+(L.fit==='contain'?' selected':'')+'>contain</option></select></div>';
+    if(L.type==='image'||L.type==='poster')h+='<div class="field"><label>Fit</label><select id="pFit"><option value="cover"'+(L.fit==='cover'?' selected':'')+'>cover</option><option value="contain"'+(L.fit==='contain'?' selected':'')+'>contain</option><option value="stretch"'+(L.fit==='stretch'?' selected':'')+'>stretch (deform)</option></select></div>';
     if(L.type==='image'||L.type==='corner'||L.type==='fill')h+=tintField(L);
     if(L.type==='fill'){
       h+='<div class="field"><label>Fill</label><select id="pFillT"><option value="solid"'+(L.fillType==='solid'||!L.fillType?' selected':'')+'>solid</option><option value="linear"'+(L.fillType==='linear'?' selected':'')+'>linear gradient</option><option value="radial"'+(L.fillType==='radial'?' selected':'')+'>radial gradient</option></select></div>';
@@ -606,7 +609,12 @@
   // ── controls ──
   document.getElementById('rarSeg').querySelectorAll('button').forEach(function(b){b.onclick=function(){rarity=b.dataset.r;document.querySelectorAll('#rarSeg button').forEach(function(x){x.className='';});b.className='on c-'+rarity;renderAll();};});
   var psel=document.getElementById('posterSel');psel.innerHTML=POSTERS.map(function(p){return '<option value="'+p[1]+'">'+p[0]+'</option>';}).join('')+'<option value="__up">Upload poster…</option>';
-  psel.onchange=function(){if(psel.value==='__up'){var f=document.createElement('input');f.type='file';f.accept='image/*';f.onchange=function(){var file=f.files[0];if(!file)return;var rd=new FileReader();rd.onload=function(){var o=document.createElement('option');o.value=rd.result;o.textContent=file.name;psel.insertBefore(o,psel.firstChild);psel.value=rd.result;render();};rd.readAsDataURL(file);};f.click();}else render();};
+  psel.onchange=function(){if(psel.value==='__up'){var f=document.createElement('input');f.type='file';f.accept='image/*';f.onchange=function(){var file=f.files[0];if(!file)return;var rd=new FileReader();rd.onload=function(){var o=document.createElement('option');o.value=rd.result;o.textContent=file.name;psel.insertBefore(o,psel.firstChild);psel.value=rd.result;render();};rd.readAsDataURL(file);};f.click();}
+    else{ // a built-in sample also updates the card TEXT (name + number) so the whole card previews that film
+      var samp=POSTERS.filter(function(p){return p[1]===psel.value;})[0];
+      if(samp){document.getElementById('nameIn').value=samp[0];document.getElementById('noIn').value='#'+samp[2];document.getElementById('typeIn').value='movie';}
+      render();positionSel();
+    }};
   ['nameIn','noIn','typeIn','nIn','newIn'].forEach(function(id){var e=document.getElementById(id);e.addEventListener(e.type==='checkbox'?'change':'input',function(){render();positionSel();});});
   var zoomEl=document.getElementById('zoom');zoomEl.oninput=function(){zoom=+zoomEl.value;cw.style.transform='scale('+zoom+')';positionSel();};
   document.getElementById('tglGrid').onchange=function(e){document.getElementById('gv');card.style.backgroundImage='';document.getElementById('stage').classList.toggle('showgrid',e.target.checked);gridOverlay(e.target.checked);};
@@ -624,6 +632,26 @@
   ['dragover','dragenter'].forEach(function(ev){stage.addEventListener(ev,function(e){e.preventDefault();});});
   stage.addEventListener('drop',function(e){e.preventDefault();var f=e.dataTransfer&&e.dataTransfer.files[0];if(f&&/^image\//.test(f.type)){var rd=new FileReader();rd.onload=function(){addImage(rd.result,f.name.replace(/\.[^.]+$/,''));};rd.readAsDataURL(f);}});
 
+  // Export the current card as a PNG (loads html2canvas on demand). Captures the
+  // flat, unselected card so no handles/tilt leak into the image.
+  function loadScript(src){return new Promise(function(res,rej){if(window.html2canvas){res();return;}var s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s);});}
+  document.getElementById('btnPng').onclick=async function(){
+    var btn=this,label=btn.textContent;btn.textContent='…';btn.disabled=true;
+    var prevSel=sel,prevZoom=zoom;
+    try{
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+      sel=null;zoom=1;cw.style.transform='';card.classList.remove('tilted');card.classList.add('flat');
+      card.style.setProperty('--rx','0deg');card.style.setProperty('--ry','0deg');
+      render();positionSel();
+      var holo=card.querySelector('.holo');if(holo)holo.style.display='none';
+      await new Promise(function(r){setTimeout(r,60);});
+      var canvas=await html2canvas(card,{backgroundColor:null,scale:3,useCORS:true,logging:false});
+      if(holo)holo.style.display='';
+      var a=document.createElement('a');a.download=(document.getElementById('nameIn').value||'card').replace(/[^\w-]+/g,'_')+'.png';a.href=canvas.toDataURL('image/png');a.click();
+    }catch(e){alert('PNG export failed: '+(e&&e.message||e)+'\\n(Cross-origin sample posters can block it — upload your own poster to export.)');}
+    sel=prevSel;zoom=prevZoom;cw.style.transform='scale('+zoom+')';document.getElementById('zoom').value=zoom;
+    renderAll();btn.textContent=label;btn.disabled=false;
+  };
   document.getElementById('undo').onclick=undo;document.getElementById('redo').onclick=redo;
   document.getElementById('btnReset').onclick=function(){if(confirm('Reset to the default card template?')){state=defaultTemplate();sel=null;pushHist();renderAll();}};
 
