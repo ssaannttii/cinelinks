@@ -114,6 +114,7 @@ body{font-family:var(--fui);background:radial-gradient(circle at 50% -10%,rgba(2
 .meta-prog{font-size:.8rem;color:var(--mut);font-weight:600;white-space:nowrap}
 .meta-prog b{color:var(--txt);font-weight:800}
 .meta-next{color:var(--gold);text-decoration:none;font-weight:800;font-size:.82rem;white-space:nowrap;cursor:pointer}
+.meta-dd{margin-left:7px;font-size:.72rem;font-weight:800;color:var(--goldsoft,#f5c542);background:rgba(232,160,0,.16);border:1px solid rgba(232,160,0,.35);border-radius:999px;padding:2px 7px;white-space:nowrap}
 .meta-next:hover{text-decoration:underline}
 .meta-share{flex-shrink:0;padding:9px 16px;border-radius:10px;border:1px solid var(--gold);background:var(--gold);color:#111;font-family:inherit;font-weight:800;font-size:.82rem;cursor:pointer;transition:opacity .15s}
 .meta-share:hover{opacity:.9}
@@ -2564,11 +2565,20 @@ function renderMetaBar() {
   if (done === 0) left = chip + '<span class="meta-prog">' + t('metaStart') + '</span>';
   else if (allDone) { const adl = t('metaAllDone'); left = chip + '<span class="meta-prog meta-alldone">🎉 ' + (adl === 'metaAllDone' ? 'Day complete!' : adl) + '</span>'; }
   else left = chip + '<span class="meta-prog"><b>' + Math.min(done, total) + '/' + total + '</b> ' + t('metaDoneL') + (done > total ? ' · +' + (done - total) : '') + '</span>';
+  // Daily Double nudge: once one game is done (and the +60 bonus is still unclaimed),
+  // surface the incentive on the next-game link so players know a 2nd game pays off.
+  let ddHint = '';
+  try {
+    const _b = JSON.parse(localStorage.getItem('cl_collection'));
+    const _td = new Date().toISOString().slice(0, 10);
+    const _dd = (_b && _b.dd && _b.dd.d === _td) ? _b.dd : null;
+    if (done >= 1 && !allDone && (!_dd || (!_dd.done && (_dd.n | 0) < 2))) ddHint = '<span class="meta-dd" title="' + t('metaDdHint') + '">⚡ +60</span>';
+  } catch (_) {}
   let nudge = '';
   if (nextIdx >= 0) {
     const g = META_NAV[nextIdx];
     const label = (done === 0 ? g.n : t('metaNext') + ': ' + g.n) + ' →';
-    nudge = '<a class="meta-next" id="metaNextBtn"' + (g.h ? ' href="' + g.h + '"' : '') + '>' + label + '</a>';
+    nudge = '<a class="meta-next" id="metaNextBtn"' + (g.h ? ' href="' + g.h + '"' : '') + '>' + label + '</a>' + ddHint;
   }
   const right = done > 0 ? '<button class="meta-share" id="metaShareBtn">' + t('metaShareBtn') + '</button>' : '';
   bar.innerHTML = '<div class="meta-info">' + left + nudge + '</div>' + right;
