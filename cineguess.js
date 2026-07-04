@@ -275,6 +275,7 @@
     if (Media.sameTarget(movie, target)) { finish(true); return; }
     toast(GT('notIt'));
     if (window.Fx) Fx.play(document.getElementById('guessInput'), 'fx-shake', 450);
+    try { if (window.Sfx) { Sfx.deadEnd(); Sfx.haptic(55); } } catch (_) { /* noop */ }
     advance('wrong');
   }
   function skip() { if (!finished) advance('skip'); }
@@ -310,7 +311,7 @@
       ? '<div class="result-verdict win">' + GT('solvedIn').replace('{n}', (results.indexOf('win') + 1)) + '</div>'
       : '<div class="result-verdict lose">' + GT('outOfGuesses') + '</div>';
     const bestPart = streak.best > streak.current ? ' · ' + GT('best') + ' <strong>' + streak.best + '</strong>' : '';
-    const streakLine = PRACTICE ? '' : '<div class="result-streak">🔥 ' + GT('streakW') + ' <strong>' + streak.current + '</strong>' + bestPart + '</div>';
+    const streakLine = PRACTICE ? '' : '<div class="result-streak">🔥 ' + GT('streakW') + ' <strong class="js-streakn">' + streak.current + '</strong>' + bestPart + '</div>';
     const actions = PRACTICE
       ? '<button class="btn btn-gold" id="againBtn">' + GT('newTitle') + '</button><button class="btn" id="shareBtn">' + GT('share') + '</button>'
       : '<button class="btn btn-gold" id="shareBtn">Share</button><a class="btn" href="/" style="display:flex;align-items:center;justify-content:center;text-decoration:none">CineLinks</a>';
@@ -327,7 +328,14 @@
     const pst = el.querySelector('.result-poster'); if (pst) pst.classList.add('fx-poster');
     if (solved) {
       const v = el.querySelector('.result-verdict'); if (v) v.classList.add('fx-win');
-      if (window.Fx) setTimeout(() => Fx.confetti({ count: 90 }), 120);
+      try { if (window.Sfx) { Sfx.win(); Sfx.haptic([12, 40, 12, 70]); } } catch (_) { /* noop */ }
+      if (window.Fx) { Fx.shake(1.2); setTimeout(() => Fx.confetti({ count: 90 }), 120); }
+      // streak number counts up + a rising streak stinger — reward that grows with the run
+      const _sv = el.querySelector('.js-streakn');
+      if (_sv && window.Fx && !PRACTICE) setTimeout(function () { Fx.countUp(_sv, streak.current, { ms: 600 }); try { if (window.Sfx) Sfx.streak(streak.current); } catch (_) { /* noop */ } }, 300);
+    } else {
+      try { if (window.Sfx) { Sfx.deadEnd(); Sfx.haptic([40, 30, 40]); } } catch (_) { /* noop */ }
+      if (window.Fx) Fx.shake(0.7);
     }
     document.getElementById('shareBtn').onclick = share;
     const again = document.getElementById('againBtn');

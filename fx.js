@@ -63,5 +63,42 @@
       if (p < 1) requestAnimationFrame(step); else el.textContent = prefix + to + suffix;
     })(performance.now());
   }
-  window.Fx = { confetti: confetti, burstFrom: burstFrom, play: play, reduced: reduced, countUp: countUp };
+  // Screen-shake / camera-punch — a decaying jitter on a target (default the
+  // page body). Power scales amplitude + duration. The whole viewport kicks and
+  // settles, Balatro-style. Transform-only, so it never triggers scrollbars.
+  function shake(power, target) {
+    if (reduced()) return;
+    var el = target || document.body; if (!el) return;
+    power = power || 1;
+    var amp = 5 * power, dur = 300 + power * 90, t0 = performance.now();
+    var base = el.style.transform || '';
+    (function step(t) {
+      var k = 1 - Math.min(1, (t - t0) / dur);
+      if (k <= 0) { el.style.transform = base; return; }
+      var a = amp * k * k;
+      el.style.transform = (base ? base + ' ' : '') +
+        'translate(' + ((Math.random() * 2 - 1) * a).toFixed(1) + 'px,' + ((Math.random() * 2 - 1) * a).toFixed(1) + 'px)';
+      requestAnimationFrame(step);
+    })(performance.now());
+  }
+  // Floating "+N" pop that rises and fades from a screen point — the score-juice
+  // primitive: call it wherever points / streak / dust change.
+  function popText(x, y, text, opts) {
+    if (reduced()) return;
+    opts = opts || {};
+    var d = document.createElement('div');
+    d.className = 'fx-pop-txt';
+    d.textContent = text;
+    if (opts.color) d.style.color = opts.color;
+    if (opts.size) d.style.fontSize = opts.size;
+    d.style.left = x + 'px'; d.style.top = y + 'px';
+    document.body.appendChild(d);
+    setTimeout(function () { try { d.remove(); } catch (_) {} }, 1050);
+  }
+  function popFrom(el, text, opts) {
+    if (!el) return;
+    var r = el.getBoundingClientRect();
+    popText(r.left + r.width / 2, r.top + r.height * 0.3, text, opts);
+  }
+  window.Fx = { confetti: confetti, burstFrom: burstFrom, play: play, reduced: reduced, countUp: countUp, shake: shake, popText: popText, popFrom: popFrom };
 })();

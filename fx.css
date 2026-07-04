@@ -26,6 +26,9 @@
 .fx-skel-row{display:flex;gap:10px;align-items:center}
 /* smooth crossfade for staged image reveals (poster/frame between stages) */
 .fx-xfade{transition:opacity .45s ease, filter .45s ease, transform .45s ease}
+/* floating score/streak pop (Fx.popText / Fx.popFrom) — the "+N" that rises and fades */
+@keyframes fxPopRise{0%{opacity:0;transform:translate(-50%,4px) scale(.7)}18%{opacity:1;transform:translate(-50%,-6px) scale(1.12)}40%{transform:translate(-50%,-14px) scale(1)}100%{opacity:0;transform:translate(-50%,-52px) scale(1)}}
+.fx-pop-txt{position:fixed;transform:translate(-50%,0);z-index:10000;pointer-events:none;font-weight:900;font-size:1.5rem;color:#f5c542;text-shadow:0 2px 12px rgba(0,0,0,.6),0 0 18px rgba(232,160,0,.5);animation:fxPopRise 1.05s cubic-bezier(.2,.8,.2,1) forwards;font-family:ui-rounded,'Schibsted Grotesk',system-ui,sans-serif}
 @media(prefers-reduced-motion:reduce){
   .fx-in,.fx-pop,.fx-shake,.fx-win,.fx-poster,.fx-glow,.fx-bounce{animation:none!important}
   .fx-confetti{display:none!important}

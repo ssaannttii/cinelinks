@@ -313,13 +313,16 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
           }
         }
       }catch(_){ /* collection is optional */ }
+      try{ if(window.Sfx){ Sfx.win(); Sfx.haptic([12,40,12,70]); } }catch(_){}
+      if(window.Fx) Fx.shake(1.2);
       render(); return;
     }
-    if(isSkip){ if(shown<total){ shown++; render(); } return; } // reveal, no penalty
+    if(isSkip){ if(shown<total){ shown++; try{ if(window.Sfx) Sfx.cardFlip(); }catch(_){} render(); } return; } // reveal, no penalty
     guesses.push({win:false});                                  // a real wrong guess
     if(shown>=total){ over=true; render(); return; }            // no posters left → lost
     shown++; render();
-    if(window.Fx){ const gi=document.getElementById('gi'); if(gi) Fx.play(gi,'fx-shake',450); }
+    try{ if(window.Sfx){ Sfx.deadEnd(); Sfx.haptic([40,30,40]); } }catch(_){}
+    if(window.Fx){ const gi=document.getElementById('gi'); if(gi) Fx.play(gi,'fx-shake',450); Fx.shake(0.6); }
     const m=document.getElementById('miss');
     if(m&&name) m.textContent='“'+name+'” '+TR('nope');
   }

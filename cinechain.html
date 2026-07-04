@@ -231,9 +231,12 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
       const ids=new Set(cast.map(function(c){return c.id;}));
       let link=null;
       for(const c of last.cast){ if(ids.has(c.id) && !usedActors.has(c.id)){ link=c; break; } }
-      if(!link){ if(feed) feed.textContent=T('noSharedPre')+last.title+T('noSharedPost'); if(window.Fx){ const ci=document.getElementById('ci'); if(ci) Fx.play(ci,'fx-shake',450); } busy=false; return; }
+      if(!link){ if(feed) feed.textContent=T('noSharedPre')+last.title+T('noSharedPost'); if(window.Fx){ const ci=document.getElementById('ci'); if(ci) Fx.play(ci,'fx-shake',450); Fx.shake(0.6); } try{ if(window.Sfx){ Sfx.deadEnd(); Sfx.haptic([40,30,40]); } }catch(_){} busy=false; return; }
       usedActors.add(link.id); usedFilms.add(mid);
       chain.push({id:mid,title:d.t,poster:d.p,cast:cast,via:link.name});
+      // each link is a small win — the stinger pitch climbs with the chain length
+      try{ if(window.Sfx){ Sfx.streak(chain.length-1); Sfx.haptic([10,25]); } }catch(_){}
+      if(window.Fx) Fx.shake(0.45);
       justAdded=true; busy=false; render();
     }catch(e){ if(feed) feed.textContent=T('networkHiccup'); busy=false; }
   }
@@ -250,6 +253,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
       '<div class="sub">'+(chain.length)+' '+T('filmsLinked')+(links>=8?T('masterful'):links>=4?T('niceRun'):'')+'</div>'+
       '<div class="row-btns" style="margin-top:12px"><button class="btn" id="shareBtn">'+T('share')+'</button><button class="btn gold" id="again">'+(isDaily?T('mode_practice'):T('newChain'))+'</button></div>';
     if(links>=1 && window.Fx) setTimeout(function(){ Fx.confetti({count:Math.min(50+links*12,130)}); }, 160);
+    if(links>=1){ try{ if(window.Sfx){ (links>=8?Sfx.allDone():Sfx.win()); Sfx.haptic([12,40,12,70]); } }catch(_){} if(window.Fx) Fx.shake(links>=8?1.6:1.2); }
     document.getElementById('again').onclick=function(){ location.href='/cinechain.html'+(isDaily?'?practice=1':'?practice=1&r='+Date.now()); };
     document.getElementById('shareBtn').onclick=function(){ if(navigator.share){navigator.share({text:share}).catch(function(){});} else { try{navigator.clipboard.writeText(share);}catch(_){ } const b=document.getElementById('shareBtn'); b.textContent=T('copied'); } };
   }

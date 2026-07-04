@@ -395,7 +395,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     } else {
       cells[idx].status='wrong'; (triedByCell[idx]=triedByCell[idx]||new Set()).add(+d.id);
       const wasLives=livesLeft; livesLeft--; combo=0;
-      flashCells[idx]='shake'; sfx('deadEnd'); haptic([14,40,14]); render();
+      flashCells[idx]='shake'; sfx('deadEnd'); haptic([14,40,14]); if(window.Fx)Fx.shake(0.7); render();
       const hp=stage.querySelector('.hp[data-h="'+(wasLives-1)+'"]'); if(hp&&window.Fx)Fx.play(hp,'lose',500);
       floatOff(idx,'✕ '+T('notMatch'),'');
       await wait(720);
@@ -433,7 +433,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
       if(window.Fx){ setTimeout(function(){Fx.confetti({count:130,power:1.1});},150); setTimeout(function(){Fx.confetti({count:90,power:.9});},650); }
       // grid wave
       stage.querySelectorAll('.cell.correct').forEach(function(el,i){ setTimeout(function(){ if(window.Fx)Fx.play(el,'win-wave',600); },120+i*70); });
-      sfx('allDone'); haptic([20,40,20,40,30]);
+      sfx('allDone'); haptic([20,40,20,40,30]); if(window.Fx)Fx.shake(1.4);
     } else {
       sfx('select'); haptic(20); // soft close on running out of lives
     }

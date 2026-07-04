@@ -314,6 +314,8 @@ function place(slot){
   results.push(c._res);
   placed.push(c);
   toast(ok ? ('✓ ' + c.title + ' — ' + c.year) : ('✗ ' + c.title + ' — ' + c.year));
+  try{ if(window.Sfx){ if(ok){ Sfx.goalReach(); Sfx.haptic([10,25]); } else { Sfx.deadEnd(); Sfx.haptic([40,30,40]); } } }catch(_){}
+  if(window.Fx) Fx.shake(ok ? 0.4 : 0.7);
   pendingIdx++;
   renderTimeline();
   renderProgress();
@@ -376,7 +378,8 @@ function renderResult(streak){
     streakLine +
     '<div class="result-actions">' + actions + '</div>';
   el.classList.add('fx-in');
-  if(solved && window.Fx) setTimeout(() => Fx.confetti({count:90}), 160);
+  if(solved){ try{ if(window.Sfx){ (score===total?Sfx.allDone():Sfx.win()); Sfx.haptic([12,40,12,70]); } }catch(_){} if(window.Fx){ Fx.shake(score===total?1.5:1.2); setTimeout(() => Fx.confetti({count:90}), 160); } }
+  else { try{ if(window.Sfx){ Sfx.deadEnd(); Sfx.haptic([40,30,40]); } }catch(_){} if(window.Fx) Fx.shake(0.7); }
   document.getElementById('shareBtn').onclick = share;
   const again = document.getElementById('againBtn');
   if(again) again.onclick = () => { location.href = 'cineline.html?practice=1&n=' + Date.now(); };
