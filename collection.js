@@ -126,6 +126,7 @@
       inner.style.setProperty('--dz', '0');
       var cv = inner.querySelector('.auth-bgcv');
       if (cv) { try { var im = inner.querySelector('.auth-bgimg, .ctc-art img'); if (im) im.style.visibility = ''; cv.remove(); } catch (_) { /* noop */ } }
+      inner.classList.remove('fx-out');                                // back to rest: normal FX gating for the next hover
     }
     Array.prototype.forEach.call(grid.querySelectorAll(sel), function (card) {
       var inner = card.querySelector(innerSel); if (!inner) return;
@@ -139,11 +140,13 @@
         clearTimeout(leaveT);
         if (activeInner && activeInner !== inner) unmount(activeInner);
         activeInner = inner;
+        inner.classList.remove('fx-out');
         inner.style.setProperty('--dz', '1');
         if (!inner.querySelector('.auth-bgcv')) { try { mountPosterDepth(card); } catch (_) { /* keep the img */ } }
       });
       card.addEventListener('pointerleave', function () {
         inner.style.setProperty('--dz', '0');                        // ease the zoom back out first
+        inner.classList.add('fx-out');                               // and fade every hover brightness/glow out in sync
         clearTimeout(leaveT);
         leaveT = setTimeout(function () {
           if (inner.style.getPropertyValue('--dz') !== '1') { unmount(inner); if (activeInner === inner) activeInner = null; }
@@ -155,7 +158,7 @@
   // zoom / fake-AO / overscan / ease and read off the best combination. Dev only.
   function mountDepthDebug() {
     try {
-      if (!/[?&]cvdebug=1\b/.test(location.search) || document.getElementById('cvDbg')) return;
+      if ((!/[?&]cvdebug=1\b/.test(location.search) && !debugEnabled()) || document.getElementById('cvDbg')) return;
       var poster = posterUrl('/RYMX2wcKCBAr24UyPD7xwmjaTn.jpg');      // The Avengers (cast in front, deep bg)
       function row(label, key, min, max, step) {
         return '<label style="display:block;margin:9px 0 2px">' + label + ' <b id="cvv_' + key + '" style="color:#f5c542">' + DEPTH_CFG[key === 'ovs' ? 'ovs' : key] + '</b>' +
@@ -196,13 +199,42 @@
   // depth-tuning panel, so the values can be edited without opening the Vault first.
   function depthDebugButton() {
     try {
-      if (!/[?&]cvdebug=1\b/.test(location.search) || document.getElementById('cvDbgBtn')) return;
+      if ((!/[?&]cvdebug=1\b/.test(location.search) && !debugEnabled()) || document.getElementById('cvDbgBtn')) return;
       var b = document.createElement('button');
       b.id = 'cvDbgBtn';
       b.textContent = '⚙ depth';
       b.style.cssText = 'position:fixed;left:14px;bottom:14px;z-index:100001;background:#e8a000;color:#1a1200;border:0;border-radius:999px;padding:9px 15px;font:800 12px system-ui,-apple-system,sans-serif;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.5)';
       b.onclick = function () { var p = document.getElementById('cvDbg'); if (p) p.remove(); else mountDepthDebug(); };
       document.body.appendChild(b);
+    } catch (_) { /* noop */ }
+  }
+  // Toggle debug mode from ANY screen (collection.js loads on every page): Cmd/Ctrl+Shift+D
+  // on desktop, or 4 quick taps in the bottom-left corner on touch. Flips cl_debug and
+  // shows/hides the tuning button immediately, with a small confirmation toast.
+  function enableDebugGesture() {
+    try {
+      function flip() {
+        var on = false; try { on = localStorage.getItem('cl_debug') === '1'; } catch (_) { /* noop */ }
+        try { if (on) localStorage.removeItem('cl_debug'); else localStorage.setItem('cl_debug', '1'); } catch (_) { /* noop */ }
+        var btn = document.getElementById('cvDbgBtn'), panel = document.getElementById('cvDbg');
+        if (on) { if (btn) btn.remove(); if (panel) panel.remove(); } else { depthDebugButton(); }
+        var t = document.createElement('div');
+        t.textContent = 'Debug ' + (on ? 'off' : 'on');
+        t.style.cssText = 'position:fixed;left:50%;bottom:72px;transform:translateX(-50%);z-index:100002;background:rgba(20,20,22,.96);color:#e8a000;border:1px solid rgba(232,160,0,.4);padding:8px 16px;border-radius:999px;font:800 12px system-ui,sans-serif;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.5)';
+        document.body.appendChild(t);
+        setTimeout(function () { try { t.remove(); } catch (_) { /* noop */ } }, 1400);
+      }
+      window.addEventListener('keydown', function (e) {
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'D' || e.key === 'd')) { e.preventDefault(); flip(); }
+      });
+      var taps = 0, last = 0;
+      window.addEventListener('pointerdown', function (e) {
+        if (e.clientX > 46 || e.clientY < window.innerHeight - 46) { taps = 0; return; } // bottom-left corner only
+        var now = e.timeStamp || 0;
+        if (now - last > 1400) taps = 0;
+        last = now; taps++;
+        if (taps >= 4) { taps = 0; flip(); }
+      }, true);
     } catch (_) { /* noop */ }
   }
   // Gyroscope tilt for a single hero card (detail / reveal) on touch devices: the
@@ -1300,6 +1332,9 @@
       '.auth-shade{position:absolute;inset:0;z-index:8;pointer-events:none;opacity:0;border-radius:13px;background:linear-gradient(var(--shang,105deg),rgba(0,0,0,.5),transparent 42%,transparent 58%,rgba(255,255,255,.14));transition:opacity .2s}' +
       '.auth-card.tilted .auth-shade{opacity:1}' +
       '.auth-card:hover,.auth-card.tilted{box-shadow:0 20px 44px rgba(0,0,0,.64)}' +
+      /* hover-out: force every added brightness/glow to ease off in sync with the depth zoom */
+      '.auth-card.fx-out .auth-glare,.auth-card.fx-out .auth-glit,.auth-card.fx-out .auth-sheen{opacity:0!important;transition:opacity .4s ease!important}' +
+      '.auth-card.fx-out,.auth-rare .auth-card.fx-out,.auth-elite .auth-card.fx-out,.auth-legendary .auth-card.fx-out{box-shadow:0 8px 22px rgba(0,0,0,.55)!important;transition:box-shadow .4s ease!important}' +
       '.auth-rare .auth-card:hover,.auth-rare .auth-card.tilted{box-shadow:0 20px 44px rgba(0,0,0,.64),0 0 26px rgba(122,166,232,.5)}' +
       '.auth-elite .auth-card:hover,.auth-elite .auth-card.tilted{box-shadow:0 20px 44px rgba(0,0,0,.64),0 0 26px rgba(181,138,214,.55)}' +
       '.auth-legendary .auth-card:hover,.auth-legendary .auth-card.tilted{box-shadow:0 20px 44px rgba(0,0,0,.64),0 0 30px rgba(232,194,74,.6)}' +
@@ -2590,5 +2625,5 @@
   // Record already-earned achievements once on load (silent — no reveal spam for an existing save).
   try { window.addEventListener('load', function () { try { syncAchievements(); } catch (_) { /* noop */ } }); } catch (_) { /* noop */ }
   if (debugEnabled()) { try { window.addEventListener('load', function () { try { debug(); } catch (_) { /* noop */ } }); } catch (_) { /* noop */ } }
-  try { if (document.readyState === 'complete') depthDebugButton(); else window.addEventListener('load', depthDebugButton); } catch (_) { /* noop */ }
+  try { enableDebugGesture(); if (document.readyState === 'complete') depthDebugButton(); else window.addEventListener('load', depthDebugButton); } catch (_) { /* noop */ }
 })();
