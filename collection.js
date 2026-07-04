@@ -116,26 +116,34 @@
   function gridDepthHover(grid, sel, innerSel) {
     if (reducedMotion()) return;
     try { if (matchMedia('(pointer: coarse)').matches) return; } catch (_) { return; }
+    var activeInner = null;                                            // only one live grid canvas at a time
+    function unmount(inner) {
+      if (!inner) return;
+      inner.style.setProperty('--dz', '0');
+      var cv = inner.querySelector('.auth-bgcv');
+      if (cv) { try { var im = inner.querySelector('.auth-bgimg, .ctc-art img'); if (im) im.style.visibility = ''; cv.remove(); } catch (_) { /* noop */ } }
+    }
     Array.prototype.forEach.call(grid.querySelectorAll(sel), function (card) {
       var inner = card.querySelector(innerSel); if (!inner) return;
-      var timer = 0;
+      var leaveT = 0;
+      // Mount immediately on hover (no delay) so the depth zoom eases in FROM the start
+      // of the hover instead of appearing after a beat. The canvas always starts at
+      // zoom 0 (= the <img>), so the img->canvas swap is invisible and there is no jump
+      // from a plain scale to the depth zoom. Only one card's canvas lives at a time.
       card.addEventListener('pointerenter', function (e) {
         if (e.pointerType && e.pointerType !== 'mouse') return;
-        clearTimeout(timer);
-        timer = setTimeout(function () {
-          inner.style.setProperty('--dz', '1');
-          if (!inner.querySelector('.auth-bgcv')) { try { mountPosterDepth(card); } catch (_) { /* keep the img */ } }
-        }, 85);
+        clearTimeout(leaveT);
+        if (activeInner && activeInner !== inner) unmount(activeInner);
+        activeInner = inner;
+        inner.style.setProperty('--dz', '1');
+        if (!inner.querySelector('.auth-bgcv')) { try { mountPosterDepth(card); } catch (_) { /* keep the img */ } }
       });
       card.addEventListener('pointerleave', function () {
-        clearTimeout(timer);
-        inner.style.setProperty('--dz', '0');                        // zoom eases back out first
-        var cv = inner.querySelector('.auth-bgcv');
-        if (cv) setTimeout(function () {
-          if (inner.style.getPropertyValue('--dz') !== '1') {         // still un-hovered: restore the <img> and free the context
-            try { var im = inner.querySelector('.auth-bgimg, .ctc-art img'); if (im) im.style.visibility = ''; cv.remove(); } catch (_) { /* noop */ }
-          }
-        }, 280);
+        inner.style.setProperty('--dz', '0');                        // ease the zoom back out first
+        clearTimeout(leaveT);
+        leaveT = setTimeout(function () {
+          if (inner.style.getPropertyValue('--dz') !== '1') { unmount(inner); if (activeInner === inner) activeInner = null; }
+        }, 220);                                                      // grace: swap the <img> back only after it has settled
       });
     });
   }
