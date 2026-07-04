@@ -56,7 +56,7 @@
   function reducedMotion() { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (_) { return false; } }
   // Live-tunable depth-zoom params (driven by the ?cvdebug=1 slider panel). Defaults
   // are the shipped values; the shader reads these each frame so sliders update live.
-  var DEPTH_CFG = window.CL_DEPTH_CFG = (window.CL_DEPTH_CFG || { zoom: 0.03, aoStr: 1, aoMax: 0.16, ease: 0.04, ovs: 1.075 });
+  var DEPTH_CFG = window.CL_DEPTH_CFG = (window.CL_DEPTH_CFG || { zoom: 0.03, aoStr: 1, aoMax: 0.16, ease: 0.04, ovs: 1.0 });
   try { if (/[?&]cvdebug=1\b/.test(location.search)) document.documentElement.style.setProperty('--ovs', DEPTH_CFG.ovs); } catch (_) { /* noop */ }
   // Shared cursor-tracking 3D tilt + glare/foil shift (mouse only). Used by themes.
   // Real fake-3D tilt: a per-element perspective rotation plus a "lift", with
@@ -190,6 +190,19 @@
         document.getElementById('cvDbgOut').textContent = s;
       };
       document.getElementById('cvDbgX').onclick = function () { p.remove(); };
+    } catch (_) { /* noop */ }
+  }
+  // ?cvdebug=1 : a persistent floating button (anywhere in the app) that toggles the
+  // depth-tuning panel, so the values can be edited without opening the Vault first.
+  function depthDebugButton() {
+    try {
+      if (!/[?&]cvdebug=1\b/.test(location.search) || document.getElementById('cvDbgBtn')) return;
+      var b = document.createElement('button');
+      b.id = 'cvDbgBtn';
+      b.textContent = '⚙ depth';
+      b.style.cssText = 'position:fixed;left:14px;bottom:14px;z-index:100001;background:#e8a000;color:#1a1200;border:0;border-radius:999px;padding:9px 15px;font:800 12px system-ui,-apple-system,sans-serif;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.5)';
+      b.onclick = function () { var p = document.getElementById('cvDbg'); if (p) p.remove(); else mountDepthDebug(); };
+      document.body.appendChild(b);
     } catch (_) { /* noop */ }
   }
   // Gyroscope tilt for a single hero card (detail / reveal) on touch devices: the
@@ -1248,12 +1261,12 @@
       // Poster parallax ONLY on fine pointers (desktop). On touch the photo stays put on
       // its stable GPU layer — transforming it every frame under the blend layers is what
       // re-rasterised it and flashed the card background through ("petardeo" to black).
-      '@media(pointer:fine){.auth-card.tilted .auth-bgimg{transform:translate3d(calc(var(--px,0) * -2.4cqw),calc(var(--py,0) * -2.4cqw),0) scale(var(--ovs,1.075))}}' +
+      '@media(pointer:fine){.auth-card.tilted .auth-bgimg{transform:translate3d(calc(var(--px,0) * -2.4cqw),calc(var(--py,0) * -2.4cqw),0) scale(var(--ovs,1.0))}}' +
       // The depth canvas replaces the <img>; it must carry the SAME 1.06 overscan the
       // img has when tilted, otherwise the poster visibly shrinks 6% at the img->canvas
       // swap and then the depth zoom eases in (the "jump between two zooms"). The shader
       // does the parallax itself, so the canvas only needs the scale, not the translate.
-      '@media(pointer:fine){.auth-card.tilted .auth-bgcv,.ctc-inner.tilted .auth-bgcv{transform:scale(var(--ovs,1.075))}}' +
+      '@media(pointer:fine){.auth-card.tilted .auth-bgcv,.ctc-inner.tilted .auth-bgcv{transform:scale(var(--ovs,1.0))}}' +
       '.auth-card.tilted .auth-star{transform:translate(calc(var(--px,0) * 3.6cqw),calc(var(--py,0) * 3.6cqw))}' +
       '.auth-card.tilted .auth-corner{transform:translate(calc(var(--px,0) * 2.6cqw),calc(var(--py,0) * 2.6cqw))}' +
       '.auth-card.tilted .auth-tags{transform:translate(calc(var(--px,0) * 3cqw),calc(var(--py,0) * 3cqw))}' +
@@ -2099,7 +2112,6 @@
     _filter = 'all'; _query = ''; _setOpen = null;
     render();
     document.getElementById('clCollModal').classList.add('open');
-    try { mountDepthDebug(); } catch (_) { /* noop */ }
     try { if (window.Track) window.Track('collection_open', stats()); } catch (_) { /* noop */ }
     // one-shot orientation tip on the first real visit
     try {
@@ -2578,4 +2590,5 @@
   // Record already-earned achievements once on load (silent — no reveal spam for an existing save).
   try { window.addEventListener('load', function () { try { syncAchievements(); } catch (_) { /* noop */ } }); } catch (_) { /* noop */ }
   if (debugEnabled()) { try { window.addEventListener('load', function () { try { debug(); } catch (_) { /* noop */ } }); } catch (_) { /* noop */ } }
+  try { if (document.readyState === 'complete') depthDebugButton(); else window.addEventListener('load', depthDebugButton); } catch (_) { /* noop */ }
 })();
