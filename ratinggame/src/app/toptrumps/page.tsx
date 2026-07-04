@@ -119,6 +119,8 @@ function cpuPick(card: Card, diff: Diff): StatKey {
 }
 function vibrate(ms: number | number[]) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch { /* noop */ } }
 const resColor = (r: Res) => (r === "win" ? "#7fd49a" : r === "lose" ? "#e8806f" : "#b58ad6");
+// streak "charge" ramp: the board aura + mult badge heat up as the run grows
+const AURA = ["transparent", "rgba(232,160,0,.18)", "rgba(255,140,0,.24)", "rgba(255,80,20,.30)", "rgba(255,40,30,.36)"];
 
 export default function TopTrumps() {
   const [mode, setMode] = useState<Mode>("daily");
@@ -175,10 +177,36 @@ export default function TopTrumps() {
   }, []);
 
   // ── juice helpers (refs/setState only → stable) ──
-  const triggerShake = useCallback(() => {
+  const triggerShake = useCallback((power = 1) => {
     if (reducedRef.current) return;
     const el = boardRef.current; if (!el) return;
+    el.style.setProperty("--amp", String(Math.min(power, 3)));   // shake grows with the streak
     el.classList.remove("tt-shake"); void el.offsetWidth; el.classList.add("tt-shake");
+  }, []);
+
+  // Balatro-style score pop: a big "+N" that leaps out of the clash and fades.
+  const scorePop = useCallback((n: number, color: string) => {
+    if (reducedRef.current || typeof document === "undefined") return;
+    const o = clashRef.current?.getBoundingClientRect(); if (!o) return;
+    const el = document.createElement("div");
+    el.textContent = "+" + n;
+    el.style.cssText = `position:fixed;left:${o.left + o.width / 2}px;top:${o.top + o.height / 2}px;font-weight:900;font-size:${Math.min(2.8, 1.5 + n * 0.14)}rem;color:${color};text-shadow:0 2px 10px rgba(0,0,0,.7),0 0 22px ${color};z-index:9999;pointer-events:none;font-family:inherit`;
+    document.body.appendChild(el);
+    el.animate([
+      { transform: "translate(-50%,-40%) scale(.5)", opacity: 0 },
+      { transform: "translate(-50%,-95%) scale(1.18)", opacity: 1, offset: 0.28 },
+      { transform: "translate(-50%,-175%) scale(1)", opacity: 0 },
+    ], { duration: 920, easing: "cubic-bezier(.2,.8,.2,1)" }).onfinish = () => el.remove();
+  }, []);
+
+  // quick full-board colour wash on a resolve (green win / red loss) — the punch.
+  const boardFlash = useCallback((color: string) => {
+    if (reducedRef.current) return;
+    const el = boardRef.current; if (!el) return;
+    const f = document.createElement("div");
+    f.style.cssText = `position:absolute;inset:0;border-radius:16px;background:${color};opacity:0;pointer-events:none;z-index:6;mix-blend-mode:screen`;
+    el.appendChild(f);
+    f.animate([{ opacity: 0 }, { opacity: 0.55, offset: 0.12 }, { opacity: 0 }], { duration: 440, easing: "ease-out" }).onfinish = () => f.remove();
   }, []);
 
   const sweep = useCallback((side: "player" | "cpu", n: number) => {
@@ -312,8 +340,9 @@ export default function TopTrumps() {
     clearTimers();
     after(820, () => {
       setClash(true);
-      if (res === "win") { vibrate(28); Sfx.win(); triggerShake(); sweep("player", [pc, cc, ...pot].length); }
-      else if (res === "lose") { vibrate([14, 28]); Sfx.lose(); sweep("cpu", [pc, cc, ...pot].length); }
+      const spoilsN = [pc, cc, ...pot].length;
+      if (res === "win") { vibrate(28); Sfx.win(); triggerShake(1 + Math.min(streak, 6) * 0.4); boardFlash("rgba(127,212,154,.6)"); scorePop(spoilsN, "#7fd49a"); sweep("player", spoilsN); }
+      else if (res === "lose") { vibrate([14, 28]); Sfx.lose(); triggerShake(0.7); boardFlash("rgba(232,128,111,.5)"); sweep("cpu", spoilsN); }
       else { vibrate([10, 22, 10]); Sfx.tie(); }
     });
     const settle = () => {
@@ -337,7 +366,7 @@ export default function TopTrumps() {
       }
       settle();
     });
-  }, [phase, player, cpu, pot, turn, round, streak, finish, sweep, triggerShake, shineOffer]);
+  }, [phase, player, cpu, pot, turn, round, streak, finish, sweep, triggerShake, boardFlash, scorePop, shineOffer]);
 
   useEffect(() => {
     if (phase === "play" && turn === "cpu" && cpu.length) {
@@ -354,6 +383,7 @@ export default function TopTrumps() {
   const total = player.length + cpu.length;
   const youPct = total ? (player.length / total) * 100 : 50;
   const onFire = streak >= 3;
+  const chargeLvl = streak >= 7 ? 4 : streak >= 5 ? 3 : streak >= 3 ? 2 : streak >= 2 ? 1 : 0;
 
   function toggleSound() { setSound(Sfx.toggle()); }
 
@@ -408,12 +438,14 @@ export default function TopTrumps() {
           <span className="tt-knob" style={{ left: youPct + "%", transition: reduced ? "none" : "left .7s cubic-bezier(.3,.9,.3,1)" }} />
         </div>
         <div className="tt-status-row flex items-center justify-center gap-2 mt-2" style={{ minHeight: 20 }}>
-          {onFire && <span className="tt-fire">🔥 {streak} in a row{streak >= 5 ? " · ON FIRE" : ""}</span>}
+          {streak >= 2 && <span className="tt-mult" key={streak} data-lvl={chargeLvl}>🔥 ×{streak}{streak >= 5 ? " · ON FIRE" : ""}</span>}
           {pot.length > 0 && <span className="tt-war">⚔ WAR · pot {pot.length}</span>}
         </div>
       </div>
 
       <div ref={boardRef} className={"tt-board" + (wide ? " tt-wide" : "")}>
+        {/* streak charge aura — heats up as the run grows (Balatro escalation) */}
+        <div className={"tt-aura" + (chargeLvl >= 2 ? " tt-aura-pulse" : "")} aria-hidden style={{ opacity: chargeLvl ? 1 : 0, background: `radial-gradient(65% 55% at 50% 45%,${AURA[chargeLvl]},transparent 72%)` }} />
         {/* CPU card */}
         <div className="tt-slot tt-slot-cpu">
           <FlipCard card={cc} faceUp={showCpu} duel={duel} clash={clash} reduced={reduced} owner={rivalTag || "CPU"} wide={wide} />
@@ -496,7 +528,9 @@ function CountStat({ target, fmt, run, from = 0, dur = 680, style }: { target: n
 const CSS = `
 @keyframes ttdeal{from{opacity:0;transform:translateY(18px) scale(.96)}to{opacity:1;transform:none}}
 @keyframes ttpulse{0%,100%{box-shadow:0 0 0 0 rgba(232,160,0,0)}50%{box-shadow:0 0 0 3px rgba(232,160,0,.4)}}
-@keyframes ttshake{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(3px)}30%,50%,70%{transform:translateX(-6px)}40%,60%{transform:translateX(6px)}}
+@keyframes ttshake{10%,90%{transform:translateX(calc(-2px*var(--amp,1)))}20%,80%{transform:translateX(calc(3px*var(--amp,1)))}30%,50%,70%{transform:translateX(calc(-6px*var(--amp,1)))}40%,60%{transform:translateX(calc(6px*var(--amp,1)))}}
+@keyframes ttauraP{0%,100%{filter:brightness(1)}50%{filter:brightness(1.45)}}
+@keyframes ttmultpop{0%{transform:scale(.5);opacity:0}55%{transform:scale(1.32)}100%{transform:scale(1);opacity:1}}
 @keyframes ttshock{from{opacity:.8;transform:translate(-50%,-50%) scale(.3)}to{opacity:0;transform:translate(-50%,-50%) scale(2.6)}}
 @keyframes ttsheen{0%{transform:translateX(-130%) skewX(-20deg)}55%,100%{transform:translateX(260%) skewX(-20deg)}}
 @keyframes tttwinkle{0%,100%{opacity:0;transform:scale(.3)}50%{opacity:1;transform:scale(1)}}
@@ -522,6 +556,13 @@ const CSS = `
 .tt-shine{position:absolute;top:0;bottom:0;width:34%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);animation:ttbarshine 2.4s linear infinite}
 .tt-knob{position:absolute;top:50%;width:4px;height:24px;border-radius:3px;background:#fff;transform:translate(-50%,-50%);box-shadow:0 0 8px rgba(0,0,0,.6)}
 .tt-fire{color:#ffb24a;font-weight:900;font-size:.8rem;animation:ttfire 1s ease-in-out infinite;text-shadow:0 0 14px rgba(255,140,0,.5)}
+.tt-aura{position:absolute;inset:-40px;pointer-events:none;z-index:0;transition:opacity .5s,background .5s}
+.tt-aura-pulse{animation:ttauraP 1.2s ease-in-out infinite}
+.tt-board>.tt-slot,.tt-board>.tt-clash,.tt-board>.tt-banner{position:relative;z-index:1}
+.tt-mult{display:inline-flex;align-items:center;font-weight:900;font-size:.86rem;color:#ffb24a;text-shadow:0 0 14px rgba(255,140,0,.55);animation:ttmultpop .4s cubic-bezier(.2,.9,.3,1)}
+.tt-mult[data-lvl="2"]{animation:ttmultpop .4s cubic-bezier(.2,.9,.3,1),ttfire 1s ease-in-out infinite}
+.tt-mult[data-lvl="3"]{color:#ff7a2a;font-size:.94rem;text-shadow:0 0 16px rgba(255,110,20,.6)}
+.tt-mult[data-lvl="4"]{color:#ff4d3d;font-size:1.02rem;text-shadow:0 0 20px rgba(255,60,30,.75)}
 .tt-war{color:#c79be6;font-size:.74rem;font-weight:800;border:1px solid rgba(181,138,214,.4);border-radius:999px;padding:2px 9px;background:rgba(181,138,214,.12)}
 .tt-clash{position:relative;display:flex;align-items:center;justify-content:center;height:42px;margin:9px 0 2px}
 .tt-shock{position:absolute;left:50%;top:50%;width:46px;height:46px;border-radius:50%;border:3px solid #fff;animation:ttshock .6s ease-out forwards;pointer-events:none}
@@ -567,7 +608,7 @@ const CSS = `
   .tt-wide .tt-vs.on{font-size:1.6rem}
 }
 @media(prefers-reduced-motion:reduce){
-  .tt-deal,.tt-rise,.tt-trophy,.tt-shake,.tt-vs.on,.tt-fire{animation:none}
+  .tt-deal,.tt-rise,.tt-trophy,.tt-shake,.tt-vs.on,.tt-fire,.tt-aura-pulse,.tt-mult{animation:none}
   .tt-shine,.tt-sheen,.tt-spark,.tt-shock{display:none}
   .tt-bar>i,.tt-track>i,.tt-knob{transition:none}
 }`;
