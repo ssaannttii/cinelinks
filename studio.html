@@ -331,6 +331,7 @@
       el.classList.toggle('metal',L.colorMode==='metal');
       el.style.fontFamily=L.font||'Schibsted Grotesk';el.style.fontSize=(L.size||8)+'cqw';el.style.fontWeight=L.weight||800;
       el.style.letterSpacing=(L.tracking||0)+'em';el.style.justifyContent=L.align==='left'?'flex-start':L.align==='right'?'flex-end':'center';el.style.textTransform=L.upper?'uppercase':'none';el.style.textAlign=L.align||'center';
+      el.style.alignItems=L.valign==='top'?'flex-start':L.valign==='bottom'?'flex-end':'center';
       if(L.colorMode==='rarity')el.style.color='var(--cr)';else if(L.colorMode==='solid')el.style.color=L.color||'#fff';
       var val=L.bind==='name'?cd.name:L.bind==='number'?cd.no:(L.text||'Text');
       el.textContent=val;
@@ -409,7 +410,9 @@
       h+='<div class="field"><textarea class="small" id="pText" placeholder="Your text…">'+esc(L.text||'')+'</textarea></div>';
       h+='<div class="field"><label>Font</label><select id="pFont">'+FONTS.map(function(f){return '<option'+(L.font===f?' selected':'')+'>'+f+'</option>';}).join('')+'</select></div>';
       h+='<div class="grid2">'+num('Size cqw','pSize',L.size||8,2,30,0.5)+num('Weight','pWeight',L.weight||800,100,900,100)+num('Tracking em','pTrack',L.tracking||0,-.1,.4,.01)+'</div>';
-      h+='<div class="field"><label>Align</label><select id="pAlign"><option value="center"'+((L.align||'center')==='center'?' selected':'')+'>center</option><option value="left"'+(L.align==='left'?' selected':'')+'>left</option><option value="right"'+(L.align==='right'?' selected':'')+'>right</option></select></div>';
+      var va=L.valign||'middle';
+      h+='<div class="grid2"><div class="field"><label>Align H</label><select id="pAlign"><option value="center"'+((L.align||'center')==='center'?' selected':'')+'>center</option><option value="left"'+(L.align==='left'?' selected':'')+'>left</option><option value="right"'+(L.align==='right'?' selected':'')+'>right</option></select></div>'+
+        '<div class="field"><label>Align V</label><select id="pVAlign"><option value="top"'+(va==='top'?' selected':'')+'>top</option><option value="middle"'+(va==='middle'?' selected':'')+'>middle</option><option value="bottom"'+(va==='bottom'?' selected':'')+'>bottom</option></select></div></div>';
       h+='<div class="field"><label>Colour</label><select id="pCMode"><option value="solid"'+((L.colorMode||'solid')==='solid'?' selected':'')+'>solid</option><option value="rarity"'+(L.colorMode==='rarity'?' selected':'')+'>rarity</option><option value="metal"'+(L.colorMode==='metal'?' selected':'')+'>metal gradient</option></select><input type="color" id="pColor" value="'+(L.color||'#ffffff')+'" style="margin-top:5px"></div>';
       h+='<label class="chk"><input type="checkbox" id="pUpper"'+(L.upper?' checked':'')+'> uppercase</label>';
     }
@@ -471,6 +474,7 @@
     live('pText',function(e){L.text=e.value;});live('pFont',function(e){L.font=e.value;});
     live('pSize',function(e){L.size=+e.value;});live('pWeight',function(e){L.weight=+e.value;});live('pTrack',function(e){L.tracking=+e.value;});
     live('pAlign',function(e){L.align=e.value;});
+    live('pVAlign',function(e){L.valign=e.value;});
     live('pCMode',function(e){L.colorMode=e.value;});live('pColor',function(e){L.color=e.value;L.colorMode='solid';});
     var up=box.querySelector('#pUpper');if(up)up.onchange=function(){L.upper=up.checked;render();commit();};
     function setT(patch){

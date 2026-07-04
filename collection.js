@@ -1342,7 +1342,7 @@
         return '<div style="' + base + '"></div>';
       }
       if (L.type === 'text') {
-        base += 'display:flex;align-items:center;justify-content:' + (L.align === 'left' ? 'flex-start' : L.align === 'right' ? 'flex-end' : 'center') + ';line-height:1.05;font-family:' + (L.font || 'inherit') + ';font-size:' + (L.size || 8) + 'cqw;font-weight:' + (L.weight || 800) + ';letter-spacing:' + (L.tracking || 0) + 'em;text-align:' + (L.align || 'center') + ';' + (L.upper ? 'text-transform:uppercase;' : '');
+        base += 'display:flex;align-items:' + (L.valign === 'top' ? 'flex-start' : L.valign === 'bottom' ? 'flex-end' : 'center') + ';justify-content:' + (L.align === 'left' ? 'flex-start' : L.align === 'right' ? 'flex-end' : 'center') + ';line-height:1.05;font-family:' + (L.font || 'inherit') + ';font-size:' + (L.size || 8) + 'cqw;font-weight:' + (L.weight || 800) + ';letter-spacing:' + (L.tracking || 0) + 'em;text-align:' + (L.align || 'center') + ';' + (L.upper ? 'text-transform:uppercase;' : '');
         if (L.colorMode === 'metal') base += 'background:linear-gradient(180deg,var(--m1),var(--cr) 52%,var(--m1));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;';
         else if (L.colorMode === 'rarity') base += 'color:var(--cr);';
         else base += 'color:' + (L.color || '#fff') + ';';
