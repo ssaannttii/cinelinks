@@ -1300,7 +1300,7 @@
       // nav tabs: labelled, top on desktop, thumb-reach bottom bar on mobile
       '.cl-vault-tabs{display:flex;gap:4px;margin-top:12px;border-bottom:1px solid rgba(255,255,255,.08)}' +
       '.cl-vtab{flex:0 0 auto;display:flex;align-items:center;gap:6px;background:none;border:none;border-bottom:2px solid transparent;color:#9a9a9a;font:inherit;font-size:.8rem;font-weight:800;letter-spacing:.02em;padding:9px 13px;cursor:pointer}' +
-      '.cl-vtab .ic{font-size:.95rem;line-height:1}' +
+      '.cl-vtab .ic{font-size:.95rem;line-height:1}.cl-vtab .ic svg{width:20px;height:20px;display:block}' +
       '.cl-vtab:hover{color:#e8e8e8}' +
       '.cl-vtab.on{color:#e8a000;border-bottom-color:#e8a000}' +
       '.cl-vtab .bdg{min-width:16px;padding:1px 5px;border-radius:99px;background:#e8a000;color:#1a1200;font-size:.6rem;font-weight:900;text-align:center}' +
@@ -1665,9 +1665,9 @@
   }
 
   var TABS = [
-    { k: 'cards', ic: '🃏', label: 'Cards' }, { k: 'sets', ic: '🧩', label: 'Sets' },
-    { k: 'show', ic: '⭐', label: 'Showcase' },
-    { k: 'backs', ic: '🎴', label: 'Backs' }, { k: 'trophies', ic: '🏅', label: 'Trophies' }
+    { k: 'cards', ic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2.2"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>', label: 'Cards' }, { k: 'sets', ic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.4"/><rect x="14" y="3" width="7" height="7" rx="1.4"/><rect x="3" y="14" width="7" height="7" rx="1.4"/><rect x="14" y="14" width="7" height="7" rx="1.4"/></svg>', label: 'Sets' },
+    { k: 'show', ic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.2l2.5 5.3 5.8.8-4.2 4 1 5.7-5.1-2.7-5.1 2.7 1-5.7-4.2-4 5.8-.8z"/></svg>', label: 'Showcase' },
+    { k: 'backs', ic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2.4"/><path d="M12 4v16M4 12h16" opacity=".55"/><circle cx="12" cy="12" r="3.2"/></svg>', label: 'Backs' }, { k: 'trophies', ic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v3.5a5 5 0 0 1-10 0z"/><path d="M7 5.5H4V7a3 3 0 0 0 3 3M17 5.5h3V7a3 3 0 0 1-3 3"/><path d="M12 12.5V16M9 20h6M9.5 20l.6-4M14.5 20l-.6-4"/></svg>', label: 'Trophies' }
   ];
   // What leveling gives you next — the retention teaser beside the XP bar.
   function nextUnlock(st) {
