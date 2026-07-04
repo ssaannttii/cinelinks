@@ -173,7 +173,7 @@ body{font-family:var(--fui);background:radial-gradient(circle at 50% -10%,rgba(2
 .sc-ember{position:absolute;width:9px;height:9px;border-radius:50%;pointer-events:none;opacity:0;animation:scEmber linear forwards}
 @keyframes scEmber{0%{opacity:0;transform:translate(0,0) scale(1)}12%{opacity:1}100%{opacity:0;transform:translate(var(--dx),-240px) scale(.25)}}
 @media(prefers-reduced-motion:reduce){.sc-flame,.streak-card{animation:none}.sc-ember{display:none}}
-.game-card{background:linear-gradient(150deg,rgba(var(--accent,255,255,255),.12),rgba(255,255,255,.02));border:0;border-radius:17px;padding:15px;text-align:left;display:flex;flex-direction:column;gap:12px;box-shadow:0 10px 28px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.06);transition:box-shadow .22s,background .22s,transform .22s}
+.game-card{background:linear-gradient(150deg,rgba(var(--accent,255,255,255),.12),rgba(255,255,255,.02));border:0;border-radius:17px;overflow:hidden;padding:15px;text-align:left;display:flex;flex-direction:column;gap:12px;box-shadow:0 10px 28px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.06);transition:box-shadow .22s,background .22s,transform .22s}
 .game-card:hover{transform:translateY(-3px);box-shadow:0 22px 54px rgba(0,0,0,.46),0 6px 24px rgba(var(--accent,232,160,0),.18),inset 0 1px 0 rgba(255,255,255,.09)}
 .game-card.done{border-color:rgba(91,189,122,.45);background:linear-gradient(180deg,rgba(91,189,122,.09),rgba(255,255,255,.04))}
 .game-card.done .game-ic{background:rgba(91,189,122,.16);color:#7fd49a}
@@ -213,6 +213,27 @@ body{font-family:var(--fui);background:radial-gradient(circle at 50% -10%,rgba(2
 .share-opt-icon svg{width:17px;height:17px;display:block;margin:0 auto}
 .cardwin-chip svg{width:14px;height:14px;vertical-align:-2px;margin-right:3px}
 #soundToggle svg{width:18px;height:18px;display:block}
+/* Mechanic-preview collages: some cards preview their own game instead of a single
+   poster wash — CineLine a timeline filmstrip, CineGroup a poster grid, Top Trumps a
+   fanned deck. Built in JS, sit behind the content under a dark left scrim. */
+.card-collage{position:absolute;inset:0;z-index:0;border-radius:inherit;overflow:hidden;pointer-events:none}
+.game-card>.card-collage{z-index:0}
+.card-collage .th{background-color:#141416;background-size:cover;background-position:center;background-repeat:no-repeat}
+.card-collage::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(11,11,13,.96) 4%,rgba(11,11,13,.72) 40%,rgba(11,11,13,.24) 66%,transparent 90%),linear-gradient(0deg,rgba(11,11,13,.94) 2%,rgba(11,11,13,.55) 26%,rgba(11,11,13,.06) 52%,transparent 64%)}
+@media(max-width:560px){.card-collage::after{background:linear-gradient(90deg,rgba(11,11,13,.97) 6%,rgba(11,11,13,.82) 46%,rgba(11,11,13,.3) 72%,transparent 94%),linear-gradient(0deg,rgba(11,11,13,.94) 2%,rgba(11,11,13,.5) 26%,transparent 58%)}}
+.game-card:has(.card-collage) .mode{background:rgba(14,14,16,.5)}
+.game-card:has(.card-collage) .mode-daily{background:rgba(232,160,0,.9);color:#1a1200}
+.game-card:has(.card-collage) .mode:hover{background:rgba(30,30,34,.6)}
+.cc-strip{position:absolute;right:-10px;top:50%;transform:translateY(-50%) rotate(-4deg);display:flex;gap:5px}
+.cc-strip .th{width:54px;height:81px;border-radius:5px;box-shadow:0 6px 16px rgba(0,0,0,.5)}
+.cc-grid{position:absolute;right:0;top:0;bottom:0;width:58%;display:grid;grid-template-columns:repeat(4,1fr);gap:3px;padding:10px;align-content:center}
+.cc-grid .th{aspect-ratio:2/3;border-radius:3px;box-shadow:0 3px 8px rgba(0,0,0,.4)}
+.cc-deck{position:absolute;right:20px;top:50%;transform:translateY(-50%);display:flex}
+.cc-deck .th{width:60px;height:88px;border-radius:6px;border:2px solid rgba(232,160,0,.55);box-shadow:0 8px 20px rgba(0,0,0,.55);margin-left:-28px}
+.cc-deck .th:first-child{margin-left:0;transform:rotate(-9deg)}
+.cc-deck .th:nth-child(2){transform:translateY(-5px);z-index:2}
+.cc-deck .th:nth-child(3){transform:rotate(9deg)}
+@media(max-width:560px){.cc-grid{width:50%}.cc-strip .th{width:46px;height:69px}.cc-deck .th{width:52px;height:76px}}
 @media(prefers-reduced-motion:reduce){.game-card::before{transition:none}}
 @keyframes cardCele{0%{box-shadow:0 0 0 0 rgba(91,189,122,0)}16%{transform:scale(1.035);box-shadow:0 0 0 2px rgba(127,212,154,.6),0 18px 54px rgba(91,189,122,.42)}100%{transform:scale(1);box-shadow:0 0 0 0 rgba(91,189,122,0)}}
 @keyframes badgePop{0%{transform:scale(0) rotate(-14deg);opacity:0}55%{transform:scale(1.45) rotate(5deg);opacity:1}78%{transform:scale(.92)}100%{transform:scale(1) rotate(0)}}
@@ -1895,24 +1916,35 @@ function renderCollCard() {
 }
 // Three rotating "★ Today" chips steer the day's menu (pure guidance — any five
 // dailies complete the day). Deterministic by UTC day so everyone sees the same.
-// Cinematic wash behind each game card: a curated, non-answer, thematically-matched
-// pool of landscape film stills per game, rotated DAILY by a date-seeded pick so the
-// hub feels fresh each day while every game keeps its visual theme (same for everyone,
-// all day). Person-centric games lean on cast-forward ensemble stills: CineLinks =
-// ensemble casts (connect actors), CineReel = single-star vehicles (whose filmography).
+// Cinematic imagery behind each game card. Most games get a single, non-answer,
+// thematically-matched landscape still that rotates DAILY (date-seeded, same for
+// everyone). Three games instead PREVIEW their own mechanic with a poster collage:
+// CineLine a chronological timeline strip, CineGroup a poster grid, Top Trumps a
+// fanned deck. All paths are validated TMDB stills/posters (never a daily answer).
 function assignGamePosters() {
   try {
-    const P = 'https://image.tmdb.org/t/p/w500';
+    const P = 'https://image.tmdb.org/t/p/w500', TH = 'https://image.tmdb.org/t/p/w342';
     const POOLS = {
       cl:     ['/nNmJRkg8wWnRmzQDe2FwKbPIsJV.jpg', '/43BEez1EGdmNpg8rcPUFToujlii.jpg', '/6WRrGYalXXveItfpnipYdayFkQB.jpg'], // Avengers, Ocean's Eleven, The Departed — ensemble casts
-      line:   ['/rzdPqYx7Um4FUZeD8wpXqjAUcEm.jpg', '/hND7xAaxxBgaIspp9iMsaEXOSTz.jpg', '/ghgfzbEV7kbpbi1O8eIILKVXEA8.jpg'], // Titanic, Gladiator, Forrest Gump — eras on a timeline
-      grp:    ['/7RyHsO4yDXtBv1zUU3mTpHeQ0d5.jpg', '/nNmJRkg8wWnRmzQDe2FwKbPIsJV.jpg', '/sw7mordbZxgITU877yTpZCud90M.jpg'], // Endgame, Avengers, Goodfellas — big groups
       chain:  ['/odJ4hx6g6vBt4lBWKFD1tI8WS4x.jpg', '/nMKdUUepR0i5zn0y1T4CsSB5chy.jpg', '/aIGIYJTyOkEVUmEd3z5x6diYsFx.jpg'], // Top Gun, The Dark Knight, Jurassic — franchises
-      trumps: ['/vL5LR6WdxWPjLPFRLe133jXWsh5.jpg', '/7RyHsO4yDXtBv1zUU3mTpHeQ0d5.jpg', '/nNmJRkg8wWnRmzQDe2FwKbPIsJV.jpg'], // Avatar, Endgame, Avengers — blockbusters
       guess:  ['/8ZTVqvKDQ8emSGUEMjsS4yHAwrp.jpg', '/43BEez1EGdmNpg8rcPUFToujlii.jpg', '/suaEOtk1N1sgg2MTM7oZd2cfVp3.jpg'], // Inception, Ocean's Eleven, Pulp Fiction — clue/cast
       reel:   ['/rzdPqYx7Um4FUZeD8wpXqjAUcEm.jpg', '/odJ4hx6g6vBt4lBWKFD1tI8WS4x.jpg', '/hND7xAaxxBgaIspp9iMsaEXOSTz.jpg'], // Titanic, Top Gun, Gladiator — star vehicles
       grid:   ['/xJHokMbljvjADYdit5fK5VQsXEG.jpg', '/vL5LR6WdxWPjLPFRLe133jXWsh5.jpg', '/qJeU7KM4nT2C1WpOrwPcSDGFUWE.jpg'], // Interstellar, Avatar, La La Land — visual variety
       rating: ['/vL5LR6WdxWPjLPFRLe133jXWsh5.jpg', '/aIGIYJTyOkEVUmEd3z5x6diYsFx.jpg', '/xJWPZIYOEFIjZpBL7SVBGnzRYXp.jpg']  // Avatar, Jurassic, Frozen II — big hits
+    };
+    const POST = {
+      godfather: '/3bhkrj58Vtu7enYsRolD1fZdja1.jpg', jaws: '/lxM6kqilAdpdhqUl2biYp5frUxE.jpg',
+      bttf: '/fNOH9f1aA7XRTzl1sAOx9iF553Q.jpg', titanic: '/9xjZS2rlVxm8SFx8kPC3aIGCOYQ.jpg',
+      darkknight: '/qJ2tW6WMUDux911r6m7haRef0WH.jpg', pulp: '/d5iIlFn5s0ImszYzBPb8JPIfbXD.jpg',
+      inception: '/edv5CZvWj09upOsy2Y6IwDhK8bt.jpg', interstellar: '/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg',
+      goodfellas: '/aKuFiU82s5ISJpGZp7YkIr3kCUd.jpg', lalaland: '/uDO8zWDhfWwoFdKS4fzkUJt0Rf0.jpg',
+      matrix: '/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg', fightclub: '/a26cQPRhJPX6GbWfQbvZdrrp9j9.jpg',
+      shawshank: '/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg', gladiator: '/ty8TGRuvJLPUmAR1H1nRIsgwvim.jpg'
+    };
+    const COLLAGE = {
+      line:   { c: 'cc-strip', f: ['godfather', 'jaws', 'bttf', 'titanic', 'darkknight'] },          // eras on a timeline
+      grp:    { c: 'cc-grid',  f: ['pulp', 'inception', 'interstellar', 'goodfellas', 'lalaland', 'matrix', 'fightclub', 'shawshank'] }, // a board of titles
+      trumps: { c: 'cc-deck',  f: ['darkknight', 'interstellar', 'gladiator'] }                        // a hand of cards
     };
     const day = (typeof dateKey === 'function' ? dateKey() : '') || '';
     function seededPick(key, arr) {
@@ -1920,10 +1952,20 @@ function assignGamePosters() {
       for (var i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) | 0; }
       return arr[Math.abs(h) % arr.length];
     }
+    function cardFor(k) { var b = document.querySelector('.game-done[data-done="' + k + '"]'); return b && b.closest('.game-card'); }
     Object.keys(POOLS).forEach(k => {
-      const badge = document.querySelector('.game-done[data-done="' + k + '"]');
-      const card = badge && badge.closest('.game-card');
+      var card = cardFor(k);
       if (card && !card.style.getPropertyValue('--poster')) card.style.setProperty('--poster', 'url(' + P + seededPick(k, POOLS[k]) + ')');
+    });
+    Object.keys(COLLAGE).forEach(k => {
+      var card = cardFor(k);
+      if (!card || card.querySelector('.card-collage')) return;
+      var cfg = COLLAGE[k];
+      var ths = cfg.f.map(function (n) { return '<div class="th" style="background-image:url(' + TH + POST[n] + ')"></div>'; }).join('');
+      var el = document.createElement('div');
+      el.className = 'card-collage';
+      el.innerHTML = '<div class="' + cfg.c + '">' + ths + '</div>';
+      card.insertBefore(el, card.firstChild);
     });
   } catch (_) {}
 }
