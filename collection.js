@@ -1317,6 +1317,15 @@
     else if (m === 'gradient') s += 'background:linear-gradient(' + (c.angle == null ? 180 : c.angle) + 'deg,' + (c.c1 || '#fff3c4') + ',' + (c.c2 || '#e8a000') + ');-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;';
     return s ? (' style="' + s + '"') : '';
   }
+  // full style for the .auth-text box: position/opacity/blend override + vertical
+  // justification of the name+meta inside the box (top / middle / bottom).
+  function tplTextBoxStyle(layers, rarity) {
+    if (!layers) return '';
+    var s = tplOv(layers, 'text', rarity) || '';
+    var g = tplGet(layers, 'textblock') || tplGet(layers, 'text');
+    if (g && g.L.valign) s += 'display:flex;flex-direction:column;justify-content:' + (g.L.valign === 'bottom' ? 'flex-end' : g.L.valign === 'middle' ? 'center' : 'flex-start') + ';';
+    return s ? (' style="' + s + '"') : '';
+  }
   // inline style override for a built-in layer (id = studio layer id) — '' if none
   function tplOv(layers, id, rarity) {
     if (!layers) return '';
@@ -1543,7 +1552,7 @@
           (p ? '<img class="auth-bgimg" src="' + ctx.esc(p) + '" alt="" loading="lazy"' + O('poster') + '>' : '<div class="auth-noimg"></div>') +
           '<div class="auth-scrim"' + O('scrim') + '></div><div class="auth-corner"' + O('corner') + '></div><div class="auth-star"' + O('star') + '></div>' +
           tagsHtml +
-          '<div class="auth-text"' + O('text') + '>' +
+          '<div class="auth-text"' + (TL ? tplTextBoxStyle(TL, c.rarity) : '') + '>' +
             '<div class="auth-name' + nmCls + '"' + (TL ? tplTitleStyle(TL, c.rarity) : '') + '>' + nm + '</div>' +
             '<div class="auth-meta"><span class="auth-gem"></span><span class="auth-rar">' + rar.label + '</span><span class="sep">·</span><span>' + typeUp + '</span><span class="sep">·</span><span class="auth-no">' + no + '</span></div>' +
           '</div>' +
