@@ -89,9 +89,12 @@ const STATS: { key: StatKey; label: string; icon: string; val: (c: Card) => numb
   { key: "rating", label: "Rating", icon: "⭐", val: (c) => c.rating, fmtNum: (n) => n.toFixed(1), bar: (c) => c.rating / 10, from: () => 0 },
   { key: "votes", label: "Fame", icon: "🔥", val: (c) => c.votes, fmtNum: (n) => votesFmt(n), bar: (c) => Math.log10(c.votes + 1) / Math.log10(MAX.votes + 1), from: () => 0 },
   { key: "revenue", label: "Box office", icon: "💰", val: (c) => c.revenue, fmtNum: (n) => money(n), bar: (c) => Math.log10(c.revenue + 1) / Math.log10(MAX.revenue + 1), from: () => 0 },
-  { key: "budget", label: "Budget", icon: "💵", val: (c) => c.budget, fmtNum: (n) => money(n), bar: (c) => Math.log10(c.budget + 1) / Math.log10(MAX.budget + 1), from: () => 0 },
+  // "Value" = return on budget (revenue/budget). A cheap hit crushes a bloated
+  // blockbuster here, so small/cult cards finally win an axis. Guards budget=0.
+  { key: "budget", label: "Value", icon: "💎", val: (c) => (c.budget > 0 ? c.revenue / c.budget : 0), fmtNum: (n) => (n > 0 ? n.toFixed(1) + "×" : "—"), bar: (c) => Math.min(1, (c.budget > 0 ? c.revenue / c.budget : 0) / 8), from: () => 0 },
   { key: "runtime", label: "Runtime", icon: "⏱️", val: (c) => c.runtime, fmtNum: (n) => runFmt(n), bar: (c) => Math.min(1, c.runtime / 210), from: () => 0 },
-  { key: "year", label: "Year", icon: "📅", val: (c) => c.year, fmtNum: (n) => String(Math.round(n)), bar: (c) => (c.year - 1950) / (new Date().getFullYear() - 1950), from: (c) => Math.max(1900, c.year - 18) },
+  // "Vintage" = age. Older wins, so classics beat modern tentpoles on this axis.
+  { key: "year", label: "Vintage", icon: "📼", val: (c) => new Date().getFullYear() - c.year, fmtNum: (n) => Math.round(n) + " yrs", bar: (c) => Math.min(1, (new Date().getFullYear() - c.year) / 75), from: () => 0 },
 ];
 
 const HAND = 8;
@@ -389,7 +392,7 @@ export default function TopTrumps() {
 
   useEffect(() => {
     if (phase === "play" && turn === "cpu" && cpu.length) {
-      const t = setTimeout(() => resolve(cpuPick(cpu[0])), 980);
+      const t = setTimeout(() => resolve(cpuPick(cpu[0])), 1700);
       return () => clearTimeout(t);
     }
   }, [phase, turn, cpu, resolve]);
@@ -399,11 +402,14 @@ export default function TopTrumps() {
   const pc = player[0], cc = cpu[0];
   const yourTurn = phase === "play" && turn === "player";
   const showCpu = revealed || phase === "over";
+  // Intel is usable on your turn AND on defense (the rival's turn), so you're
+  // never a pure spectator: read the attacker, then Peek or Swap to reposition.
+  const canAct = phase === "play" && !clash;
   // Intel spends: Peek reveals the rival's full card this duel; Swap sinks your
   // top card and brings up the next (dodge a bad matchup). The rival card is
   // unchanged by a swap, so a prior Peek stays valid.
-  const doPeek = () => { if (!yourTurn || peeked || intel < 1) return; setIntel((i) => i - 1); setPeeked(true); Sfx.select(); };
-  const doSwap = () => { if (!yourTurn || intel < 2 || player.length < 2) return; setIntel((i) => i - 2); setPlayer((p) => [...p.slice(1), p[0]]); Sfx.tap(); };
+  const doPeek = () => { if (!canAct || peeked || intel < 1) return; setIntel((i) => i - 1); setPeeked(true); Sfx.select(); };
+  const doSwap = () => { if (!canAct || intel < 2 || player.length < 2) return; setIntel((i) => i - 2); setPlayer((p) => [...p.slice(1), p[0]]); Sfx.tap(); };
   const total = player.length + cpu.length;
   const youPct = total ? (player.length / total) * 100 : 50;
   const onFire = streak >= 3;
@@ -480,7 +486,7 @@ export default function TopTrumps() {
         {/* CPU card */}
         <div className="tt-slot tt-slot-cpu">
           <FlipCard card={cc} faceUp={showCpu} duel={duel} clash={clash} reduced={reduced} owner={rivalTag || "CPU"} wide={wide} />
-          {yourTurn && cc && <ReconPanel card={cc} full={peeked} />}
+          {canAct && cc && <ReconPanel card={cc} full={peeked} />}
         </div>
 
         {/* clash / VS zone */}
@@ -509,9 +515,9 @@ export default function TopTrumps() {
 
         {/* Player card */}
         <div className="tt-slot tt-slot-you">
-          {yourTurn && !clash && (
+          {canAct && (
             <div className="tt-intel">
-              <span className="tt-intel-n">🔎 Intel &times;{intel}</span>
+              <span className="tt-intel-n">🔎 Intel &times;{intel}{!yourTurn ? " · defend" : ""}</span>
               <button className="tt-intel-b" type="button" disabled={peeked || intel < 1} onClick={doPeek} title="Reveal the rival's full card">Peek &middot; 1</button>
               <button className="tt-intel-b" type="button" disabled={intel < 2 || player.length < 2} onClick={doSwap} title="Sink this card, bring up the next">Swap &middot; 2</button>
             </div>
