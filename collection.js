@@ -1798,6 +1798,18 @@
       '.clr-flip.flip-go.live{animation:clrLive 5s ease-in-out infinite}' +
       '@keyframes clrLive{0%,100%{transform:rotateY(0) rotateX(0)}25%{transform:rotateY(6deg) rotateX(-2.5deg)}50%{transform:rotateY(0) rotateX(0)}75%{transform:rotateY(-6deg) rotateX(2.5deg)}}' +
       '.clr-face,.clr-back{position:absolute;inset:0;-webkit-backface-visibility:hidden;backface-visibility:hidden;border-radius:13px;overflow:hidden}' +
+      // Real card THICKNESS: clr-flip is already preserve-3d, so push the front face
+      // out by --thick and build 4 dark side walls (--cw = pixel width, set in JS) —
+      // as the card spins through edge-on during the flip you see its physical side.
+      '.clr-flip{--thick:7px}' +
+      '.clr-face{transform:translateZ(var(--thick))}' +
+      '.clr-edge{position:absolute;background:linear-gradient(180deg,#16253f,#0b1322 42%,#05080f);box-shadow:inset 0 0 7px rgba(0,0,0,.7)}' +
+      '.clr-edge.e-l,.clr-edge.e-r{top:0;height:100%;width:calc(var(--thick) * 2);left:calc(50% - var(--thick))}' +
+      '.clr-edge.e-r{transform:rotateY(90deg) translateZ(calc(var(--cw,300px) / 2))}' +
+      '.clr-edge.e-l{transform:rotateY(-90deg) translateZ(calc(var(--cw,300px) / 2))}' +
+      '.clr-edge.e-t,.clr-edge.e-b{left:0;width:100%;height:calc(var(--thick) * 2);top:calc(50% - var(--thick))}' +
+      '.clr-edge.e-t{transform:rotateX(90deg) translateZ(calc(var(--cw,300px) * 0.7))}' +
+      '.clr-edge.e-b{transform:rotateX(-90deg) translateZ(calc(var(--cw,300px) * 0.7))}' +
       // light + shade that fire as the front face swings into view — makes the card a lit surface, not a flat plane
       '.clr-face::before{content:"";position:absolute;inset:0;z-index:29;pointer-events:none;border-radius:13px;opacity:0;background:linear-gradient(106deg,rgba(0,0,0,.45),transparent 46%,transparent 60%,rgba(255,255,255,.12))}' +
       '.clr-face::after{content:"";position:absolute;inset:0;z-index:30;pointer-events:none;border-radius:13px;opacity:0;background:linear-gradient(118deg,transparent 34%,rgba(255,255,255,.92) 50%,transparent 66%)}' +
@@ -1805,7 +1817,7 @@
       '.clr-flip.flip-go .clr-face::after{animation:clrLightPass 1.05s ease-in-out}' +
       '@keyframes clrShade{0%,46%{opacity:0}68%{opacity:1}100%{opacity:0}}' +
       '@keyframes clrLightPass{0%,40%{opacity:0}55%{opacity:.95}76%{opacity:.22}100%{opacity:0}}' +
-      '.clr-back{transform:rotateY(180deg);background:repeating-linear-gradient(45deg,#101a30,#101a30 9px,#13203a 9px,#13203a 18px);border:1px solid rgba(232,160,0,.32);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 3px rgba(232,160,0,.16)}' +
+      '.clr-back{transform:rotateY(180deg) translateZ(var(--thick,7px));background:repeating-linear-gradient(45deg,#101a30,#101a30 9px,#13203a 9px,#13203a 18px);border:1px solid rgba(232,160,0,.32);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 3px rgba(232,160,0,.16)}' +
       '.clr-mono{font-size:3rem;font-weight:900;color:#e8a000;letter-spacing:-.05em;text-shadow:0 2px 14px rgba(232,140,0,.5)}' +
       '.clr-halo{position:absolute;inset:0;border-radius:13px;box-shadow:0 0 0 0 var(--halo,transparent)}' +
       '.clr-flip:not(.flip-go):not(.flipped) .clr-halo{animation:clrHalo 1s ease-in-out infinite}' +
@@ -2789,12 +2801,15 @@
         document.getElementById('clrBody').innerHTML =
           '<div class="clr-stage" style="--halo:' + rl.ring + '"><div class="clr-flip" id="clrFlip">' +
           '<div class="clr-back ' + activeCardbackClass() + '"><div class="clr-halo"></div><div class="clr-mono">CL</div></div>' +
-          '<div class="clr-face" id="clrFace"></div></div><div class="clr-shock" id="clrShock"></div></div>' +
+          '<div class="clr-face" id="clrFace"></div>' +
+          '<div class="clr-edge e-l"></div><div class="clr-edge e-r"></div><div class="clr-edge e-t"></div><div class="clr-edge e-b"></div>' +
+          '</div><div class="clr-shock" id="clrShock"></div></div>' +
           '<div class="clr-cap" id="clrCap"></div>' +
           '<div class="clr-hint">' + (idx < queue.length - 1 ? 'tap for next' : 'tap to finish') + (function () { try { if (!localStorage.getItem('clRevealTip')) { localStorage.setItem('clRevealTip', '1'); return '<div style="margin-top:6px;font-size:.68rem;color:#b9a97f">New cards land in <b>Your collection</b> on the home page</div>'; } } catch (_) { /* noop */ } return ''; })() + '</div>';
         document.getElementById('clrFace').innerHTML = theme.card(c, CTX, 0);
         setDots();
         var flip = document.getElementById('clrFlip');
+        try { flip.style.setProperty('--cw', (flip.offsetWidth || 300) + 'px'); } catch (_) { /* noop */ }   // real edge faces need the pixel width for translateZ
         state = 'anim';
         if (reduced) { flip.classList.add('flipped'); showCap(c); state = 'ready'; return; }
         try { if (window.Sfx) { window.Sfx.cardFlip(); window.Sfx.haptic(tier === 'legendary' ? [10, 30] : 8); } } catch (_) { /* noop */ }
