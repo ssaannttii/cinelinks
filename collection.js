@@ -1512,6 +1512,19 @@
       '.auth-rare .auth-card:hover,.auth-rare .auth-card.tilted{box-shadow:0 20px 44px rgba(0,0,0,.64),0 0 26px rgba(122,166,232,.5)}' +
       '.auth-elite .auth-card:hover,.auth-elite .auth-card.tilted{box-shadow:0 20px 44px rgba(0,0,0,.64),0 0 26px rgba(181,138,214,.55)}' +
       '.auth-legendary .auth-card:hover,.auth-legendary .auth-card.tilted{box-shadow:0 20px 44px rgba(0,0,0,.64),0 0 30px rgba(232,194,74,.6)}' +
+      // Fake card THICKNESS on the big detail card: a stack of hard, dark shadows
+      // offset opposite the tilt extrudes a solid "side" out of the receding edge,
+      // so the flat plane reads as a chunky 3D slab as you drag-tilt it. Single card,
+      // desktop only → the per-frame box-shadow repaint is cheap. (--px/--py = tilt.)
+      '@media(pointer:fine){#clDetailCard .auth-card.tilted{box-shadow:' +
+        'calc(var(--px,0) * 3px) calc(var(--py,0) * 3px) 0 rgba(255,246,220,.14),' +   // lit leading edge (bevel)
+        'calc(var(--px,0) * -8px) calc(var(--py,0) * -8px) 0 #0c1426,' +               // extruded side (receding edge)
+        'calc(var(--px,0) * -16px) calc(var(--py,0) * -16px) 0 #0a1120,' +
+        'calc(var(--px,0) * -24px) calc(var(--py,0) * -24px) 0 #080e1a,' +
+        'calc(var(--px,0) * -32px) calc(var(--py,0) * -32px) 0 #060b15,' +
+        'calc(var(--px,0) * -40px) calc(var(--py,0) * -40px) 0 #050910,' +
+        'calc(var(--px,0) * -48px) calc(var(--py,0) * -48px) 0 #04070d,' +
+        '0 34px 66px rgba(0,0,0,.72);transition:box-shadow 0s}}' +
       '@media(prefers-reduced-motion:reduce){.auth{animation:none}.auth-star,.auth-legendary .auth-foil{animation:none}.auth-card{transition:none}.auth-sheen{animation:none;display:none}.auth-glit{display:none}.auth-refl,.auth-rim{display:none}.auth-bgimg,.auth-star,.auth-corner,.auth-tags,.auth-text{transition:none}.auth-legendary .auth-frame::after{animation:none}}' +
       // Mobile (coarse pointer): kill the idle infinite animations. None of them can run on
       // Blink's compositor — authStar animates filter with a drop-shadow in the keyframe
