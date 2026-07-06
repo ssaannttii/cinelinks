@@ -477,7 +477,7 @@ export default function TopTrumps() {
 
         {/* Player card */}
         <div className="tt-slot tt-slot-you">
-          {pc && <PlayerCard key={pc.id} card={pc} chosen={chosen} duel={duel} clash={clash} revealed={revealed} yourTurn={yourTurn} onPick={resolve} onFire={onFire} streak={streak} banned={banned} />}
+          {pc && <PlayerCard key={pc.id} card={pc} chosen={chosen} duel={duel} clash={clash} revealed={revealed} yourTurn={yourTurn} onPick={resolve} onFire={onFire} streak={streak} banned={banned} wide={wide} />}
         </div>
       </div>
 
@@ -574,6 +574,15 @@ const CSS = `
 .tt-row:not(:disabled):hover{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.18)}
 .tt-row:not(:disabled):active{transform:scale(.985)}
 .tt-row.lit{border-color:var(--gold);background:rgba(232,160,0,.16)}
+/* Poster-hero header (desktop wide only): the card wears its collectible
+   silhouette - big poster on top, name-plate over a gradient, rarity badge -
+   then the stat tray below. Unifies the Vault card with the Top Trumps card. */
+.tt-hero{position:relative;height:172px;border-radius:12px;overflow:hidden;background:var(--s2);box-shadow:0 4px 16px rgba(0,0,0,.45)}
+.tt-hero-poster{width:100%;height:100%;object-fit:cover;object-position:center;display:block}
+.tt-hero-badge{position:absolute;top:8px;right:8px;font-size:.56rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;border:1px solid;border-radius:999px;padding:2px 9px;background:rgba(13,13,13,.6);backdrop-filter:blur(3px);z-index:5}
+.tt-hero-plate{position:absolute;left:0;right:0;bottom:0;padding:22px 12px 9px;background:linear-gradient(transparent,rgba(0,0,0,.55) 45%,rgba(0,0,0,.88));z-index:5}
+.tt-hero-title{font-weight:800;font-size:1.02rem;line-height:1.14;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.7)}
+.tt-hero-meta{color:#e0cc94;font-size:.74rem;margin-top:3px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 /* Mobile compact: on phones the whole your-turn state (momentum bar, CPU card,
    VS, banner and ALL six stat rows) must fit one screen - no scrolling to act. */
 @media(max-width:480px){
@@ -630,28 +639,47 @@ function Sparkles() {
   return <>{pts.map((p, i) => <span key={i} className="tt-spark" style={{ top: p.top, left: p.left, animationDelay: p.d }} />)}</>;
 }
 
-function PlayerCard({ card, chosen, duel, clash, revealed, yourTurn, onPick, onFire, streak, banned }: { card: Card; chosen: StatKey | null; duel: Duel; clash: boolean; revealed: boolean; yourTurn: boolean; onPick: (k: StatKey) => void; onFire: boolean; streak: number; banned?: StatKey | null }) {
+function PlayerCard({ card, chosen, duel, clash, revealed, yourTurn, onPick, onFire, streak, banned, wide }: { card: Card; chosen: StatKey | null; duel: Duel; clash: boolean; revealed: boolean; yourTurn: boolean; onPick: (k: StatKey) => void; onFire: boolean; streak: number; banned?: StatKey | null; wide?: boolean }) {
   const rar = RARITY[card.rarity];
   const fancy = card.rarity !== "common";
+  const ownTag = card.owned ? " · yours" : card.loaner ? " · loaner" : "";
   const glow = onFire ? `0 14px 40px rgba(0,0,0,.45), 0 0 ${18 + Math.min(streak, 7) * 4}px rgba(232,160,0,${0.25 + Math.min(streak, 7) * 0.04})` : `0 14px 40px rgba(0,0,0,.4)`;
   return (
     <div className="tt-deal tt-pc" key={card.id} style={{ position: "relative", background: "var(--s1)", border: "2px solid " + rar.ring, borderRadius: 16, padding: 14, boxShadow: glow, overflow: "hidden", animation: onFire ? "ttdeal .4s cubic-bezier(.2,.8,.2,1) both, ttglow 1.8s ease-in-out infinite" : undefined }}>
       {fancy && <div style={{ position: "absolute", inset: 0, background: rar.grad, pointerEvents: "none" }} />}
-      {fancy && <span className="tt-sheen" />}
-      {card.rarity === "legendary" && <Sparkles />}
-      <div className="flex gap-3" style={{ position: "relative" }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={card.poster} alt="" className="tt-pc-poster" style={{ width: 72, height: 108, objectFit: "cover", borderRadius: 9, flexShrink: 0, background: "var(--s2)", boxShadow: "0 4px 14px rgba(0,0,0,.5)" }} />
-        <div className="min-w-0 flex-1">
-          <div className="tt-pc-title" style={{ fontWeight: 800, fontSize: "1rem", lineHeight: 1.2 }}>{card.title}</div>
-          <div style={{ color: "var(--mut)", fontSize: ".78rem", marginTop: 2 }}>{card.year} · {card.genre}</div>
-          <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 7, flexWrap: "wrap" }}>
-            <span style={{ fontSize: ".58rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: ".07em", color: rar.ring, border: "1px solid " + rar.ring, borderRadius: 999, padding: "2px 8px" }}>{rar.label}{card.owned ? " · yours" : card.loaner ? " · loaner" : ""}</span>
-            {(card.mastery || 0) > 0 && <span title="Mastery — wins ties" style={{ fontSize: ".62rem", fontWeight: 900, color: card.mastery === 3 ? "#f5c542" : card.mastery === 2 ? "#dfe6f2" : "#cd8f52", textShadow: "0 0 8px rgba(245,197,66,.5)" }}>★ M{card.mastery}</span>}
-            {card.shine && <span title="Shined — once per match you may re-pick after losing a duel" style={{ fontSize: ".62rem" }}>✨</span>}
+      {!wide && fancy && <span className="tt-sheen" />}
+      {!wide && card.rarity === "legendary" && <Sparkles />}
+      {wide ? (
+        <div className="tt-hero" style={{ position: "relative" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={card.poster} alt="" className="tt-hero-poster" style={{ background: "var(--s2)" }} />
+          {fancy && <span className="tt-sheen" />}
+          {card.rarity === "legendary" && <Sparkles />}
+          <span className="tt-hero-badge" style={{ color: rar.ring, borderColor: rar.ring }}>{rar.label}{ownTag}</span>
+          <div className="tt-hero-plate">
+            <div className="tt-hero-title">{card.title}</div>
+            <div className="tt-hero-meta">
+              <span>{card.year} · {card.genre}</span>
+              {(card.mastery || 0) > 0 && <span title="Mastery — wins ties" style={{ fontWeight: 900, color: card.mastery === 3 ? "#f5c542" : card.mastery === 2 ? "#dfe6f2" : "#cd8f52", textShadow: "0 0 8px rgba(245,197,66,.5)" }}>★ M{card.mastery}</span>}
+              {card.shine && <span title="Shined — once per match you may re-pick after losing a duel">✨</span>}
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="flex gap-3" style={{ position: "relative" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={card.poster} alt="" className="tt-pc-poster" style={{ width: 72, height: 108, objectFit: "cover", borderRadius: 9, flexShrink: 0, background: "var(--s2)", boxShadow: "0 4px 14px rgba(0,0,0,.5)" }} />
+          <div className="min-w-0 flex-1">
+            <div className="tt-pc-title" style={{ fontWeight: 800, fontSize: "1rem", lineHeight: 1.2 }}>{card.title}</div>
+            <div style={{ color: "var(--mut)", fontSize: ".78rem", marginTop: 2 }}>{card.year} · {card.genre}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 7, flexWrap: "wrap" }}>
+              <span style={{ fontSize: ".58rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: ".07em", color: rar.ring, border: "1px solid " + rar.ring, borderRadius: 999, padding: "2px 8px" }}>{rar.label}{ownTag}</span>
+              {(card.mastery || 0) > 0 && <span title="Mastery — wins ties" style={{ fontSize: ".62rem", fontWeight: 900, color: card.mastery === 3 ? "#f5c542" : card.mastery === 2 ? "#dfe6f2" : "#cd8f52", textShadow: "0 0 8px rgba(245,197,66,.5)" }}>★ M{card.mastery}</span>}
+              {card.shine && <span title="Shined — once per match you may re-pick after losing a duel" style={{ fontSize: ".62rem" }}>✨</span>}
+            </div>
+          </div>
+        </div>
+      )}
       <div className="tt-rows mt-3 flex flex-col gap-2" style={{ position: "relative" }}>
         {STATS.map((s) => {
           const lit = chosen === s.key;
@@ -695,15 +723,15 @@ function FlipCard({ card, faceUp, duel, clash, reduced, owner, wide }: { card?: 
   const frontWide = (
     <div className="tt-flip-face tt-pc" style={{ ...hidden, position: "relative", background: "var(--s1)", border: "2px solid " + frontBorder, borderRadius: 16, padding: 14, overflow: "hidden", boxShadow: win ? "0 0 26px rgba(127,212,154,.5)" : "0 14px 40px rgba(0,0,0,.4)" }}>
       {fancy && <div style={{ position: "absolute", inset: 0, background: rar.grad, pointerEvents: "none" }} />}
-      {fancy && <span className="tt-sheen" />}
-      {card.rarity === "legendary" && <Sparkles />}
-      <div className="flex gap-3" style={{ position: "relative" }}>
+      <div className="tt-hero" style={{ position: "relative" }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={card.poster} alt="" className="tt-pc-poster" style={{ width: 72, height: 108, objectFit: "cover", borderRadius: 9, flexShrink: 0, background: "var(--s2)", boxShadow: "0 4px 14px rgba(0,0,0,.5)" }} />
-        <div className="min-w-0 flex-1">
-          <div className="tt-pc-title" style={{ fontWeight: 800, fontSize: "1rem", lineHeight: 1.2 }}>{card.title}</div>
-          <div style={{ color: "var(--mut)", fontSize: ".78rem", marginTop: 2 }}>{card.year} · {card.genre}</div>
-          <div style={{ display: "inline-block", marginTop: 7, fontSize: ".58rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: ".07em", color: rar.ring, border: "1px solid " + rar.ring, borderRadius: 999, padding: "2px 8px" }}>{rar.label} · {owner}</div>
+        <img src={card.poster} alt="" className="tt-hero-poster" style={{ background: "var(--s2)" }} />
+        {fancy && <span className="tt-sheen" />}
+        {card.rarity === "legendary" && <Sparkles />}
+        <span className="tt-hero-badge" style={{ color: rar.ring, borderColor: rar.ring }}>{rar.label} · {owner}</span>
+        <div className="tt-hero-plate">
+          <div className="tt-hero-title">{card.title}</div>
+          <div className="tt-hero-meta">{card.year} · {card.genre}</div>
         </div>
       </div>
       <div className="tt-rows mt-3 flex flex-col gap-2" style={{ position: "relative" }}>
