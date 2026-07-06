@@ -2938,7 +2938,7 @@
   // Pull the published site-wide card design (if any). Async: applies + re-renders
   // once loaded. A local override still wins. Empty / missing file = default cards.
   try {
-    fetch('/card-template.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+    fetch('/card-template.json', { cache: 'default' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
       if (j && Array.isArray(j.layers) && j.layers.length) { _globalTpl = j; try { refreshOpen(); } catch (_) { /* noop */ } }
     }).catch(function () { /* no published design — fine */ });
   } catch (_) { /* noop */ }

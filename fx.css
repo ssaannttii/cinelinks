@@ -36,6 +36,10 @@
   .fx-xfade{transition:none}
 }
 
+/* Freeze every animation while the tab is hidden (set by fx.js) — no compositor
+   churn or battery drain repainting foils/drifts nobody is looking at. */
+html.cl-hidden *,html.cl-hidden *::before,html.cl-hidden *::after{animation-play-state:paused!important}
+
 /* ── Elegant custom scrollbar (dark track, soft gold thumb) — global ──────── */
 html{scrollbar-width:thin;scrollbar-color:rgba(232,160,0,.5) rgba(255,255,255,.04)}
 ::-webkit-scrollbar{width:11px;height:11px}

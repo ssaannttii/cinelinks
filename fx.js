@@ -101,4 +101,11 @@
     popText(r.left + r.width / 2, r.top + r.height * 0.3, text, opts);
   }
   window.Fx = { confetti: confetti, burstFrom: burstFrom, play: play, reduced: reduced, countUp: countUp, shake: shake, popText: popText, popFrom: popFrom };
+
+  // Pause all CSS animations while the tab is backgrounded (fx.css does the work).
+  try {
+    document.addEventListener('visibilitychange', function () {
+      document.documentElement.classList.toggle('cl-hidden', document.hidden);
+    });
+  } catch (_) { /* noop */ }
 })();

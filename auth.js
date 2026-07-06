@@ -194,5 +194,9 @@
       renderSignedOut(); // show the Google button
     }
   };
-  document.head.appendChild(s);
+  // Load Google Identity when the browser is idle, not during initial page work:
+  // the cached signed-in pill already rendered, and the button / silent re-auth
+  // can wait a beat. Keeps GIS off the critical path (better TTI).
+  var addGis = function () { document.head.appendChild(s); };
+  if (window.requestIdleCallback) requestIdleCallback(addGis, { timeout: 3000 }); else setTimeout(addGis, 1200);
 })();
