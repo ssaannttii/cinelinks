@@ -124,6 +124,7 @@ const AURA = ["transparent", "rgba(232,160,0,.18)", "rgba(255,140,0,.24)", "rgba
 export default function TopTrumps() {
   const [mode, setMode] = useState<Mode>("daily");
   const [howto, setHowto] = useState(false);
+  const [prize, setPrize] = useState<string | null>(null);   // card banked into the Vault this game
   const [phase, setPhase] = useState<Phase>("play");
   const [player, setPlayer] = useState<Card[]>(() => []);
   const [cpu, setCpu] = useState<Card[]>(() => []);
@@ -239,7 +240,7 @@ export default function TopTrumps() {
     setPlayer(mine); setCpu(theirs);
     setPot([]); setTurn("player"); setRound(1); setChosen(null); setDuel(null); setClash(false);
     setStreak(0); setBest(0); setWon(false); setRevealed(false);
-    setRivalTag(null); setRivalMsg(null);
+    setRivalTag(null); setRivalMsg(null); setPrize(null);
     shineUsedRef.current = false; settleRef.current = null; setShineOffer(null); setBanned(null);
     setPhase("deal");
     if (m === "daily") {
@@ -248,12 +249,22 @@ export default function TopTrumps() {
   }, []);
 
   // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time deal on mount
-  useEffect(() => { newGame("daily"); }, [newGame]);
+  useEffect(() => {
+    let m: Mode = "daily";
+    try { if (new URLSearchParams(window.location.search).get("mode") === "practice") m = "practice"; } catch { /* noop */ }
+    setMode(m); newGame(m);
+  }, [newGame]);
 
   // eslint-disable-next-line react-hooks/set-state-in-effect -- surface the rules once, on first visit
   useEffect(() => { try { if (!localStorage.getItem("tt_seen_howto")) setHowto(true); } catch { /* noop */ } }, []);
   const closeHowto = () => { setHowto(false); try { localStorage.setItem("tt_seen_howto", "1"); } catch { /* noop */ } };
   const startBattle = useCallback(() => { Sfx.select(); setPhase("play"); }, []);
+  // Top Trumps is the arena for your Vault: open the collection in-place (collection.js
+  // is loaded app-wide). Falls back to the CineLinks home if it isn't ready.
+  const openVault = () => {
+    try { if (window.Collection?.openGallery) { Sfx.select(); window.Collection.openGallery(); return; } } catch { /* noop */ }
+    window.location.href = "https://cinelinks.vercel.app";
+  };
 
   const finish = useCallback((np: Card[], nc: Card[]) => {
     const w = np.length >= nc.length;
@@ -287,6 +298,7 @@ export default function TopTrumps() {
           if (prize) {
             const nc2 = window.Collection.add([{ id: prize.id, type: "movie", name: prize.title, img: prize.poster, rarityFloor: "rare", bump: nc.length === 0 ? 2 : 1 }]);
             if (nc2 && nc2.length) {
+              setPrize(prize.title);
               try { const wns = JSON.parse(localStorage.getItem("clCardWins") || "[]"); if (wns.indexOf("rating") < 0) { wns.push("rating"); localStorage.setItem("clCardWins", JSON.stringify(wns)); } } catch { /* noop */ }
               const rev = window.Collection.reveal;
               if (rev) setTimeout(() => rev(nc2), 1300);
@@ -401,8 +413,9 @@ export default function TopTrumps() {
     <main className="tt-main">
       <style>{CSS}</style>
 
-      <a href="https://cinelinks.vercel.app/rating" style={backStyle}><HomeIcon /> Rating games</a>
+      <a href="https://cinelinks.vercel.app" style={backStyle}><HomeIcon /> CineLinks</a>
       <button onClick={toggleSound} aria-label={sound ? "Mute sound" : "Unmute sound"} style={soundStyle}>{sound ? "🔊" : "🔇"}</button>
+      <button onClick={openVault} aria-label="Open your Vault" style={vaultStyle}>🃏 Vault</button>
 
       <div className="text-center">
         <h1 className="tt-title" style={{ fontSize: "2rem", fontWeight: 900, letterSpacing: "-.025em", lineHeight: 1 }}>Top<span>Trumps</span></h1>
@@ -502,12 +515,14 @@ export default function TopTrumps() {
             <span style={{ color: "#aab2c0", fontSize: "1.5rem" }}><CountStat target={cpu.length} fmt={(n) => String(Math.round(n))} run /> <span style={{ fontSize: ".72rem", color: "var(--mut)", fontWeight: 800 }}>{(rivalTag || "CPU").toUpperCase()}</span></span>
           </div>
           {best >= 3 && <div style={{ color: "#7fd49a", fontSize: ".8rem", fontWeight: 800, marginBottom: 10 }}>Best streak this game · {best}🔥</div>}
+          {won && prize && <div style={{ fontSize: ".82rem", fontWeight: 800, marginBottom: 12, color: "var(--txt)" }}>🃏 New card in your Vault: <b style={{ color: "var(--gold)" }}>{prize}</b></div>}
           <div className="flex gap-2 justify-center flex-wrap">
+            {won && prize && <button onClick={openVault} style={btn(true)}>🃏 Open Vault</button>}
             <button onClick={() => { Sfx.tap(); share(); }} style={btn(false)}>Share</button>
             <button onClick={() => { startRival(); }} style={btn(false)}>⚔ Rival deck</button>
             {mode === "daily" && dailyLocked
-              ? <button onClick={() => { Sfx.select(); setMode("practice"); newGame("practice"); }} style={btn(true)}>Practice</button>
-              : <button onClick={() => { Sfx.select(); newGame(mode); }} style={btn(true)}>{mode === "daily" ? "Replay" : "New deck"}</button>}
+              ? <button onClick={() => { Sfx.select(); setMode("practice"); newGame("practice"); }} style={btn(!(won && prize))}>Practice</button>
+              : <button onClick={() => { Sfx.select(); newGame(mode); }} style={btn(!(won && prize))}>{mode === "daily" ? "Replay" : "New deck"}</button>}
           </div>
           {rivalMsg && <div style={{ color: "var(--mut)", fontSize: ".74rem", marginTop: 10 }}>{rivalMsg}</div>}
           {mode === "daily" && <div style={{ color: "var(--mut)", fontSize: ".72rem", marginTop: 12 }}>Daily counts toward your streak · come back tomorrow for a new deck</div>}
@@ -651,6 +666,7 @@ const CSS = `
 
 const backStyle: React.CSSProperties = { position: "fixed", top: 13, left: 13, zIndex: 50, display: "inline-flex", alignItems: "center", gap: 5, color: "var(--mut)", textDecoration: "none", fontSize: ".78rem", fontWeight: 700, background: "rgba(20,20,20,.6)", border: "1px solid var(--bdr)", borderRadius: 999, padding: "7px 13px", backdropFilter: "blur(8px)" };
 const soundStyle: React.CSSProperties = { position: "fixed", top: 13, right: 13, zIndex: 50, width: 38, height: 38, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "1rem", color: "var(--txt)", background: "rgba(20,20,20,.6)", border: "1px solid var(--bdr)", borderRadius: 999, cursor: "pointer", backdropFilter: "blur(8px)" };
+const vaultStyle: React.CSSProperties = { position: "fixed", top: 13, right: 59, zIndex: 50, height: 38, display: "inline-flex", alignItems: "center", gap: 5, padding: "0 13px", fontSize: ".78rem", fontWeight: 700, fontFamily: "inherit", color: "var(--txt)", background: "rgba(20,20,20,.6)", border: "1px solid var(--bdr)", borderRadius: 999, cursor: "pointer", backdropFilter: "blur(8px)" };
 function btn(gold: boolean): React.CSSProperties { return { padding: "11px 20px", borderRadius: 12, border: gold ? "none" : "1px solid var(--bdr)", background: gold ? "linear-gradient(135deg,#f5c542,#e8a000)" : "transparent", color: gold ? "#111" : "var(--txt)", fontWeight: 800, fontFamily: "inherit", cursor: "pointer", fontSize: ".88rem", boxShadow: gold ? "0 6px 18px rgba(232,160,0,.35)" : "none" }; }
 
 function DealTray({ cards, ownedN, onStart, reduced }: { cards: Card[]; ownedN: number; onStart: () => void; reduced: boolean }) {

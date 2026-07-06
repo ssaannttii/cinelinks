@@ -45,6 +45,7 @@ declare global {
     Collection?: {
       add: (items: Array<Record<string, unknown>>) => Array<Record<string, unknown>>;
       reveal?: (cards: Array<Record<string, unknown>>) => void;
+      openGallery?: (tab?: string) => void;
     };
     CineInternal?: {
       isTester?: () => boolean;
