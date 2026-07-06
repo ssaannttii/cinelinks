@@ -374,21 +374,23 @@ body{font-family:var(--fui);background:radial-gradient(circle at 50% -10%,rgba(2
 .profile-btn-dot{position:absolute;top:-2px;right:-2px;width:11px;height:11px;border-radius:50%;background:#7fd49a;border:2px solid #0d0d0d;box-shadow:0 0 0 2px rgba(127,212,154,.3)}
 .profile-screen{position:fixed;inset:0;z-index:240;display:none;align-items:flex-start;justify-content:center;padding:20px 16px;overflow-y:auto;background:rgba(0,0,0,.78);backdrop-filter:blur(8px)}
 .profile-screen.open{display:flex}
-.profile-box{width:100%;max-width:460px;margin:auto;background:#161616;border:1px solid rgba(232,160,0,.22);border-radius:18px;padding:20px;box-shadow:0 30px 90px rgba(0,0,0,.6);animation:winBoxIn .34s cubic-bezier(.22,1,.36,1) both}
+.profile-box{width:100%;max-width:460px;margin:auto;background:linear-gradient(180deg,rgba(232,160,0,.06),transparent 150px),#161616;border:1px solid rgba(232,160,0,.22);border-radius:18px;padding:20px;box-shadow:0 30px 90px rgba(0,0,0,.6);animation:winBoxIn .34s cubic-bezier(.22,1,.36,1) both}
 .profile-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
 .profile-title{font-size:1.15rem;font-weight:800;color:#f5f5f5}.profile-title span{color:var(--gold)}
 .profile-x{background:none;border:none;color:#888;font-size:1.3rem;cursor:pointer;line-height:1;padding:2px 6px}.profile-x:hover{color:#f5f5f5}
-.profile-hero{display:flex;align-items:center;gap:14px;margin-bottom:16px}
-.profile-badge{width:52px;height:52px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:900;color:#1a1200;background:linear-gradient(135deg,#f5c542,#e8a000);box-shadow:0 6px 18px rgba(232,160,0,.4)}
+.profile-hero{display:flex;align-items:center;gap:14px;margin-bottom:14px;padding:14px;border-radius:15px;border:1px solid rgba(232,160,0,.16);background:radial-gradient(135% 120% at 0% 0%,rgba(232,160,0,.13),transparent 62%),#191712}
+.profile-badge{width:56px;height:56px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.55rem;font-weight:900;color:#1a1200;background:linear-gradient(135deg,#f5c542,#e8a000);box-shadow:0 0 0 3px rgba(232,160,0,.16),0 6px 20px rgba(232,160,0,.45)}
 .profile-xp{flex:1;min-width:0}
 .profile-xp-l{display:flex;justify-content:space-between;font-size:.72rem;color:#9a9a9a;font-weight:700;margin-bottom:5px}
 .profile-xp-bar{height:8px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden}
 .profile-xp-bar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#e8a000,#f5c542);transition:width .6s cubic-bezier(.3,.9,.3,1)}
-.profile-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:16px}
-.pstat{background:#1d1d1d;border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:11px 6px;text-align:center}
-.pstat b{display:block;font-size:1.05rem;font-weight:900;color:#f5f5f5}.pstat span{display:block;font-size:.66rem;color:#9a9a9a;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-top:3px}
+.profile-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:16px}
+.pstat{background:linear-gradient(180deg,rgba(232,160,0,.08),transparent),#1a1a1a;border:1px solid rgba(232,160,0,.18);border-radius:13px;padding:13px 10px;text-align:center}
+.pstat b{display:block;font-size:1.2rem;font-weight:900;color:#f5f5f5}.pstat span{display:block;font-size:.66rem;color:#c9a84e;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-top:3px}
 .profile-actions{display:flex;flex-direction:column;gap:9px;margin-bottom:16px}
-.prow{display:flex;align-items:center;gap:12px;width:100%;background:#1d1d1d;border:1px solid rgba(255,255,255,.07);border-radius:13px;padding:13px 15px;text-align:left;cursor:pointer;font-family:inherit;color:var(--txt);transition:border-color .15s,transform .15s,background .15s}
+.prow{display:flex;align-items:center;gap:12px;width:100%;background:linear-gradient(180deg,rgba(232,160,0,.06),transparent),var(--s1);border:1px solid rgba(232,160,0,.16);border-radius:13px;padding:13px 15px;text-align:left;cursor:pointer;font-family:inherit;color:var(--txt);transition:border-color .15s,transform .15s,background .15s}
+.prow.primary{border-color:rgba(232,160,0,.5);background:linear-gradient(180deg,rgba(232,160,0,.14),transparent),var(--s1);box-shadow:0 4px 16px rgba(232,160,0,.12)}
+.prow.primary .prow-ic{background:linear-gradient(135deg,#f5c542,#e8a000);color:#1a1200}
 .prow:hover{border-color:rgba(232,160,0,.45);transform:translateY(-1px);background:#222}
 .prow-ic{width:38px;height:38px;flex-shrink:0;border-radius:11px;background:rgba(232,160,0,.14);display:flex;align-items:center;justify-content:center;color:var(--gold)}
 .prow-ic svg{width:20px;height:20px}
@@ -1008,11 +1010,12 @@ body{font-family:var(--fui);background:radial-gradient(circle at 50% -10%,rgba(2
     </div>
     <div class="profile-stats">
       <div class="pstat"><b id="pstatCards">0</b><span>Cards</span></div>
+      <div class="pstat"><b id="pstatSets">0/63</b><span>Sets</span></div>
       <div class="pstat"><b id="pstatDust">&#10024; 0</b><span>Dust</span></div>
       <div class="pstat"><b id="pstatTrophies">0/16</b><span>Trophies</span></div>
     </div>
     <div class="profile-actions">
-      <button class="prow" type="button" onclick="closeProfile();try{Collection.openGallery()}catch(_){}">
+      <button class="prow primary" type="button" onclick="closeProfile();try{Collection.openGallery()}catch(_){}">
         <span class="prow-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="16" rx="2.5"/><path d="M7 4v16M17 4v16M2.5 9.5H7M17 9.5h4.5M2.5 14.5H7M17 14.5h4.5"/></svg></span><span class="prow-tx"><b>Your collection</b><span id="prowCollSub">Play to start collecting</span></span>
         <span class="prow-dot" id="prowCollDot" style="display:none"></span><span class="prow-arrow">›</span></button>
       <button class="prow" type="button" onclick="closeProfile();try{Collection.openAchievements()}catch(_){}">
@@ -2474,7 +2477,9 @@ function renderProfile() {
   set('profileXpNum', st.xpInto + ' / ' + st.xpSpan + ' XP');
   var fill = document.getElementById('profileXpFill');
   if (fill) fill.style.width = Math.max(3, Math.min(100, st.xpSpan ? (st.xpInto / st.xpSpan) * 100 : 0)) + '%';
+  var setsC = 0, setsT = 0; try { var ss = Collection.sets(); setsT = ss.length; setsC = ss.filter(function (x) { return x.complete; }).length; } catch (_) {}
   set('pstatCards', st.count);
+  set('pstatSets', setsC + '/' + setsT);
   set('pstatDust', '&#10024; ' + dust, true);
   set('pstatTrophies', troph + '/' + trophTotal);
   set('prowCollSub', st.count > 0 ? (st.count + ' cards · ' + st.films + ' films · ' + st.people + ' people' + (st.newCount ? ' · ' + st.newCount + ' new' : '')) : 'Play a game to start collecting');
