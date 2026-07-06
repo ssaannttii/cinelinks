@@ -96,9 +96,8 @@ const STATS: { key: StatKey; label: string; icon: string; val: (c: Card) => numb
 
 const HAND = 8;
 const MAX_ROUNDS = 40;
-type Phase = "play" | "reveal" | "over";
+type Phase = "deal" | "play" | "reveal" | "over";
 type Mode = "daily" | "practice";
-type Diff = "normal" | "hard";
 type Res = "win" | "lose" | "tie";
 type Duel = { stat: StatKey; pv: number; cv: number; res: Res; tb?: boolean } | null;
 
@@ -111,11 +110,11 @@ function mulberry(seed: number) { return () => { seed |= 0; seed = (seed + 0x6D2
 function dayNum() { const n = new Date(); return Math.floor(Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate()) / 86400000); }
 const todayKey = madridDayKey;   // suite dailies roll over on Madrid midnight, not UTC
 
-function cpuPick(card: Card, diff: Diff): StatKey {
+function cpuPick(card: Card): StatKey {
   const scored = STATS.map((s) => ({ k: s.key, b: s.bar(card) }));
   scored.sort((a, b) => b.b - a.b);
-  if (diff === "hard" || Math.random() < 0.7) return scored[0].k;
-  return scored[1].k;
+  // Beatable but competent: usually plays its strongest stat, sometimes its 2nd.
+  return Math.random() < 0.7 ? scored[0].k : scored[1].k;
 }
 function vibrate(ms: number | number[]) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch { /* noop */ } }
 const resColor = (r: Res) => (r === "win" ? "#7fd49a" : r === "lose" ? "#e8806f" : "#b58ad6");
@@ -124,7 +123,7 @@ const AURA = ["transparent", "rgba(232,160,0,.18)", "rgba(255,140,0,.24)", "rgba
 
 export default function TopTrumps() {
   const [mode, setMode] = useState<Mode>("daily");
-  const [diff, setDiff] = useState<Diff>("normal");
+  const [howto, setHowto] = useState(false);
   const [phase, setPhase] = useState<Phase>("play");
   const [player, setPlayer] = useState<Card[]>(() => []);
   const [cpu, setCpu] = useState<Card[]>(() => []);
@@ -242,7 +241,7 @@ export default function TopTrumps() {
     setStreak(0); setBest(0); setWon(false); setRevealed(false);
     setRivalTag(null); setRivalMsg(null);
     shineUsedRef.current = false; settleRef.current = null; setShineOffer(null); setBanned(null);
-    setPhase("play");
+    setPhase("deal");
     if (m === "daily") {
       try { const s = JSON.parse(localStorage.getItem("toptrumps_daily") || "null"); setDailyLocked(!!(s && s.date === todayKey())); } catch { setDailyLocked(false); }
     } else setDailyLocked(false);
@@ -250,6 +249,11 @@ export default function TopTrumps() {
 
   // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time deal on mount
   useEffect(() => { newGame("daily"); }, [newGame]);
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- surface the rules once, on first visit
+  useEffect(() => { try { if (!localStorage.getItem("tt_seen_howto")) setHowto(true); } catch { /* noop */ } }, []);
+  const closeHowto = () => { setHowto(false); try { localStorage.setItem("tt_seen_howto", "1"); } catch { /* noop */ } };
+  const startBattle = useCallback(() => { Sfx.select(); setPhase("play"); }, []);
 
   const finish = useCallback((np: Card[], nc: Card[]) => {
     const w = np.length >= nc.length;
@@ -370,10 +374,10 @@ export default function TopTrumps() {
 
   useEffect(() => {
     if (phase === "play" && turn === "cpu" && cpu.length) {
-      const t = setTimeout(() => resolve(cpuPick(cpu[0], diff)), 980);
+      const t = setTimeout(() => resolve(cpuPick(cpu[0])), 980);
       return () => clearTimeout(t);
     }
-  }, [phase, turn, cpu, diff, resolve]);
+  }, [phase, turn, cpu, resolve]);
 
   useEffect(() => () => clearTimers(), []);
 
@@ -405,18 +409,24 @@ export default function TopTrumps() {
         <p className="tt-sub" style={{ color: "var(--mut)", fontSize: ".82rem", marginTop: 5 }}>Pick a stat. Higher wins the cards. Take the deck.</p>
       </div>
 
-      {/* mode + difficulty */}
+      {/* mode: daily is the ritual (shared deck, counts to your streak); practice is unlimited */}
       <div className="tt-mode-row flex items-center justify-center gap-2 mt-3">
         <div className="tt-seg">
           <Seg active={mode === "daily"} onClick={() => { Sfx.select(); setMode("daily"); newGame("daily"); }}>Daily</Seg>
           <Seg active={mode === "practice"} onClick={() => { Sfx.select(); setMode("practice"); newGame("practice"); }}>Practice</Seg>
         </div>
-        <div className="tt-seg">
-          <Seg active={diff === "normal"} onClick={() => { Sfx.tap(); setDiff("normal"); }}>Normal</Seg>
-          <Seg active={diff === "hard"} onClick={() => { Sfx.tap(); setDiff("hard"); }}>Hard</Seg>
-        </div>
+        <button onClick={() => (howto ? closeHowto() : setHowto(true))} className="tt-howto-btn" aria-label="How to play">How to play</button>
       </div>
+      {howto && (
+        <div className="tt-howto" role="note">
+          <button onClick={closeHowto} className="tt-howto-x" aria-label="Dismiss">✕</button>
+          <b style={{ color: "var(--gold)" }}>How it works.</b> You and the rival each hold a deck of {HAND}. Every round a card flips up: pick a stat and the higher value takes both cards. Win all the rival&apos;s cards to take the match. A tie starts a <b>WAR</b> — the cards pile into a pot for whoever wins next. Your deck is built from the cards you&apos;ve collected in CineLinks.
+        </div>
+      )}
 
+      {phase === "deal" && <DealTray cards={player} ownedN={ownedN} onStart={startBattle} reduced={reduced} />}
+
+      {phase !== "deal" && (<>
       {/* deck provenance: your collection IS your deck */}
       <div className="tt-deck-line text-center" style={{ marginTop: 8, fontSize: ".7rem", fontWeight: 700, color: "var(--mut)" }}>
         {ownedN > 0
@@ -480,6 +490,7 @@ export default function TopTrumps() {
           {pc && <PlayerCard key={pc.id} card={pc} chosen={chosen} duel={duel} clash={clash} revealed={revealed} yourTurn={yourTurn} onPick={resolve} onFire={onFire} streak={streak} banned={banned} wide={wide} />}
         </div>
       </div>
+      </>)}
 
       {phase === "over" && (
         <div className="text-center mt-6 tt-rise">
@@ -583,6 +594,22 @@ const CSS = `
 .tt-hero-plate{position:absolute;left:0;right:0;bottom:0;padding:22px 12px 9px;background:linear-gradient(transparent,rgba(0,0,0,.55) 45%,rgba(0,0,0,.88));z-index:5}
 .tt-hero-title{font-weight:800;font-size:1.02rem;line-height:1.14;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.7)}
 .tt-hero-meta{color:#e0cc94;font-size:.74rem;margin-top:3px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+/* How-to banner (first visit + on demand) and the opening hand deal. */
+.tt-howto-btn{padding:5px 12px;border-radius:999px;border:1px solid var(--bdr);background:transparent;color:var(--mut);font-weight:800;font-family:inherit;cursor:pointer;font-size:.72rem;transition:color .15s,border-color .15s}
+.tt-howto-btn:hover{color:var(--txt);border-color:rgba(255,255,255,.25)}
+.tt-howto{position:relative;max-width:440px;margin:10px auto 0;padding:11px 34px 11px 13px;border:1px solid var(--bdr);border-radius:12px;background:rgba(255,255,255,.03);font-size:.76rem;line-height:1.55;color:var(--txt);text-align:left}
+.tt-howto-x{position:absolute;top:6px;right:8px;background:none;border:none;color:var(--mut);cursor:pointer;font-size:.72rem;font-family:inherit;padding:4px;line-height:1}
+.tt-deal-tray{margin-top:16px;text-align:center;animation:ttrise .4s both}
+.tt-deal-title{font-size:1.15rem;font-weight:900;letter-spacing:-.01em}
+.tt-deal-sub{font-size:.74rem;font-weight:700;color:var(--mut);margin-top:3px}
+.tt-deal-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin:13px auto 16px;max-width:440px}
+.tt-deal-card{position:relative;border-radius:10px;overflow:hidden;border:2px solid var(--bdr);background:var(--s2);aspect-ratio:2/3;animation:ttdeal .42s cubic-bezier(.2,.8,.2,1) both}
+.tt-deal-card.loaner{opacity:.5;filter:saturate(.65)}
+.tt-deal-card img{width:100%;height:100%;object-fit:cover;display:block}
+.tt-deal-plate{position:absolute;left:0;right:0;bottom:0;padding:14px 6px 5px;background:linear-gradient(transparent,rgba(0,0,0,.9));text-align:left}
+.tt-deal-name{font-size:.6rem;font-weight:800;color:#fff;line-height:1.12;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tt-deal-rar{font-size:.5rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+@media(min-width:920px){.tt-deal-grid{max-width:600px;gap:12px}}
 /* Mobile compact: on phones the whole your-turn state (momentum bar, CPU card,
    VS, banner and ALL six stat rows) must fit one screen - no scrolling to act. */
 @media(max-width:480px){
@@ -625,6 +652,35 @@ const CSS = `
 const backStyle: React.CSSProperties = { position: "fixed", top: 13, left: 13, zIndex: 50, display: "inline-flex", alignItems: "center", gap: 5, color: "var(--mut)", textDecoration: "none", fontSize: ".78rem", fontWeight: 700, background: "rgba(20,20,20,.6)", border: "1px solid var(--bdr)", borderRadius: 999, padding: "7px 13px", backdropFilter: "blur(8px)" };
 const soundStyle: React.CSSProperties = { position: "fixed", top: 13, right: 13, zIndex: 50, width: 38, height: 38, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "1rem", color: "var(--txt)", background: "rgba(20,20,20,.6)", border: "1px solid var(--bdr)", borderRadius: 999, cursor: "pointer", backdropFilter: "blur(8px)" };
 function btn(gold: boolean): React.CSSProperties { return { padding: "11px 20px", borderRadius: 12, border: gold ? "none" : "1px solid var(--bdr)", background: gold ? "linear-gradient(135deg,#f5c542,#e8a000)" : "transparent", color: gold ? "#111" : "var(--txt)", fontWeight: 800, fontFamily: "inherit", cursor: "pointer", fontSize: ".88rem", boxShadow: gold ? "0 6px 18px rgba(232,160,0,.35)" : "none" }; }
+
+function DealTray({ cards, ownedN, onStart, reduced }: { cards: Card[]; ownedN: number; onStart: () => void; reduced: boolean }) {
+  return (
+    <div className="tt-deal-tray">
+      <div className="tt-deal-title">Your deck</div>
+      <div className="tt-deal-sub">
+        {ownedN > 0
+          ? <><b style={{ color: "var(--gold)" }}>{ownedN}</b> of {HAND} from your CineLinks collection{ownedN < HAND ? <> · {HAND - ownedN} loaner{HAND - ownedN === 1 ? "" : "s"}</> : " — full deck!"}</>
+          : <>House cards for now — <a href="https://cinelinks.vercel.app" style={{ color: "var(--gold)", textDecoration: "none" }}>collect in CineLinks</a> to battle with your own</>}
+      </div>
+      <div className="tt-deal-grid">
+        {cards.map((c, i) => {
+          const rar = RARITY[c.rarity];
+          return (
+            <div key={c.id} className={"tt-deal-card" + (c.owned ? "" : " loaner")} style={{ borderColor: c.owned ? rar.ring : "var(--bdr)", animationDelay: reduced ? undefined : (i * 0.055).toFixed(3) + "s" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={c.poster} alt="" />
+              <div className="tt-deal-plate">
+                <div className="tt-deal-name">{c.title}</div>
+                <div className="tt-deal-rar" style={{ color: c.owned ? rar.ring : "var(--mut)" }}>{c.owned ? rar.label : "loaner"}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <button onClick={onStart} style={btn(true)}>Start battle</button>
+    </div>
+  );
+}
 
 function Seg({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return <button onClick={onClick} style={{ padding: "5px 13px", borderRadius: 999, border: "none", background: active ? "rgba(232,160,0,.18)" : "transparent", color: active ? "var(--gold)" : "var(--mut)", fontWeight: 800, fontFamily: "inherit", cursor: "pointer", fontSize: ".74rem", boxShadow: active ? "inset 0 0 0 1px rgba(232,160,0,.5)" : "none", transition: "background .15s,color .15s" }}>{children}</button>;
