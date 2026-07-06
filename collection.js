@@ -913,12 +913,134 @@
       { id: 505710, type: 'person', name: 'Zendaya' }, { id: 234352, type: 'person', name: 'Margot Robbie' },
       { id: 30614, type: 'person', name: 'Ryan Gosling' }
     ] },
+    { id: 'godfathertrilogy', name: 'The Corleone Saga', members: [
+      { id: 238, type: 'movie', name: 'The Godfather' }, { id: 240, type: 'movie', name: 'The Godfather Part II' },
+      { id: 242, type: 'movie', name: 'The Godfather Part III' }
+    ] },
+    { id: 'wizarding', name: 'The Wizarding World', members: [
+      { id: 671, type: 'movie', name: "Harry Potter and the Philosopher's Stone" }, { id: 672, type: 'movie', name: 'Harry Potter and the Chamber of Secrets' },
+      { id: 673, type: 'movie', name: 'Harry Potter and the Prisoner of Azkaban' }, { id: 674, type: 'movie', name: 'Harry Potter and the Goblet of Fire' }
+    ] },
+    { id: 'fastsaga', name: 'Family - Fast Saga', members: [
+      { id: 9799, type: 'movie', name: 'The Fast and the Furious' }, { id: 51497, type: 'movie', name: 'Fast Five' },
+      { id: 168259, type: 'movie', name: 'Furious 7' }
+    ] },
+    { id: 'hobbit', name: 'There and Back Again', members: [
+      { id: 49051, type: 'movie', name: 'The Hobbit: An Unexpected Journey' }, { id: 57158, type: 'movie', name: 'The Hobbit: The Desolation of Smaug' },
+      { id: 122917, type: 'movie', name: 'The Hobbit: The Battle of the Five Armies' }
+    ] },
+    { id: 'bond', name: 'Licence to Kill - 007', members: [
+      { id: 36557, type: 'movie', name: 'Casino Royale' }, { id: 37724, type: 'movie', name: 'Skyfall' },
+      { id: 370172, type: 'movie', name: 'No Time to Die' }
+    ] },
+    { id: 'webslingers', name: 'Into the Spider-Verse', members: [
+      { id: 634649, type: 'movie', name: 'Spider-Man: No Way Home' }, { id: 324857, type: 'movie', name: 'Spider-Man: Into the Spider-Verse' },
+      { id: 569094, type: 'movie', name: 'Spider-Man: Across the Spider-Verse' }
+    ] },
+    { id: 'scorsese', name: 'Scorsese Streets', members: [
+      { id: 769, type: 'movie', name: 'GoodFellas' }, { id: 1422, type: 'movie', name: 'The Departed' },
+      { id: 103, type: 'movie', name: 'Taxi Driver' }, { id: 106646, type: 'movie', name: 'The Wolf of Wall Street' }
+    ] },
+    { id: 'kubrick', name: 'Kubrick Vision', members: [
+      { id: 62, type: 'movie', name: '2001: A Space Odyssey' }, { id: 694, type: 'movie', name: 'The Shining' },
+      { id: 185, type: 'movie', name: 'A Clockwork Orange' }, { id: 600, type: 'movie', name: 'Full Metal Jacket' }
+    ] },
+    { id: 'fincher', name: 'Fincher Files', members: [
+      { id: 550, type: 'movie', name: 'Fight Club' }, { id: 807, type: 'movie', name: 'Se7en' },
+      { id: 37799, type: 'movie', name: 'The Social Network' }, { id: 210577, type: 'movie', name: 'Gone Girl' }
+    ] },
+    { id: 'villeneuve', name: 'Villeneuve Worlds', members: [
+      { id: 438631, type: 'movie', name: 'Dune' }, { id: 329865, type: 'movie', name: 'Arrival' },
+      { id: 335984, type: 'movie', name: 'Blade Runner 2049' }, { id: 273481, type: 'movie', name: 'Sicario' }
+    ] },
+    { id: 'ridley', name: 'Ridley Scott Epics', members: [
+      { id: 348, type: 'movie', name: 'Alien' }, { id: 78, type: 'movie', name: 'Blade Runner' },
+      { id: 98, type: 'movie', name: 'Gladiator' }, { id: 286217, type: 'movie', name: 'The Martian' }
+    ] },
+    { id: 'cameron', name: 'Cameron Spectacle', members: [
+      { id: 597, type: 'movie', name: 'Titanic' }, { id: 19995, type: 'movie', name: 'Avatar' },
+      { id: 76600, type: 'movie', name: 'Avatar: The Way of Water' }, { id: 218, type: 'movie', name: 'The Terminator' }
+    ] },
+    { id: 'ghibli', name: 'Studio Ghibli', members: [
+      { id: 129, type: 'movie', name: 'Spirited Away' }, { id: 8392, type: 'movie', name: 'My Neighbor Totoro' },
+      { id: 128, type: 'movie', name: 'Princess Mononoke' }, { id: 4935, type: 'movie', name: "Howl's Moving Castle" }
+    ] },
+    { id: 'horror', name: 'Horror Hall of Fame', members: [
+      { id: 9552, type: 'movie', name: 'The Exorcist' }, { id: 694, type: 'movie', name: 'The Shining' },
+      { id: 948, type: 'movie', name: 'Halloween' }, { id: 419430, type: 'movie', name: 'Get Out' }
+    ] },
+    { id: 'modernbestpic', name: 'Modern Best Picture', members: [
+      { id: 496243, type: 'movie', name: 'Parasite' }, { id: 581734, type: 'movie', name: 'Nomadland' },
+      { id: 545611, type: 'movie', name: 'Everything Everywhere All at Once' }, { id: 872585, type: 'movie', name: 'Oppenheimer' }
+    ] },
+    { id: 'deepspace', name: 'Deep Space', members: [
+      { id: 157336, type: 'movie', name: 'Interstellar' }, { id: 62, type: 'movie', name: '2001: A Space Odyssey' },
+      { id: 329865, type: 'movie', name: 'Arrival' }, { id: 286217, type: 'movie', name: 'The Martian' }
+    ] },
+    { id: 'toon', name: 'Animation Masters', members: [
+      { id: 8587, type: 'movie', name: 'The Lion King' }, { id: 808, type: 'movie', name: 'Shrek' },
+      { id: 129, type: 'movie', name: 'Spirited Away' }, { id: 324857, type: 'movie', name: 'Spider-Man: Into the Spider-Verse' }
+    ] },
+    { id: 'auteurs', name: 'The Auteurs', members: [
+      { id: 488, type: 'person', name: 'Steven Spielberg' }, { id: 525, type: 'person', name: 'Christopher Nolan' },
+      { id: 138, type: 'person', name: 'Quentin Tarantino' }, { id: 1032, type: 'person', name: 'Martin Scorsese' },
+      { id: 240, type: 'person', name: 'Stanley Kubrick' }
+    ] },
+    { id: 'visionaries', name: 'Visionary Directors', members: [
+      { id: 7467, type: 'person', name: 'David Fincher' }, { id: 137427, type: 'person', name: 'Denis Villeneuve' },
+      { id: 608, type: 'person', name: 'Hayao Miyazaki' }, { id: 2710, type: 'person', name: 'James Cameron' },
+      { id: 578, type: 'person', name: 'Ridley Scott' }
+    ] },
+    { id: 'queens', name: 'Queens of Cinema', members: [
+      { id: 5064, type: 'person', name: 'Meryl Streep' }, { id: 112, type: 'person', name: 'Cate Blanchett' },
+      { id: 2227, type: 'person', name: 'Nicole Kidman' }, { id: 1204, type: 'person', name: 'Julia Roberts' }
+    ] },
+    { id: 'nextgen', name: 'Next Generation', members: [
+      { id: 1190668, type: 'person', name: 'Timothee Chalamet' }, { id: 1373737, type: 'person', name: 'Florence Pugh' },
+      { id: 1397778, type: 'person', name: 'Anya Taylor-Joy' }, { id: 505710, type: 'person', name: 'Zendaya' }
+    ] },
+    { id: 'method', name: 'The Method', members: [
+      { id: 73421, type: 'person', name: 'Joaquin Phoenix' }, { id: 3894, type: 'person', name: 'Christian Bale' },
+      { id: 6193, type: 'person', name: 'Leonardo DiCaprio' }, { id: 2037, type: 'person', name: 'Cillian Murphy' }
+    ] },
+    { id: 'actionlegends', name: 'Action Legends', members: [
+      { id: 6384, type: 'person', name: 'Keanu Reeves' }, { id: 500, type: 'person', name: 'Tom Cruise' },
+      { id: 2231, type: 'person', name: 'Samuel L. Jackson' }, { id: 5292, type: 'person', name: 'Denzel Washington' }
+    ] },
+    { id: 'hbofantasy', name: 'The Realm', members: [
+      { id: 1399, type: 'tv', name: 'Game of Thrones' }, { id: 94997, type: 'tv', name: 'House of the Dragon' },
+      { id: 100088, type: 'tv', name: 'The Last of Us' }
+    ] },
+    { id: 'streamtv', name: 'Streaming Giants', members: [
+      { id: 66732, type: 'tv', name: 'Stranger Things' }, { id: 82856, type: 'tv', name: 'The Mandalorian' },
+      { id: 65494, type: 'tv', name: 'The Crown' }, { id: 119051, type: 'tv', name: 'Wednesday' }
+    ] },
+    { id: 'sitcoms', name: 'Sitcom Legends', members: [
+      { id: 2316, type: 'tv', name: 'The Office' }, { id: 1668, type: 'tv', name: 'Friends' },
+      { id: 1400, type: 'tv', name: 'Seinfeld' }, { id: 8592, type: 'tv', name: 'Parks and Recreation' }
+    ] },
+    { id: 'crimetv', name: 'Crime and Antiheroes', members: [
+      { id: 1396, type: 'tv', name: 'Breaking Bad' }, { id: 60059, type: 'tv', name: 'Better Call Saul' },
+      { id: 1438, type: 'tv', name: 'The Wire' }, { id: 76331, type: 'tv', name: 'Succession' }
+    ] },
     { id: 'cinephile', name: 'Cinephile', goal: { kind: 'films', target: 25 } },
     { id: 'starstruck', name: 'Star-studded', goal: { kind: 'people', target: 15 } },
     { id: 'spectrum', name: 'Full Spectrum', goal: { kind: 'rarityAll' } },
     { id: 'legends', name: 'Legend Hunter', goal: { kind: 'rarity', rarity: 'legendary', target: 5 } },
     { id: 'elite10', name: 'Elite Circle', goal: { kind: 'rarity', rarity: 'elite', target: 10 } },
-    { id: 'vault60', name: 'Serious Collector', goal: { kind: 'count', target: 60 } }
+    { id: 'vault60', name: 'Serious Collector', goal: { kind: 'count', target: 60 } },
+    { id: 'century', name: 'Century Club', goal: { kind: 'count', target: 100 } },
+    { id: 'vault150', name: 'Dedicated Curator', goal: { kind: 'count', target: 150 } },
+    { id: 'vault250', name: 'Vault Keeper', goal: { kind: 'count', target: 250 } },
+    { id: 'films50', name: 'Film Buff', goal: { kind: 'films', target: 50 } },
+    { id: 'films100', name: 'Silver-Screen Scholar', goal: { kind: 'films', target: 100 } },
+    { id: 'people30', name: 'Casting Director', goal: { kind: 'people', target: 30 } },
+    { id: 'people50', name: 'Talent Agent', goal: { kind: 'people', target: 50 } },
+    { id: 'legend10', name: 'Legend Collector', goal: { kind: 'rarity', rarity: 'legendary', target: 10 } },
+    { id: 'legend20', name: 'Mythmaker', goal: { kind: 'rarity', rarity: 'legendary', target: 20 } },
+    { id: 'elite25', name: 'Elite Guard', goal: { kind: 'rarity', rarity: 'elite', target: 25 } },
+    { id: 'elite50', name: 'Elite Vanguard', goal: { kind: 'rarity', rarity: 'elite', target: 50 } },
+    { id: 'rare50', name: 'Rare Breed', goal: { kind: 'rarity', rarity: 'rare', target: 50 } }
   ];
 
   function setsStateFrom(s) {
