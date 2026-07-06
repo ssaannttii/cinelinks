@@ -150,6 +150,8 @@ export default function TopTrumps() {
   const [reduced, setReduced] = useState(false);
   const [wide, setWide] = useState(false);   // desktop face-off layout
   const [sound, setSound] = useState(true);
+  const [intel, setIntel] = useState(3);      // tactical resource: spend to Peek / Swap
+  const [peeked, setPeeked] = useState(false); // this duel's rival card is fully scouted
 
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const initHandRef = useRef<Set<number>>(new Set());   // your dealt hand — cards beyond it were captured in battle
@@ -242,6 +244,7 @@ export default function TopTrumps() {
     setStreak(0); setBest(0); setWon(false); setRevealed(false);
     setRivalTag(null); setRivalMsg(null); setPrize(null);
     shineUsedRef.current = false; settleRef.current = null; setShineOffer(null); setBanned(null);
+    setIntel(3); setPeeked(false);
     setPhase("deal");
     if (m === "daily") {
       try { const s = JSON.parse(localStorage.getItem("toptrumps_daily") || "null"); setDailyLocked(!!(s && s.date === todayKey())); } catch { setDailyLocked(false); }
@@ -364,12 +367,12 @@ export default function TopTrumps() {
     const settle = () => {
       const spoils = shuffle([pc, cc, ...pot], Math.random);
       let np = player.slice(1), nc = cpu.slice(1), nturn = turn, nstreak = streak;
-      if (res === "win") { np = [...np, ...spoils]; nturn = "player"; nstreak = streak + 1; setPot([]); if (nstreak >= 2) Sfx.streak(nstreak); }
+      if (res === "win") { np = [...np, ...spoils]; nturn = "player"; nstreak = streak + 1; setPot([]); if (nstreak >= 2) Sfx.streak(nstreak); if (nstreak % 3 === 0) setIntel((i) => Math.min(6, i + 1)); }
       else if (res === "lose") { nc = [...nc, ...spoils]; nturn = "cpu"; nstreak = 0; setPot([]); }
       else { setPot(spoils); }
       setPlayer(np); setCpu(nc); setTurn(nturn); setStreak(nstreak); setBest((b) => Math.max(b, nstreak));
       if (np.length === 0 || nc.length === 0 || round >= MAX_ROUNDS) { finish(np, nc); }
-      else { setRound((r) => r + 1); setRevealed(false); setChosen(null); setClash(false); setDuel(null); setPhase("play"); }
+      else { setRound((r) => r + 1); setRevealed(false); setChosen(null); setClash(false); setDuel(null); setPeeked(false); setPhase("play"); }
     };
     after(1620, () => {
       // Shine save: a Shined card from your collection lets you re-pick ONCE per
@@ -396,6 +399,11 @@ export default function TopTrumps() {
   const pc = player[0], cc = cpu[0];
   const yourTurn = phase === "play" && turn === "player";
   const showCpu = revealed || phase === "over";
+  // Intel spends: Peek reveals the rival's full card this duel; Swap sinks your
+  // top card and brings up the next (dodge a bad matchup). The rival card is
+  // unchanged by a swap, so a prior Peek stays valid.
+  const doPeek = () => { if (!yourTurn || peeked || intel < 1) return; setIntel((i) => i - 1); setPeeked(true); Sfx.select(); };
+  const doSwap = () => { if (!yourTurn || intel < 2 || player.length < 2) return; setIntel((i) => i - 2); setPlayer((p) => [...p.slice(1), p[0]]); Sfx.tap(); };
   const total = player.length + cpu.length;
   const youPct = total ? (player.length / total) * 100 : 50;
   const onFire = streak >= 3;
@@ -433,7 +441,7 @@ export default function TopTrumps() {
       {howto && (
         <div className="tt-howto" role="note">
           <button onClick={closeHowto} className="tt-howto-x" aria-label="Dismiss">✕</button>
-          <b style={{ color: "var(--gold)" }}>How it works.</b> You and the rival each hold a deck of {HAND}. Every round a card flips up: pick a stat and the higher value takes both cards. Win all the rival&apos;s cards to take the match. A tie starts a <b>WAR</b> — the cards pile into a pot for whoever wins next. Your deck is built from the cards you&apos;ve collected in CineLinks.
+          <b style={{ color: "var(--gold)" }}>How it works.</b> You and the rival each hold a deck of {HAND}. Every round a card flips up: pick a stat and the higher value takes both cards. Win all the rival&apos;s cards to take the match. A tie starts a <b>WAR</b> — the cards pile into a pot for whoever wins next. Read the <b>Recon</b> on the rival&apos;s card, then spend <b>Intel</b> to <b>Peek</b> (see all their stats) or <b>Swap</b> your top card for the next. Your deck is built from the cards you&apos;ve collected in CineLinks.
         </div>
       )}
 
@@ -472,6 +480,7 @@ export default function TopTrumps() {
         {/* CPU card */}
         <div className="tt-slot tt-slot-cpu">
           <FlipCard card={cc} faceUp={showCpu} duel={duel} clash={clash} reduced={reduced} owner={rivalTag || "CPU"} wide={wide} />
+          {yourTurn && cc && <ReconPanel card={cc} full={peeked} />}
         </div>
 
         {/* clash / VS zone */}
@@ -500,6 +509,13 @@ export default function TopTrumps() {
 
         {/* Player card */}
         <div className="tt-slot tt-slot-you">
+          {yourTurn && !clash && (
+            <div className="tt-intel">
+              <span className="tt-intel-n">🔎 Intel &times;{intel}</span>
+              <button className="tt-intel-b" type="button" disabled={peeked || intel < 1} onClick={doPeek} title="Reveal the rival's full card">Peek &middot; 1</button>
+              <button className="tt-intel-b" type="button" disabled={intel < 2 || player.length < 2} onClick={doSwap} title="Sink this card, bring up the next">Swap &middot; 2</button>
+            </div>
+          )}
           {pc && <PlayerCard key={pc.id} card={pc} chosen={chosen} duel={duel} clash={clash} revealed={revealed} yourTurn={yourTurn} onPick={resolve} onFire={onFire} streak={streak} banned={banned} wide={wide} />}
         </div>
       </div>
@@ -625,6 +641,23 @@ const CSS = `
 .tt-deal-name{font-size:.6rem;font-weight:800;color:#fff;line-height:1.12;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tt-deal-rar{font-size:.5rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
 @media(min-width:920px){.tt-deal-grid{max-width:600px;gap:12px}}
+/* Intel tactical layer: recon (free read of the rival) + Peek/Swap spends. */
+.tt-recon{margin-top:8px;border:1px solid var(--bdr);border-radius:11px;background:rgba(255,255,255,.03);padding:8px 10px;font-size:.72rem;font-weight:700;text-align:left;animation:ttrise .25s both}
+.tt-recon.full{border-color:rgba(232,160,0,.4);background:rgba(232,160,0,.07)}
+.tt-recon-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:8px}
+.tt-recon-tag{font-size:.55rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;border:1px solid;border-radius:999px;padding:1px 7px}
+.tt-recon-lbl{font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:.11em;color:var(--mut)}
+.tt-recon-hint{color:var(--txt)}
+.tt-recon-warn{color:#e8806f;font-weight:900;margin-right:4px}
+.tt-recon-rows{display:grid;grid-template-columns:1fr 1fr;gap:3px 12px}
+.tt-recon-row{display:flex;align-items:center;justify-content:space-between;color:#cfcfcf}
+.tt-recon-row.hot{color:#e8806f}
+.tt-recon-row b{color:#fff}
+.tt-intel{display:flex;align-items:center;gap:7px;margin-bottom:9px;flex-wrap:wrap;justify-content:center}
+.tt-intel-n{font-size:.72rem;font-weight:800;color:var(--gold)}
+.tt-intel-b{font-family:inherit;font-size:.72rem;font-weight:800;color:var(--txt);background:rgba(255,255,255,.05);border:1px solid var(--bdr);border-radius:999px;padding:5px 12px;cursor:pointer;transition:background .14s,border-color .14s,opacity .14s}
+.tt-intel-b:not(:disabled):hover{background:rgba(232,160,0,.14);border-color:rgba(232,160,0,.4)}
+.tt-intel-b:disabled{opacity:.4;cursor:default}
 /* Mobile compact: on phones the whole your-turn state (momentum bar, CPU card,
    VS, banner and ALL six stat rows) must fit one screen - no scrolling to act. */
 @media(max-width:480px){
@@ -668,6 +701,31 @@ const backStyle: React.CSSProperties = { position: "fixed", top: 13, left: 13, z
 const soundStyle: React.CSSProperties = { position: "fixed", top: 13, right: 13, zIndex: 50, width: 38, height: 38, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "1rem", color: "var(--txt)", background: "rgba(20,20,20,.6)", border: "1px solid var(--bdr)", borderRadius: 999, cursor: "pointer", backdropFilter: "blur(8px)" };
 const vaultStyle: React.CSSProperties = { position: "fixed", top: 13, right: 59, zIndex: 50, height: 38, display: "inline-flex", alignItems: "center", gap: 5, padding: "0 13px", fontSize: ".78rem", fontWeight: 700, fontFamily: "inherit", color: "var(--txt)", background: "rgba(20,20,20,.6)", border: "1px solid var(--bdr)", borderRadius: 999, cursor: "pointer", backdropFilter: "blur(8px)" };
 function btn(gold: boolean): React.CSSProperties { return { padding: "11px 20px", borderRadius: 12, border: gold ? "none" : "1px solid var(--bdr)", background: gold ? "linear-gradient(135deg,#f5c542,#e8a000)" : "transparent", color: gold ? "#111" : "var(--txt)", fontWeight: 800, fontFamily: "inherit", cursor: "pointer", fontSize: ".88rem", boxShadow: gold ? "0 6px 18px rgba(232,160,0,.35)" : "none" }; }
+
+function ReconPanel({ card, full }: { card: Card; full: boolean }) {
+  const rar = RARITY[card.rarity];
+  const rows = STATS.map((s) => ({ s, bar: s.bar(card), val: s.fmtNum(s.val(card)) }));
+  const strong = rows.reduce((a, b) => (b.bar > a.bar ? b : a), rows[0]);
+  return (
+    <div className={"tt-recon" + (full ? " full" : "")}>
+      <div className="tt-recon-hd">
+        <span className="tt-recon-tag" style={{ color: rar.ring, borderColor: rar.ring }}>{rar.label}</span>
+        <span className="tt-recon-lbl">{full ? "Full intel" : "Recon"}</span>
+      </div>
+      {full ? (
+        <div className="tt-recon-rows">
+          {rows.map((r) => (
+            <div key={r.s.key} className={"tt-recon-row" + (r === strong ? " hot" : "")}>
+              <span>{r.s.icon} {r.s.label}</span><b>{r.val}</b>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="tt-recon-hint"><span className="tt-recon-warn">&#9888; Strong</span> {strong.s.icon} {strong.s.label} &middot; <b>{strong.val}</b></div>
+      )}
+    </div>
+  );
+}
 
 function DealTray({ cards, ownedN, onStart, reduced }: { cards: Card[]; ownedN: number; onStart: () => void; reduced: boolean }) {
   return (
