@@ -1,4 +1,7 @@
 User-agent: *
 Allow: /
+Disallow: /admin.html
+Disallow: /studio.html
+Disallow: /api/
 
 Sitemap: https://cinelinks.vercel.app/sitemap.xml
