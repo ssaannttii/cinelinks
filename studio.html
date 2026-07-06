@@ -18,6 +18,7 @@
   .btn:hover{border-color:rgba(232,194,74,.5)}
   .btn:disabled{opacity:.4;cursor:default}
   .btn.gold{background:var(--gold);color:#1a1200;border-color:transparent}.btn.gold:hover{background:var(--gold2)}
+  .btn.on{background:rgba(232,160,0,.22);border-color:rgba(232,194,74,.6);color:var(--gold2)}
   .btn.sm{padding:4px 9px;font-size:.72rem;border-radius:7px}
   .btn.danger{color:#ffb0b0;border-color:rgba(255,120,120,.3)}
   .ic{width:15px;height:15px;vertical-align:-2px}
@@ -83,6 +84,9 @@
   .k-textblock .mt{display:flex;align-items:center;justify-content:center;gap:4cqw;font-size:5.3cqw;font-weight:800;letter-spacing:.05em;text-transform:uppercase}
   .k-textblock .gem{width:4.7cqw;height:4.7cqw;border-radius:1.3cqw;transform:rotate(45deg);background:var(--cr);box-shadow:0 0 4cqw var(--cr)}
   .k-textblock .rar{color:var(--cr)}.k-textblock .sep{color:rgba(255,255,255,.32)}.k-textblock .no{color:rgba(255,255,255,.82);font-family:ui-monospace,Menlo,monospace}
+  .k-meta{display:flex;align-items:center;justify-content:center;gap:4cqw;font-size:5.3cqw;font-weight:800;letter-spacing:.05em;text-transform:uppercase}
+  .k-meta .gem{width:4.7cqw;height:4.7cqw;flex-shrink:0;border-radius:1.3cqw;transform:rotate(45deg);background:var(--cr);box-shadow:0 0 4cqw var(--cr)}
+  .k-meta .rar{color:var(--cr)}.k-meta .sep{color:rgba(255,255,255,.32)}.k-meta .no{color:rgba(255,255,255,.82);font-family:ui-monospace,Menlo,monospace}
   .k-text{display:flex;align-items:center;justify-content:center;line-height:1.05}
   .k-text.metal{background:linear-gradient(180deg,var(--m1),var(--cr) 52%,var(--m1));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
   /* holo effect overlays (preview only, driven by tilt) */
@@ -234,7 +238,7 @@
   var POSTERS=[['Interstellar','/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg','014'],['The Dark Knight','/qJ2tW6WMUDux911r6m7haRef0WH.jpg','008'],['Dune','/cDbNAY0KM84cxXhmj8f0dLWza3t.jpg','021'],['Blade Runner 2049','/gajva2L0rPYkEWjzgFlBXCAVBE5.jpg','017'],['The Matrix','/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg','099'],['Pulp Fiction','/d5iIlFn5s0ImszYzBPb8JPIfbXD.jpg','094']];
   var BLENDS=['normal','multiply','screen','overlay','soft-light','color-dodge','hard-light','lighten','darken','difference','luminosity'];
   var FONTS=['Schibsted Grotesk','Georgia, serif','ui-monospace, Menlo, monospace','Impact, sans-serif','system-ui, sans-serif','Fraunces, Georgia, serif'];
-  var KIND={poster:'poster',scrim:'scrim',corner:'corner',star:'holo star',frame:'frame',foil:'foil',tags:'badges',badgeStar:'badge',badgeCopies:'badge',badgeNew:'badge',textblock:'name plate',image:'image',text:'text',fill:'fill'};
+  var KIND={poster:'poster',scrim:'scrim',corner:'corner',star:'holo star',frame:'frame',foil:'foil',tags:'badges',badgeStar:'badge',badgeCopies:'badge',badgeNew:'badge',textblock:'title',meta:'meta line',image:'image',text:'text',fill:'fill'};
   function op(v){return {common:v,rare:v,elite:v,legendary:v};}
   function clone(o){return JSON.parse(JSON.stringify(o));}
   // 'stretch' deforms the texture to fill the layer box (aspect ratio ignored)
@@ -253,6 +257,17 @@
     return '';
   }
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  // meta row content (gem · rarity · type · #no) with per-field toggles; plain
+  // spans when a uniform colour is chosen so the override actually takes.
+  function metaRowHtml(L,r,cd){
+    var f=(L&&L.fields)||{}, plain=L&&L.colorMode&&L.colorMode!=='default';
+    var gem=(f.gem!==false)?'<span class="gem"></span>':'';
+    var typeLbl=cd.type==='person'?'Actor':cd.type==='tv'?'Series':'Film', t=[];
+    if(f.rarity!==false)t.push(plain?'<span>'+r.label+'</span>':'<span class="rar">'+r.label+'</span>');
+    if(f.type!==false)t.push('<span>'+typeLbl+'</span>');
+    if(f.no!==false)t.push(plain?'<span>'+esc(cd.no||'#000')+'</span>':'<span class="no">'+esc(cd.no||'#000')+'</span>');
+    return gem+t.join('<span class="sep">·</span>');
+  }
   function uid(){return 'l'+Math.random().toString(36).slice(2,7);}
 
   // default template mirrors the in-game "authentic" card, layer by layer
@@ -266,7 +281,8 @@
     {id:'badgeStar',type:'badgeStar',name:'★ Mastery badge',rect:{x:58,y:4.6,w:11,h:9},rot:0,blend:'normal',opacity:op(1)},
     {id:'badgeCopies',type:'badgeCopies',name:'×N Copies badge',rect:{x:69.5,y:4.6,w:13,h:8},rot:0,blend:'normal',opacity:op(1)},
     {id:'badgeNew',type:'badgeNew',name:'New badge',rect:{x:82.5,y:4.6,w:14,h:8},rot:0,blend:'normal',opacity:op(1)},
-    {id:'text',type:'textblock',name:'Name plate',rect:{x:0,y:60,w:100,h:40},rot:0,blend:'normal',opacity:op(1)}
+    {id:'text',type:'textblock',name:'Title',rect:{x:0,y:63,w:100,h:22},rot:0,blend:'normal',opacity:op(1),upper:true},
+    {id:'meta',type:'meta',name:'Meta line',rect:{x:0,y:85,w:100,h:10},rot:0,blend:'normal',opacity:op(1),fields:{gem:true,rarity:true,type:true,no:true}}
   ]};}
 
   var state=load()||defaultTemplate();
@@ -303,7 +319,7 @@
       var o=(L.opacity&&typeof L.opacity==='object')?L.opacity[rarity]:(L.opacity==null?1:L.opacity);
       el.style.opacity=o;
       if(L.blend&&L.blend!=='normal')el.style.mixBlendMode=L.blend;
-      var tf=L.rot?('rotate('+L.rot+'deg)'):'';
+      var tf='';if(L.rot)tf+='rotate('+L.rot+'deg) ';if(L.flipH)tf+='scaleX(-1) ';if(L.flipV)tf+='scaleY(-1) ';tf=tf.trim();
       // effects
       var filt=[];
       if(L.blur)filt.push('blur('+L.blur+'px)');
@@ -325,6 +341,7 @@
   function renderKind(el,L,r,cd){
     if(L.type==='poster'){el.style.background='#0a1830 url('+posterUrl()+') center top/'+fitCss(L.fit,'cover')+' no-repeat';}
     else if(L.type==='image'){
+      if(L.radius)el.style.borderRadius=L.radius+'%';
       if(L.tint&&L.tint!=='none'){el.style.background=(L.tint==='rarity')?'var(--cr)':L.tint;var ms=fitCss(L.fit,'contain');el.style.webkitMaskImage=el.style.maskImage='url('+L.src+')';el.style.webkitMaskSize=el.style.maskSize=ms;el.style.webkitMaskPosition=el.style.maskPosition='center';el.style.webkitMaskRepeat=el.style.maskRepeat='no-repeat';}
       else{el.style.background='url('+L.src+') center/'+fitCss(L.fit,'contain')+' no-repeat';}
     }
@@ -349,8 +366,16 @@
       // stack the name + meta and justify them vertically inside the box (top/middle/bottom)
       el.style.display='flex';el.style.flexDirection='column';el.style.justifyContent=L.valign==='bottom'?'flex-end':L.valign==='middle'?'center':'flex-start';
       var nmStyle='font-size:'+nmSize+'cqw;'+(L.font?'font-family:'+L.font+';':'')+(L.weight?'font-weight:'+L.weight+';':'')+(L.tracking!=null?'letter-spacing:'+L.tracking+'em;':'')+(L.upper===false?'text-transform:none;':'')+(L.align?'text-align:'+L.align+';':'')+titleStyle(L);
+      // meta lives in its own layer if present; else keep it here (legacy)
+      var hasMeta=state.layers.some(function(x){return x.type==='meta';});
       el.innerHTML='<div class="nm" style="'+nmStyle+'">'+esc(cd.name||'Card Name')+'</div>'+
-        '<div class="mt"><span class="gem"></span><span class="rar">'+r.label+'</span><span class="sep">·</span><span>'+(cd.type==='person'?'Actor':cd.type==='tv'?'Series':'Film')+'</span><span class="sep">·</span><span class="no">'+esc(cd.no||'#000')+'</span></div>';
+        (hasMeta?'':metaRowHtml(L,r,cd));
+    }
+    else if(L.type==='meta'){
+      el.style.justifyContent=L.align==='left'?'flex-start':L.align==='right'?'flex-end':'center';
+      el.style.fontSize=(L.size||5.3)+'cqw';if(L.font)el.style.fontFamily=L.font;if(L.weight)el.style.fontWeight=L.weight;if(L.tracking!=null)el.style.letterSpacing=L.tracking+'em';
+      if(L.colorMode==='rarity')el.style.color='var(--cr)';else if(L.colorMode==='solid')el.style.color=L.color||'#fff';
+      el.innerHTML=metaRowHtml(L,r,cd);
     }
     else if(L.type==='tags'){
       var h='';if(cd.n>=3)h+='<span class="mst">★</span>';if(cd.n>1)h+='<span class="dp">×'+cd.n+'</span>';if(cd.isNew)h+='<span class="nw">New</span>';
@@ -415,10 +440,11 @@
     h+='<div class="field"><label>Show on rarity</label><div class="rseg" id="pRar">'+['common','rare','elite','legendary'].map(function(r){var on=!L.rarities||L.rarities.indexOf(r)>=0;return '<button data-rr="'+r+'" class="'+(on?'on c-'+r:'')+'">'+r[0].toUpperCase()+'</button>';}).join('')+'</div></div>';
     h+='<div class="field"><label>Blend</label><select id="pBlend">'+BLENDS.map(function(b){return '<option'+(L.blend===b?' selected':'')+'>'+b+'</option>';}).join('')+'</select></div>';
     h+='<div class="grid2">'+num('X','pX',L.rect.x,-30,110)+num('Y','pY',L.rect.y,-30,110)+num('W','pW',L.rect.w,1,140)+num('H','pH',L.rect.h,1,140)+'</div>';
-    h+='<div class="row" style="margin-top:2px"><button class="btn sm" id="pCenX">⊹ Center X</button><button class="btn sm" id="pCenY">⊹ Center Y</button></div>';
+    h+='<div class="row" style="margin-top:2px"><button class="btn sm" id="pCenX">⊹ Center X</button><button class="btn sm" id="pCenY">⊹ Center Y</button>'+
+      '<button class="btn sm'+(L.flipH?' on':'')+'" id="pFlipH" title="Flip horizontal">⇋ Flip H</button><button class="btn sm'+(L.flipV?' on':'')+'" id="pFlipV" title="Flip vertical">⇅ Flip V</button></div>';
     h+=num('Rotation','pRot',L.rot||0,-180,180,1);
     h+='<p class="hint">Handles: <b>⌥</b> scale from center · <b>⇧</b> keep ratio</p>';
-    if(L.type==='image'||L.type==='poster')h+='<div class="field"><label>Fit</label><select id="pFit"><option value="cover"'+(L.fit==='cover'?' selected':'')+'>cover</option><option value="contain"'+(L.fit==='contain'?' selected':'')+'>contain</option><option value="stretch"'+(L.fit==='stretch'?' selected':'')+'>stretch (deform)</option></select></div>';
+    if(L.type==='image'||L.type==='poster')h+='<div class="grid2"><div class="field"><label>Fit</label><select id="pFit"><option value="cover"'+(L.fit==='cover'?' selected':'')+'>cover</option><option value="contain"'+(L.fit==='contain'?' selected':'')+'>contain</option><option value="stretch"'+(L.fit==='stretch'?' selected':'')+'>stretch (deform)</option></select></div>'+(L.type==='image'?num('Radius %','pRad',L.radius||0,0,50):'<div></div>')+'</div>';
     if(L.type==='image'||L.type==='corner'||L.type==='fill')h+=tintField(L);
     if(L.type==='fill'){
       h+='<div class="field"><label>Fill</label><select id="pFillT"><option value="solid"'+(L.fillType==='solid'||!L.fillType?' selected':'')+'>solid</option><option value="linear"'+(L.fillType==='linear'?' selected':'')+'>linear gradient</option><option value="radial"'+(L.fillType==='radial'?' selected':'')+'>radial gradient</option></select></div>';
@@ -451,6 +477,15 @@
       if(tm==='gradient'){h+='<div class="row"><input type="color" id="pTC1" value="'+(tc.c1||'#fff3c4')+'"><input type="color" id="pTC2" value="'+(tc.c2||'#e8a000')+'"><span class="hint" style="margin:0">gradient stops</span></div>'+'<div class="field">'+num('Angle','pTAng',tc.angle==null?180:tc.angle,0,360)+'</div>';}
       h+='<button class="btn sm" id="pTAll" style="margin-top:2px">Copy this to all rarities</button>';
       h+='<p class="hint">Per rarity — switch the C/R/E/L preview to style each tier. Meta row keeps the card style.</p>';
+    }
+    if(L.type==='meta'){
+      var mf=L.fields||{};
+      h+='<div class="field"><label>Show fields</label><div class="rseg" id="pMFields">'+
+        [['gem','◆'],['rarity','Rarity'],['type','Type'],['no','#No']].map(function(p){var on=mf[p[0]]!==false;return '<button data-mf="'+p[0]+'" class="'+(on?'on':'')+'">'+p[1]+'</button>';}).join('')+'</div></div>';
+      h+='<div class="field"><label>Font</label><select id="pMFont"><option value="">card default</option>'+FONTS.map(function(f){return '<option'+(L.font===f?' selected':'')+'>'+f+'</option>';}).join('')+'</select></div>';
+      h+='<div class="grid2">'+num('Size cqw','pMSize',L.size||5.3,2,16,0.1)+num('Weight','pMWeight',L.weight||800,100,900,100)+num('Tracking em','pMTrack',L.tracking==null?.05:L.tracking,-.1,.4,.01)+'</div>';
+      h+='<div class="field"><label>Align</label><select id="pMAlign"><option value="center"'+((L.align||'center')==='center'?' selected':'')+'>center</option><option value="left"'+(L.align==='left'?' selected':'')+'>left</option><option value="right"'+(L.align==='right'?' selected':'')+'>right</option></select></div>';
+      h+='<div class="field"><label>Colour</label><select id="pMCMode"><option value="default"'+((L.colorMode||'default')==='default'?' selected':'')+'>card default</option><option value="rarity"'+(L.colorMode==='rarity'?' selected':'')+'>rarity</option><option value="solid"'+(L.colorMode==='solid'?' selected':'')+'>solid</option></select><input type="color" id="pMColor" value="'+(L.color||'#cbb98a')+'" style="margin-top:5px"></div>';
     }
     // effects (all layers)
     h+='<div class="sec" style="margin-top:12px;border:0;padding:0"><p class="lbl">Effects</p>';
@@ -492,6 +527,8 @@
     ['X','Y','W','H'].forEach(function(k){live('p'+k,function(e){L.rect[k.toLowerCase()]=+e.value;});});
     live('pRot',function(e){L.rot=+e.value;});
     var cenX=box.querySelector('#pCenX');if(cenX)cenX.onclick=function(){L.rect.x=Math.round((100-L.rect.w)/2*10)/10;render();positionSel();renderProps();commit();};
+    var flH=box.querySelector('#pFlipH');if(flH)flH.onclick=function(){L.flipH=!L.flipH;render();renderProps();commit();};
+    var flV=box.querySelector('#pFlipV');if(flV)flV.onclick=function(){L.flipV=!L.flipV;render();renderProps();commit();};
     var cenY=box.querySelector('#pCenY');if(cenY)cenY.onclick=function(){L.rect.y=Math.round((100-L.rect.h)/2*10)/10;render();positionSel();renderProps();commit();};
     var opAll=box.querySelector('#pOpAll');if(opAll)opAll.onclick=function(){var v=(L.opacity&&typeof L.opacity==='object')?L.opacity[rarity]:(L.opacity==null?1:L.opacity);L.opacity=op(v);render();renderProps();commit();};
     live('pFit',function(e){L.fit=e.value;});
@@ -503,6 +540,13 @@
     live('pTTrack',function(e){L.tracking=+e.value;});
     var talign=box.querySelector('#pTAlign');if(talign)talign.onchange=function(){L.align=talign.value;render();commit();};
     var tvalign=box.querySelector('#pTVAlign');if(tvalign)tvalign.onchange=function(){L.valign=tvalign.value;render();commit();};
+    // meta line
+    var mseg=box.querySelector('#pMFields');if(mseg)mseg.querySelectorAll('button').forEach(function(b){b.onclick=function(){if(!L.fields)L.fields={};var k=b.dataset.mf;L.fields[k]=L.fields[k]===false;render();renderProps();commit();};});
+    var mfont=box.querySelector('#pMFont');if(mfont)mfont.onchange=function(){L.font=mfont.value||undefined;render();commit();};
+    live('pMSize',function(e){L.size=+e.value;});live('pMWeight',function(e){L.weight=+e.value;});live('pMTrack',function(e){L.tracking=+e.value;});
+    var malign=box.querySelector('#pMAlign');if(malign)malign.onchange=function(){L.align=malign.value;render();commit();};
+    var mcmode=box.querySelector('#pMCMode');if(mcmode)mcmode.onchange=function(){L.colorMode=mcmode.value;render();commit();};
+    var mcolor=box.querySelector('#pMColor');if(mcolor)mcolor.oninput=function(){L.color=mcolor.value;L.colorMode='solid';render();persist();};
     var tupper=box.querySelector('#pTUpper');if(tupper)tupper.onchange=function(){L.upper=tupper.checked;render();commit();};
     live('pC1',function(e){L.c1=e.value;});live('pC2',function(e){L.c2=e.value;});
     live('pAng',function(e){L.angle=+e.value;});live('pRad',function(e){L.radius=+e.value;});

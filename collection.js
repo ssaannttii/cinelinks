@@ -1326,6 +1326,30 @@
     if (g && g.L.valign) s += 'display:flex;flex-direction:column;justify-content:' + (g.L.valign === 'bottom' ? 'flex-end' : g.L.valign === 'middle' ? 'center' : 'flex-start') + ';';
     return s ? (' style="' + s + '"') : '';
   }
+  // ── separate meta line (rarity · type · #no + gem) ──
+  function tplMetaContent(layers, rar, typeUp, no) {
+    var g = tplGet(layers, 'meta'), L = g ? g.L : {}, f = L.fields || {};
+    var plain = L.colorMode && L.colorMode !== 'default';
+    var gem = (f.gem !== false) ? '<span class="auth-gem"></span>' : '', t = [];
+    if (f.rarity !== false) t.push(plain ? '<span>' + rar.label + '</span>' : '<span class="auth-rar">' + rar.label + '</span>');
+    if (f.type !== false) t.push('<span>' + typeUp + '</span>');
+    if (f.no !== false) t.push(plain ? '<span>' + no + '</span>' : '<span class="auth-no">' + no + '</span>');
+    return gem + t.join('<span class="sep">·</span>');
+  }
+  function tplMetaBoxStyle(layers, rarity) {
+    var g = tplGet(layers, 'meta'); if (!g) return '';
+    var L = g.L, s = 'position:absolute;' + (tplOv(layers, 'meta', rarity) || '');
+    if (L.align) s += 'justify-content:' + (L.align === 'left' ? 'flex-start' : L.align === 'right' ? 'flex-end' : 'center') + ';';
+    if (L.font) s += 'font-family:' + L.font + ';';
+    if (L.size) s += 'font-size:' + L.size + 'cqw;';
+    if (L.weight) s += 'font-weight:' + L.weight + ';';
+    if (L.tracking != null) s += 'letter-spacing:' + L.tracking + 'em;';
+    if (L.colorMode === 'rarity') s += 'color:var(--cr);';
+    else if (L.colorMode === 'solid') s += 'color:' + (L.color || '#fff') + ';';
+    return ' style="' + s + '"';
+  }
+  // rotate + flip transform for a layer ('' if none)
+  function tplXform(L) { var t = ''; if (L.rot) t += 'rotate(' + L.rot + 'deg) '; if (L.flipH) t += 'scaleX(-1) '; if (L.flipV) t += 'scaleY(-1) '; return t ? ('transform:' + t.trim() + ';') : ''; }
   // inline style override for a built-in layer (id = studio layer id) — '' if none
   function tplOv(layers, id, rarity) {
     if (!layers) return '';
@@ -1337,22 +1361,23 @@
     var o = (L.opacity && typeof L.opacity === 'object') ? L.opacity[rarity] : L.opacity;
     if (o != null) s += 'opacity:' + o + ';';
     if (L.blend && L.blend !== 'normal') s += 'mix-blend-mode:' + L.blend + ';';
-    if (L.rot) s += 'transform:rotate(' + L.rot + 'deg);';
+    s += tplXform(L);
     return s;
   }
   // HTML for the studio's custom (added) layers: image / text / fill
   function tplCustom(layers, rarity, cd) {
     if (!layers) return '';
-    var builtin = { poster: 1, scrim: 1, corner: 1, star: 1, frame: 1, foil: 1, tags: 1, textblock: 1 };
+    var builtin = { poster: 1, scrim: 1, corner: 1, star: 1, frame: 1, foil: 1, tags: 1, textblock: 1, meta: 1, badgeStar: 1, badgeCopies: 1, badgeNew: 1 };
     return layers.map(function (L, z) {
       if (builtin[L.type]) return '';
       if (L.rarities && L.rarities.indexOf(rarity) < 0) return '';   // custom layer scoped to other rarities → hidden here
       var rc = L.rect || { x: 0, y: 0, w: 100, h: 100 };
       var o = (L.opacity && typeof L.opacity === 'object') ? L.opacity[rarity] : (L.opacity == null ? 1 : L.opacity);
       var base = 'position:absolute;pointer-events:none;left:' + rc.x + '%;top:' + rc.y + '%;width:' + rc.w + '%;height:' + rc.h + '%;z-index:' + z + ';opacity:' + o + ';' +
-        (L.blend && L.blend !== 'normal' ? 'mix-blend-mode:' + L.blend + ';' : '') + (L.rot ? 'transform:rotate(' + L.rot + 'deg);' : '');
+        (L.blend && L.blend !== 'normal' ? 'mix-blend-mode:' + L.blend + ';' : '') + tplXform(L);
       if (L.type === 'image') {
         var fc = L.fit === 'stretch' ? '100% 100%' : (L.fit || 'contain');   // 'stretch' deforms to fill the box
+        if (L.radius) base += 'border-radius:' + L.radius + '%;';
         if (L.tint && L.tint !== 'none') { var col = L.tint === 'rarity' ? 'var(--cr)' : L.tint; base += 'background:' + col + ';-webkit-mask:url(' + L.src + ') center/' + fc + ' no-repeat;mask:url(' + L.src + ') center/' + fc + ' no-repeat;'; }
         else base += 'background:url(' + L.src + ') center/' + fc + ' no-repeat;';
         return '<div style="' + base + '"></div>';
@@ -1547,6 +1572,11 @@
       } else {
         tagsHtml = '<div class="auth-tags"' + O('tags') + '>' + shineT + starB + copiesB + newB + '</div>';
       }
+      // Meta line: its own positioned layer when the template splits it out; else
+      // it rides inside the name-plate box (default + legacy).
+      var hasMetaLayer = TL && tplGet(TL, 'meta');
+      var metaInside = hasMetaLayer ? '' : '<div class="auth-meta"><span class="auth-gem"></span><span class="auth-rar">' + rar.label + '</span><span class="sep">·</span><span>' + typeUp + '</span><span class="sep">·</span><span class="auth-no">' + no + '</span></div>';
+      var metaLayer = hasMetaLayer ? ('<div class="auth-meta"' + tplMetaBoxStyle(TL, c.rarity) + '>' + tplMetaContent(TL, rar, typeUp, no) + '</div>') : '';
       return '<div class="auth auth-' + c.rarity + (person ? ' person' : '') + (c.shine ? ' cl-shine' : '') + (TL ? ' auth-tpl' : '') + '" style="--cr:' + rar.ring + ';--m1:' + (METAL[c.rarity] || '#fff') + ';animation-delay:' + Math.min(i, 16) * 22 + 'ms" title="' + nm + ' · ' + rar.label + ' · ' + no + (c.shine ? ' · Shined' : '') + '">' +
         '<div class="auth-card">' +
           (p ? '<img class="auth-bgimg" src="' + ctx.esc(p) + '" alt="" loading="lazy"' + O('poster') + '>' : '<div class="auth-noimg"></div>') +
@@ -1554,8 +1584,8 @@
           tagsHtml +
           '<div class="auth-text"' + (TL ? tplTextBoxStyle(TL, c.rarity) : '') + '>' +
             '<div class="auth-name' + nmCls + '"' + (TL ? tplTitleStyle(TL, c.rarity) : '') + '>' + nm + '</div>' +
-            '<div class="auth-meta"><span class="auth-gem"></span><span class="auth-rar">' + rar.label + '</span><span class="sep">·</span><span>' + typeUp + '</span><span class="sep">·</span><span class="auth-no">' + no + '</span></div>' +
-          '</div>' +
+            metaInside +
+          '</div>' + metaLayer +
           '<div class="auth-frame"' + O('frame') + '></div><div class="auth-foil"' + O('foil') + '></div><div class="auth-glit"></div><div class="auth-shade"></div><div class="auth-sheen"></div><div class="auth-glare"></div><div class="auth-refl"></div>' +
           '<div class="auth-rim auth-rim-t"></div><div class="auth-rim auth-rim-b"></div><div class="auth-rim auth-rim-l"></div><div class="auth-rim auth-rim-r"></div>' +
           (TL ? tplCustom(TL, c.rarity, { name: nm, no: no }) : '') +
