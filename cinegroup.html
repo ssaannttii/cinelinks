@@ -20,7 +20,7 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="stylesheet" href="/fx.css">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@600&family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap');
 :root{--bg:#0d0d0d;--s1:#181818;--s2:#222;--bdr:rgba(255,255,255,0.10);--txt:#f0f0f0;--mut:#8d8d8d;--gold:#e8a000;--golddim:rgba(232,160,0,0.15);
  --c-saga:#e8c24a;--c-theme:#7aa6e8;--c-actor:#86c98a;--c-director:#b58ad6;--good:#5bbd7a;--bad:#d8503a}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -726,6 +726,6 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 <script defer src="/sfx.js"></script>
 <script defer src="/analytics.js"></script>
 <script defer src="/feedback.js"></script>
-<script defer src="/collection.js"></script>
+<script>/* collection.js is only needed on a win (Collection.add/reveal, always guarded) — load it at idle instead of on the critical path so the game boots faster */window.addEventListener("load",function(){var L=function(){if(window.Collection)return;var s=document.createElement("script");s.src="/collection.js";document.head.appendChild(s);};window.requestIdleCallback?requestIdleCallback(L,{timeout:3000}):setTimeout(L,1200);});</script>
 </body>
 </html>
