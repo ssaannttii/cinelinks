@@ -1803,7 +1803,7 @@
       // as the card spins through edge-on during the flip you see its physical side.
       '.clr-flip{--thick:7px}' +
       '.clr-face{transform:translateZ(var(--thick))}' +
-      '.clr-edge{position:absolute;background:linear-gradient(180deg,#16253f,#0b1322 42%,#05080f);box-shadow:inset 0 0 7px rgba(0,0,0,.7)}' +
+      '.clr-edge{position:absolute;background:linear-gradient(180deg,#33456a,#1a2a48 45%,#0e1830);box-shadow:inset 0 1px 0 rgba(255,255,255,.16),inset 0 0 9px rgba(0,0,0,.45)}' +
       '.clr-edge.e-l,.clr-edge.e-r{top:0;height:100%;width:calc(var(--thick) * 2);left:calc(50% - var(--thick))}' +
       '.clr-edge.e-r{transform:rotateY(90deg) translateZ(calc(var(--cw,300px) / 2))}' +
       '.clr-edge.e-l{transform:rotateY(-90deg) translateZ(calc(var(--cw,300px) / 2))}' +
