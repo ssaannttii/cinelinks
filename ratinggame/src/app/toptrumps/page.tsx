@@ -155,6 +155,8 @@ export default function TopTrumps() {
   const [sound, setSound] = useState(true);
   const [intel, setIntel] = useState(3);      // tactical resource: spend to Peek / Swap
   const [peeked, setPeeked] = useState(false); // this duel's rival card is fully scouted
+  const [seenIds, setSeenIds] = useState<number[]>([]); // rival cards revealed so far (deck tracker)
+  const [trackSel, setTrackSel] = useState<number | null>(null); // expanded card in the tracker
 
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const initHandRef = useRef<Set<number>>(new Set());   // your dealt hand — cards beyond it were captured in battle
@@ -247,7 +249,7 @@ export default function TopTrumps() {
     setStreak(0); setBest(0); setWon(false); setRevealed(false);
     setRivalTag(null); setRivalMsg(null); setPrize(null);
     shineUsedRef.current = false; settleRef.current = null; setShineOffer(null); setBanned(null);
-    setIntel(3); setPeeked(false);
+    setIntel(3); setPeeked(false); setSeenIds([]); setTrackSel(null);
     setPhase("deal");
     if (m === "daily") {
       try { const s = JSON.parse(localStorage.getItem("toptrumps_daily") || "null"); setDailyLocked(!!(s && s.date === todayKey())); } catch { setDailyLocked(false); }
@@ -357,6 +359,7 @@ export default function TopTrumps() {
     if (res === "tie" && (pc.mastery || 0) > 0) { res = "win"; tb = true; }
     const byPlayer = turn === "player";
     setChosen(stat); setRevealed(true); setPhase("reveal"); setClash(false);
+    setSeenIds((prev) => (prev.includes(cc.id) ? prev : [...prev, cc.id]));   // now scouted forever
     setDuel({ stat, pv, cv, res, tb });
     vibrate(10); Sfx.flip(); if (byPlayer) Sfx.pick();
     clearTimers();
@@ -375,7 +378,7 @@ export default function TopTrumps() {
       else { setPot(spoils); }
       setPlayer(np); setCpu(nc); setTurn(nturn); setStreak(nstreak); setBest((b) => Math.max(b, nstreak));
       if (np.length === 0 || nc.length === 0 || round >= MAX_ROUNDS) { finish(np, nc); }
-      else { setRound((r) => r + 1); setRevealed(false); setChosen(null); setClash(false); setDuel(null); setPeeked(false); setPhase("play"); }
+      else { setRound((r) => r + 1); setRevealed(false); setChosen(null); setClash(false); setDuel(null); setPeeked(false); setTrackSel(null); setPhase("play"); }
     };
     after(1620, () => {
       // Shine save: a Shined card from your collection lets you re-pick ONCE per
@@ -408,8 +411,13 @@ export default function TopTrumps() {
   // Intel spends: Peek reveals the rival's full card this duel; Swap sinks your
   // top card and brings up the next (dodge a bad matchup). The rival card is
   // unchanged by a swap, so a prior Peek stays valid.
-  const doPeek = () => { if (!canAct || peeked || intel < 1) return; setIntel((i) => i - 1); setPeeked(true); Sfx.select(); };
+  const doPeek = () => { if (!canAct || peeked || intel < 1) return; setIntel((i) => i - 1); setPeeked(true); if (cc) setSeenIds((prev) => (prev.includes(cc.id) ? prev : [...prev, cc.id])); Sfx.select(); };
   const doSwap = () => { if (!canAct || intel < 2 || player.length < 2) return; setIntel((i) => i - 2); setPlayer((p) => [...p.slice(1), p[0]]); Sfx.tap(); };
+  // Deck tracker: a rival card is "known" once it's been revealed in a duel, or if
+  // it originally came from YOUR hand (you always knew those). You learn the SET
+  // they hold, never the order — the top card stays a gamble until you Peek.
+  const knownRival = new Set<number>();
+  cpu.forEach((c) => { if (seenIds.includes(c.id) || initHandRef.current.has(c.id)) knownRival.add(c.id); });
   const total = player.length + cpu.length;
   const youPct = total ? (player.length / total) * 100 : 50;
   const onFire = streak >= 3;
@@ -447,7 +455,7 @@ export default function TopTrumps() {
       {howto && (
         <div className="tt-howto" role="note">
           <button onClick={closeHowto} className="tt-howto-x" aria-label="Dismiss">✕</button>
-          <b style={{ color: "var(--gold)" }}>How it works.</b> You and the rival each hold a deck of {HAND}. Every round a card flips up: pick a stat and the higher value takes both cards. Win all the rival&apos;s cards to take the match. A tie starts a <b>WAR</b> — the cards pile into a pot for whoever wins next. Read the <b>Recon</b> on the rival&apos;s card, then spend <b>Intel</b> to <b>Peek</b> (see all their stats) or <b>Swap</b> your top card for the next. Your deck is built from the cards you&apos;ve collected in CineLinks.
+          <b style={{ color: "var(--gold)" }}>How it works.</b> You and the rival each hold a deck of {HAND}. Every round a card flips up: pick a stat and the higher value takes both cards. Win all the rival&apos;s cards to take the match. A tie starts a <b>WAR</b> — the cards pile into a pot for whoever wins next. Their deck starts hidden; every card you face gets scouted into the <b>Rival deck</b> tracker, so you learn the set they hold but never the order. Spend <b>Intel</b> to <b>Peek</b> the exact top card, or <b>Swap</b> your own for the next. Your deck is built from the cards you&apos;ve collected in CineLinks.
         </div>
       )}
 
@@ -480,13 +488,19 @@ export default function TopTrumps() {
         </div>
       </div>
 
+      {canAct && cc && (
+        <div className="tt-intel-region">
+          {peeked && <ReconPanel card={cc} full />}
+          {cpu.length > 0 && <RivalTracker cards={cpu} known={knownRival} sel={trackSel} onSel={setTrackSel} />}
+        </div>
+      )}
+
       <div ref={boardRef} className={"tt-board" + (wide ? " tt-wide" : "")}>
         {/* streak charge aura — heats up as the run grows (Balatro escalation) */}
         <div className={"tt-aura" + (chargeLvl >= 2 ? " tt-aura-pulse" : "")} aria-hidden style={{ opacity: chargeLvl ? 1 : 0, background: `radial-gradient(65% 55% at 50% 45%,${AURA[chargeLvl]},transparent 72%)` }} />
         {/* CPU card */}
         <div className="tt-slot tt-slot-cpu">
           <FlipCard card={cc} faceUp={showCpu} duel={duel} clash={clash} reduced={reduced} owner={rivalTag || "CPU"} wide={wide} />
-          {canAct && cc && <ReconPanel card={cc} full={peeked} />}
         </div>
 
         {/* clash / VS zone */}
@@ -664,6 +678,18 @@ const CSS = `
 .tt-intel-b{font-family:inherit;font-size:.72rem;font-weight:800;color:var(--txt);background:rgba(255,255,255,.05);border:1px solid var(--bdr);border-radius:999px;padding:5px 12px;cursor:pointer;transition:background .14s,border-color .14s,opacity .14s}
 .tt-intel-b:not(:disabled):hover{background:rgba(232,160,0,.14);border-color:rgba(232,160,0,.4)}
 .tt-intel-b:disabled{opacity:.4;cursor:default}
+.tt-intel-region{max-width:460px;margin:0 auto 10px}
+.tt-rdeck{margin-top:8px;border:1px solid var(--bdr);border-radius:11px;background:rgba(255,255,255,.03);padding:8px 10px;text-align:left;animation:ttrise .25s both}
+.tt-track-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;gap:8px}
+.tt-track-lbl{font-size:.64rem;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:var(--gold)}
+.tt-track-sub{font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:var(--mut)}
+.tt-track-chips{display:flex;flex-wrap:wrap;gap:5px}
+.tt-chip{width:30px;height:44px;border-radius:6px;border:1.5px solid rgba(255,255,255,.18);background:var(--s2);overflow:hidden;padding:0;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.55);font-weight:900;font-size:.95rem;transition:transform .12s,box-shadow .12s}
+.tt-chip img{width:100%;height:100%;object-fit:cover;display:block}
+.tt-chip.unknown{cursor:default;border-style:dashed;border-color:rgba(255,255,255,.22);background:rgba(255,255,255,.04)}
+.tt-chip.on{transform:translateY(-2px);box-shadow:0 0 0 2px var(--gold)}
+.tt-track-detail{margin-top:8px;padding-top:8px;border-top:1px solid var(--bdr)}
+.tt-track-name{font-size:.78rem;font-weight:800;margin-bottom:6px}.tt-track-name span{color:var(--mut);font-weight:700;font-size:.7rem;margin-left:4px}
 /* Mobile compact: on phones the whole your-turn state (momentum bar, CPU card,
    VS, banner and ALL six stat rows) must fit one screen - no scrolling to act. */
 @media(max-width:480px){
@@ -708,6 +734,38 @@ const soundStyle: React.CSSProperties = { position: "fixed", top: 13, right: 13,
 const vaultStyle: React.CSSProperties = { position: "fixed", top: 13, right: 59, zIndex: 50, height: 38, display: "inline-flex", alignItems: "center", gap: 5, padding: "0 13px", fontSize: ".78rem", fontWeight: 700, fontFamily: "inherit", color: "var(--txt)", background: "rgba(20,20,20,.6)", border: "1px solid var(--bdr)", borderRadius: 999, cursor: "pointer", backdropFilter: "blur(8px)" };
 function btn(gold: boolean): React.CSSProperties { return { padding: "11px 20px", borderRadius: 12, border: gold ? "none" : "1px solid var(--bdr)", background: gold ? "linear-gradient(135deg,#f5c542,#e8a000)" : "transparent", color: gold ? "#111" : "var(--txt)", fontWeight: 800, fontFamily: "inherit", cursor: "pointer", fontSize: ".88rem", boxShadow: gold ? "0 6px 18px rgba(232,160,0,.35)" : "none" }; }
 
+function RivalTracker({ cards, known, sel, onSel }: { cards: Card[]; known: Set<number>; sel: number | null; onSel: (id: number | null) => void }) {
+  const sorted = [...cards].sort((a, b) => a.id - b.id);
+  const knownN = sorted.filter((c) => known.has(c.id)).length;
+  const selCard = sel != null ? cards.find((c) => c.id === sel && known.has(c.id)) : null;
+  return (
+    <div className="tt-rdeck">
+      <div className="tt-track-hd">
+        <span className="tt-track-lbl">Rival deck &times;{cards.length}</span>
+        <span className="tt-track-sub">{knownN === 0 ? "unscouted" : knownN + "/" + cards.length + " scouted"}</span>
+      </div>
+      <div className="tt-track-chips">
+        {sorted.map((c) => known.has(c.id) ? (
+          <button key={c.id} type="button" className={"tt-chip" + (sel === c.id ? " on" : "")} onClick={() => onSel(sel === c.id ? null : c.id)} title={c.title} style={{ borderColor: RARITY[c.rarity].ring }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={c.poster} alt="" />
+          </button>
+        ) : (
+          <span key={c.id} className="tt-chip unknown">?</span>
+        ))}
+      </div>
+      {selCard && (
+        <div className="tt-track-detail">
+          <div className="tt-track-name">{selCard.title} <span>{selCard.year}</span></div>
+          <div className="tt-recon-rows">
+            {STATS.map((s) => <div key={s.key} className="tt-recon-row"><span>{s.icon} {s.label}</span><b>{s.fmtNum(s.val(selCard))}</b></div>)}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ReconPanel({ card, full }: { card: Card; full: boolean }) {
   const rar = RARITY[card.rarity];
   const rows = STATS.map((s) => ({ s, bar: s.bar(card), val: s.fmtNum(s.val(card)) }));
@@ -716,7 +774,7 @@ function ReconPanel({ card, full }: { card: Card; full: boolean }) {
     <div className={"tt-recon" + (full ? " full" : "")}>
       <div className="tt-recon-hd">
         <span className="tt-recon-tag" style={{ color: rar.ring, borderColor: rar.ring }}>{rar.label}</span>
-        <span className="tt-recon-lbl">{full ? "Full intel" : "Recon"}</span>
+        <span className="tt-recon-lbl">{full ? "On top now" : "Recon"}</span>
       </div>
       {full ? (
         <div className="tt-recon-rows">
