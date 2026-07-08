@@ -65,8 +65,10 @@ function readOwned(): OwnedRec[] {
 // rarity, mastery); "loaner" house cards fill the gaps until you collect more.
 // The CPU never draws a card that's in your hand.
 function buildDecks(m: Mode): { mine: Card[]; theirs: Card[]; ownedN: number } {
+  // daily = fair fixed deck, same for everyone (seeded, house pool, no collection).
+  // arena = YOUR collection (+ loaners to fill). practice = random house deck.
   const rnd = m === "daily" ? mulberry(dayNum() * 2654435761) : mulberry((Math.random() * 1e9) | 0);
-  const owned = shuffle(readOwned(), rnd).slice(0, HAND);
+  const owned = m === "arena" ? shuffle(readOwned(), rnd).slice(0, HAND) : [];
   const mineOwned = owned.map((o) => ({ ...toCard(o.t), owned: true, rarity: o.rarity, mastery: o.mastery, shine: o.shine }));
   const used = new Set(mineOwned.map((c) => c.id));
   const rest = shuffle(TRUMP_POOL.filter((t) => !used.has(t[0])), rnd);
@@ -100,7 +102,7 @@ const STATS: { key: StatKey; label: string; icon: string; val: (c: Card) => numb
 const HAND = 8;
 const MAX_ROUNDS = 40;
 type Phase = "deal" | "play" | "reveal" | "over";
-type Mode = "daily" | "practice";
+type Mode = "daily" | "arena" | "practice";
 type Res = "win" | "lose" | "tie";
 type Duel = { stat: StatKey; pv: number; cv: number; res: Res; tb?: boolean } | null;
 
@@ -262,7 +264,7 @@ export default function TopTrumps() {
   // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time deal on mount
   useEffect(() => {
     let m: Mode = "daily";
-    try { if (new URLSearchParams(window.location.search).get("mode") === "practice") m = "practice"; } catch { /* noop */ }
+    try { const q = new URLSearchParams(window.location.search).get("mode"); if (q === "practice" || q === "arena") m = q; } catch { /* noop */ }
     setMode(m); newGame(m);
   }, [newGame]);
 
@@ -298,22 +300,22 @@ export default function TopTrumps() {
             body: JSON.stringify({ day: todayKey(), deck: Array.from(initHandRef.current).slice(0, 8), won: w, tag: tag || undefined }) }).catch(() => {});
         }
       } catch { /* noop */ }
-      // Spoils of war: a daily win banks the best card you CAPTURED from the CPU
-      // into the CineLinks collection (same origin via the /rating proxy). Prize
-      // floor rare; a total sweep (CPU wiped out) bumps it a tier higher.
+    }
+    // Spoils of war: a Daily or Arena win banks the best card you CAPTURED from the
+    // CPU into the CineLinks collection (same origin via the /rating proxy). Prize
+    // floor rare; a total sweep bumps a tier. Practice never banks (pure sandbox).
+    if ((mode === "daily" || mode === "arena") && w && typeof window !== "undefined" && window.Collection) {
       try {
-        if (w && typeof window !== "undefined" && window.Collection) {
-          const captured = np.filter((c) => !initHandRef.current.has(c.id));
-          const pool = captured.length ? captured : np;
-          const prize = pool.reduce((b, c) => (c.rating > b.rating ? c : b), pool[0]);
-          if (prize) {
-            const nc2 = window.Collection.add([{ id: prize.id, type: "movie", name: prize.title, img: prize.poster, rarityFloor: "rare", bump: nc.length === 0 ? 2 : 1 }]);
-            if (nc2 && nc2.length) {
-              setPrize(prize.title);
-              try { const wns = JSON.parse(localStorage.getItem("clCardWins") || "[]"); if (wns.indexOf("rating") < 0) { wns.push("rating"); localStorage.setItem("clCardWins", JSON.stringify(wns)); } } catch { /* noop */ }
-              const rev = window.Collection.reveal;
-              if (rev) setTimeout(() => rev(nc2), 1300);
-            }
+        const captured = np.filter((c) => !initHandRef.current.has(c.id));
+        const pool = captured.length ? captured : np;
+        const prize = pool.reduce((b, c) => (c.rating > b.rating ? c : b), pool[0]);
+        if (prize) {
+          const nc2 = window.Collection.add([{ id: prize.id, type: "movie", name: prize.title, img: prize.poster, rarityFloor: "rare", bump: nc.length === 0 ? 2 : 1 }]);
+          if (nc2 && nc2.length) {
+            setPrize(prize.title);
+            try { const wns = JSON.parse(localStorage.getItem("clCardWins") || "[]"); if (wns.indexOf("rating") < 0) { wns.push("rating"); localStorage.setItem("clCardWins", JSON.stringify(wns)); } } catch { /* noop */ }
+            const rev = window.Collection.reveal;
+            if (rev) setTimeout(() => rev(nc2), 1300);
           }
         }
       } catch { /* collection is optional */ }
@@ -464,6 +466,7 @@ export default function TopTrumps() {
       <div className="tt-mode-row flex items-center justify-center gap-2 mt-3">
         <div className="tt-seg">
           <Seg active={mode === "daily"} onClick={() => { Sfx.select(); setMode("daily"); newGame("daily"); }}>Daily</Seg>
+          <Seg active={mode === "arena"} onClick={() => { Sfx.select(); setMode("arena"); newGame("arena"); }}>Arena</Seg>
           <Seg active={mode === "practice"} onClick={() => { Sfx.select(); setMode("practice"); newGame("practice"); }}>Practice</Seg>
         </div>
         <button onClick={() => (howto ? closeHowto() : setHowto(true))} className="tt-howto-btn" aria-label="How to play">How to play</button>
@@ -475,14 +478,18 @@ export default function TopTrumps() {
         </div>
       )}
 
-      {phase === "deal" && <DealTray cards={player} ownedN={ownedN} onStart={startBattle} reduced={reduced} />}
+      {phase === "deal" && <DealTray cards={player} ownedN={ownedN} mode={mode} onStart={startBattle} reduced={reduced} />}
 
       {phase !== "deal" && (<>
-      {/* deck provenance: your collection IS your deck */}
+      {/* deck provenance: Daily is fair (shared), Arena is your collection */}
       <div className="tt-deck-line text-center" style={{ marginTop: 8, fontSize: ".7rem", fontWeight: 700, color: "var(--mut)" }}>
-        {ownedN > 0
-          ? <span>🃏 <b style={{ color: "var(--gold)" }}>{ownedN}</b> from your collection{ownedN < HAND ? <> · {HAND - ownedN} loaner{HAND - ownedN === 1 ? "" : "s"}</> : " — full deck!"}</span>
-          : <span>Playing with house cards — <a href="https://cinelinks.vercel.app" style={{ color: "var(--gold)", textDecoration: "none" }}>collect cards in CineLinks</a> to battle with your own deck</span>}
+        {mode === "daily"
+          ? <span>⚖️ Daily Duel — same deck for everyone today</span>
+          : mode === "practice"
+          ? <span>🎲 Practice — random house deck</span>
+          : ownedN > 0
+          ? <span>🃏 <b style={{ color: "var(--gold)" }}>{ownedN}</b> of {HAND} from your collection{ownedN < HAND ? <> · {HAND - ownedN} loaner{HAND - ownedN === 1 ? "" : "s"}</> : " — full deck!"}</span>
+          : <span>House cards — <a href="https://cinelinks.vercel.app" style={{ color: "var(--gold)", textDecoration: "none" }}>collect cards in CineLinks</a> to fill your Arena deck</span>}
       </div>
 
       {/* tug-of-war momentum bar */}
@@ -576,8 +583,8 @@ export default function TopTrumps() {
             <button onClick={() => { Sfx.tap(); share(); }} style={btn(false)}>Share</button>
             <button onClick={() => { startRival(); }} style={btn(false)}>⚔ Rival deck</button>
             {mode === "daily" && dailyLocked
-              ? <button onClick={() => { Sfx.select(); setMode("practice"); newGame("practice"); }} style={btn(!(won && prize))}>Practice</button>
-              : <button onClick={() => { Sfx.select(); newGame(mode); }} style={btn(!(won && prize))}>{mode === "daily" ? "Replay" : "New deck"}</button>}
+              ? <button onClick={() => { Sfx.select(); setMode("arena"); newGame("arena"); }} style={btn(!(won && prize))}>Play Arena</button>
+              : <button onClick={() => { Sfx.select(); newGame(mode); }} style={btn(!(won && prize))}>New deck</button>}
           </div>
           {rivalMsg && <div style={{ color: "var(--mut)", fontSize: ".74rem", marginTop: 10 }}>{rivalMsg}</div>}
           {mode === "daily" && <div style={{ color: "var(--mut)", fontSize: ".72rem", marginTop: 12 }}>Daily counts toward your streak · come back tomorrow for a new deck</div>}
@@ -831,14 +838,18 @@ function ReconPanel({ card, full }: { card: Card; full: boolean }) {
   );
 }
 
-function DealTray({ cards, ownedN, onStart, reduced }: { cards: Card[]; ownedN: number; onStart: () => void; reduced: boolean }) {
+function DealTray({ cards, ownedN, mode, onStart, reduced }: { cards: Card[]; ownedN: number; mode: Mode; onStart: () => void; reduced: boolean }) {
   return (
     <div className="tt-deal-tray">
-      <div className="tt-deal-title">Your deck</div>
+      <div className="tt-deal-title">{mode === "daily" ? "Today's deck" : mode === "practice" ? "Practice deck" : "Your deck"}</div>
       <div className="tt-deal-sub">
-        {ownedN > 0
+        {mode === "daily"
+          ? <>Daily Duel — the same deck for everyone today</>
+          : mode === "practice"
+          ? <>A random house deck for a no-stakes game</>
+          : ownedN > 0
           ? <><b style={{ color: "var(--gold)" }}>{ownedN}</b> of {HAND} from your CineLinks collection{ownedN < HAND ? <> · {HAND - ownedN} loaner{HAND - ownedN === 1 ? "" : "s"}</> : " — full deck!"}</>
-          : <>House cards for now — <a href="https://cinelinks.vercel.app" style={{ color: "var(--gold)", textDecoration: "none" }}>collect in CineLinks</a> to battle with your own</>}
+          : <>House cards for now — <a href="https://cinelinks.vercel.app" style={{ color: "var(--gold)", textDecoration: "none" }}>collect in CineLinks</a> to fill your Arena deck</>}
       </div>
       <div className="tt-deal-grid">
         {cards.map((c, i) => {
