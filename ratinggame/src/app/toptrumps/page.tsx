@@ -428,6 +428,12 @@ export default function TopTrumps() {
   const rivalSeen = new Set<number>();
   rivalDeckRef.current.forEach((c) => { if (seenIds.includes(c.id)) rivalSeen.add(c.id); });
   const myKnown = new Set<number>(myDeckRef.current.map((c) => c.id));
+  const rivalViewer = rivalDeckRef.current.length > 0 ? (
+    <DeckViewer cards={rivalDeckRef.current} known={rivalSeen} label="Rival hand" sub={rivalSeen.size + " seen · " + (rivalDeckRef.current.length - rivalSeen.size) + " unknown"} sel={trackSel} onSel={setTrackSel} />
+  ) : null;
+  const myViewer = myDeckRef.current.length > 0 ? (
+    <DeckViewer cards={myDeckRef.current} known={myKnown} label="Your hand" sub="tap for stats" sel={trackSel} onSel={setTrackSel} />
+  ) : null;
   const total = player.length + cpu.length;
   const youPct = total ? (player.length / total) * 100 : 50;
   const onFire = streak >= 3;
@@ -501,14 +507,8 @@ export default function TopTrumps() {
       {canAct && cc && (
         <div className="tt-intel-region">
           {peeked && <ReconPanel card={cc} full />}
-          {rivalDeckRef.current.length > 0 && (
-            <DeckViewer cards={rivalDeckRef.current} known={rivalSeen} label="Rival hand"
-              sub={rivalSeen.size + " seen · " + (rivalDeckRef.current.length - rivalSeen.size) + " unknown"}
-              sel={trackSel} onSel={setTrackSel} />
-          )}
-          {myDeckRef.current.length > 0 && (
-            <DeckViewer cards={myDeckRef.current} known={myKnown} label="Your hand" sub="tap for stats" sel={trackSel} onSel={setTrackSel} />
-          )}
+          {/* mobile: both hands stacked above the board. desktop: hidden (shown above each card instead) */}
+          <div className="tt-viewers-m">{rivalViewer}{myViewer}</div>
         </div>
       )}
 
@@ -517,6 +517,7 @@ export default function TopTrumps() {
         <div className={"tt-aura" + (chargeLvl >= 2 ? " tt-aura-pulse" : "")} aria-hidden style={{ opacity: chargeLvl ? 1 : 0, background: `radial-gradient(65% 55% at 50% 45%,${AURA[chargeLvl]},transparent 72%)` }} />
         {/* CPU card */}
         <div className="tt-slot tt-slot-cpu">
+          {canAct && <div className="tt-viewer-d">{rivalViewer}</div>}
           <FlipCard card={cc} faceUp={showCpu} duel={duel} clash={clash} reduced={reduced} owner={rivalTag || "CPU"} wide={wide} />
         </div>
 
@@ -546,6 +547,7 @@ export default function TopTrumps() {
 
         {/* Player card */}
         <div className="tt-slot tt-slot-you">
+          {canAct && <div className="tt-viewer-d">{myViewer}</div>}
           {canAct && (
             <div className="tt-intel">
               <span className="tt-intel-n">🔎 Intel &times;{intel}{!yourTurn ? " · defend" : ""}</span>
@@ -696,6 +698,8 @@ const CSS = `
 .tt-intel-b:not(:disabled):hover{background:rgba(232,160,0,.14);border-color:rgba(232,160,0,.4)}
 .tt-intel-b:disabled{opacity:.4;cursor:default}
 .tt-intel-region{max-width:460px;margin:0 auto 10px}
+.tt-viewer-d{display:none}
+@media(min-width:920px){.tt-viewers-m{display:none}.tt-viewer-d{display:block;margin-bottom:8px}}
 .tt-rdeck{margin-top:8px;border:1px solid var(--bdr);border-radius:11px;background:rgba(255,255,255,.03);padding:8px 10px;text-align:left;animation:ttrise .25s both}
 .tt-track-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;gap:8px}
 .tt-track-lbl{font-size:.64rem;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:var(--gold)}
