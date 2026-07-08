@@ -160,6 +160,8 @@ export default function TopTrumps() {
 
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const initHandRef = useRef<Set<number>>(new Set());   // your dealt hand — cards beyond it were captured in battle
+  const myDeckRef = useRef<Card[]>([]);      // your starting 8 (fixed) — for the hand viewer
+  const rivalDeckRef = useRef<Card[]>([]);   // rival's starting 8 (fixed) — scouting is tracked against this
   const reducedRef = useRef(false);
   const boardRef = useRef<HTMLDivElement>(null);
   const clashRef = useRef<HTMLDivElement>(null);
@@ -243,6 +245,7 @@ export default function TopTrumps() {
     clearTimers();
     const { mine, theirs, ownedN: on } = buildDecks(m);
     initHandRef.current = new Set(mine.map((c) => c.id));
+    myDeckRef.current = mine; rivalDeckRef.current = theirs;
     setOwnedN(on);
     setPlayer(mine); setCpu(theirs);
     setPot([]); setTurn("player"); setRound(1); setChosen(null); setDuel(null); setClash(false);
@@ -338,6 +341,7 @@ export default function TopTrumps() {
         theirs = theirs.concat(pad.slice(0, HAND - theirs.length).map(toCard));
       }
       setMode("practice"); setOwnedN(on);
+      myDeckRef.current = mine; rivalDeckRef.current = theirs;
       setPlayer(mine); setCpu(theirs);
       setPot([]); setTurn("player"); setRound(1); setChosen(null); setDuel(null); setClash(false);
       setStreak(0); setBest(0); setWon(false); setRevealed(false); setDailyLocked(false);
@@ -418,8 +422,12 @@ export default function TopTrumps() {
   // they hold, never the order — the top card stays a gamble until you Peek.
   // A rival card is "scouted" once it's been shown in a duel (seenIds captures
   // both cards each duel). We only surface the ones you've actually seen.
-  const knownRival = new Set<number>();
-  cpu.forEach((c) => { if (seenIds.includes(c.id)) knownRival.add(c.id); });
+  // Scouting is tracked against each side's ORIGINAL 8 (fixed), not the live deck
+  // that grows/shrinks as cards get captured. A rival card is "seen" once it has
+  // appeared in any duel; your own 8 you always know.
+  const rivalSeen = new Set<number>();
+  rivalDeckRef.current.forEach((c) => { if (seenIds.includes(c.id)) rivalSeen.add(c.id); });
+  const myKnown = new Set<number>(myDeckRef.current.map((c) => c.id));
   const total = player.length + cpu.length;
   const youPct = total ? (player.length / total) * 100 : 50;
   const onFire = streak >= 3;
@@ -457,7 +465,7 @@ export default function TopTrumps() {
       {howto && (
         <div className="tt-howto" role="note">
           <button onClick={closeHowto} className="tt-howto-x" aria-label="Dismiss">✕</button>
-          <b style={{ color: "var(--gold)" }}>How it works.</b> You and the rival each hold a deck of {HAND}. Every round a card flips up: pick a stat and the higher value takes both cards. Win all the rival&apos;s cards to take the match. A tie starts a <b>WAR</b> — the cards pile into a pot for whoever wins next. Their deck starts hidden; every card you face gets scouted into the <b>Rival deck</b> tracker, so you build up which cards they&apos;re holding (but never which is on top). Spend <b>Intel</b> to <b>Peek</b> the exact top card, or <b>Swap</b> your own for the next. Your deck is built from the cards you&apos;ve collected in CineLinks.
+          <b style={{ color: "var(--gold)" }}>How it works.</b> You and the rival each hold a deck of {HAND}. Every round a card flips up: pick a stat and the higher value takes both cards. Win all the rival&apos;s cards to take the match. A tie starts a <b>WAR</b> — the cards pile into a pot for whoever wins next. Both of you start with a hidden hand of 8. As cards come out, the viewer fills in which of the rival&apos;s 8 you&apos;ve <b>seen</b> vs which are still <b>unknown</b> (you can review your own hand too) — but never which is on top. Spend <b>Intel</b> to <b>Peek</b> the exact top card, or <b>Swap</b> your own for the next. Your deck is built from the cards you&apos;ve collected in CineLinks.
         </div>
       )}
 
@@ -493,7 +501,14 @@ export default function TopTrumps() {
       {canAct && cc && (
         <div className="tt-intel-region">
           {peeked && <ReconPanel card={cc} full />}
-          {cpu.length > 0 && <RivalTracker cards={cpu} known={knownRival} sel={trackSel} onSel={setTrackSel} />}
+          {rivalDeckRef.current.length > 0 && (
+            <DeckViewer cards={rivalDeckRef.current} known={rivalSeen} label="Rival hand"
+              sub={rivalSeen.size + " seen · " + (rivalDeckRef.current.length - rivalSeen.size) + " unknown"}
+              sel={trackSel} onSel={setTrackSel} />
+          )}
+          {myDeckRef.current.length > 0 && (
+            <DeckViewer cards={myDeckRef.current} known={myKnown} label="Your hand" sub="tap for stats" sel={trackSel} onSel={setTrackSel} />
+          )}
         </div>
       )}
 
@@ -736,18 +751,17 @@ const soundStyle: React.CSSProperties = { position: "fixed", top: 13, right: 13,
 const vaultStyle: React.CSSProperties = { position: "fixed", top: 13, right: 59, zIndex: 50, height: 38, display: "inline-flex", alignItems: "center", gap: 5, padding: "0 13px", fontSize: ".78rem", fontWeight: 700, fontFamily: "inherit", color: "var(--txt)", background: "rgba(20,20,20,.6)", border: "1px solid var(--bdr)", borderRadius: 999, cursor: "pointer", backdropFilter: "blur(8px)" };
 function btn(gold: boolean): React.CSSProperties { return { padding: "11px 20px", borderRadius: 12, border: gold ? "none" : "1px solid var(--bdr)", background: gold ? "linear-gradient(135deg,#f5c542,#e8a000)" : "transparent", color: gold ? "#111" : "var(--txt)", fontWeight: 800, fontFamily: "inherit", cursor: "pointer", fontSize: ".88rem", boxShadow: gold ? "0 6px 18px rgba(232,160,0,.35)" : "none" }; }
 
-function RivalTracker({ cards, known, sel, onSel }: { cards: Card[]; known: Set<number>; sel: number | null; onSel: (id: number | null) => void }) {
-  // Full rival deck: scouted cards show their poster (tap for stats), the rest stay
-  // "?". Sorted by id (NOT play order), so a card flips from ? to poster in place as
-  // you scout it, and you still never know which is actually on top.
+function DeckViewer({ cards, known, label, sub, sel, onSel }: { cards: Card[]; known: Set<number>; label: string; sub: string; sel: number | null; onSel: (id: number | null) => void }) {
+  // A side's ORIGINAL 8 (fixed). Known cards show their poster (tap for stats); the
+  // rest stay "?". Sorted by id (NOT play order), so a card flips from ? to poster
+  // in place as you scout it, and you never learn which is on top from this.
   const sorted = [...cards].sort((a, b) => a.id - b.id);
-  const scoutedN = sorted.filter((c) => known.has(c.id)).length;
   const selCard = sel != null ? cards.find((c) => c.id === sel && known.has(c.id)) : null;
   return (
     <div className="tt-rdeck">
       <div className="tt-track-hd">
-        <span className="tt-track-lbl">Rival deck &times;{cards.length}</span>
-        <span className="tt-track-sub">{scoutedN > 0 ? scoutedN + " scouted" : "unscouted"}</span>
+        <span className="tt-track-lbl">{label}</span>
+        <span className="tt-track-sub">{sub}</span>
       </div>
       <div className="tt-track-chips">
         {sorted.map((c) => known.has(c.id) ? (
