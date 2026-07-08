@@ -359,7 +359,7 @@ export default function TopTrumps() {
     if (res === "tie" && (pc.mastery || 0) > 0) { res = "win"; tb = true; }
     const byPlayer = turn === "player";
     setChosen(stat); setRevealed(true); setPhase("reveal"); setClash(false);
-    setSeenIds((prev) => (prev.includes(cc.id) ? prev : [...prev, cc.id]));   // now scouted forever
+    setSeenIds((prev) => { const add = [pc.id, cc.id].filter((id) => !prev.includes(id)); return add.length ? [...prev, ...add] : prev; });   // both cards shown this duel
     setDuel({ stat, pv, cv, res, tb });
     vibrate(10); Sfx.flip(); if (byPlayer) Sfx.pick();
     clearTimers();
@@ -416,8 +416,10 @@ export default function TopTrumps() {
   // Deck tracker: a rival card is "known" once it's been revealed in a duel, or if
   // it originally came from YOUR hand (you always knew those). You learn the SET
   // they hold, never the order — the top card stays a gamble until you Peek.
+  // A rival card is "scouted" once it's been shown in a duel (seenIds captures
+  // both cards each duel). We only surface the ones you've actually seen.
   const knownRival = new Set<number>();
-  cpu.forEach((c) => { if (seenIds.includes(c.id) || initHandRef.current.has(c.id)) knownRival.add(c.id); });
+  cpu.forEach((c) => { if (seenIds.includes(c.id)) knownRival.add(c.id); });
   const total = player.length + cpu.length;
   const youPct = total ? (player.length / total) * 100 : 50;
   const onFire = streak >= 3;
@@ -455,7 +457,7 @@ export default function TopTrumps() {
       {howto && (
         <div className="tt-howto" role="note">
           <button onClick={closeHowto} className="tt-howto-x" aria-label="Dismiss">✕</button>
-          <b style={{ color: "var(--gold)" }}>How it works.</b> You and the rival each hold a deck of {HAND}. Every round a card flips up: pick a stat and the higher value takes both cards. Win all the rival&apos;s cards to take the match. A tie starts a <b>WAR</b> — the cards pile into a pot for whoever wins next. Their deck starts hidden; every card you face gets scouted into the <b>Rival deck</b> tracker, so you learn the set they hold but never the order. Spend <b>Intel</b> to <b>Peek</b> the exact top card, or <b>Swap</b> your own for the next. Your deck is built from the cards you&apos;ve collected in CineLinks.
+          <b style={{ color: "var(--gold)" }}>How it works.</b> You and the rival each hold a deck of {HAND}. Every round a card flips up: pick a stat and the higher value takes both cards. Win all the rival&apos;s cards to take the match. A tie starts a <b>WAR</b> — the cards pile into a pot for whoever wins next. Their deck starts hidden; every card you face gets scouted into the <b>Rival deck</b> tracker, so you build up which cards they&apos;re holding (but never which is on top). Spend <b>Intel</b> to <b>Peek</b> the exact top card, or <b>Swap</b> your own for the next. Your deck is built from the cards you&apos;ve collected in CineLinks.
         </div>
       )}
 
@@ -488,10 +490,10 @@ export default function TopTrumps() {
         </div>
       </div>
 
-      {canAct && cc && (
+      {canAct && cc && (peeked || knownRival.size > 0) && (
         <div className="tt-intel-region">
           {peeked && <ReconPanel card={cc} full />}
-          {cpu.length > 0 && <RivalTracker cards={cpu} known={knownRival} sel={trackSel} onSel={setTrackSel} />}
+          {knownRival.size > 0 && <RivalTracker cards={cpu} known={knownRival} sel={trackSel} onSel={setTrackSel} />}
         </div>
       )}
 
@@ -735,23 +737,22 @@ const vaultStyle: React.CSSProperties = { position: "fixed", top: 13, right: 59,
 function btn(gold: boolean): React.CSSProperties { return { padding: "11px 20px", borderRadius: 12, border: gold ? "none" : "1px solid var(--bdr)", background: gold ? "linear-gradient(135deg,#f5c542,#e8a000)" : "transparent", color: gold ? "#111" : "var(--txt)", fontWeight: 800, fontFamily: "inherit", cursor: "pointer", fontSize: ".88rem", boxShadow: gold ? "0 6px 18px rgba(232,160,0,.35)" : "none" }; }
 
 function RivalTracker({ cards, known, sel, onSel }: { cards: Card[]; known: Set<number>; sel: number | null; onSel: (id: number | null) => void }) {
-  const sorted = [...cards].sort((a, b) => a.id - b.id);
-  const knownN = sorted.filter((c) => known.has(c.id)).length;
-  const selCard = sel != null ? cards.find((c) => c.id === sel && known.has(c.id)) : null;
+  // Only the rival cards you've actually scouted, in play right now. No "?" slots.
+  const scouted = cards.filter((c) => known.has(c.id)).sort((a, b) => a.id - b.id);
+  if (!scouted.length) return null;
+  const selCard = sel != null ? scouted.find((c) => c.id === sel) : null;
   return (
     <div className="tt-rdeck">
       <div className="tt-track-hd">
-        <span className="tt-track-lbl">Rival deck &times;{cards.length}</span>
-        <span className="tt-track-sub">{knownN === 0 ? "unscouted" : knownN + "/" + cards.length + " scouted"}</span>
+        <span className="tt-track-lbl">Scouted rival cards</span>
+        <span className="tt-track-sub">tap for stats</span>
       </div>
       <div className="tt-track-chips">
-        {sorted.map((c) => known.has(c.id) ? (
+        {scouted.map((c) => (
           <button key={c.id} type="button" className={"tt-chip" + (sel === c.id ? " on" : "")} onClick={() => onSel(sel === c.id ? null : c.id)} title={c.title} style={{ borderColor: RARITY[c.rarity].ring }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={c.poster} alt="" />
           </button>
-        ) : (
-          <span key={c.id} className="tt-chip unknown">?</span>
         ))}
       </div>
       {selCard && (
