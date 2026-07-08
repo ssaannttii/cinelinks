@@ -442,7 +442,7 @@ export default function TopTrumps() {
   function toggleSound() { setSound(Sfx.toggle()); }
 
   function share() {
-    const s = `🃏 Top Trumps${mode === "daily" ? " #" + (dayNum() - 20000) : ""} — ${won ? "won" : "lost"} ${player.length}–${cpu.length} vs CPU${best >= 3 ? ` · ${best}🔥 streak` : ""}\ncinelinks.vercel.app/rating/toptrumps`;
+    const s = `🃏 Vault Arena${mode === "daily" ? " #" + (dayNum() - 20000) : ""} — ${won ? "won" : "lost"} ${player.length}–${cpu.length} vs CPU${best >= 3 ? ` · ${best}🔥 streak` : ""}\ncinelinks.vercel.app/rating/toptrumps`;
     if (navigator.share) navigator.share({ text: s }).catch(() => {});
     else if (navigator.clipboard) navigator.clipboard.writeText(s).catch(() => {});
   }
@@ -456,7 +456,7 @@ export default function TopTrumps() {
       <button onClick={openVault} aria-label="Open your Vault" style={vaultStyle}>🃏 Vault</button>
 
       <div className="text-center">
-        <h1 className="tt-title" style={{ fontSize: "2rem", fontWeight: 900, letterSpacing: "-.025em", lineHeight: 1 }}>Top<span>Trumps</span></h1>
+        <h1 className="tt-title" style={{ fontSize: "2rem", fontWeight: 900, letterSpacing: "-.025em", lineHeight: 1 }}>Vault<span>Arena</span></h1>
         <p className="tt-sub" style={{ color: "var(--mut)", fontSize: ".82rem", marginTop: 5 }}>Pick a stat. Higher wins the cards. Take the deck.</p>
       </div>
 
