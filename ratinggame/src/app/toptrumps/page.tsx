@@ -92,9 +92,9 @@ const STATS: { key: StatKey; label: string; icon: string; val: (c: Card) => numb
   // "Value" = return on budget (revenue/budget). A cheap hit crushes a bloated
   // blockbuster here, so small/cult cards finally win an axis. Guards budget=0.
   { key: "budget", label: "Value", icon: "💎", val: (c) => (c.budget > 0 ? c.revenue / c.budget : 0), fmtNum: (n) => (n > 0 ? n.toFixed(1) + "×" : "—"), bar: (c) => Math.min(1, (c.budget > 0 ? c.revenue / c.budget : 0) / 8), from: () => 0 },
-  { key: "runtime", label: "Runtime", icon: "⏱️", val: (c) => c.runtime, fmtNum: (n) => runFmt(n), bar: (c) => Math.min(1, c.runtime / 210), from: () => 0 },
+  { key: "runtime", label: "Epic Scale", icon: "⏱️", val: (c) => c.runtime, fmtNum: (n) => runFmt(n), bar: (c) => Math.min(1, c.runtime / 210), from: () => 0 },
   // "Vintage" = age. Older wins, so classics beat modern tentpoles on this axis.
-  { key: "year", label: "Vintage", icon: "📼", val: (c) => new Date().getFullYear() - c.year, fmtNum: (n) => Math.round(n) + " yrs", bar: (c) => Math.min(1, (new Date().getFullYear() - c.year) / 75), from: () => 0 },
+  { key: "year", label: "Legacy", icon: "📼", val: (c) => new Date().getFullYear() - c.year, fmtNum: (n) => Math.round(n) + " yrs", bar: (c) => Math.min(1, (new Date().getFullYear() - c.year) / 75), from: () => 0 },
 ];
 
 const HAND = 8;
@@ -471,7 +471,7 @@ export default function TopTrumps() {
       {howto && (
         <div className="tt-howto" role="note">
           <button onClick={closeHowto} className="tt-howto-x" aria-label="Dismiss">✕</button>
-          <b style={{ color: "var(--gold)" }}>How it works.</b> You and the rival each hold a deck of {HAND}. Every round a card flips up: pick a stat and the higher value takes both cards. Win all the rival&apos;s cards to take the match. A tie starts a <b>WAR</b> — the cards pile into a pot for whoever wins next. Both of you start with a hidden hand of 8. As cards come out, the viewer fills in which of the rival&apos;s 8 you&apos;ve <b>seen</b> vs which are still <b>unknown</b> (you can review your own hand too) — but never which is on top. Spend <b>Intel</b> to <b>Peek</b> the exact top card, or <b>Swap</b> your own for the next. Your deck is built from the cards you&apos;ve collected in CineLinks.
+          <b style={{ color: "var(--gold)" }}>How it works.</b> You and the rival each hold a deck of {HAND}. Every round a card flips up: pick a stat and the higher value takes both cards. Win all the rival&apos;s cards to take the match. A tie starts a <b>WAR</b> — the cards pile into a pot for whoever wins next. Both of you start with a hidden hand of 8. As cards come out, the viewer fills in which of the rival&apos;s 8 you&apos;ve <b>seen</b> vs which are still <b>unknown</b> (you can review your own hand too) — but never which is on top. Spend <b>Intel</b> to <b>Scout</b> the exact top card, or <b>Swap</b> your own for the next. Your deck is built from the cards you&apos;ve collected in CineLinks.
         </div>
       )}
 
@@ -551,7 +551,7 @@ export default function TopTrumps() {
           {canAct && (
             <div className="tt-intel">
               <span className="tt-intel-n">🔎 Intel &times;{intel}{!yourTurn ? " · defend" : ""}</span>
-              <button className="tt-intel-b" type="button" disabled={peeked || intel < 1} onClick={doPeek} title="Reveal the rival's full card">Peek &middot; 1</button>
+              <button className="tt-intel-b" type="button" disabled={peeked || intel < 1} onClick={doPeek} title="Scout the rival's top card">Scout &middot; 1</button>
               <button className="tt-intel-b" type="button" disabled={intel < 2 || player.length < 2} onClick={doSwap} title="Sink this card, bring up the next">Swap &middot; 2</button>
             </div>
           )}
