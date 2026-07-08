@@ -429,7 +429,7 @@ export default function TopTrumps() {
   rivalDeckRef.current.forEach((c) => { if (seenIds.includes(c.id)) rivalSeen.add(c.id); });
   const myKnown = new Set<number>(myDeckRef.current.map((c) => c.id));
   const rivalViewer = rivalDeckRef.current.length > 0 ? (
-    <DeckViewer cards={rivalDeckRef.current} known={rivalSeen} label="Rival hand" sub={rivalSeen.size + " seen · " + (rivalDeckRef.current.length - rivalSeen.size) + " unknown"} sel={trackSel} onSel={setTrackSel} />
+    <DeckViewer cards={rivalDeckRef.current} known={rivalSeen} label="Rival hand" sub={rivalSeen.size + " seen · " + (rivalDeckRef.current.length - rivalSeen.size) + " unknown"} sel={trackSel} onSel={setTrackSel} vs={pc} />
   ) : null;
   const myViewer = myDeckRef.current.length > 0 ? (
     <DeckViewer cards={myDeckRef.current} known={myKnown} label="Your hand" sub="tap for stats" sel={trackSel} onSel={setTrackSel} />
@@ -711,6 +711,7 @@ const CSS = `
 .tt-chip.on{transform:translateY(-2px);box-shadow:0 0 0 2px var(--gold)}
 .tt-track-detail{margin-top:8px;padding-top:8px;border-top:1px solid var(--bdr)}
 .tt-track-name{font-size:.78rem;font-weight:800;margin-bottom:6px}.tt-track-name span{color:var(--mut);font-weight:700;font-size:.7rem;margin-left:4px}
+.tt-track-vs{float:right;font-size:.58rem!important;font-weight:800!important;text-transform:uppercase;letter-spacing:.08em;color:var(--gold)!important;margin-left:0!important}
 /* Mobile compact: on phones the whole your-turn state (momentum bar, CPU card,
    VS, banner and ALL six stat rows) must fit one screen - no scrolling to act. */
 @media(max-width:480px){
@@ -755,12 +756,14 @@ const soundStyle: React.CSSProperties = { position: "fixed", top: 13, right: 13,
 const vaultStyle: React.CSSProperties = { position: "fixed", top: 13, right: 59, zIndex: 50, height: 38, display: "inline-flex", alignItems: "center", gap: 5, padding: "0 13px", fontSize: ".78rem", fontWeight: 700, fontFamily: "inherit", color: "var(--txt)", background: "rgba(20,20,20,.6)", border: "1px solid var(--bdr)", borderRadius: 999, cursor: "pointer", backdropFilter: "blur(8px)" };
 function btn(gold: boolean): React.CSSProperties { return { padding: "11px 20px", borderRadius: 12, border: gold ? "none" : "1px solid var(--bdr)", background: gold ? "linear-gradient(135deg,#f5c542,#e8a000)" : "transparent", color: gold ? "#111" : "var(--txt)", fontWeight: 800, fontFamily: "inherit", cursor: "pointer", fontSize: ".88rem", boxShadow: gold ? "0 6px 18px rgba(232,160,0,.35)" : "none" }; }
 
-function DeckViewer({ cards, known, label, sub, sel, onSel }: { cards: Card[]; known: Set<number>; label: string; sub: string; sel: number | null; onSel: (id: number | null) => void }) {
-  // A side's ORIGINAL 8 (fixed). Known cards show their poster (tap for stats); the
-  // rest stay "?". Sorted by id (NOT play order), so a card flips from ? to poster
-  // in place as you scout it, and you never learn which is on top from this.
+function DeckViewer({ cards, known, label, sub, sel, onSel, vs }: { cards: Card[]; known: Set<number>; label: string; sub: string; sel: number | null; onSel: (id: number | null) => void; vs?: Card }) {
+  // A side's ORIGINAL 8 (fixed). Known cards show their poster; hover (or tap on
+  // touch) opens a stat panel. When `vs` (your current card) is passed, each stat
+  // is coloured green/red for whether your card would beat this rival card on it.
+  const [hover, setHover] = useState<number | null>(null);
   const sorted = [...cards].sort((a, b) => a.id - b.id);
-  const selCard = sel != null ? cards.find((c) => c.id === sel && known.has(c.id)) : null;
+  const activeId = hover != null ? hover : sel;
+  const active = activeId != null ? cards.find((c) => c.id === activeId && known.has(c.id)) : null;
   return (
     <div className="tt-rdeck">
       <div className="tt-track-hd">
@@ -769,7 +772,9 @@ function DeckViewer({ cards, known, label, sub, sel, onSel }: { cards: Card[]; k
       </div>
       <div className="tt-track-chips">
         {sorted.map((c) => known.has(c.id) ? (
-          <button key={c.id} type="button" className={"tt-chip" + (sel === c.id ? " on" : "")} onClick={() => onSel(sel === c.id ? null : c.id)} title={c.title} style={{ borderColor: RARITY[c.rarity].ring }}>
+          <button key={c.id} type="button" className={"tt-chip" + (activeId === c.id ? " on" : "")}
+            onMouseEnter={() => setHover(c.id)} onMouseLeave={() => setHover(null)}
+            onClick={() => onSel(sel === c.id ? null : c.id)} title={c.title} style={{ borderColor: RARITY[c.rarity].ring }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={c.poster} alt="" />
           </button>
@@ -777,11 +782,23 @@ function DeckViewer({ cards, known, label, sub, sel, onSel }: { cards: Card[]; k
           <span key={c.id} className="tt-chip unknown">?</span>
         ))}
       </div>
-      {selCard && (
+      {active && (
         <div className="tt-track-detail">
-          <div className="tt-track-name">{selCard.title} <span>{selCard.year}</span></div>
+          <div className="tt-track-name">{active.title} <span>{active.year}</span>{vs && <span className="tt-track-vs">you › rival</span>}</div>
           <div className="tt-recon-rows">
-            {STATS.map((s) => <div key={s.key} className="tt-recon-row"><span>{s.icon} {s.label}</span><b>{s.fmtNum(s.val(selCard))}</b></div>)}
+            {STATS.map((s) => {
+              if (vs) {
+                const pv = s.val(vs), cv = s.val(active);
+                const col = pv > cv ? "#7fd49a" : pv < cv ? "#e8806f" : "var(--mut)";
+                return (
+                  <div key={s.key} className="tt-recon-row" style={{ color: col }}>
+                    <span>{s.icon} {s.label}</span>
+                    <span>{s.fmtNum(pv)} <span style={{ opacity: .5 }}>›</span> {s.fmtNum(cv)} <b>{pv > cv ? "✓" : pv < cv ? "✗" : "="}</b></span>
+                  </div>
+                );
+              }
+              return <div key={s.key} className="tt-recon-row"><span>{s.icon} {s.label}</span><b>{s.fmtNum(s.val(active))}</b></div>;
+            })}
           </div>
         </div>
       )}
