@@ -490,10 +490,10 @@ export default function TopTrumps() {
         </div>
       </div>
 
-      {canAct && cc && (peeked || knownRival.size > 0) && (
+      {canAct && cc && (
         <div className="tt-intel-region">
           {peeked && <ReconPanel card={cc} full />}
-          {knownRival.size > 0 && <RivalTracker cards={cpu} known={knownRival} sel={trackSel} onSel={setTrackSel} />}
+          {cpu.length > 0 && <RivalTracker cards={cpu} known={knownRival} sel={trackSel} onSel={setTrackSel} />}
         </div>
       )}
 
@@ -737,22 +737,26 @@ const vaultStyle: React.CSSProperties = { position: "fixed", top: 13, right: 59,
 function btn(gold: boolean): React.CSSProperties { return { padding: "11px 20px", borderRadius: 12, border: gold ? "none" : "1px solid var(--bdr)", background: gold ? "linear-gradient(135deg,#f5c542,#e8a000)" : "transparent", color: gold ? "#111" : "var(--txt)", fontWeight: 800, fontFamily: "inherit", cursor: "pointer", fontSize: ".88rem", boxShadow: gold ? "0 6px 18px rgba(232,160,0,.35)" : "none" }; }
 
 function RivalTracker({ cards, known, sel, onSel }: { cards: Card[]; known: Set<number>; sel: number | null; onSel: (id: number | null) => void }) {
-  // Only the rival cards you've actually scouted, in play right now. No "?" slots.
-  const scouted = cards.filter((c) => known.has(c.id)).sort((a, b) => a.id - b.id);
-  if (!scouted.length) return null;
-  const selCard = sel != null ? scouted.find((c) => c.id === sel) : null;
+  // Full rival deck: scouted cards show their poster (tap for stats), the rest stay
+  // "?". Sorted by id (NOT play order), so a card flips from ? to poster in place as
+  // you scout it, and you still never know which is actually on top.
+  const sorted = [...cards].sort((a, b) => a.id - b.id);
+  const scoutedN = sorted.filter((c) => known.has(c.id)).length;
+  const selCard = sel != null ? cards.find((c) => c.id === sel && known.has(c.id)) : null;
   return (
     <div className="tt-rdeck">
       <div className="tt-track-hd">
-        <span className="tt-track-lbl">Scouted rival cards</span>
-        <span className="tt-track-sub">tap for stats</span>
+        <span className="tt-track-lbl">Rival deck &times;{cards.length}</span>
+        <span className="tt-track-sub">{scoutedN > 0 ? scoutedN + " scouted" : "unscouted"}</span>
       </div>
       <div className="tt-track-chips">
-        {scouted.map((c) => (
+        {sorted.map((c) => known.has(c.id) ? (
           <button key={c.id} type="button" className={"tt-chip" + (sel === c.id ? " on" : "")} onClick={() => onSel(sel === c.id ? null : c.id)} title={c.title} style={{ borderColor: RARITY[c.rarity].ring }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={c.poster} alt="" />
           </button>
+        ) : (
+          <span key={c.id} className="tt-chip unknown">?</span>
         ))}
       </div>
       {selCard && (
