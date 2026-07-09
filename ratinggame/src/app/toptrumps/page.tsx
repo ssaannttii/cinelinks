@@ -397,8 +397,10 @@ export default function TopTrumps() {
     const pv = sdef.val(pc), cv = sdef.val(cc);
     let res: Res = pv > cv ? "win" : cv > pv ? "lose" : "tie";
     let tb = false;
-    // Mastery perk: a starred card from your collection (×3+ copies) wins ties.
-    if (res === "tie" && (pc.mastery || 0) > 0) { res = "win"; tb = true; }
+    // Mastery: a card you hold in force (×3+ copies) HOLDS THE LINE on a hair's-
+    // breadth loss — the defeat becomes a WAR instead. Triggers far more than the
+    // old exact-tie rule, and fights for the pot rather than stealing a win outright.
+    if (res === "lose" && (pc.mastery || 0) > 0 && sdef.bar(cc) - sdef.bar(pc) <= 0.06) { res = "tie"; tb = true; }
     const byPlayer = turn === "player";
     setChosen(stat); setRevealed(true); setPhase("reveal"); setClash(false);
     setSeenIds((prev) => { const add = [pc.id, cc.id].filter((id) => !prev.includes(id)); return add.length ? [...prev, ...add] : prev; });   // both cards shown this duel
@@ -411,6 +413,7 @@ export default function TopTrumps() {
       const spoilsN = [pc, cc, ...pot].length;
       if (res === "win") { vibrate(28); Sfx.win(); triggerShake(1 + Math.min(streak, 6) * 0.4); boardFlash("rgba(127,212,154,.6)"); scorePop(spoilsN, "#7fd49a"); sweep("player", spoilsN); }
       else if (res === "lose") { vibrate([14, 28]); Sfx.lose(); triggerShake(0.7); boardFlash("rgba(232,128,111,.5)"); sweep("cpu", spoilsN); }
+      else if (tb) { vibrate([20, 30, 20]); Sfx.win(); boardFlash("rgba(245,197,66,.55)"); }   // Mastery held the line
       else { vibrate([10, 22, 10]); Sfx.tie(); }
     });
     const settle = () => {
@@ -594,7 +597,7 @@ export default function TopTrumps() {
                   style={{ ...btn(false), padding: "7px 14px", fontSize: ".76rem" }}>Accept loss</button>
               </span>
             : clash && duel
-            ? <span style={{ color: resColor(duel.res) }}>{duel.res === "win" ? (duel.tb ? "★ Mastery breaks the tie — cards are yours" : "You took the cards") : duel.res === "lose" ? "CPU took the cards" : "Tie — pot grows ⚔"}<span style={{ color: "var(--mut)", fontWeight: 600, fontSize: ".7rem", marginLeft: 8 }}>tap ▸</span></span>
+            ? <span style={{ color: resColor(duel.res) }}>{duel.res === "win" ? "You took the cards" : duel.res === "lose" ? "CPU took the cards" : (duel.tb ? "★ Mastery held the line — WAR!" : "Tie — pot grows ⚔")}<span style={{ color: "var(--mut)", fontWeight: 600, fontSize: ".7rem", marginLeft: 8 }}>tap ▸</span></span>
             : yourTurn ? <span style={{ color: "var(--gold)" }}>Your turn — pick a stat</span>
             : phase === "reveal" ? <span style={{ color: "var(--mut)" }}>Revealing…</span>
             : cpuTell ? <span style={{ color: "#e8806f" }}>⚠ {rivalTag || "CPU"} is leaning {STATS.find((s) => s.key === cpuTell)?.label}</span>
@@ -938,7 +941,7 @@ function PlayerCard({ card, chosen, duel, clash, revealed, yourTurn, onPick, onF
             <div className="tt-hero-title">{card.title}</div>
             <div className="tt-hero-meta">
               <span>{card.year} · {card.genre}</span>
-              {(card.mastery || 0) > 0 && <span title="Mastery — wins ties" style={{ fontWeight: 900, color: card.mastery === 3 ? "#f5c542" : card.mastery === 2 ? "#dfe6f2" : "#cd8f52", textShadow: "0 0 8px rgba(245,197,66,.5)" }}>★ M{card.mastery}</span>}
+              {(card.mastery || 0) > 0 && <span title="Mastery — holds the line on a close loss (turns it into WAR)" style={{ fontWeight: 900, color: card.mastery === 3 ? "#f5c542" : card.mastery === 2 ? "#dfe6f2" : "#cd8f52", textShadow: "0 0 8px rgba(245,197,66,.5)" }}>★ M{card.mastery}</span>}
               {card.shine && <span title="Shined — once per match you may re-pick after losing a duel">✨</span>}
             </div>
           </div>
@@ -952,7 +955,7 @@ function PlayerCard({ card, chosen, duel, clash, revealed, yourTurn, onPick, onF
             <div style={{ color: "var(--mut)", fontSize: ".78rem", marginTop: 2 }}>{card.year} · {card.genre}</div>
             <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 7, flexWrap: "wrap" }}>
               <span style={{ fontSize: ".58rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: ".07em", color: rar.ring, border: "1px solid " + rar.ring, borderRadius: 999, padding: "2px 8px" }}>{rar.label}{ownTag}</span>
-              {(card.mastery || 0) > 0 && <span title="Mastery — wins ties" style={{ fontSize: ".62rem", fontWeight: 900, color: card.mastery === 3 ? "#f5c542" : card.mastery === 2 ? "#dfe6f2" : "#cd8f52", textShadow: "0 0 8px rgba(245,197,66,.5)" }}>★ M{card.mastery}</span>}
+              {(card.mastery || 0) > 0 && <span title="Mastery — holds the line on a close loss (turns it into WAR)" style={{ fontSize: ".62rem", fontWeight: 900, color: card.mastery === 3 ? "#f5c542" : card.mastery === 2 ? "#dfe6f2" : "#cd8f52", textShadow: "0 0 8px rgba(245,197,66,.5)" }}>★ M{card.mastery}</span>}
               {card.shine && <span title="Shined — once per match you may re-pick after losing a duel" style={{ fontSize: ".62rem" }}>✨</span>}
             </div>
           </div>
