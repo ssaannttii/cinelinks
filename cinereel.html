@@ -205,8 +205,8 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
   // it is always the final, guaranteed-solvable reveal.
   function revealSet(films){
     if(films.length<=REVEALS) return films.slice().reverse();
-    const maxRank=Math.min(films.length-1, Math.max(REVEALS*3-1, 19)); // deepest cut (~20th credit)
-    const gamma=1.4, need=REVEALS-1, idx=[];
+    const maxRank=Math.min(films.length-1, Math.max(REVEALS*5-1, 29)); // deepest cut (~30th credit) — harder start
+    const gamma=1.7, need=REVEALS-1, idx=[];
     for(let k=0;k<need;k++){
       const frac=(need-k)/need;                       // k=0 -> deepest, later k -> shallower (never 0)
       let j=Math.max(1, Math.round(maxRank*Math.pow(frac,gamma)));
