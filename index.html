@@ -922,6 +922,13 @@ body{font-family:var(--fui);background:radial-gradient(circle at 50% -10%,rgba(2
           <a class="mode mode-practice" href="/rating/toptrumps?mode=arena">Arena</a>
         </div>
       </div>
+      <div class="game-card" style="--accent:91,189,122">
+        <div class="game-head"><span class="game-ic"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 8h.01M12 8h4M8 12h8M8 16h5"/></svg></span><span class="game-meta"><span class="game-name">CineCode <span class="new-tag">NEW</span><span class="game-done" data-done="code"></span></span><span class="game-desc">Decode the hidden movie</span></span></div>
+        <div class="game-modes">
+          <a class="mode mode-daily" href="/cinecode.html">Daily</a>
+          <a class="mode mode-practice" href="/cinecode.html?practice=1">Practice</a>
+        </div>
+      </div>
     </div>
     <button class="more-toggle" id="moreToggle" type="button" aria-expanded="false">+ More games</button>
     <div class="games more-games" id="moreGames" hidden>
@@ -2113,7 +2120,7 @@ function markDoneBadges() {
     cl: linksDone(), clue: clueDone('cineclueState'), frame: clueDone('cineframeState'),
     cast: clueDone('cinecastState'), line: clueDone('cinelineState'),
     reel: clueDone('cinereelState'), grid: clueDone('cinegridState'), chain: clueDone('cinechainState'),
-    grp: clueDone('cinegroupState'), rating: ratingDone(), trumps: trumpsDone()
+    code: clueDone('cinecodeState'), grp: clueDone('cinegroupState'), rating: ratingDone(), trumps: trumpsDone()
   };
   // the fused Guess It card: three lenses over one engine, done at 3/3
   const guessN = ['cineclueState', 'cineframeState', 'cinecastState'].filter(clueDone).length;
@@ -2248,6 +2255,7 @@ function metaItems() {
   });
   { const s = gs('cinelineState'); const done = !!(s && s.day === ud && s.finished); items.push({ emoji: '📅', done: done, text: done ? ((s.solved ? '✅ ' : '') + (s.score != null ? s.score + '/10' : 'done')) : null }); }
   { const s = gs('cinereelState'); const done = !!(s && s.day === ud && s.finished); items.push({ emoji: '🎞️', done: done, text: done ? (s.won ? ('✅ ' + (s.score || '?') + '/6') : '❌') : null }); }
+  { const s = gs('cinecodeState'); const done = !!(s && s.day === ud && s.finished); items.push({ emoji: '🎯', done: done, text: done ? (s.won ? ('✅ ' + (s.score || '?') + '/6') : '❌') : null }); }
   { const s = gs('cinegridState'); const done = !!(s && s.day === ud && s.finished); items.push({ emoji: '🔲', done: done, text: done ? ('✅ ' + (s.filled || 0) + '/9') : null }); }
   { const s = gs('cinechainState'); const done = !!(s && s.day === ud && s.finished); items.push({ emoji: '⛓️', done: done, text: done ? ('✅ chain ' + (s.length || 0)) : null }); }
   { const s = gs('cinegroupState'); const done = !!(s && s.day === ud && s.finished); items.push({ emoji: '🟨', done: done, text: done ? (s.won ? ('✅ ' + (s.mistakes || 0) + '/4') : '❌') : null }); }
@@ -2579,7 +2587,7 @@ function shareTodayText(items, done, total, streak) {
 const META_NAV = [
   { n: 'CineLinks', h: null }, { n: 'CineClue', h: '/cineclue.html' }, { n: 'CineFrame', h: '/cineframe.html' },
   { n: 'CineCast', h: '/cinecast.html' }, { n: 'CineLine', h: '/cineline.html' },
-  { n: 'CineReel', h: '/cinereel.html' }, { n: 'CineGrid', h: '/cinegrid.html' }, { n: 'CineChain', h: '/cinechain.html' },
+  { n: 'CineReel', h: '/cinereel.html' }, { n: 'CineCode', h: '/cinecode.html' }, { n: 'CineGrid', h: '/cinegrid.html' }, { n: 'CineChain', h: '/cinechain.html' },
   { n: 'CineGroup', h: '/cinegroup.html' },
   { n: 'Rating games', h: '/rating/versus?mode=daily' },
   { n: 'Vault Arena', h: '/rating/toptrumps' }
