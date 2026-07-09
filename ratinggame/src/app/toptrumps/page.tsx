@@ -106,7 +106,7 @@ const STATS: { key: StatKey; label: string; icon: string; val: (c: Card) => numb
 ];
 
 const HAND = 8;
-const MAX_ROUNDS = 40;
+const MAX_ROUNDS = 32;
 type Phase = "deal" | "play" | "reveal" | "over";
 type Mode = "daily" | "arena" | "practice";
 type Res = "win" | "lose" | "tie";
@@ -175,6 +175,7 @@ export default function TopTrumps() {
   const postedRef = useRef(false);           // deck published to the rival pool once per day
   const shineUsedRef = useRef(false);        // the Shine save is once per match
   const settleRef = useRef<(() => void) | null>(null);
+  const advanceRef = useRef<(() => void) | null>(null);   // tap-to-skip: run this duel's settle now
   const [shineOffer, setShineOffer] = useState<StatKey | null>(null);
   const [banned, setBanned] = useState<StatKey | null>(null);   // the stat you just lost with (can't re-pick it)
   const [revealed, setRevealed] = useState(false);
@@ -405,7 +406,7 @@ export default function TopTrumps() {
     trk("arena_stat", { mode, stat, turn, res }); if (tb) trk("arena_mastery", { mode });
     vibrate(10); Sfx.flip(); if (byPlayer) Sfx.pick();
     clearTimers();
-    after(820, () => {
+    after(700, () => {
       setClash(true);
       const spoilsN = [pc, cc, ...pot].length;
       if (res === "win") { vibrate(28); Sfx.win(); triggerShake(1 + Math.min(streak, 6) * 0.4); boardFlash("rgba(127,212,154,.6)"); scorePop(spoilsN, "#7fd49a"); sweep("player", spoilsN); }
@@ -422,7 +423,8 @@ export default function TopTrumps() {
       if (np.length === 0 || nc.length === 0 || round >= MAX_ROUNDS) { finish(np, nc); }
       else { setRound((r) => r + 1); setRevealed(false); setChosen(null); setClash(false); setDuel(null); setPeeked(false); setTrackSel(null); setCpuTell(null); setPhase("play"); }
     };
-    after(1620, () => {
+    advanceRef.current = settle;
+    after(1200, () => {
       // Shine save: a Shined card from your collection lets you re-pick ONCE per
       // match after losing a duel you chose — the cosmetic becomes a lifeline.
       if (res === "lose" && byPlayer && pc.shine && !shineUsedRef.current) {
@@ -438,7 +440,7 @@ export default function TopTrumps() {
 
   useEffect(() => {
     if (phase === "play" && turn === "cpu" && cpu.length) {
-      const t = setTimeout(() => resolve(cpuTell ?? cpuPick(cpu[0], archetype.bias)), 1700);
+      const t = setTimeout(() => resolve(cpuTell ?? cpuPick(cpu[0], archetype.bias)), 1350);
       return () => clearTimeout(t);
     }
   }, [phase, turn, cpu, resolve, cpuTell, archetype]);
@@ -461,6 +463,10 @@ export default function TopTrumps() {
   const doCounter = () => { if (!canAct || yourTurn || cpuTell || intel < 1 || !cc) return; setIntel((i) => i - 1); setCpuTell(cpuPick(cc, archetype.bias)); trk("arena_counter", { mode }); Sfx.select(); };
   // Swap (both turns, cost 1): sink your top card, bring up the next.
   const doSwap = () => { if (!canAct || intel < 1 || player.length < 2) return; setIntel((i) => i - 1); setPlayer((p) => [...p.slice(1), p[0]]); trk("arena_swap", { mode }); Sfx.tap(); };
+  // Tap-to-skip: once the result has flashed, tapping the board runs this duel's
+  // settle now instead of waiting out the pause.
+  const canSkip = phase === "reveal" && clash && !shineOffer && !!advanceRef.current;
+  const advance = () => { if (!canSkip) return; clearTimers(); const f = advanceRef.current; advanceRef.current = null; f?.(); };
   // Deck tracker: a rival card is "known" once it's been revealed in a duel, or if
   // it originally came from YOUR hand (you always knew those). You learn the SET
   // they hold, never the order — the top card stays a gamble until you Peek.
@@ -561,7 +567,7 @@ export default function TopTrumps() {
         </div>
       )}
 
-      <div ref={boardRef} className={"tt-board" + (wide ? " tt-wide" : "")}>
+      <div ref={boardRef} className={"tt-board" + (wide ? " tt-wide" : "")} onClick={advance} style={canSkip ? { cursor: "pointer" } : undefined}>
         {/* streak charge aura — heats up as the run grows (Balatro escalation) */}
         <div className={"tt-aura" + (chargeLvl >= 2 ? " tt-aura-pulse" : "")} aria-hidden style={{ opacity: chargeLvl ? 1 : 0, background: `radial-gradient(65% 55% at 50% 45%,${AURA[chargeLvl]},transparent 72%)` }} />
         {/* CPU card */}
@@ -588,7 +594,7 @@ export default function TopTrumps() {
                   style={{ ...btn(false), padding: "7px 14px", fontSize: ".76rem" }}>Accept loss</button>
               </span>
             : clash && duel
-            ? <span style={{ color: resColor(duel.res) }}>{duel.res === "win" ? (duel.tb ? "★ Mastery breaks the tie — cards are yours" : "You took the cards") : duel.res === "lose" ? "CPU took the cards" : "Tie — pot grows ⚔"}</span>
+            ? <span style={{ color: resColor(duel.res) }}>{duel.res === "win" ? (duel.tb ? "★ Mastery breaks the tie — cards are yours" : "You took the cards") : duel.res === "lose" ? "CPU took the cards" : "Tie — pot grows ⚔"}<span style={{ color: "var(--mut)", fontWeight: 600, fontSize: ".7rem", marginLeft: 8 }}>tap ▸</span></span>
             : yourTurn ? <span style={{ color: "var(--gold)" }}>Your turn — pick a stat</span>
             : phase === "reveal" ? <span style={{ color: "var(--mut)" }}>Revealing…</span>
             : cpuTell ? <span style={{ color: "#e8806f" }}>⚠ {rivalTag || "CPU"} is leaning {STATS.find((s) => s.key === cpuTell)?.label}</span>
