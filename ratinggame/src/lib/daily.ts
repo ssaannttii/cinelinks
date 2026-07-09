@@ -50,5 +50,6 @@ declare global {
     CineInternal?: {
       isTester?: () => boolean;
     };
+    Track?: (name: string, props?: Record<string, unknown>) => void;
   }
 }

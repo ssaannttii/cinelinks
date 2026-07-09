@@ -64,6 +64,12 @@ function readOwned(): OwnedRec[] {
 // Deal both hands. Yours is built from your collection first (owned cards, earned
 // rarity, mastery); "loaner" house cards fill the gaps until you collect more.
 // The CPU never draws a card that's in your hand.
+// Lightweight telemetry -> Vercel Web Analytics via the shared analytics.js Track
+// global (testers auto-excluded, no-op if not loaded yet). Balance by data, not vibes.
+function trk(name: string, props?: Record<string, unknown>) {
+  try { if (typeof window !== "undefined" && window.Track) window.Track(name, props); } catch { /* noop */ }
+}
+
 function buildDecks(m: Mode): { mine: Card[]; theirs: Card[]; ownedN: number } {
   // daily = fair fixed deck, same for everyone (seeded, house pool, no collection).
   // arena = YOUR collection (+ loaners to fill). practice = random house deck.
@@ -164,6 +170,7 @@ export default function TopTrumps() {
   const initHandRef = useRef<Set<number>>(new Set());   // your dealt hand — cards beyond it were captured in battle
   const myDeckRef = useRef<Card[]>([]);      // your starting 8 (fixed) — for the hand viewer
   const rivalDeckRef = useRef<Card[]>([]);   // rival's starting 8 (fixed) — scouting is tracked against this
+  const matchStartRef = useRef(0);           // ms timestamp of match start (match-length telemetry)
   const reducedRef = useRef(false);
   const boardRef = useRef<HTMLDivElement>(null);
   const clashRef = useRef<HTMLDivElement>(null);
@@ -249,6 +256,7 @@ export default function TopTrumps() {
     initHandRef.current = new Set(mine.map((c) => c.id));
     myDeckRef.current = mine; rivalDeckRef.current = theirs;
     setOwnedN(on);
+    matchStartRef.current = Date.now(); trk("arena_start", { mode: m, owned: on });
     setPlayer(mine); setCpu(theirs);
     setPot([]); setTurn("player"); setRound(1); setChosen(null); setDuel(null); setClash(false);
     setStreak(0); setBest(0); setWon(false); setRevealed(false);
@@ -282,6 +290,7 @@ export default function TopTrumps() {
   const finish = useCallback((np: Card[], nc: Card[]) => {
     const w = np.length >= nc.length;
     setWon(w); setPhase("over");
+    trk("arena_end", { mode, won: w ? 1 : 0, rounds: round, you: np.length, cpu: nc.length, secs: Math.round((Date.now() - matchStartRef.current) / 1000) });
     if (mode === "daily") {
       try {
         localStorage.setItem("toptrumps_daily", JSON.stringify({ date: todayKey(), won: w, mine: np.length, cpu: nc.length }));
@@ -322,7 +331,7 @@ export default function TopTrumps() {
     }
     if (w) { vibrate([20, 40, 20]); Sfx.victory(); setTimeout(() => confetti(160), 140); setTimeout(() => confetti(90), 620); }
     else { vibrate(80); Sfx.defeat(); }
-  }, [mode]);
+  }, [mode, round]);
 
   const startRival = useCallback(async () => {
     try {
@@ -343,6 +352,7 @@ export default function TopTrumps() {
         theirs = theirs.concat(pad.slice(0, HAND - theirs.length).map(toCard));
       }
       setMode("practice"); setOwnedN(on);
+      matchStartRef.current = Date.now(); trk("arena_start", { mode: "rival", owned: on });
       myDeckRef.current = mine; rivalDeckRef.current = theirs;
       setPlayer(mine); setCpu(theirs);
       setPot([]); setTurn("player"); setRound(1); setChosen(null); setDuel(null); setClash(false);
@@ -367,6 +377,7 @@ export default function TopTrumps() {
     setChosen(stat); setRevealed(true); setPhase("reveal"); setClash(false);
     setSeenIds((prev) => { const add = [pc.id, cc.id].filter((id) => !prev.includes(id)); return add.length ? [...prev, ...add] : prev; });   // both cards shown this duel
     setDuel({ stat, pv, cv, res, tb });
+    trk("arena_stat", { mode, stat, turn, res }); if (tb) trk("arena_mastery", { mode });
     vibrate(10); Sfx.flip(); if (byPlayer) Sfx.pick();
     clearTimers();
     after(820, () => {
@@ -379,7 +390,7 @@ export default function TopTrumps() {
     const settle = () => {
       const spoils = shuffle([pc, cc, ...pot], Math.random);
       let np = player.slice(1), nc = cpu.slice(1), nturn = turn, nstreak = streak;
-      if (res === "win") { np = [...np, ...spoils]; nturn = "player"; nstreak = streak + 1; setPot([]); if (nstreak >= 2) Sfx.streak(nstreak); if (nstreak % 3 === 0) setIntel((i) => Math.min(6, i + 1)); }
+      if (res === "win") { np = [...np, ...spoils]; nturn = "player"; nstreak = streak + 1; setPot([]); if (nstreak >= 2) Sfx.streak(nstreak); if (nstreak % 3 === 0) { setIntel((i) => Math.min(6, i + 1)); trk("arena_intel", { mode }); } }
       else if (res === "lose") { nc = [...nc, ...spoils]; nturn = "cpu"; nstreak = 0; setPot([]); }
       else { setPot(spoils); }
       setPlayer(np); setCpu(nc); setTurn(nturn); setStreak(nstreak); setBest((b) => Math.max(b, nstreak));
@@ -392,6 +403,7 @@ export default function TopTrumps() {
       if (res === "lose" && byPlayer && pc.shine && !shineUsedRef.current) {
         settleRef.current = settle;
         setShineOffer(stat);
+        trk("arena_shine", { mode });
         vibrate([8, 20]);
         return;
       }
@@ -417,8 +429,8 @@ export default function TopTrumps() {
   // Intel spends: Peek reveals the rival's full card this duel; Swap sinks your
   // top card and brings up the next (dodge a bad matchup). The rival card is
   // unchanged by a swap, so a prior Peek stays valid.
-  const doPeek = () => { if (!canAct || peeked || intel < 1) return; setIntel((i) => i - 1); setPeeked(true); if (cc) setSeenIds((prev) => (prev.includes(cc.id) ? prev : [...prev, cc.id])); Sfx.select(); };
-  const doSwap = () => { if (!canAct || intel < 2 || player.length < 2) return; setIntel((i) => i - 2); setPlayer((p) => [...p.slice(1), p[0]]); Sfx.tap(); };
+  const doPeek = () => { if (!canAct || peeked || intel < 1) return; setIntel((i) => i - 1); setPeeked(true); if (cc) setSeenIds((prev) => (prev.includes(cc.id) ? prev : [...prev, cc.id])); trk("arena_scout", { mode }); Sfx.select(); };
+  const doSwap = () => { if (!canAct || intel < 2 || player.length < 2) return; setIntel((i) => i - 2); setPlayer((p) => [...p.slice(1), p[0]]); trk("arena_swap", { mode }); Sfx.tap(); };
   // Deck tracker: a rival card is "known" once it's been revealed in a duel, or if
   // it originally came from YOUR hand (you always knew those). You learn the SET
   // they hold, never the order — the top card stays a gamble until you Peek.
