@@ -121,11 +121,31 @@ function mulberry(seed: number) { return () => { seed |= 0; seed = (seed + 0x6D2
 function dayNum() { const n = new Date(); return Math.floor(Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate()) / 86400000); }
 const todayKey = madridDayKey;   // suite dailies roll over on Madrid midnight, not UTC
 
-function cpuPick(card: Card): StatKey {
-  const scored = STATS.map((s) => ({ k: s.key, b: s.bar(card) }));
-  scored.sort((a, b) => b.b - a.b);
-  // Beatable but competent: usually plays its strongest stat, sometimes its 2nd.
-  return Math.random() < 0.7 ? scored[0].k : scored[1].k;
+// Daily rivals have a personality: a stat bias you can READ and plan around
+// (announced before the match). The Gambler (no bias) plays unpredictably.
+type Archetype = { id: string; name: string; bias: StatKey[] | null; blurb: string };
+const ARCHETYPES: Archetype[] = [
+  { id: "critic", name: "The Critic", bias: ["rating"], blurb: "trusts the ratings" },
+  { id: "mogul", name: "The Mogul", bias: ["revenue", "votes"], blurb: "chases box office and buzz" },
+  { id: "archivist", name: "The Archivist", bias: ["year"], blurb: "loves old classics" },
+  { id: "indie", name: "The Indie Darling", bias: ["budget"], blurb: "roots for the underdog" },
+  { id: "epic", name: "The Epic Fan", bias: ["runtime"], blurb: "goes for the epics" },
+  { id: "gambler", name: "The Gambler", bias: null, blurb: "plays unpredictably" },
+];
+
+function cpuPick(card: Card, bias?: StatKey[] | null): StatKey {
+  const scored = STATS.map((s) => ({ k: s.key, b: s.bar(card) })).sort((a, b) => b.b - a.b);
+  if (!bias || bias.length === 0) {
+    // Gambler / default: usually best, sometimes 2nd, occasionally a wild pick.
+    const r = Math.random();
+    return r < 0.6 ? scored[0].k : r < 0.85 ? scored[1].k : scored[Math.floor(Math.random() * scored.length)].k;
+  }
+  // Archetype: ~68% plays its strongest biased stat, else its overall best.
+  if (Math.random() < 0.68) {
+    const pref = bias.map((k) => scored.find((s) => s.k === k)).filter((x): x is { k: StatKey; b: number } => !!x).sort((a, b) => b.b - a.b)[0];
+    if (pref) return pref.k;
+  }
+  return scored[0].k;
 }
 function vibrate(ms: number | number[]) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch { /* noop */ } }
 const resColor = (r: Res) => (r === "win" ? "#7fd49a" : r === "lose" ? "#e8806f" : "#b58ad6");
@@ -166,6 +186,7 @@ export default function TopTrumps() {
   const [seenIds, setSeenIds] = useState<number[]>([]); // rival cards revealed so far (deck tracker)
   const [trackSel, setTrackSel] = useState<number | null>(null); // expanded card in the tracker
   const [cpuTell, setCpuTell] = useState<StatKey | null>(null);   // Counter-read: the stat the CPU will play this defense
+  const [archetype, setArchetype] = useState<Archetype>(ARCHETYPES[0]); // this match's rival personality (stat bias)
 
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const initHandRef = useRef<Set<number>>(new Set());   // your dealt hand — cards beyond it were captured in battle
@@ -258,6 +279,7 @@ export default function TopTrumps() {
     myDeckRef.current = mine; rivalDeckRef.current = theirs;
     setOwnedN(on);
     matchStartRef.current = Date.now(); trk("arena_start", { mode: m, owned: on });
+    setArchetype(m === "daily" ? ARCHETYPES[dayNum() % ARCHETYPES.length] : ARCHETYPES[Math.floor(Math.random() * ARCHETYPES.length)]);
     setPlayer(mine); setCpu(theirs);
     setPot([]); setTurn("player"); setRound(1); setChosen(null); setDuel(null); setClash(false);
     setStreak(0); setBest(0); setWon(false); setRevealed(false);
@@ -354,6 +376,7 @@ export default function TopTrumps() {
       }
       setMode("practice"); setOwnedN(on);
       matchStartRef.current = Date.now(); trk("arena_start", { mode: "rival", owned: on });
+      setArchetype(ARCHETYPES[Math.floor(Math.random() * ARCHETYPES.length)]);
       myDeckRef.current = mine; rivalDeckRef.current = theirs;
       setPlayer(mine); setCpu(theirs);
       setPot([]); setTurn("player"); setRound(1); setChosen(null); setDuel(null); setClash(false);
@@ -415,10 +438,10 @@ export default function TopTrumps() {
 
   useEffect(() => {
     if (phase === "play" && turn === "cpu" && cpu.length) {
-      const t = setTimeout(() => resolve(cpuTell ?? cpuPick(cpu[0])), 1700);
+      const t = setTimeout(() => resolve(cpuTell ?? cpuPick(cpu[0], archetype.bias)), 1700);
       return () => clearTimeout(t);
     }
-  }, [phase, turn, cpu, resolve, cpuTell]);
+  }, [phase, turn, cpu, resolve, cpuTell, archetype]);
 
   useEffect(() => () => clearTimers(), []);
 
@@ -435,7 +458,7 @@ export default function TopTrumps() {
   // viewer and auto-opens its win/lose comparison — no separate panel.
   const doPeek = () => { if (!canAct || !yourTurn || peeked || intel < 2 || !cc) return; setIntel((i) => i - 2); setPeeked(true); setSeenIds((prev) => (prev.includes(cc.id) ? prev : [...prev, cc.id])); setTrackSel(cc.id); trk("arena_scout", { mode }); Sfx.select(); };
   // Counter-read (defense, cost 1): reveal the stat the CPU is about to play (locks it in).
-  const doCounter = () => { if (!canAct || yourTurn || cpuTell || intel < 1 || !cc) return; setIntel((i) => i - 1); setCpuTell(cpuPick(cc)); trk("arena_counter", { mode }); Sfx.select(); };
+  const doCounter = () => { if (!canAct || yourTurn || cpuTell || intel < 1 || !cc) return; setIntel((i) => i - 1); setCpuTell(cpuPick(cc, archetype.bias)); trk("arena_counter", { mode }); Sfx.select(); };
   // Swap (both turns, cost 1): sink your top card, bring up the next.
   const doSwap = () => { if (!canAct || intel < 1 || player.length < 2) return; setIntel((i) => i - 1); setPlayer((p) => [...p.slice(1), p[0]]); trk("arena_swap", { mode }); Sfx.tap(); };
   // Deck tracker: a rival card is "known" once it's been revealed in a duel, or if
@@ -497,7 +520,7 @@ export default function TopTrumps() {
         </div>
       )}
 
-      {phase === "deal" && <DealTray cards={player} ownedN={ownedN} mode={mode} onStart={startBattle} reduced={reduced} />}
+      {phase === "deal" && <DealTray cards={player} ownedN={ownedN} mode={mode} archetype={archetype} onStart={startBattle} reduced={reduced} />}
 
       {phase !== "deal" && (<>
       {/* deck provenance: Daily is fair (shared), Arena is your collection */}
@@ -525,6 +548,7 @@ export default function TopTrumps() {
           <span className="tt-knob" style={{ left: youPct + "%", transition: reduced ? "none" : "left .7s cubic-bezier(.3,.9,.3,1)" }} />
         </div>
         <div className="tt-status-row flex items-center justify-center gap-2 mt-2" style={{ minHeight: 20 }}>
+          <span className="tt-arch" title={archetype.blurb}>⚔ {archetype.name}</span>
           {streak >= 2 && <span className="tt-mult" key={streak} data-lvl={chargeLvl}>🔥 ×{streak}{streak >= 5 ? " · ON FIRE" : ""}</span>}
           {pot.length > 0 && <span className="tt-war">⚔ WAR · pot {pot.length}</span>}
         </div>
@@ -737,6 +761,8 @@ const CSS = `
 .tt-chip img{width:100%;height:100%;object-fit:cover;display:block}
 .tt-chip.unknown{cursor:default;border-style:dashed;border-color:rgba(255,255,255,.22);background:rgba(255,255,255,.04)}
 .tt-chip.on{transform:translateY(-2px);box-shadow:0 0 0 2px var(--gold)}
+.tt-deal-rival{margin-top:10px;font-size:.74rem;font-weight:700;color:var(--mut)}
+.tt-arch{font-size:.64rem;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}
 .tt-chip.top{box-shadow:0 0 0 2px #7fd49a}
 .tt-chip.top.on{box-shadow:0 0 0 2px #7fd49a,0 0 0 4px rgba(232,160,0,.5)}
 .tt-track-top{float:right;font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#7fd49a;margin-left:8px}
@@ -838,7 +864,7 @@ function DeckViewer({ cards, known, label, sub, sel, onSel, vs, topId }: { cards
 }
 
 
-function DealTray({ cards, ownedN, mode, onStart, reduced }: { cards: Card[]; ownedN: number; mode: Mode; onStart: () => void; reduced: boolean }) {
+function DealTray({ cards, ownedN, mode, archetype, onStart, reduced }: { cards: Card[]; ownedN: number; mode: Mode; archetype: Archetype; onStart: () => void; reduced: boolean }) {
   return (
     <div className="tt-deal-tray">
       <div className="tt-deal-title">{mode === "daily" ? "Today's deck" : mode === "practice" ? "Practice deck" : "Your deck"}</div>
@@ -851,6 +877,7 @@ function DealTray({ cards, ownedN, mode, onStart, reduced }: { cards: Card[]; ow
           ? <><b style={{ color: "var(--gold)" }}>{ownedN}</b> of {HAND} from your CineLinks collection{ownedN < HAND ? <> · {HAND - ownedN} loaner{HAND - ownedN === 1 ? "" : "s"}</> : " — full deck!"}</>
           : <>House cards for now — <a href="https://cinelinks.vercel.app" style={{ color: "var(--gold)", textDecoration: "none" }}>collect in CineLinks</a> to fill your Arena deck</>}
       </div>
+      <div className="tt-deal-rival">⚔ Today&apos;s rival: <b style={{ color: "var(--gold)" }}>{archetype.name}</b> — {archetype.blurb}</div>
       <div className="tt-deal-grid">
         {cards.map((c, i) => {
           const rar = RARITY[c.rarity];
