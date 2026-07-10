@@ -42,7 +42,11 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 .cx.red{background:var(--red);color:#fff;border-color:transparent}
 .cx .ar{font-weight:900;margin-left:2px}
 @keyframes pop{from{opacity:0;transform:translateY(6px) scale(.97)}to{opacity:1;transform:none}}
-.dots{display:flex;gap:6px;justify-content:center;margin:2px 0 14px}
+.anchors{max-width:470px;margin:6px auto 0;text-align:left;font-size:.76rem;color:var(--txt);line-height:1.45;display:flex;flex-wrap:wrap;gap:1px 4px;align-items:baseline}
+.anchors .ak{opacity:.6;font-size:.82rem}
+.anchors .asep{color:var(--mut);margin:0 5px}
+.revnote{color:var(--mut);font-size:.68rem;margin:6px auto 0;max-width:440px}
+.dots{display:flex;gap:6px;justify-content:center;margin:14px 0 14px}
 .dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.16)}
 .dot.used{background:#c0494a}
 .dot.win{background:var(--good)}
@@ -151,11 +155,10 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     colYear:     { en:'Year', es:'Año', fr:'Année', de:'Jahr', pt:'Ano' },
     colGenre:    { en:'Genre', es:'Género', fr:'Genre', de:'Genre', pt:'Género' },
     colLang:     { en:'Lang', es:'Idioma', fr:'Langue', de:'Sprache', pt:'Idioma' },
-    colTime:     { en:'Runtime', es:'Duración', fr:'Durée', de:'Länge', pt:'Duração' },
-    colRating:   { en:'Rating', es:'Nota', fr:'Note', de:'Note', pt:'Nota' },
-    colPeople:   { en:'People', es:'Gente', fr:'Gens', de:'Leute', pt:'Gente' },
-    sameDir:     { en:'Same director', es:'Mismo director', fr:'Même réalisateur', de:'Gleicher Regisseur', pt:'Mesmo realizador' },
-    sharedCast:  { en:'Shared cast', es:'Reparto común', fr:'Casting commun', de:'Gleiche Besetzung', pt:'Elenco comum' }
+    colDir:      { en:'Dir', es:'Dir', fr:'Réal', de:'Regie', pt:'Real' },
+    colCast:     { en:'Cast', es:'Reparto', fr:'Casting', de:'Cast', pt:'Elenco' },
+    colKey:      { en:'Tags', es:'Claves', fr:'Thèmes', de:'Themen', pt:'Temas' },
+    revealNote:  { en:'A match reveals the shared name below each row', es:'Cada coincidencia revela el nombre compartido debajo', fr:'Une correspondance révèle le nom partagé en dessous', de:'Ein Treffer zeigt den gemeinsamen Namen darunter', pt:'Cada coincidência revela o nome partilhado abaixo' }
   };
   function TR(k){ var m=L[k]; if(!m||typeof m!=='object') return k; var l=_lang(); return (l==='en'?null:m[l])||m.en||k; }
 
@@ -201,8 +204,16 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
   }
 
   // ── movie data + attribute comparison ─────────────────────
+  // 3 calls per film: details (year/genre/language/country), credits (director
+  // + top cast, kept WITH names so a match can be REVEALED), and keywords (the
+  // plot DNA). Cast/keywords are the recall anchors — the "letters" you rebuild
+  // the film from — so matches surface the shared name, not just a colour.
   async function movieData(id){
-    const [d,c]=await Promise.all([api('movie/'+id), api('movie/'+id+'/credits').catch(()=>({}))]);
+    const [d,c,k]=await Promise.all([
+      api('movie/'+id),
+      api('movie/'+id+'/credits').catch(()=>({})),
+      api('movie/'+id+'/keywords').catch(()=>({}))
+    ]);
     if(!d || d.success===false || !d.id) return null;
     const crew=(c&&c.crew)||[], cast=(c&&c.cast)||[];
     const dir=crew.find(p=>p.job==='Director');
@@ -210,23 +221,16 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
       id:d.id, title:d.title||d.name, year:parseInt((d.release_date||'').slice(0,4),10)||null,
       poster:d.poster_path,
       genreIds:(d.genres||[]).map(g=>g.id), genreNames:(d.genres||[]).map(g=>g.name),
-      runtime:d.runtime||null, rating:d.vote_average||null,
       lang:d.original_language||'', countries:(d.production_countries||[]).map(p=>p.iso_3166_1),
       dirId:dir?dir.id:null, dirName:dir?dir.name:null,
-      cast:cast.slice(0,8).map(p=>p.id),
-      lead:cast.length?cast[0].name:null
+      cast:cast.slice(0,10).map(p=>({id:p.id,name:p.name})),
+      lead:cast.length?cast[0].name:null,
+      kw:((k&&k.keywords)||[]).map(w=>({id:w.id,name:w.name}))
     };
   }
-  function valid(m){ return !!(m && m.year && m.runtime && m.genreIds.length && m.rating && m.dirId && m.cast.length); }
+  function valid(m){ return !!(m && m.year && m.genreIds.length && m.dirId && m.cast.length); }
 
-  // Each cell: {c:'green'|'gold'|'red', v:display, ar:'up'|'down'|null, t:tooltip}
-  function numCell(gv,sv,gt,ot,suf,dec){
-    if(gv==null||sv==null) return {c:'red',v:'—',ar:null,t:TR('noMatch')};
-    const diff=Math.abs(gv-sv);
-    const c=diff<=gt?'green':diff<=ot?'gold':'red';
-    const ar=sv>gv?'up':sv<gv?'down':null;
-    return {c:c, v:(dec?gv.toFixed(dec):Math.round(gv))+(suf||''), ar:ar, t:c==='green'?TR('exact'):c==='gold'?TR('close'):TR('noMatch')};
-  }
+  // Each cell: {c:'green'|'gold'|'red', v:short token, ar:arrow, names:[revealed], t:tooltip}
   function yearCell(gy,sy){
     if(gy==null||sy==null) return {c:'red',v:'—',ar:null};
     const diff=Math.abs(gy-sy);
@@ -238,9 +242,6 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     const samePrimary = gp!=null && gp===sp;                       // green only for a matching lead genre
     const shared = g.genreIds.filter(x=>s.genreIds.indexOf(x)>=0);  // any genre in common (broad "Action" etc. → gold)
     const c = samePrimary?'green':shared.length?'gold':'red';
-    // Show the genre that actually MATCHED, not the guess's lead genre, so a
-    // gold/green never mislabels the secret (e.g. a shared-Action guess reads
-    // "Action", not the guess's own "Science Fiction").
     const showId = c==='red' ? gp : (shared.indexOf(sp)>=0 ? sp : shared[0]);
     return {c:c, v:g.genreNames[g.genreIds.indexOf(showId)]||g.genreNames[0]||'—', ar:null, t:g.genreNames.join(', ')};
   }
@@ -249,22 +250,32 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     const country = g.countries.some(x=>s.countries.indexOf(x)>=0);
     return {c:same?'green':country?'gold':'red', v:(g.lang||'?').toUpperCase(), ar:null, t:(g.lang||'').toUpperCase()+(g.countries.length?' · '+g.countries.join(', '):'')};
   }
-  function peopleCell(g,s){
-    const sameDir = g.dirId && g.dirId===s.dirId;
-    const sharedCast = g.cast.some(x=>s.cast.indexOf(x)>=0);
-    return {c:sameDir?'green':sharedCast?'gold':'red', v:sameDir?TR('sameDir'):sharedCast?TR('sharedCast'):'—', ar:null, t:sameDir?TR('sameDir'):sharedCast?TR('sharedCast'):TR('noMatch')};
+  // DNA columns — reveal the shared name(s): the yellow letter you can see.
+  function directorCell(g,s){
+    const same = g.dirId && g.dirId===s.dirId;
+    return {c:same?'green':'red', v:same?'✓':'—', ar:null, names:(same&&s.dirName)?[s.dirName]:[], t:same?s.dirName:TR('noMatch')};
+  }
+  function castCell(g,s){
+    const shared = g.cast.filter(p=>s.cast.some(q=>q.id===p.id)).map(p=>p.name);
+    const n=shared.length;
+    return {c:n>=2?'green':n===1?'gold':'red', v:n?('×'+n):'—', ar:null, names:shared, t:n?shared.join(', '):TR('noMatch')};
+  }
+  function keywordCell(g,s){
+    const shared = g.kw.filter(w=>s.kw.some(x=>x.id===w.id)).map(w=>w.name);
+    const m=shared.length;
+    return {c:m>=2?'green':m===1?'gold':'red', v:m?('×'+m):'—', ar:null, names:shared, t:m?shared.join(', '):TR('noMatch')};
   }
   function compare(g,s){
     return {
       year: yearCell(g.year,s.year),
       genre: genreCell(g,s),
       lang: langCell(g,s),
-      runtime: numCell(g.runtime,s.runtime,5,20,'m',0),
-      rating: numCell(g.rating,s.rating,0.2,0.6,'',1),
-      people: peopleCell(g,s)
+      director: directorCell(g,s),
+      cast: castCell(g,s),
+      keyword: keywordCell(g,s)
     };
   }
-  const CELL_ORDER=['year','genre','lang','runtime','rating','people'];
+  const CELL_ORDER=['year','genre','lang','director','cast','keyword'];
 
   async function pickSecret(){
     const pool=(window.CINECLUE_POOL||[]).filter(x=>typeof x==='number');
@@ -287,18 +298,26 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
   function cellHTML(cell){
     return '<div class="cx '+cell.c+'"'+(cell.t?' title="'+esc(cell.t)+'"':'')+'>'+esc(cell.v)+(cell.ar?' <span class="ar">'+(cell.ar==='up'?'↑':'↓')+'</span>':'')+'</div>';
   }
+  function anchorsHTML(c){
+    const p=[], cap=arr=>arr.slice(0,3).map(esc).join(', ')+(arr.length>3?' +'+(arr.length-3):'');
+    if(c.director.names&&c.director.names.length) p.push('<span class="ak">🎬</span> '+esc(c.director.names[0]));
+    if(c.cast.names&&c.cast.names.length)         p.push('<span class="ak">🎭</span> '+cap(c.cast.names));
+    if(c.keyword.names&&c.keyword.names.length)   p.push('<span class="ak">🏷</span> '+cap(c.keyword.names));
+    return p.length?'<div class="anchors">'+p.join('<span class="asep">·</span>')+'</div>':'';
+  }
   function rowHTML(r){
     const c=r.cells;
     return '<div class="grow">'+
       '<div class="gtitle"><img src="'+poster(r.movie.poster)+'" alt=""><span><span class="t">'+esc(r.movie.title)+'</span> <span class="y">'+(r.movie.year||'')+'</span></span></div>'+
       '<div class="gstrip">'+CELL_ORDER.map(k=>cellHTML(c[k])).join('')+'</div>'+
+      anchorsHTML(c)+
     '</div>';
   }
   function headHTML(){
-    return '<div class="ghead"><div class="ghl">'+TR('colYear')+'</div><div class="ghl">'+TR('colGenre')+'</div><div class="ghl">'+TR('colLang')+'</div><div class="ghl">'+TR('colTime')+'</div><div class="ghl">'+TR('colRating')+'</div><div class="ghl">'+TR('colPeople')+'</div></div>';
+    return '<div class="ghead"><div class="ghl">'+TR('colYear')+'</div><div class="ghl">'+TR('colGenre')+'</div><div class="ghl">'+TR('colLang')+'</div><div class="ghl">'+TR('colDir')+'</div><div class="ghl">'+TR('colCast')+'</div><div class="ghl">'+TR('colKey')+'</div></div>';
   }
   function legendHTML(){
-    return '<div class="legend"><span><i style="background:var(--green)"></i>'+TR('exact')+'</span><span><i style="background:var(--gold)"></i>'+TR('close')+'</span><span><i style="background:var(--red)"></i>'+TR('noMatch')+'</span><span>↑↓ '+TR('colYear').toLowerCase()+' / '+TR('colTime').toLowerCase()+' / '+TR('colRating').toLowerCase()+'</span></div>';
+    return '<div class="legend"><span><i style="background:var(--green)"></i>'+TR('exact')+'</span><span><i style="background:var(--gold)"></i>'+TR('close')+'</span><span><i style="background:var(--red)"></i>'+TR('noMatch')+'</span></div><div class="revnote">'+TR('revealNote')+'</div>';
   }
 
   function render(){
