@@ -70,6 +70,8 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 .result .who img{width:56px;height:84px;border-radius:8px;object-fit:cover;border:1px solid var(--bdr)}
 .result .who .nm{font-weight:800;font-size:1.05rem;text-align:left}
 .result .who .sub{color:var(--mut);font-size:.8rem}
+.result .who .cred{color:var(--mut);font-size:.74rem;margin-top:3px}
+.result .who .nm .y{color:var(--mut);font-weight:600;font-size:.82rem}
 .stats{display:flex;gap:16px;justify-content:center;margin:14px 0 2px}
 .stat{display:flex;flex-direction:column;align-items:center;gap:1px;font-size:.6rem;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}
 .stat b{font-size:1.2rem;color:var(--txt);font-weight:800}
@@ -210,8 +212,9 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
       genreIds:(d.genres||[]).map(g=>g.id), genreNames:(d.genres||[]).map(g=>g.name),
       runtime:d.runtime||null, rating:d.vote_average||null,
       lang:d.original_language||'', countries:(d.production_countries||[]).map(p=>p.iso_3166_1),
-      dirId:dir?dir.id:null,
-      cast:cast.slice(0,8).map(p=>p.id)
+      dirId:dir?dir.id:null, dirName:dir?dir.name:null,
+      cast:cast.slice(0,8).map(p=>p.id),
+      lead:cast.length?cast[0].name:null
     };
   }
   function valid(m){ return !!(m && m.year && m.runtime && m.genreIds.length && m.rating && m.dirId && m.cast.length); }
@@ -232,9 +235,14 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
   }
   function genreCell(g,s){
     const gp=g.genreIds[0], sp=s.genreIds[0];
-    const principal = g.genreIds.indexOf(sp)>=0 || s.genreIds.indexOf(gp)>=0;
-    const any = g.genreIds.some(x=>s.genreIds.indexOf(x)>=0);
-    return {c:principal?'green':any?'gold':'red', v:g.genreNames[0]||'—', ar:null, t:g.genreNames.join(', ')};
+    const samePrimary = gp!=null && gp===sp;                       // green only for a matching lead genre
+    const shared = g.genreIds.filter(x=>s.genreIds.indexOf(x)>=0);  // any genre in common (broad "Action" etc. → gold)
+    const c = samePrimary?'green':shared.length?'gold':'red';
+    // Show the genre that actually MATCHED, not the guess's lead genre, so a
+    // gold/green never mislabels the secret (e.g. a shared-Action guess reads
+    // "Action", not the guess's own "Science Fiction").
+    const showId = c==='red' ? gp : (shared.indexOf(sp)>=0 ? sp : shared[0]);
+    return {c:c, v:g.genreNames[g.genreIds.indexOf(showId)]||g.genreNames[0]||'—', ar:null, t:g.genreNames.join(', ')};
   }
   function langCell(g,s){
     const same = g.lang && g.lang===s.lang;
@@ -359,7 +367,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     const s=SECRET;
     let stats=null;
     if(isDaily){
-      saveDone({day:utcDay(),finished:true,won:won,score:score,title:s.title,year:s.year,poster:s.poster,rows:rows});
+      saveDone({day:utcDay(),finished:true,won:won,score:score,title:s.title,year:s.year,poster:s.poster,dirName:s.dirName,lead:s.lead,rows:rows});
       stats=bumpStats(won,score,utcDay());
       // Daily win → the secret film is the prize card: floor rare, +2 for a 1-2 solve, +1 within three.
       try{
@@ -376,10 +384,12 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     const dayN=utcDay()-Math.floor(Date.UTC(2026,0,1)/864e5);
     const grid=rows.map(r=>CELL_ORDER.map(k=>r.cells[k].c==='green'?'🟩':r.cells[k].c==='gold'?'🟨':'🟥').join('')).join('\n');
     const share='🎬 CineCode'+(isDaily?' #'+dayN:'')+' '+(won?score+'/'+MAX:'X/'+MAX)+'\n'+grid+'\nhttps://cinelinks.vercel.app/cinecode.html';
+    const credit=(s.dirName?('dir. '+s.dirName):'')+(s.lead?(s.dirName?' · ':'')+s.lead:'');
     document.getElementById('result').innerHTML=
       '<h2 class="'+(won?'win':'')+'">'+(won?TR('gotIt'):TR('soClose'))+'</h2>'+
-      '<div class="who"><img src="'+poster(s.poster,'w185')+'" alt=""><div><div class="nm">'+esc(s.title)+'</div>'+
-        '<div class="sub">'+(won?(TR('solvedIn')+' '+score+'/'+MAX+' '+TR('tries')):TR('theAnswer'))+'</div></div></div>'+
+      '<div class="who"><img src="'+poster(s.poster,'w185')+'" alt=""><div><div class="nm">'+esc(s.title)+' <span class="y">'+(s.year||'')+'</span></div>'+
+        '<div class="sub">'+(won?(TR('solvedIn')+' '+score+'/'+MAX+' '+TR('tries')):TR('theAnswer'))+'</div>'+
+        (credit?'<div class="cred">'+esc(credit)+'</div>':'')+'</div></div>'+
       (stats?statsHTML(stats):'')+
       '<div class="row"><button class="btn" id="shareBtn">'+TR('share')+'</button><button class="btn gold" id="again">'+(isDaily?TR('practice'):TR('again'))+'</button></div>';
     if(won && window.Fx) setTimeout(()=>Fx.confetti({count:90}),160);
@@ -398,8 +408,9 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
       rows.map(rowHTML).join('')+
       '<div class="result show" id="result">'+
       '<h2 class="'+(d.won?'win':'')+'">'+(d.won?TR('solvedToday'):TR('todaysAnswer'))+'</h2>'+
-      '<div class="who"><img src="'+poster(d.poster,'w185')+'" alt=""><div><div class="nm">'+esc(d.title)+'</div>'+
-      '<div class="sub">'+(d.won?(TR('solvedIn')+' '+(d.score||'?')+'/'+MAX+' '+TR('tries')):TR('comeBack'))+'</div></div></div>'+
+      '<div class="who"><img src="'+poster(d.poster,'w185')+'" alt=""><div><div class="nm">'+esc(d.title)+' <span class="y">'+(d.year||'')+'</span></div>'+
+      '<div class="sub">'+(d.won?(TR('solvedIn')+' '+(d.score||'?')+'/'+MAX+' '+TR('tries')):TR('comeBack'))+'</div>'+
+      ((d.dirName||d.lead)?'<div class="cred">'+esc((d.dirName?('dir. '+d.dirName):'')+(d.lead?(d.dirName?' · ':'')+d.lead:''))+'</div>':'')+'</div></div>'+
       statsHTML(loadStats())+
       '<div class="row"><button class="btn gold" id="again">'+TR('practice')+'</button></div></div>';
     document.getElementById('again').onclick=()=>{location.href='/cinecode.html?practice=1';};
