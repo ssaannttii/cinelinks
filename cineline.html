@@ -225,6 +225,26 @@ let pendingIdx = 0; // index into deck of the card being placed
 let results = [];   // 'correct' | 'wrong' per placement
 let finished = false, solved = false, score = 0, lastPlaced = null;
 
+// The daily deck avoids films seen in the previous NO_REPEAT_DAYS days. It's
+// recomputed deterministically (same for everyone, no server): we replay each
+// recent day's pick — each excluding ITS own prior window — so a film can't come
+// back within a week. Pool is ~670 and a day uses ~16, so a 7-day block (~112)
+// leaves plenty of variety. One number to tune the window.
+const NO_REPEAT_DAYS = 7;
+function dailyDeckOrder(pool, day, take){
+  const recent = [];   // picked-id arrays, oldest → newest
+  let todays = [];
+  // Warm up from far enough back that the last NO_REPEAT_DAYS days each carry a
+  // full history, then today's pick excludes exactly that rolling window.
+  for(let d = day - 2 * NO_REPEAT_DAYS; d <= day; d++){
+    const banned = new Set();
+    recent.slice(-NO_REPEAT_DAYS).forEach(arr => arr.forEach(id => banned.add(id)));
+    todays = Timeline.shuffle(pool, d).filter(id => !banned.has(id)).slice(0, take);
+    recent.push(todays);
+  }
+  return todays;
+}
+
 async function loadDeck(){
   // Practice = endless deck: one recognisable film per decade from TMDB Discover
   // (Discover results already carry title/date/poster, so no per-id fetch).
@@ -243,8 +263,9 @@ async function loadDeck(){
   }
   const pool = window.CINELINE_POOL || [];
   if(!pool.length) throw new Error('empty pool');
-  const seed = PRACTICE ? Math.floor(Math.random() * 1e9) : DAY;
-  const order = Timeline.shuffle(pool, seed).slice(0, 16);
+  const order = PRACTICE
+    ? Timeline.shuffle(pool, Math.floor(Math.random() * 1e9)).slice(0, 16)
+    : dailyDeckOrder(pool, DAY, 16);
   const ds = await Promise.all(order.map(id => api('movie/' + id).catch(()=>null)));
   const cards = [];
   for(const d of ds){
