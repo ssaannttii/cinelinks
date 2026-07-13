@@ -10,14 +10,14 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#0b0b0c; --panel:#141416; --txt:#f5f5f5; --mut:#9a9a9e; --gold:#e8a000; --goldsoft:#f5c542;
+    --bg:#252c35; --panel:#2c343f; --txt:#f5f5f5; --mut:#9a9a9e; --gold:#e8a000; --goldsoft:#f5c542;
     --fdisp:'Fraunces',Georgia,serif; --fui:'Schibsted Grotesk',-apple-system,sans-serif;
     --rare:#5aa9e6; --elite:#b58ad6; --legend:#e8a000; --common:#8d8d92;
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
   body{background:var(--bg);color:var(--txt);font-family:var(--fui);overflow-x:hidden;
-    background:radial-gradient(1200px 600px at 80% -5%,rgba(232,160,0,.10),transparent 60%),var(--bg)}
+    background:var(--bg)}
   a{color:inherit;text-decoration:none}
   img{display:block}
   ::-webkit-scrollbar{height:0;width:0}
@@ -87,7 +87,7 @@
 
   /* landscape game tiles */
   .tile{position:relative;flex:0 0 auto;width:270px;aspect-ratio:16/10;border-radius:8px;overflow:hidden;
-    cursor:pointer;scroll-snap-align:start;background:#1a1a1d;transition:transform .28s cubic-bezier(.2,.8,.3,1),box-shadow .28s;transform-origin:center}
+    cursor:pointer;scroll-snap-align:start;background:#2b333d;transition:transform .28s cubic-bezier(.2,.8,.3,1),box-shadow .28s;transform-origin:center}
   .tile:hover{transform:scale(1.11);box-shadow:0 18px 44px rgba(0,0,0,.6);z-index:20}
   .tile-bg{position:absolute;inset:0;background-size:cover;background-position:center 30%}
   .tile-scrim{position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,.9) 4%,rgba(0,0,0,.25) 42%,rgba(0,0,0,.05) 70%)}
@@ -109,7 +109,7 @@
 
   /* ranked row */
   .rank-tile{display:flex;align-items:flex-end;flex:0 0 auto;scroll-snap-align:start}
-  .rank-num{font-family:var(--fdisp);font-weight:600;font-size:9rem;line-height:.7;color:#1a1a1d;
+  .rank-num{font-family:var(--fdisp);font-weight:600;font-size:9rem;line-height:.7;color:#2e3742;
     -webkit-text-stroke:2px #3a3a40;margin-right:-26px;position:relative;z-index:1;user-select:none}
   .rank-tile .tile{width:172px;aspect-ratio:2/3;z-index:2}
   .rank-tile .tile-ic{display:none}

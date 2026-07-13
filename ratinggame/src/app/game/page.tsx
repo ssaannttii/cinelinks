@@ -78,7 +78,7 @@ function buildShareText(mode: GameMode, score: number, max: number, rounds: Roun
 function PosterImage({ src, title }: { src: string; title: string }) {
   const [loaded, setLoaded] = useState(false);
   return (
-    <div className="relative w-full aspect-[2/3] rounded-xl overflow-hidden" style={{ background: "#181818" }}>
+    <div className="relative w-full aspect-[2/3] rounded-xl overflow-hidden" style={{ background: "#2c343f" }}>
       {!loaded && <div className="absolute inset-0 skeleton" />}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
@@ -98,7 +98,7 @@ function RatingBar({ label, guess, actual, color }: { label: string; guess: numb
   const actualW = Math.min((actualNum / max) * 100, 100);
   return (
     <div className="mb-4">
-      <div className="flex justify-between text-xs mb-1" style={{ color: "#777" }}>
+      <div className="flex justify-between text-xs mb-1" style={{ color: "#9aa4b0" }}>
         <span>{label}</span>
         <span>Actual: <span className="font-bold" style={{ color }}>{actual}</span></span>
       </div>
@@ -286,13 +286,13 @@ function GameContent() {
 
   if (loading || (movieIds.length > 0 && !currentRound && phase !== "done")) {
     return (
-      <div className="flex flex-1 items-center justify-center min-h-screen" style={{ background: "#0d0d0d" }}>
+      <div className="flex flex-1 items-center justify-center min-h-screen" style={{ background: "#252c35" }}>
         <div className="text-center space-y-4">
           <div className="relative w-14 h-14 mx-auto">
             <div className="absolute inset-0 rounded-lg border-2 border-t-[#e8a000] border-r-[rgba(232,160,0,0.4)] border-b-transparent border-l-transparent animate-spin" />
             <div className="absolute inset-3 rounded-full animate-pulse" style={{ background: "rgba(232,160,0,0.1)" }} />
           </div>
-          <p className="text-sm font-medium" style={{ color: "#777" }}>Loading films…</p>
+          <p className="text-sm font-medium" style={{ color: "#9aa4b0" }}>Loading films…</p>
         </div>
       </div>
     );
@@ -311,16 +311,16 @@ function GameContent() {
                   { label: "Couch Potato", sub: "Those were rough", color: "#f87171" };
 
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 animate-slide-up" style={{ background: "#0d0d0d" }}>
+      <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 animate-slide-up" style={{ background: "#252c35" }}>
         <div className="max-w-lg w-full rounded-2xl p-6" style={{ background: "rgba(255,255,255,0.045)", backdropFilter: "blur(18px)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 30px 80px rgba(0,0,0,0.38)" }}>
           <div className="text-center mb-6">
             <p className="text-[0.6rem] font-bold tracking-[0.18em] uppercase mb-3" style={{ color: "#e8a000" }}>
               {mode === "imdb" ? "IMDB Score" : mode === "rt" ? "Rotten Tomatoes" : "Double Down"}
             </p>
             <p className="text-2xl font-black mb-0.5" style={{ color: grade.color }}>{grade.label}</p>
-            <p className="text-sm" style={{ color: "#777" }}>{grade.sub}</p>
+            <p className="text-sm" style={{ color: "#9aa4b0" }}>{grade.sub}</p>
             <p className="text-5xl font-black mt-4 text-[#f0f0f0]">
-              {totalScore} <span className="text-xl font-normal" style={{ color: "#777" }}>/ {maxScore}</span>
+              {totalScore} <span className="text-xl font-normal" style={{ color: "#9aa4b0" }}>/ {maxScore}</span>
             </p>
             <div className="mt-3 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.07)" }}>
               <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${pct}%`, background: "#e8a000" }} />
@@ -338,13 +338,13 @@ function GameContent() {
                 </div>
                 <div className="text-right">
                   {(mode === "imdb" || mode === "both") && (
-                    <p className="text-xs" style={{ color: "#777" }}>
+                    <p className="text-xs" style={{ color: "#9aa4b0" }}>
                       IMDB: <span style={{ color: "#e8a000" }} className="font-bold">{r.movie.imdbRating}</span>
                       <span style={{ color: "#555" }}> (you: {r.imdbGuess?.toFixed(1)})</span>
                     </p>
                   )}
                   {(mode === "rt" || mode === "both") && (
-                    <p className="text-xs" style={{ color: "#777" }}>
+                    <p className="text-xs" style={{ color: "#9aa4b0" }}>
                       RT: <span className="text-red-400 font-bold">{r.movie.rtRating}</span>
                       <span style={{ color: "#555" }}> (you: {r.rtGuess}%)</span>
                     </p>
@@ -374,13 +374,13 @@ function GameContent() {
   const progress = ((currentIdx + 1) / movieIds.length) * 100;
 
   return (
-    <div className="min-h-screen flex flex-col items-center px-4 py-6 max-w-2xl mx-auto w-full" style={{ background: "#0d0d0d" }}>
+    <div className="min-h-screen flex flex-col items-center px-4 py-6 max-w-2xl mx-auto w-full" style={{ background: "#252c35" }}>
       {/* Header */}
       <div className="w-full mb-5">
         <div className="flex justify-between items-center mb-2">
           <a href="https://cinelinks.vercel.app" className="inline-flex items-center gap-1.5 text-sm font-bold transition-colors hover:opacity-85" style={{ color: "#9a9a9a", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "999px", padding: "6px 12px", textDecoration: "none" }}>← CineLinks</a>
           <div className="flex items-center gap-3">
-            <span className="text-sm" style={{ color: "#777" }}>Film {currentIdx + 1} / {movieIds.length}</span>
+            <span className="text-sm" style={{ color: "#9aa4b0" }}>Film {currentIdx + 1} / {movieIds.length}</span>
             <span className="text-sm font-bold" style={{ color: "#e8a000" }}>{totalScore} pts</span>
           </div>
         </div>
@@ -394,7 +394,7 @@ function GameContent() {
                 key={m}
                 onClick={() => changeMode(m)}
                 className="flex-1 text-xs font-bold py-1.5 rounded-lg transition-all"
-                style={m === mode ? { background: "#e8a000", color: "#111" } : { background: "transparent", color: "#777" }}
+                style={m === mode ? { background: "#e8a000", color: "#111" } : { background: "transparent", color: "#9aa4b0" }}
               >
                 {label}
               </button>
@@ -420,7 +420,7 @@ function GameContent() {
               <h2 className="text-xl md:text-2xl font-black leading-tight mb-2 text-center md:text-left text-[#f0f0f0]">{movie.title}</h2>
               <div className="flex flex-wrap gap-1.5 text-xs">
                 {[movie.year, movie.runtime !== "N/A" ? movie.runtime : null, ...movie.genre.split(", ").slice(0, 2)].filter(Boolean).map((tag) => (
-                  <span key={tag} className="rounded-full px-2.5 py-0.5" style={{ background: "rgba(255,255,255,0.06)", color: "#777" }}>{tag}</span>
+                  <span key={tag} className="rounded-full px-2.5 py-0.5" style={{ background: "rgba(255,255,255,0.06)", color: "#9aa4b0" }}>{tag}</span>
                 ))}
               </div>
               {movie.director !== "N/A" && (
@@ -448,7 +448,7 @@ function GameContent() {
                   return (
                     <div className="text-center mb-4">
                       <span className="text-3xl font-black" style={{ color }}>+{currentRound.totalPoints}</span>
-                      <span className="text-lg" style={{ color: "#777" }}> pts</span>
+                      <span className="text-lg" style={{ color: "#9aa4b0" }}> pts</span>
                       <p className="text-sm mt-0.5" style={{ color }}>{label}</p>
                     </div>
                   );
@@ -484,7 +484,7 @@ function GameContent() {
 export default function GamePage() {
   return (
     <Suspense fallback={
-      <div className="flex items-center justify-center min-h-screen" style={{ background: "#0d0d0d", color: "#777" }}>Loading…</div>
+      <div className="flex items-center justify-center min-h-screen" style={{ background: "#252c35", color: "#9aa4b0" }}>Loading…</div>
     }>
       <GameContent />
     </Suspense>

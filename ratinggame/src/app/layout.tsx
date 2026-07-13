@@ -22,7 +22,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`h-full antialiased ${inter.variable}`}>
-      <body className="min-h-full flex flex-col" style={{ background: "#0d0d0d", color: "#f0f0f0", fontFamily: "var(--font-inter), -apple-system, sans-serif" }}>
+      <body className="min-h-full flex flex-col" style={{ background: "#252c35", color: "#f0f0f0", fontFamily: "var(--font-inter), -apple-system, sans-serif" }}>
         {children}
         {/* CineLinks suite engines — same origin in production (served through the
             /rating/* proxy), so Top Trumps can bank cards into the shared collection

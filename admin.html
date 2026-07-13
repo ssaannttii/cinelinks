@@ -9,16 +9,16 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#0d0d0d;--s1:#181818;--s2:#232323;--s3:#2d2d2d;--bdr:rgba(255,255,255,.1);--txt:#f0f0f0;--mut:#8d8d8d;--gold:#e8a000;--green:#55d98d;--red:#ff6565}
+:root{--bg:#252c35;--s1:#2c343f;--s2:#343d49;--s3:#3c4653;--bdr:rgba(255,255,255,.07);--txt:#f0f0f0;--mut:#9aa4b0;--gold:#e8a000;--green:#55d98d;--red:#ff6565}
 body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background:linear-gradient(180deg,#121212,var(--bg));color:var(--txt);min-height:100vh}
 button,input{font:inherit}
-.top{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 22px;background:rgba(13,13,13,.9);backdrop-filter:blur(14px);border-bottom:1px solid var(--bdr)}
+.top{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 22px;background:rgba(37,44,53,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--bdr)}
 .brand{font-size:.78rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
 .monthbar{display:flex;align-items:center;gap:10px}
 .icon-btn,.btn{border:1px solid var(--bdr);border-radius:8px;background:var(--s1);color:var(--txt);cursor:pointer}
 .icon-btn{width:34px;height:34px}
 .btn{padding:9px 12px;font-size:.78rem;font-weight:700}
-.btn.gold{background:var(--gold);border-color:var(--gold);color:#111}
+.btn.gold{background:var(--gold);border-color:var(--gold);color:#1a1408}
 .btn.red{color:var(--red)}
 .month-title{min-width:180px;text-align:center;font-weight:800}
 .wrap{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:18px;padding:20px;max-width:1320px;margin:0 auto}
@@ -46,7 +46,7 @@ button,input{font:inherit}
 .thumb.title{width:24px;height:36px;border-radius:4px}
 .thumb img{width:100%;height:100%;object-fit:cover;display:block}
 .search{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:8px}
-.search input{min-width:0;border:1px solid var(--bdr);border-radius:8px;background:#101010;color:var(--txt);padding:9px 10px}
+.search input{min-width:0;border:1px solid var(--bdr);border-radius:8px;background:#212831;color:var(--txt);padding:9px 10px}
 .results{display:grid;gap:6px;margin-top:8px;max-height:230px;overflow:auto}
 .result{display:flex;gap:9px;align-items:center;border:1px solid var(--bdr);border-radius:8px;background:rgba(255,255,255,.025);padding:7px;cursor:pointer;text-align:left;color:var(--txt)}
 .result:hover{border-color:rgba(232,160,0,.45)}
@@ -71,12 +71,12 @@ button,input{font:inherit}
 .fb-val{border-radius:999px;padding:3px 7px;font-size:.56rem;font-weight:900;text-transform:uppercase;letter-spacing:.08em;background:rgba(232,160,0,.12);color:var(--gold)}
 .fb-meta{min-width:0;color:var(--txt);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .fb-time{color:var(--mut);font-size:.62rem}
-.lock{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(13,13,13,.96);padding:20px}
+.lock{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(37,44,53,.97);padding:20px}
 .lock-card{width:min(420px,100%);background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:22px}
 .lock-card h1{font-size:1.2rem;margin-bottom:8px}
 .lock-card p{color:var(--mut);font-size:.83rem;line-height:1.45;margin-bottom:14px}
 .lock-row{display:grid;grid-template-columns:1fr auto;gap:8px}
-.lock-row input{min-width:0;border:1px solid var(--bdr);border-radius:8px;background:#101010;color:var(--txt);padding:10px}
+.lock-row input{min-width:0;border:1px solid var(--bdr);border-radius:8px;background:#212831;color:var(--txt);padding:10px}
 @media (max-width:900px){.wrap{grid-template-columns:1fr}.panel{position:static}.day{min-height:96px}.challenge{-webkit-line-clamp:3}}
 @media (max-width:620px){.top{align-items:flex-start;flex-direction:column}.monthbar{width:100%;justify-content:space-between}.month-title{min-width:0}.dow div{font-size:.55rem}.day{min-height:84px;padding:7px}.challenge{font-size:.68rem}.wrap{padding:12px}}
 </style>

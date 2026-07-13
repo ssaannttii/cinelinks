@@ -210,13 +210,13 @@ export default function CareerPage() {
 
   if (phase === "loading") {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#0d0d0d" }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#252c35" }}>
         <div className="text-center space-y-4">
           <div className="relative w-14 h-14 mx-auto">
             <div className="absolute inset-0 rounded-lg border-2 border-t-[#e8a000] border-r-[rgba(232,160,0,0.4)] border-b-transparent border-l-transparent animate-spin" />
             <div className="absolute inset-3 rounded-full animate-pulse" style={{ background: "rgba(232,160,0,0.1)" }} />
           </div>
-          <p className="text-sm font-medium" style={{ color: "#777" }}>Loading career…</p>
+          <p className="text-sm font-medium" style={{ color: "#9aa4b0" }}>Loading career…</p>
         </div>
       </div>
     );
@@ -239,7 +239,7 @@ export default function CareerPage() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen flex flex-col px-4 py-6 max-w-lg mx-auto" style={{ background: "#0d0d0d" }}>
+    <div className="min-h-screen flex flex-col px-4 py-6 max-w-lg mx-auto" style={{ background: "#252c35" }}>
 
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
@@ -277,7 +277,7 @@ export default function CareerPage() {
           <p className="font-black text-lg text-[#f0f0f0] leading-tight">{person.name}</p>
           <p className="text-xs mt-0.5 capitalize" style={{ color: "#555" }}>{person.type}</p>
           {phase === "playing" && (
-            <p className="text-xs mt-2" style={{ color: "#777" }}>
+            <p className="text-xs mt-2" style={{ color: "#9aa4b0" }}>
               Drag to rank · <span style={{ color: "#e8a000" }}>highest</span> at top
             </p>
           )}
@@ -408,7 +408,7 @@ export default function CareerPage() {
 
         {phase === "revealed" && (
           <div className="space-y-3">
-            <p className="text-center text-sm" style={{ color: "#777" }}>{grade.sub}</p>
+            <p className="text-center text-sm" style={{ color: "#9aa4b0" }}>{grade.sub}</p>
             <div className="flex gap-3">
               <button
                 onClick={initGame}

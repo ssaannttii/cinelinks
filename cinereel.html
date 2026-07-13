@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CineReel — Whose filmography is this?</title>
 <meta name="description" content="Guess the actor from their films, revealed one poster at a time — from deep cut to blockbuster.">
-<meta name="theme-color" content="#0d0d0d">
+<meta name="theme-color" content="#252c35">
 <link rel="icon" type="image/png" href="/logo.png">
 <link rel="canonical" href="https://cinelinks.vercel.app/cinereel.html">
 <meta property="og:type" content="website">
@@ -21,8 +21,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600&family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#0d0d0d;--s1:#181818;--bdr:rgba(255,255,255,.1);--txt:#f0f0f0;--mut:#8d8d8d;--gold:#e8a000;--good:#5bbd7a}
-body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background:radial-gradient(circle at 50% -10%,rgba(232,160,0,.10),transparent 36%),linear-gradient(180deg,#101010,var(--bg) 340px);color:var(--txt);min-height:100vh;display:flex}
+:root{--bg:#252c35;--s1:#2c343f;--bdr:rgba(255,255,255,.07);--txt:#f0f0f0;--mut:#9aa4b0;--gold:#e8a000;--good:#5bbd7a}
+body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;display:flex}
 .wrap{max-width:560px;margin:auto;padding:26px 18px 70px;width:100%;text-align:center}
 .logo{font-size:2rem;font-weight:800;letter-spacing:-.02em}
 .logo b{color:var(--gold)}
@@ -43,7 +43,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 .guess{position:relative;max-width:420px;margin:0 auto}
 .guess input{width:100%;padding:13px 15px;border-radius:11px;border:1px solid var(--bdr);background:rgba(255,255,255,.05);color:var(--txt);font-family:inherit;font-size:.95rem;outline:none}
 .guess input:focus{border-color:rgba(232,160,0,.55)}
-.ac{position:absolute;left:0;right:0;top:54px;background:#1c1c1c;border:1px solid var(--bdr);border-radius:11px;overflow:hidden;z-index:5;text-align:left;box-shadow:0 18px 50px rgba(0,0,0,.5)}
+.ac{position:absolute;left:0;right:0;top:54px;background:#212831;border:1px solid var(--bdr);border-radius:11px;overflow:hidden;z-index:5;text-align:left;box-shadow:0 18px 50px rgba(0,0,0,.5)}
 .ac-item{display:flex;align-items:center;gap:10px;padding:8px 11px;cursor:pointer}
 .ac-item:hover,.ac-item.sel{background:rgba(232,160,0,.12)}
 .ac-item img{width:30px;height:42px;object-fit:cover;border-radius:5px;background:#333;flex-shrink:0}
@@ -51,7 +51,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 .ac-item .kf{color:var(--mut);font-size:.72rem}
 .row{display:flex;gap:8px;max-width:420px;margin:10px auto 0}
 .btn{flex:1;padding:11px;border-radius:11px;border:1px solid var(--bdr);background:transparent;color:var(--txt);font-family:inherit;font-weight:700;font-size:.85rem;cursor:pointer}
-.btn.gold{background:var(--gold);color:#111;border-color:var(--gold)}
+.btn.gold{background:var(--gold);color:#1a1408;border-color:var(--gold)}
 .btn:hover{opacity:.92}
 .miss{min-height:20px;color:#d98b8b;font-size:.8rem;margin-top:10px}
 .result{margin-top:18px;padding:18px;border-radius:14px;border:1px solid var(--bdr);background:rgba(255,255,255,.04);display:none}

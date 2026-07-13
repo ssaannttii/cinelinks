@@ -1,19 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #0d0d0d;
-  --s1: #181818;
-  --s2: #222;
+  --bg: #252c35;
+  --s1: #2c343f;
+  --s2: #343d49;
   --bdr: rgba(255, 255, 255, 0.09);
   --txt: #f0f0f0;
-  --mut: #777;
+  --mut: #9aa4b0;
   --gold: #e8a000;
   --gold-dim: rgba(232, 160, 0, 0.15);
 }
 
 body {
-  background: radial-gradient(circle at 50% -10%, rgba(232, 160, 0, 0.08), transparent 34%),
-              linear-gradient(180deg, #101010 0%, var(--bg) 330px);
+  background: var(--bg);
   color: var(--txt);
   min-height: 100vh;
 }
@@ -88,7 +87,7 @@ input[type="range"]::-moz-range-thumb {
 .animate-pop             { animation: pop        0.35s ease both; }
 
 .skeleton {
-  background: linear-gradient(90deg, #181818 25%, #222 50%, #181818 75%);
+  background: linear-gradient(90deg, #2c343f 25%, #3a4450 50%, #2c343f 75%);
   background-size: 200% 100%;
   animation: shimmer 1.4s infinite;
 }

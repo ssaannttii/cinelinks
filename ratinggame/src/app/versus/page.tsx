@@ -260,7 +260,7 @@ function VersusGame() {
 
   if (phase === "error") {
     return (
-      <div className="min-h-screen flex items-center justify-center px-6" style={{ background: "#0d0d0d" }}>
+      <div className="min-h-screen flex items-center justify-center px-6" style={{ background: "#252c35" }}>
         <div className="text-center space-y-4">
           <p className="text-sm" style={{ color: "#999" }}>Couldn&apos;t load the matchup.</p>
           <button onClick={() => initGame()} className="font-bold py-2.5 px-6 rounded-xl" style={{ background: "#e8a000", color: "#111" }}>Retry</button>
@@ -271,13 +271,13 @@ function VersusGame() {
 
   if (phase === "loading" && !leftMovie) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "#0d0d0d" }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#252c35" }}>
         <div className="text-center space-y-4">
           <div className="relative w-14 h-14 mx-auto">
             <div className="absolute inset-0 rounded-lg border-2 border-t-[#e8a000] border-r-[rgba(232,160,0,0.4)] border-b-transparent border-l-transparent animate-spin" />
             <div className="absolute inset-3 rounded-full animate-pulse" style={{ background: "rgba(232,160,0,0.1)" }} />
           </div>
-          <p className="text-sm font-medium" style={{ color: "#777" }}>Loading matchup…</p>
+          <p className="text-sm font-medium" style={{ color: "#9aa4b0" }}>Loading matchup…</p>
         </div>
       </div>
     );
@@ -294,7 +294,7 @@ function VersusGame() {
     const dayNum = getDayNumber();
 
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12" style={{ background: "#0d0d0d" }}>
+      <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12" style={{ background: "#252c35" }}>
         <div className="max-w-md w-full rounded-2xl p-6" style={{ background: "rgba(255,255,255,0.045)", backdropFilter: "blur(18px)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 30px 80px rgba(0,0,0,0.38)" }}>
           <div className="text-center mb-6">
             {isDaily ? (
@@ -311,9 +311,9 @@ function VersusGame() {
               <p className="text-[0.6rem] font-bold tracking-[0.18em] uppercase mb-3" style={{ color: "#e8a000" }}>Higher or Lower</p>
             )}
             <p className={`text-2xl font-black mb-0.5 ${grade.color}`}>{grade.label}</p>
-            <p className="text-sm" style={{ color: "#777" }}>{grade.sub}</p>
+            <p className="text-sm" style={{ color: "#9aa4b0" }}>{grade.sub}</p>
             <p className="text-6xl font-black mt-4 text-[#f0f0f0]">
-              {score}<span className="text-2xl font-normal" style={{ color: "#777" }}> / {ROUNDS}</span>
+              {score}<span className="text-2xl font-normal" style={{ color: "#9aa4b0" }}> / {ROUNDS}</span>
             </p>
             {maxStreak >= 3 && <p className="text-sm mt-2" style={{ color: "#e8a000" }}>Best streak: {maxStreak} 🔥</p>}
           </div>
@@ -371,14 +371,14 @@ function VersusGame() {
   const progress = ((round + 1) / ROUNDS) * 100;
 
   return (
-    <div className="min-h-screen flex flex-col px-3 py-4 max-w-2xl mx-auto w-full" style={{ background: "#0d0d0d" }}>
+    <div className="min-h-screen flex flex-col px-3 py-4 max-w-2xl mx-auto w-full" style={{ background: "#252c35" }}>
       {/* Header */}
       <div className="mb-4">
         <div className="flex justify-between items-center mb-2">
           <a href="https://cinelinks.vercel.app" className="inline-flex items-center gap-1.5 text-sm font-bold transition-colors hover:opacity-85" style={{ color: "#9a9a9a", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "999px", padding: "6px 12px", textDecoration: "none" }}>← CineLinks</a>
           <div className="flex items-center gap-3">
             {streak >= 2 && <span className="text-sm font-bold" style={{ color: "#e8a000" }}>{streak} 🔥</span>}
-            <span className="text-sm" style={{ color: "#777" }}>{round + 1} / {ROUNDS}</span>
+            <span className="text-sm" style={{ color: "#9aa4b0" }}>{round + 1} / {ROUNDS}</span>
             <span className="text-sm font-bold text-green-400">{score} ✓</span>
           </div>
         </div>
@@ -392,7 +392,7 @@ function VersusGame() {
           Daily #{getDayNumber()}
         </p>
       )}
-      <p className="text-center text-sm mb-3" style={{ color: "#777" }}>
+      <p className="text-center text-sm mb-3" style={{ color: "#9aa4b0" }}>
         Which has the higher <span style={{ color: "#e8a000" }} className="font-semibold">IMDB rating</span>?
         <span className="hidden sm:inline text-xs ml-2" style={{ color: "#444" }}>(← → keys)</span>
       </p>
@@ -426,7 +426,7 @@ function VersusGame() {
               style={{ borderColor, borderWidth: "1px", background: "rgba(255,255,255,0.03)" }}
             >
               {/* Poster — grows to fill all card height */}
-              <div className="relative flex-1 min-h-0" style={{ background: "#181818" }}>
+              <div className="relative flex-1 min-h-0" style={{ background: "#2c343f" }}>
                 {movie.poster && movie.poster !== "N/A" ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -477,7 +477,7 @@ function VersusGame() {
             style={{ bottom: "52px" }}>
             <div
               className="w-9 h-9 rounded-full flex items-center justify-center shadow-lg"
-              style={{ background: "#0d0d0d", border: "2px solid rgba(255,255,255,0.15)" }}
+              style={{ background: "#252c35", border: "2px solid rgba(255,255,255,0.15)" }}
             >
               <span className="text-[10px] font-black" style={{ color: "#666" }}>VS</span>
             </div>
@@ -504,7 +504,7 @@ export default function VersusPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center" style={{ background: "#0d0d0d" }}>
+        <div className="min-h-screen flex items-center justify-center" style={{ background: "#252c35" }}>
           <div className="relative w-14 h-14">
             <div className="absolute inset-0 rounded-lg border-2 border-t-[#e8a000] border-r-[rgba(232,160,0,0.4)] border-b-transparent border-l-transparent animate-spin" />
           </div>

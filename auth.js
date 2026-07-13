@@ -49,7 +49,7 @@
   function toast(msg) {
     var t = document.createElement('div');
     t.textContent = msg;
-    t.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(14px);background:#181818;border:1px solid rgba(91,189,122,.4);color:#f0f0f0;padding:11px 16px;border-radius:11px;font-family:Inter,-apple-system,sans-serif;font-size:.84rem;font-weight:600;box-shadow:0 14px 34px rgba(0,0,0,.5);opacity:0;transition:opacity .25s,transform .25s;z-index:1300';
+    t.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(14px);background:#2c343f;border:1px solid rgba(91,189,122,.4);color:#f0f0f0;padding:11px 16px;border-radius:11px;font-family:Inter,-apple-system,sans-serif;font-size:.84rem;font-weight:600;box-shadow:0 14px 34px rgba(0,0,0,.5);opacity:0;transition:opacity .25s,transform .25s;z-index:1300';
     document.body.appendChild(t);
     requestAnimationFrame(function () { t.style.opacity = '1'; t.style.transform = 'translateX(-50%) translateY(0)'; });
     setTimeout(function () { t.style.opacity = '0'; setTimeout(function () { t.remove(); }, 300); }, 3200);
@@ -99,7 +99,7 @@
     pill.innerHTML = img + '<span style="color:#5bbd7a">' + A('authSyncedPill', '✓ Synced') + '</span>';
 
     var menu = document.createElement('div');
-    menu.style.cssText = 'display:none;margin-top:6px;width:236px;background:#181818;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:11px;box-shadow:0 12px 34px rgba(0,0,0,.5);color:#f0f0f0;font-size:.78rem';
+    menu.style.cssText = 'display:none;margin-top:6px;width:236px;background:#2c343f;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:11px;box-shadow:0 12px 34px rgba(0,0,0,.5);color:#f0f0f0;font-size:.78rem';
     var who = p.name || p.email ? ('<p style="margin:0 0 8px;font-weight:700">' + (p.name || p.email) + '</p>') : '';
     menu.innerHTML = who +
       '<p style="margin:0 0 10px;color:#8d8d8d;font-size:.72rem;line-height:1.5">' + A('authMenuBlurb', 'Your streaks &amp; history are backed up and synced across devices. We only store game stats and your Google ID.') + ' <a href="/privacy.html" style="color:#e8a000;text-decoration:none;font-weight:700">' + A('authPrivacy', 'Privacy') + '</a></p>';

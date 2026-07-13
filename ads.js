@@ -14,7 +14,7 @@
 
   var bar = document.createElement('div');
   bar.id = 'ad-bar';
-  bar.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:80;display:flex;justify-content:center;align-items:center;min-height:60px;background:rgba(13,13,13,.92);backdrop-filter:blur(6px);border-top:1px solid rgba(255,255,255,.08)';
+  bar.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:80;display:flex;justify-content:center;align-items:center;min-height:60px;background:rgba(37,44,53,.93);backdrop-filter:blur(6px);border-top:1px solid rgba(255,255,255,.08)';
 
   var ins = document.createElement('ins');
   ins.className = 'adsbygoogle';

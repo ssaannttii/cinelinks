@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CineFrame - Guess the daily film from a frame</title>
 <meta name="description" content="A daily film-guessing game: name the movie from a blurred frame that sharpens with each wrong guess. A new film every day. Images from TMDB.">
-<meta name="theme-color" content="#0d0d0d">
+<meta name="theme-color" content="#252c35">
 <link rel="icon" type="image/png" href="/logo.png">
 <link rel="canonical" href="https://cinelinks.vercel.app/cineframe.html">
 <meta property="og:type" content="website">
@@ -22,8 +22,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600&family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#0d0d0d;--s1:#181818;--s2:#222;--bdr:rgba(255,255,255,0.09);--txt:#f0f0f0;--mut:#8d8d8d;--gold:#e8a000;--golddim:rgba(232,160,0,0.15)}
-body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background:radial-gradient(circle at 50% -10%,rgba(232,160,0,.08),transparent 34%),linear-gradient(180deg,#101010 0%,var(--bg) 330px);color:var(--txt);min-height:100vh}
+:root{--bg:#252c35;--s1:#2c343f;--s2:#343d49;--bdr:rgba(255,255,255,0.07);--txt:#f0f0f0;--mut:#9aa4b0;--gold:#e8a000;--golddim:rgba(232,160,0,0.15)}
+body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh}
 #cineBackdrop{position:fixed;inset:0;z-index:-1;background-size:cover;background-position:center;opacity:0;filter:blur(12px) brightness(.6);transform:scale(1.08);transition:opacity 1.6s ease;pointer-events:none}
 #cineBackdrop.on{opacity:.1}
 .wrap{max-width:540px;margin:0 auto;padding:18px 16px 60px}
@@ -58,7 +58,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 .actions{display:flex;gap:10px}
 .btn{flex:1;padding:12px;border-radius:12px;border:1px solid var(--bdr);background:transparent;color:var(--txt);font-family:inherit;font-size:.9rem;font-weight:700;cursor:pointer;transition:background .15s,border-color .15s,opacity .15s}
 .btn:hover{border-color:rgba(232,160,0,.5)}
-.btn-gold{background:var(--gold);color:#111;border-color:var(--gold)}
+.btn-gold{background:var(--gold);color:#1a1408;border-color:var(--gold)}
 .btn-gold:hover{opacity:.9}
 .btn:disabled{opacity:.4;cursor:not-allowed}
 .guesses{margin-top:14px;display:flex;flex-direction:column;gap:6px}
@@ -395,7 +395,7 @@ function renderResult(streak){
   const el = document.getElementById('result');
   el.classList.remove('hidden');
   if(target.backdropPath){
-    el.style.backgroundImage = 'linear-gradient(180deg,rgba(22,22,22,.86),rgba(22,22,22,.97)),url(' + IMGBASE + 'w780' + target.backdropPath + ')';
+    el.style.backgroundImage = 'linear-gradient(180deg,rgba(33,40,49,.88),rgba(33,40,49,.97)),url(' + IMGBASE + 'w780' + target.backdropPath + ')';
     el.style.backgroundSize = 'cover'; el.style.backgroundPosition = 'center';
   }
   const verdict = solved

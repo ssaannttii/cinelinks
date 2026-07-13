@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>CineGroup — Find the four hidden connections</title>
 <meta name="description" content="Group 16 movie titles into four hidden cinematic connections — a film twist on Connections. New puzzle every day.">
-<meta name="theme-color" content="#0d0d0d">
+<meta name="theme-color" content="#252c35">
 <link rel="canonical" href="https://cinelinks.vercel.app/cinegroup.html">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://cinelinks.vercel.app/cinegroup.html">
@@ -21,10 +21,10 @@
 <link rel="stylesheet" href="/fx.css">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@600&family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap');
-:root{--bg:#0d0d0d;--s1:#181818;--s2:#222;--bdr:rgba(255,255,255,0.10);--txt:#f0f0f0;--mut:#8d8d8d;--gold:#e8a000;--golddim:rgba(232,160,0,0.15);
+:root{--bg:#252c35;--s1:#2c343f;--s2:#343d49;--bdr:rgba(255,255,255,0.07);--txt:#f0f0f0;--mut:#9aa4b0;--gold:#e8a000;--golddim:rgba(232,160,0,0.15);
  --c-saga:#e8c24a;--c-theme:#7aa6e8;--c-actor:#86c98a;--c-director:#b58ad6;--good:#5bbd7a;--bad:#d8503a}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background:radial-gradient(circle at 50% -10%,rgba(232,160,0,.07),transparent 34%),var(--bg);color:var(--txt);min-height:100vh;padding:54px 14px 40px}
+body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;padding:54px 14px 40px}
 .wrap{max-width:480px;margin:0 auto;text-align:center}
 .logo{font-size:2rem;font-weight:800;letter-spacing:-.02em}
 .logo b{color:var(--gold)}
@@ -32,19 +32,19 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 .kicker{margin-top:10px;font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
 .loading{color:var(--mut);font-size:.9rem;padding:48px 0}
 .solved-area{display:flex;flex-direction:column;gap:7px;margin:16px 0 7px}
-.solved{border-radius:9px;padding:9px 10px;color:#111}
+.solved{border-radius:9px;padding:9px 10px;color:#1a1408}
 .solved .s-label{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
 .solved .s-titles{font-size:.74rem;font-weight:600;margin-top:1px;opacity:.85}
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
 .tile{display:flex;align-items:center;justify-content:center;text-align:center;min-height:74px;padding:5px 4px;border-radius:9px;background:var(--s2);border:1px solid var(--bdr);color:var(--txt);font-weight:700;font-size:.64rem;line-height:1.12;cursor:pointer;user-select:none;-webkit-user-select:none;transition:transform .1s,background .12s,border-color .12s,opacity .18s,box-shadow .12s;word-break:break-word;hyphens:auto;animation:tileIn .34s cubic-bezier(.2,.8,.2,1) backwards}
 .tile:hover{border-color:rgba(232,160,0,.4)}
 .tile:active{transform:scale(.92)}
-.tile.sel{background:var(--gold);color:#111;border-color:var(--gold);transform:scale(.95);box-shadow:0 6px 18px rgba(232,160,0,.35)}
+.tile.sel{background:var(--gold);color:#1a1408;border-color:var(--gold);transform:scale(.95);box-shadow:0 6px 18px rgba(232,160,0,.35)}
 .grid.focus .tile:not(.sel){opacity:.42}
 .tile.wrong{animation:shake .4s}
 .tile.pop{animation:pop .25s}
-.tile.solving{animation:solveBounce .5s cubic-bezier(.3,1.3,.5,1) both;color:#111;border-color:transparent;box-shadow:0 8px 22px rgba(0,0,0,.35)}
-.tile.done{color:#111;font-weight:800;border-color:transparent;opacity:.62;cursor:default;pointer-events:none;position:relative}
+.tile.solving{animation:solveBounce .5s cubic-bezier(.3,1.3,.5,1) both;color:#1a1408;border-color:transparent;box-shadow:0 8px 22px rgba(0,0,0,.35)}
+.tile.done{color:#1a1408;font-weight:800;border-color:transparent;opacity:.62;cursor:default;pointer-events:none;position:relative}
 .tile.done::after{content:"✓";position:absolute;top:3px;right:5px;font-size:.62rem;font-weight:900;opacity:.65}
 .legend{display:flex;flex-wrap:wrap;gap:6px 10px;justify-content:center;margin:14px 0 10px}
 .leg{display:inline-flex;align-items:center;gap:5px;font-size:.64rem;font-weight:700;color:var(--mut)}
@@ -67,9 +67,9 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 .btn{flex:1;padding:11px;border-radius:999px;border:1px solid var(--bdr);background:transparent;color:var(--txt);font-family:inherit;font-size:.82rem;font-weight:700;cursor:pointer;transition:opacity .15s,background .15s,border-color .15s}
 .btn:hover{border-color:rgba(232,160,0,.5)}
 .btn:disabled{opacity:.4;cursor:default}
-.btn-go{background:var(--gold);color:#111;border-color:var(--gold);flex:1.3}
+.btn-go{background:var(--gold);color:#1a1408;border-color:var(--gold);flex:1.3}
 .btn-go:disabled{background:var(--s2);color:var(--mut);border-color:var(--bdr)}
-.toast{position:fixed;left:50%;top:64px;transform:translateX(-50%);background:#fff;color:#111;font-weight:800;font-size:.82rem;padding:8px 16px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:60}
+.toast{position:fixed;left:50%;top:64px;transform:translateX(-50%);background:#fff;color:#1a1408;font-weight:800;font-size:.82rem;padding:8px 16px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:60}
 .toast.on{opacity:1}
 .result{margin-top:8px}
 .result h2{font-size:1.5rem;margin-bottom:4px}

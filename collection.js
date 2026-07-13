@@ -1859,7 +1859,7 @@
       '.cl-dbg button.on{border-color:#e8a000;background:rgba(232,160,0,.16);color:#e8a000}' +
       '.cl-dbg button.danger:hover{border-color:#e8806f;color:#e8806f}' +
       '.cl-dbg .stat{font-size:.7rem;color:#9a9a9a;margin-top:8px}.cl-dbg .stat b{color:#e8e8e8}' +
-      '.cl-dbg textarea{width:100%;height:74px;margin-top:8px;background:#0d0d0d;color:#cfcfcf;border:1px solid rgba(255,255,255,.14);border-radius:8px;font-family:monospace;font-size:.66rem;padding:7px;resize:vertical}' +
+      '.cl-dbg textarea{width:100%;height:74px;margin-top:8px;background:#212831;color:#cfcfcf;border:1px solid rgba(255,255,255,.14);border-radius:8px;font-family:monospace;font-size:.66rem;padding:7px;resize:vertical}' +
       // card detail view
       // Scroll lives on the MODAL, not the box — so the box can stay overflow:visible
       // and never clip the 3D-tilted card against a rectangle. margin:auto centres the
@@ -1878,7 +1878,7 @@
       '.cl-di{width:300px;max-width:90vw}' +
       '.cl-di-name{font-size:1.15rem;font-weight:800;color:#f5f5f5;text-align:center;margin-bottom:11px}' +
       '.cl-di-rows{display:flex;flex-direction:column;gap:1px;border-radius:11px;overflow:hidden;border:1px solid rgba(255,255,255,.09)}' +
-      '.cl-di-row{display:flex;justify-content:space-between;padding:10px 14px;background:#181818;font-size:.84rem}' +
+      '.cl-di-row{display:flex;justify-content:space-between;padding:10px 14px;background:#2c343f;font-size:.84rem}' +
       '.cl-di-row span{color:#9a9a9a}.cl-di-row b{color:#f0f0f0;font-weight:700}' +
       '.cl-shine-wrap{width:100%;margin-top:13px;text-align:center}' +
       '.cl-shine-btn{width:100%;border:none;border-radius:11px;padding:12px 14px;font-size:.92rem;font-weight:800;cursor:pointer;color:#06121f;background:linear-gradient(135deg,#bfe6ff,#7ab8ff);box-shadow:0 6px 18px rgba(120,184,255,.32);transition:transform .12s ease,box-shadow .2s ease}' +
@@ -2004,7 +2004,7 @@
       '.cl-sx-ring span{width:44px;height:44px;margin:6px;border-radius:50%;background:#161514;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.9rem;color:#f2ead6;font-variant-numeric:tabular-nums}' +
       '.cl-sx-ring i{font-style:normal;font-size:.6rem;color:#8a8272}' +
       '.cl-sx.mile .cl-sx-info{flex:1;min-width:0}' +
-      '.cl-slot{position:relative;aspect-ratio:5/7;border-radius:13px;border:1.5px dashed rgba(255,255,255,.16);background:repeating-linear-gradient(45deg,#141414,#141414 9px,#181818 9px,#181818 18px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:8px}' +
+      '.cl-slot{position:relative;aspect-ratio:5/7;border-radius:13px;border:1.5px dashed rgba(255,255,255,.16);background:repeating-linear-gradient(45deg,#28303a,#28303a 9px,#2c343f 9px,#2c343f 18px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:8px}' +
       '.cl-slot-q{font-size:1.8rem;font-weight:900;color:rgba(255,255,255,.22)}' +
       '.cl-slot-nm{font-size:.64rem;font-weight:700;color:rgba(255,255,255,.45);line-height:1.2}' +
       '.cl-slot-forge{font:inherit;font-size:.66rem;font-weight:800;color:#bfe6ff;background:rgba(120,184,255,.12);border:1px solid rgba(150,205,255,.4);border-radius:999px;padding:4px 10px;cursor:pointer;transition:background .15s}' +

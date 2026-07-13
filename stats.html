@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Your stats - CineLinks suite</title>
 <meta name="description" content="Your streaks and history across the CineLinks film games.">
-<meta name="theme-color" content="#0d0d0d">
+<meta name="theme-color" content="#252c35">
 <meta name="robots" content="noindex, follow">
 <link rel="canonical" href="https://cinelinks.vercel.app/stats.html">
 <link rel="icon" type="image/png" href="/logo.png">
@@ -20,8 +20,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#0d0d0d;--s1:#181818;--s2:#222;--bdr:rgba(255,255,255,0.09);--txt:#f0f0f0;--mut:#8d8d8d;--gold:#e8a000;--golddim:rgba(232,160,0,0.15)}
-body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background:radial-gradient(circle at 50% -10%,rgba(232,160,0,.08),transparent 34%),linear-gradient(180deg,#101010 0%,var(--bg) 330px);color:var(--txt);min-height:100vh}
+:root{--bg:#252c35;--s1:#2c343f;--s2:#343d49;--bdr:rgba(255,255,255,0.07);--txt:#f0f0f0;--mut:#9aa4b0;--gold:#e8a000;--golddim:rgba(232,160,0,0.15)}
+body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh}
 #cineBackdrop{position:fixed;inset:0;z-index:-1;background-size:cover;background-position:center;opacity:0;filter:blur(12px) brightness(.6);transform:scale(1.08);transition:opacity 1.6s ease;pointer-events:none}
 #cineBackdrop.on{opacity:.1}
 .wrap{max-width:540px;margin:0 auto;padding:18px 16px 60px}
@@ -43,7 +43,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 .card-actions{display:flex;gap:8px}
 .btn{flex:1;padding:10px;border-radius:10px;border:1px solid var(--bdr);background:transparent;color:var(--txt);font-family:inherit;font-size:.82rem;font-weight:700;text-decoration:none;text-align:center;transition:border-color .15s,background .15s}
 .btn:hover{border-color:rgba(232,160,0,.5);background:rgba(232,160,0,.05)}
-.btn-gold{background:var(--gold);color:#111;border-color:var(--gold)}
+.btn-gold{background:var(--gold);color:#1a1408;border-color:var(--gold)}
 .empty{color:var(--mut);font-size:.82rem;text-align:center;padding:6px 0 12px}
 .ext{display:flex;align-items:center;gap:12px;background:rgba(232,160,0,.07);border:1px solid rgba(232,160,0,.25);border-radius:14px;padding:14px;text-decoration:none;color:var(--txt)}
 .ext:hover{background:rgba(232,160,0,.12)}

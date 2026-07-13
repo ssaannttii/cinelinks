@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CineGrid: Fill the cast grid</title>
 <meta name="description" content="A daily 3×3 film grid: name a movie that pairs each actor with each other. Instant reveal, build a streak, chase the perfect grid.">
-<meta name="theme-color" content="#0d0d0d">
+<meta name="theme-color" content="#252c35">
 <link rel="icon" type="image/png" href="/logo.png">
 <link rel="canonical" href="https://cinelinks.vercel.app/cinegrid.html">
 <meta property="og:type" content="website">
@@ -21,8 +21,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600&family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#0d0d0d;--s1:#181818;--bdr:rgba(255,255,255,.1);--txt:#f0f0f0;--mut:#8d8d8d;--gold:#e8a000;--good:#5bbd7a;--bad:#d8503a}
-body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background:radial-gradient(circle at 50% -10%,rgba(232,160,0,.10),transparent 36%),linear-gradient(180deg,#101010,var(--bg) 340px);color:var(--txt);min-height:100vh;display:flex;-webkit-tap-highlight-color:transparent}
+:root{--bg:#252c35;--s1:#2c343f;--bdr:rgba(255,255,255,.07);--txt:#f0f0f0;--mut:#9aa4b0;--gold:#e8a000;--good:#5bbd7a;--bad:#d8503a}
+body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;display:flex;-webkit-tap-highlight-color:transparent}
 .wrap{max-width:520px;margin:auto;padding:26px 16px 70px;width:100%;text-align:center}
 .logo{font-size:2rem;font-weight:800;letter-spacing:-.02em}
 .logo b{color:var(--gold)}
@@ -49,7 +49,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 .grid{display:grid;grid-template-columns:62px 1fr 1fr 1fr;gap:5px;max-width:430px;margin:0 auto}
 .corner{border-radius:8px}
 .hdr{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:4px 2px;text-align:center}
-.hdr img{width:42px;height:42px;border-radius:50%;object-fit:cover;background:#2a2a2a;border:1px solid var(--bdr)}
+.hdr img{width:42px;height:42px;border-radius:50%;object-fit:cover;background:#333c48;border:1px solid var(--bdr)}
 .hdr.row img{width:38px;height:38px}
 .hdr .hn{font-size:.56rem;font-weight:700;line-height:1.1;color:var(--txt);max-width:78px}
 .cell{aspect-ratio:1;border-radius:9px;border:1px solid var(--bdr);background:var(--s1);position:relative;overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color .15s,transform .15s,box-shadow .3s}
@@ -85,7 +85,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:flex-start;justify-content:center;z-index:20;padding:56px 16px 16px;backdrop-filter:blur(2px)}
 .modal.open{display:flex;animation:fadeIn .18s ease}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-.sheet{width:100%;max-width:420px;background:#1a1a1a;border:1px solid var(--bdr);border-radius:14px;padding:16px;box-shadow:0 24px 70px rgba(0,0,0,.6);animation:sheetIn .26s cubic-bezier(.2,.9,.25,1)}
+.sheet{width:100%;max-width:420px;background:#2c343f;border:1px solid var(--bdr);border-radius:14px;padding:16px;box-shadow:0 24px 70px rgba(0,0,0,.6);animation:sheetIn .26s cubic-bezier(.2,.9,.25,1)}
 @keyframes sheetIn{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
 .sheet h3{font-size:.9rem;font-weight:700;margin-bottom:3px}
 .sheet .pair{color:var(--gold);font-size:.82rem;font-weight:700;margin-bottom:12px}
@@ -114,7 +114,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 .row-btns{display:flex;gap:8px;max-width:380px;margin:14px auto 0}
 .btn{flex:1;padding:12px;border-radius:11px;border:1px solid var(--bdr);background:transparent;color:var(--txt);font-family:inherit;font-weight:700;font-size:.85rem;cursor:pointer;transition:transform .09s ease}
 .btn:active{transform:scale(.96)}
-.btn.gold{background:var(--gold);color:#111;border-color:var(--gold)}
+.btn.gold{background:var(--gold);color:#1a1408;border-color:var(--gold)}
 .btn:disabled{opacity:.4;cursor:default}
 .loading{color:var(--mut);font-size:.9rem;padding:40px 0}
 .foot{margin-top:24px;color:var(--mut);font-size:.74rem}
