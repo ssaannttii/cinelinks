@@ -2355,7 +2355,7 @@
     });
     sortCards(cards);
     grid.style.display = 'block';
-    grid.style.gridTemplateColumns = '';
+    grid.style.gridTemplateColumns = ''; grid.style.justifyContent = ''; grid.style.gap = '';
     if (!cards.length) {
       grid.innerHTML = query
         ? '<div class="cl-coll-empty"><div class="cl-empty-row"><div class="cl-ghost">?</div><div class="cl-ghost">?</div><div class="cl-ghost">?</div></div>No cards match &ldquo;' + esc(_query) + '&rdquo;.</div>'
@@ -2472,7 +2472,10 @@
       if (!set || set.kind !== 'curated' || !set.discovered) { _setOpen = null; renderSets(); return; }
       var theme = activeTheme(); injectThemeCss(theme);
       grid.style.display = 'grid';
-      grid.style.gridTemplateColumns = 'repeat(auto-fill,' + (theme.gridCols || 'minmax(110px,1fr)') + ')';
+      // Sets are short lists: capped flexible tracks + centered block (vs the full-bleed cards tab)
+      grid.style.gridTemplateColumns = 'repeat(auto-fill,minmax(min(150px,40vw),176px))';
+      grid.style.justifyContent = 'center';
+      grid.style.gap = '14px';
       var owned = [], dustNow = dustBalance();
       grid.innerHTML = '<div class="cl-set-head"><button class="cl-back-btn" id="clSetBack">&#8249; Sets</button><span class="cl-set-htitle">' + esc(set.name) + ' &middot; ' + set.owned + '/' + set.total + (set.complete ? ' &#10003;' : '') + '</span></div>' +
         set.members.map(function (m, i) {
@@ -2514,6 +2517,7 @@
       return;
     }
     grid.style.display = 'block';
+    grid.style.gridTemplateColumns = ''; grid.style.justifyContent = ''; grid.style.gap = '';
     var curated = states.filter(function (s) { return s.kind === 'curated'; });
     var found = curated.filter(function (s) { return s.discovered; });
     var locked = curated.filter(function (s) { return !s.discovered; });
