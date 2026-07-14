@@ -454,7 +454,7 @@
           mkTex(0, im);
           mkTex(1, im);                                             // dmap placeholder until the real map arrives
           var dpr = Math.min(2, window.devicePixelRatio || 1);
-          var w = inner.clientWidth + 2, h = inner.clientHeight + 2;
+          var w = (artCv ? inner.clientWidth * 0.84 + 1 : inner.clientWidth + 2), h = inner.clientHeight + 2;
           cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
           gl.viewport(0, 0, cv.width, cv.height);
           // cover-fit + "center top" anchor (matches the img's object-fit/position)
