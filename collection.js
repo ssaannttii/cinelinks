@@ -1078,6 +1078,14 @@
 
   // ── Card backs: most unlock by level; "Mastery" is gated on the trophy case
   //   (achievements) so it can't be reached by level-grinding alone. ──
+  // 'Countdown leader' back (design handoff, back 8c): film perforations, crosshair,
+  // double-ring circle with the CL monogram, wordmark. Geometry is shared; each
+  // cb-* material only swaps the CSS palette vars.
+  function cbBackHtml() {
+    return '<div class="cbk"><i class="cbk-perf l"></i><i class="cbk-perf r"></i><i class="cbk-cross v"></i><i class="cbk-cross h"></i>' +
+      '<div class="cbk-circle"><div class="cbk-mono">CL</div></div>' +
+      '<div class="cbk-word">CineLinks</div></div>';
+  }
   var CARDBACKS = [
     { id: 'classic', name: 'Classic', level: 1, css: '' },
     { id: 'gold', name: 'Gold Foil', level: 3, css: 'cb-gold' },
@@ -1948,8 +1956,19 @@
       '.clr-flip.flip-go .clr-face::after{animation:clrLightPass 1.05s ease-in-out}' +
       '@keyframes clrShade{0%,46%{opacity:0}68%{opacity:1}100%{opacity:0}}' +
       '@keyframes clrLightPass{0%,40%{opacity:0}55%{opacity:.95}76%{opacity:.22}100%{opacity:0}}' +
-      '.clr-back{transform:rotateY(180deg) translateZ(var(--thick,7px));background:repeating-linear-gradient(45deg,#101a30,#101a30 9px,#13203a 9px,#13203a 18px);border:1px solid rgba(232,160,0,.32);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 3px rgba(232,160,0,.16)}' +
+      '.clr-back{transform:rotateY(180deg) translateZ(var(--thick,7px));background:var(--cbk-bg,#0c1117);border:1px solid rgba(255,255,255,.09);display:flex;align-items:center;justify-content:center}' +
       '.clr-mono{font-size:3rem;font-weight:800;color:#e8a000;letter-spacing:-.05em;text-shadow:0 2px 14px rgba(232,140,0,.5)}' +
+      // ── back geometry (shared by reveal flip + picker swatches; palette via --cbk-* vars) ──
+      '.cbk{position:absolute;inset:0;container-type:inline-size;pointer-events:none}' +
+      '.cbk-perf{position:absolute;top:0;bottom:0;width:4.7cqw;border-radius:.8cqw;background:repeating-linear-gradient(180deg,var(--cbk-perf,rgba(232,194,74,.32)) 0 4.2cqw,transparent 4.2cqw 8.4cqw)}' +
+      '.cbk-perf.l{left:5.8cqw}.cbk-perf.r{right:5.8cqw}' +
+      '.cbk-cross{position:absolute;background:var(--cbk-cross,rgba(232,194,74,.14))}' +
+      '.cbk-cross.v{left:50%;top:0;bottom:0;width:1px}' +
+      '.cbk-cross.h{top:50%;left:10.5cqw;right:10.5cqw;height:1px}' +
+      '.cbk-circle{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:54.7cqw;aspect-ratio:1;border-radius:50%;border:.9cqw solid var(--cbk-ring,rgba(232,194,74,.5));background:var(--cbk-cbg,transparent);display:flex;align-items:center;justify-content:center}' +
+      '.cbk-circle::before{content:"";position:absolute;inset:3.7cqw;border-radius:50%;border:.6cqw solid var(--cbk-ring2,rgba(232,194,74,.22))}' +
+      '.cbk-mono{font-size:17.4cqw;font-weight:900;letter-spacing:-.03em;background:var(--cbk-cl,linear-gradient(160deg,#f0a832,#c47f16));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;filter:drop-shadow(0 .8cqw 2.4cqw var(--cbk-glow,rgba(232,194,74,.35)))}' +
+      '.cbk-word{position:absolute;left:0;right:0;bottom:13.7cqw;text-align:center;font-family:"Space Mono",ui-monospace,Menlo,monospace;font-size:3.9cqw;font-weight:700;letter-spacing:.32em;text-indent:.32em;text-transform:uppercase;color:var(--cbk-word,rgba(255,255,255,.42))}' +
       '.clr-halo{position:absolute;inset:0;border-radius:12px;box-shadow:0 0 0 0 var(--halo,transparent)}' +
       '.clr-flip:not(.flip-go):not(.flipped) .clr-halo{animation:clrHalo 1s ease-in-out infinite}' +
       '@keyframes clrHalo{0%,100%{box-shadow:0 0 10px 1px var(--halo,transparent),inset 0 0 12px var(--halo,transparent)}50%{box-shadow:0 0 30px 7px var(--halo,transparent),inset 0 0 22px var(--halo,transparent)}}' +
@@ -2021,30 +2040,21 @@
       '.cl-slot-forge.off{color:#8a8a8a;background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.14)}' +
       '.cl-slot-forge.shake{animation:clShake .4s}' +
       '.cl-slot-forge:disabled{opacity:.6;cursor:default}' +
-      // ── card backs ──
-      '.clr-back.cb-gold,.cb-swatch.cb-gold{background:linear-gradient(160deg,#3a2c0f,#150f04);border-color:rgba(232,194,74,.6);box-shadow:inset 0 0 0 3px rgba(232,194,74,.28)}' +
-      '.clr-back.cb-gold .clr-mono,.cb-swatch.cb-gold .clr-mono{color:#f5d97a;text-shadow:0 2px 14px rgba(232,194,74,.5)}' +
-      '.clr-back.cb-holo,.cb-swatch.cb-holo{background:conic-gradient(from 0deg,#3a2a4a,#243a5a,#244a44,#4a3a24,#3a2a4a);border-color:rgba(255,255,255,.42);box-shadow:inset 0 0 0 3px rgba(255,255,255,.18)}' +
-      '.clr-back.cb-holo .clr-mono,.cb-swatch.cb-holo .clr-mono{color:#fff}' +
-      '.clr-back.cb-aurora,.cb-swatch.cb-aurora{background:linear-gradient(160deg,#0b2a3a,#1f5a6e 40%,#3aa88f 70%,#7ad6a0);border-color:rgba(150,235,215,.5);box-shadow:inset 0 0 0 3px rgba(140,230,210,.22)}' +
-      '.clr-back.cb-aurora .clr-mono,.cb-swatch.cb-aurora .clr-mono{color:#eafff6;text-shadow:0 2px 14px rgba(120,230,200,.6)}' +
-      '.clr-back.cb-midnight,.cb-swatch.cb-midnight{background:radial-gradient(circle at 30% 20%,#1a2238,#080c16);border-color:rgba(122,166,232,.42);box-shadow:inset 0 0 0 3px rgba(122,166,232,.18)}' +
-      '.clr-back.cb-midnight .clr-mono,.cb-swatch.cb-midnight .clr-mono{color:#9ab8e8}' +
-      '.clr-back.cb-crimson,.cb-swatch.cb-crimson{background:linear-gradient(160deg,#3a1218,#16080a);border-color:rgba(216,90,90,.5);box-shadow:inset 0 0 0 3px rgba(216,90,90,.22)}' +
-      '.clr-back.cb-crimson .clr-mono,.cb-swatch.cb-crimson .clr-mono{color:#e88080}' +
-      '.clr-back.cb-emerald,.cb-swatch.cb-emerald{background:linear-gradient(160deg,#0d2c1e,#06120c 60%,#0f3323);border-color:rgba(80,200,140,.55);box-shadow:inset 0 0 0 3px rgba(80,200,140,.24),0 0 18px rgba(80,200,140,.18)}' +
-      '.clr-back.cb-emerald .clr-mono,.cb-swatch.cb-emerald .clr-mono{color:#7fe0ac;text-shadow:0 2px 14px rgba(80,200,140,.7)}' +
-      '.clr-back.cb-prism,.cb-swatch.cb-prism{background:conic-gradient(from 210deg,#2a1030,#102035,#10352a,#333012,#2a1030),linear-gradient(160deg,#191024,#0b0714);background-blend-mode:screen;border-color:rgba(216,160,255,.55);box-shadow:inset 0 0 0 3px rgba(216,160,255,.26),0 0 20px rgba(180,140,255,.22)}' +
-      '.clr-back.cb-prism .clr-mono,.cb-swatch.cb-prism .clr-mono{background:linear-gradient(100deg,#ff9a9a,#fff39a,#9affb0,#9ad9ff,#c39aff);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}' +
-      '.clr-back.cb-mastery,.cb-swatch.cb-mastery{background:conic-gradient(from 45deg,#0b0b0b,#3a2a10,#e8c24a,#3a2a10,#0b0b0b,#1a1206,#0b0b0b);border-color:rgba(232,194,74,.7);box-shadow:inset 0 0 0 3px rgba(232,194,74,.38),0 0 22px rgba(232,194,74,.32)}' +
-      '.clr-back.cb-mastery .clr-mono,.cb-swatch.cb-mastery .clr-mono{color:#fff;text-shadow:0 2px 18px rgba(232,194,74,.85)}' +
-      '.cb-obsidian,.cb-swatch.cb-obsidian{background:radial-gradient(120% 120% at 30% 20%,#25262b,#0a0a0c 60%),conic-gradient(from 120deg,#0a0a0c,#1c2733,#0a0a0c,#231a2e,#0a0a0c);background-blend-mode:screen;border-color:rgba(150,170,200,.6);box-shadow:inset 0 0 0 3px rgba(150,170,200,.28),0 0 22px rgba(120,150,190,.28)}' +
-      '.clr-back.cb-obsidian .clr-mono,.cb-swatch.cb-obsidian .clr-mono{background:linear-gradient(120deg,#dfe7f2,#9fb2c9);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;text-shadow:0 2px 14px rgba(150,180,220,.5)}' +
+      // ── card-back materials: each cb-* swaps the --cbk-* palette on the shared geometry ──
+      '.clr-back.cb-gold,.cb-swatch.cb-gold{--cbk-bg:linear-gradient(160deg,#1c1408,#0e0903);--cbk-perf:rgba(245,217,122,.4);--cbk-cross:rgba(245,217,122,.16);--cbk-ring:rgba(245,217,122,.65);--cbk-ring2:rgba(245,217,122,.3);--cbk-cl:linear-gradient(160deg,#f5d97a,#c8921a);--cbk-glow:rgba(232,194,74,.55);--cbk-word:rgba(245,217,122,.5)}' +
+      '.clr-back.cb-holo,.cb-swatch.cb-holo{--cbk-bg:conic-gradient(from 0deg,#241d33,#1a2638,#1a2f2a,#2e271a,#241d33);--cbk-perf:rgba(255,255,255,.35);--cbk-cross:rgba(255,255,255,.14);--cbk-ring:rgba(255,255,255,.55);--cbk-ring2:rgba(255,255,255,.25);--cbk-cl:linear-gradient(120deg,#ffd3d3,#fff7c9,#cfffdc,#cdeeff,#e3d3ff);--cbk-glow:rgba(255,255,255,.4);--cbk-word:rgba(255,255,255,.55)}' +
+      '.clr-back.cb-aurora,.cb-swatch.cb-aurora{--cbk-bg:linear-gradient(160deg,#07222e,#0d3b40 55%,#14524a);--cbk-perf:rgba(140,230,210,.38);--cbk-cross:rgba(140,230,210,.14);--cbk-ring:rgba(140,230,210,.6);--cbk-ring2:rgba(140,230,210,.28);--cbk-cl:linear-gradient(160deg,#baf5df,#3aa88f);--cbk-glow:rgba(120,230,200,.5);--cbk-word:rgba(200,255,240,.5)}' +
+      '.clr-back.cb-midnight,.cb-swatch.cb-midnight{--cbk-bg:radial-gradient(circle at 30% 20%,#141b2e,#070b14);--cbk-perf:rgba(122,166,232,.35);--cbk-cross:rgba(122,166,232,.14);--cbk-ring:rgba(122,166,232,.55);--cbk-ring2:rgba(122,166,232,.26);--cbk-cl:linear-gradient(160deg,#cfe0ff,#6f92d8);--cbk-glow:rgba(122,166,232,.45);--cbk-word:rgba(170,200,245,.5)}' +
+      '.clr-back.cb-crimson,.cb-swatch.cb-crimson{--cbk-bg:linear-gradient(160deg,#2a0d12,#12060a);--cbk-perf:rgba(216,90,90,.4);--cbk-cross:rgba(216,90,90,.15);--cbk-ring:rgba(216,90,90,.6);--cbk-ring2:rgba(216,90,90,.28);--cbk-cl:linear-gradient(160deg,#f0a0a0,#b04040);--cbk-glow:rgba(216,90,90,.5);--cbk-word:rgba(240,160,160,.5)}' +
+      '.clr-back.cb-emerald,.cb-swatch.cb-emerald{--cbk-bg:linear-gradient(160deg,#08211a,#04120c);--cbk-perf:rgba(80,200,140,.4);--cbk-cross:rgba(80,200,140,.15);--cbk-ring:rgba(80,200,140,.6);--cbk-ring2:rgba(80,200,140,.28);--cbk-cl:linear-gradient(160deg,#9fe8bf,#2f9e68);--cbk-glow:rgba(80,200,140,.55);--cbk-word:rgba(160,240,200,.5)}' +
+      '.clr-back.cb-prism,.cb-swatch.cb-prism{--cbk-bg:linear-gradient(160deg,#191024,#0b0714);--cbk-perf:rgba(216,160,255,.4);--cbk-cross:rgba(216,160,255,.16);--cbk-ring:rgba(216,160,255,.6);--cbk-ring2:rgba(216,160,255,.28);--cbk-cl:linear-gradient(100deg,#ff9a9a,#fff39a,#9affb0,#9ad9ff,#c39aff);--cbk-glow:rgba(180,140,255,.5);--cbk-word:rgba(220,190,255,.55)}' +
+      '.clr-back.cb-mastery,.cb-swatch.cb-mastery{--cbk-bg:conic-gradient(from 45deg,#0b0b0b,#2e2208,#4a3a12,#2e2208,#0b0b0b,#1a1206,#0b0b0b);--cbk-perf:rgba(232,194,74,.5);--cbk-cross:rgba(232,194,74,.2);--cbk-ring:rgba(232,194,74,.8);--cbk-ring2:rgba(232,194,74,.4);--cbk-cl:linear-gradient(160deg,#fff7dd,#e8c24a);--cbk-glow:rgba(232,194,74,.75);--cbk-word:rgba(255,240,200,.6)}' +
+      '.clr-back.cb-obsidian,.cb-swatch.cb-obsidian{--cbk-bg:radial-gradient(120% 120% at 30% 20%,#22242a,#0a0a0c);--cbk-perf:rgba(150,170,200,.4);--cbk-cross:rgba(150,170,200,.15);--cbk-ring:rgba(150,170,200,.6);--cbk-ring2:rgba(150,170,200,.28);--cbk-cl:linear-gradient(120deg,#dfe7f2,#9fb2c9);--cbk-glow:rgba(150,180,220,.45);--cbk-word:rgba(190,205,225,.55)}' +
       '.cb-sub{font-size:.74rem;color:#9a9a9a;margin-bottom:14px}' +
       '.cb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:12px}' +
       '.cb-item{cursor:pointer;text-align:center}.cb-item.locked{cursor:default}' +
-      '.cb-swatch{position:relative;aspect-ratio:5/7;border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:repeating-linear-gradient(45deg,#101a30,#101a30 9px,#13203a 9px,#13203a 18px);border:1px solid rgba(232,160,0,.32);box-shadow:inset 0 0 0 3px rgba(232,160,0,.16)}' +
-      '.cb-swatch .clr-mono{font-size:1.6rem}' +
+      '.cb-swatch{position:relative;aspect-ratio:5/7;border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--cbk-bg,#0c1117);border:1px solid rgba(255,255,255,.09)}' +
+      '' +
       '.cb-item.active .cb-swatch{outline:2px solid #e8a000;outline-offset:2px}' +
       '.cb-item.locked .cb-swatch{filter:grayscale(.7) brightness(.5)}' +
       '.cb-item.locked .cb-swatch::after{content:attr(data-req);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:6px;color:#fff;font-size:.66rem;font-weight:800;background:rgba(0,0,0,.55)}' +
@@ -2935,7 +2945,7 @@
         var tier = c.rarity, rl = RARITY[tier];
         document.getElementById('clrBody').innerHTML =
           '<div class="clr-stage" style="--halo:' + rl.ring + '"><div class="clr-flip" id="clrFlip">' +
-          '<div class="clr-back ' + activeCardbackClass() + '"><div class="clr-halo"></div><div class="clr-mono">CL</div></div>' +
+          '<div class="clr-back ' + activeCardbackClass() + '"><div class="clr-halo"></div>' + cbBackHtml() + '</div>' +
           '<div class="clr-face" id="clrFace"></div>' +
           '<div class="clr-edge e-l"></div><div class="clr-edge e-r"></div><div class="clr-edge e-t"></div><div class="clr-edge e-b"></div>' +
           '</div><div class="clr-shock" id="clrShock"></div></div>' +
@@ -3026,7 +3036,7 @@
     grid.innerHTML = cardbacksState().map(function (cb) {
       var lock = cb.req.type === 'achv' ? ('🔒 ' + cb.req.need + ' trophies') : ('🔒 Lvl ' + cb.req.need);
       return '<div class="cb-item' + (cb.active ? ' active' : '') + (cb.unlocked ? '' : ' locked') + '" data-id="' + cb.id + '">' +
-        '<div class="cb-swatch ' + cb.css + '" data-req="' + lock + '"><div class="clr-mono">CL</div></div>' +
+        '<div class="cb-swatch ' + cb.css + '" data-req="' + lock + '">' + cbBackHtml() + '</div>' +
         '<div class="cb-nm">' + esc(cb.name) + '</div></div>';
     }).join('');
     Array.prototype.forEach.call(grid.querySelectorAll('.cb-item'), function (el) {
