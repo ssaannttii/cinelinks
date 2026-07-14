@@ -364,7 +364,7 @@
       var img = inner.querySelector('.auth-bgimg, .ctc-art img'); if (!img || !img.src) return;
       var cv = document.createElement('canvas');
       cv.className = 'auth-bgcv';
-      cv.style.cssText = 'position:absolute;inset:-1px;width:calc(100% + 2px);height:calc(100% + 2px);z-index:0;pointer-events:none';
+      cv.style.cssText = 'position:absolute;top:-1px;bottom:-1px;right:-1px;left:' + (inner.classList.contains('auth-card') ? 'calc(16% - 1px)' : '-1px') + ';z-index:0;pointer-events:none';
       var gl = cv.getContext('webgl', { alpha: false, antialias: false });
       if (!gl) return;
       var VS = 'attribute vec2 p;varying vec2 v;void main(){v=p*.5+.5;gl_Position=vec4(p,0.,1.);}';
@@ -1533,58 +1533,68 @@
       // layers (foil/glit/glare/shade) blend WITHIN the card instead of re-compositing
       // against the page every frame — the canonical fix for the transform+blend+radius
       // flicker in Chrome/Blink & Safari (they'd otherwise flash the card bg to black).
-      '.auth-card{position:relative;container-type:inline-size;aspect-ratio:5/7;border-radius:12px;overflow:hidden;isolation:isolate;transition:transform .16s ease,box-shadow .2s ease;background:#0a1830;box-shadow:0 8px 22px rgba(0,0,0,.55);-webkit-backface-visibility:hidden;backface-visibility:hidden}' +
-      '.auth-bgimg{position:absolute;inset:-1px;width:calc(100% + 2px);height:calc(100% + 2px);object-fit:cover;object-position:center top;z-index:0;transform:translateZ(0);-webkit-backface-visibility:hidden;backface-visibility:hidden}' +
-      '.auth-noimg{position:absolute;inset:0;z-index:0;background:radial-gradient(120% 80% at 50% 0%,#17325e,#0a1830)}' +
-      '.auth-scrim{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(6,11,22,.34),transparent 20%,transparent 56%,rgba(6,11,22,.74) 78%,rgba(4,9,18,.96))}' +
-      '.auth-corner{position:absolute;top:0;left:0;width:30%;height:21%;z-index:3;background:linear-gradient(135deg,var(--m1),var(--cr) 58%,transparent 60%);clip-path:polygon(0 0,100% 0,0 100%);opacity:.95;pointer-events:none}' +
-      '.auth-star{position:absolute;top:4.5%;left:4.5%;width:12%;aspect-ratio:1;z-index:4;background:conic-gradient(from 0deg,#ff9a9a,#fff39a,#9affb0,#9ad9ff,#c39aff,#ff9af0,#ff9a9a);clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);filter:drop-shadow(0 1px 3px rgba(0,0,0,.6));animation:authStar 9s linear infinite}' +
-      '@keyframes authStar{to{filter:hue-rotate(360deg) drop-shadow(0 1px 3px rgba(0,0,0,.6))}}' +
+      '.auth-card{position:relative;container-type:inline-size;aspect-ratio:5/7;border-radius:13px;overflow:hidden;isolation:isolate;transition:transform .16s ease,box-shadow .2s ease;background:var(--spbg,#0c1117);box-shadow:0 14px 34px -10px rgba(0,0,0,.6);-webkit-backface-visibility:hidden;backface-visibility:hidden}' +
+      '.auth-bgimg{position:absolute;top:-1px;bottom:-1px;left:16%;right:-1px;width:auto;height:auto;object-fit:cover;object-position:center top;z-index:0;transform:translateZ(0);-webkit-backface-visibility:hidden;backface-visibility:hidden}' +
+      '.auth-noimg{position:absolute;top:0;bottom:0;left:16%;right:0;z-index:0;background:radial-gradient(120% 80% at 50% 0%,#17325e,#0a1830)}' +
+      '.auth-scrim{position:absolute;left:16%;right:0;bottom:0;height:44%;z-index:1;pointer-events:none;background:linear-gradient(180deg,#ffffff,#000000);mix-blend-mode:multiply;opacity:.85}' +
+      // Spine: left rail architecture (design 5) — stripes / vertical meta / card number.
+      '.auth-common{--cr:#9aa3ad}' +
+      '.auth-elite{--spbg:#100c15}.auth-legendary{--spbg:#15100a}' +
+      '.auth-spine{position:absolute;left:0;top:0;bottom:0;width:16%;z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:4.8cqw 0 5.6cqw;background:var(--spbg,#0c1117);border-right:.8cqw solid var(--cr);pointer-events:none}' +
+      '.auth-elite .auth-spine,.auth-legendary .auth-spine{border-right-width:1.2cqw}' +
+      '.auth-sp-stripes{display:flex;flex-direction:column;gap:1.6cqw;width:100%;padding:0 3.6cqw}' +
+      '.auth-sp-stripes i{display:block;height:2cqw;border-radius:.8cqw;background:var(--cr)}' +
+      '.auth-sp-stripes i:nth-child(2){opacity:.55}.auth-sp-stripes i:nth-child(3){opacity:.25}' +
+      '.auth-elite .auth-sp-stripes i:nth-child(1){box-shadow:0 0 6px rgba(181,138,214,.6)}.auth-elite .auth-sp-stripes i:nth-child(2){opacity:1}.auth-elite .auth-sp-stripes i:nth-child(3){opacity:.4}' +
+      '.auth-legendary .auth-sp-stripes i:nth-child(1){box-shadow:0 0 7px rgba(232,194,74,.8)}.auth-legendary .auth-sp-stripes i:nth-child(2){opacity:1;box-shadow:0 0 7px rgba(232,194,74,.55)}.auth-legendary .auth-sp-stripes i:nth-child(3){opacity:1;box-shadow:0 0 7px rgba(232,194,74,.35)}' +
+      '.auth-sp-meta,.auth-sp-no{writing-mode:vertical-rl;transform:rotate(180deg);font-family:"Space Mono",ui-monospace,Menlo,monospace;font-size:4cqw;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--cr);white-space:nowrap;max-height:62%;overflow:hidden}' +
+      '.auth-sp-no{font-weight:400;letter-spacing:.06em;color:rgba(255,255,255,.6);max-height:none}' +
       '@keyframes authDrift{0%{background-position:0% 50%}100%{background-position:280% 50%}}' +
       '.auth-tags{position:absolute;top:4.6cqw;right:4.6cqw;z-index:9;display:flex;gap:2.7cqw}' +
-      '.auth-nw{font-size:4.6cqw;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#06281a;background:#7fd49a;border-radius:3.3cqw;padding:1.3cqw 3.3cqw}' +
+      '.auth-nw{font-size:4.2cqw;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#06281a;background:#7fd49a;border-radius:3.6cqw;padding:1.6cqw 4cqw}' +
       '.auth-dp{font-size:5.3cqw;font-weight:800;color:#1a1200;background:linear-gradient(135deg,#f5c542,#e8a000);border-radius:99px;padding:.7cqw 4.6cqw}' +
       // mastery star (copies ×3/×5/×10 → bronze/silver/gold)
       '.auth-mst{font-size:6.2cqw;line-height:1;font-weight:800}' +
       '.auth-mst.m1{color:#cd8f52;text-shadow:0 1px 4px rgba(0,0,0,.7)}' +
       '.auth-mst.m2{color:#dfe6f2;text-shadow:0 0 6px rgba(200,220,255,.6),0 1px 4px rgba(0,0,0,.7)}' +
       '.auth-mst.m3{color:#f5c542;text-shadow:0 0 8px rgba(245,197,66,.8),0 1px 4px rgba(0,0,0,.7)}' +
-      '.auth-text{position:absolute;left:0;right:0;bottom:0;z-index:5;padding:0 7.3cqw 6.7cqw;text-align:center}' +
-      '.auth-name{font-weight:800;font-size:10.9cqw;line-height:1.02;letter-spacing:.01em;text-transform:uppercase;white-space:normal;max-height:2.05em;overflow:hidden;background:linear-gradient(180deg,var(--m1),var(--cr) 52%,var(--m1));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;filter:drop-shadow(0 .7cqw 1.4cqw rgba(0,0,0,.9));margin-bottom:3.3cqw}' +
-      '.auth-name--md{font-size:9cqw}.auth-name--sm{font-size:7.5cqw;letter-spacing:0}' +
+      '.auth-text{position:absolute;left:16%;right:0;bottom:0;z-index:5;padding:0 5.6cqw 6cqw;text-align:left}' +
+      '.auth-bar{width:10.4cqw;height:1.6cqw;border-radius:.8cqw;background:var(--cr);margin-bottom:3.2cqw}' +
+      '.auth-elite .auth-bar{height:2cqw;box-shadow:0 0 7px rgba(181,138,214,.5)}' +
+      '.auth-legendary .auth-bar{height:2cqw;box-shadow:0 0 9px rgba(232,194,74,.7)}' +
+      '.auth-name{font-weight:900;font-size:10.4cqw;line-height:1;letter-spacing:.01em;text-transform:uppercase;white-space:normal;max-height:2.05em;overflow:hidden;color:#f4f6f8;text-shadow:0 .8cqw 2cqw rgba(0,0,0,.85);margin-bottom:0}' +
+      '.auth-name--md{font-size:8.8cqw}.auth-name--sm{font-size:7.4cqw;letter-spacing:0}' +
       '.auth-meta{display:flex;align-items:center;justify-content:center;gap:4cqw;font-size:5.3cqw;font-weight:800;letter-spacing:.05em;text-transform:uppercase}' +
       '.auth-gem{width:4.7cqw;height:4.7cqw;flex-shrink:0;border-radius:1.3cqw;transform:rotate(45deg);background:var(--cr);box-shadow:0 0 4cqw var(--cr)}' +
       '.auth-rar{color:var(--cr)}' +
       '.auth-meta .sep{color:rgba(255,255,255,.32)}' +
       '.auth-no{color:rgba(255,255,255,.82);font-family:ui-monospace,Menlo,monospace;letter-spacing:.03em}' +
-      '.auth-frame{position:absolute;inset:0;z-index:6;border-radius:12px;pointer-events:none;box-shadow:inset 0 0 0 .7cqw rgba(0,0,0,.55),inset 0 0 0 2cqw var(--cr),inset 0 0 0 2.7cqw rgba(0,0,0,.45)}' +
-      // Material rail: a gradient "metal" ring on the frame (light top-left → dark bottom-right = bevel/relief),
-      // tuned per rarity so the surface reads as matte / satin / metallic / gold at a glance.
-      '.auth-frame::after{content:"";position:absolute;inset:0;border-radius:12px;padding:1.9cqw;background:linear-gradient(140deg,rgba(255,255,255,.5),transparent 36%,transparent 60%,rgba(255,255,255,.3));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;mix-blend-mode:overlay;opacity:.5}' +
-      '.auth-common .auth-frame::after{opacity:.26;background:linear-gradient(140deg,rgba(255,255,255,.32),transparent 42%,transparent 58%,rgba(0,0,0,.28))}' +                                   // matte
-      '.auth-rare .auth-frame::after{opacity:.5;background:linear-gradient(140deg,rgba(222,236,255,.72),transparent 38%,transparent 60%,rgba(110,146,200,.4))}' +                                    // satin
-      '.auth-elite .auth-frame::after{opacity:.62;background:linear-gradient(140deg,rgba(242,228,255,.9),rgba(181,138,214,.25) 40%,transparent 56%,rgba(96,64,140,.5))}' +                            // metallic grain
-      '.auth-legendary .auth-frame::after{opacity:.85;background:linear-gradient(140deg,rgba(255,246,205,.98),rgba(232,194,74,.4) 36%,rgba(120,88,20,.42) 60%,rgba(255,240,190,.9));animation:authMetal 6s ease-in-out infinite}' +  // gold relief
-      '@keyframes authMetal{0%,100%{filter:brightness(1)}50%{filter:brightness(1.28)}}' +
-      '.auth-foil{position:absolute;inset:0;z-index:7;pointer-events:none;opacity:0;background:repeating-linear-gradient(115deg,rgba(255,119,115,.4),rgba(255,237,95,.4) 11%,rgba(168,255,150,.4) 21%,rgba(131,255,247,.4) 31%,rgba(120,148,255,.4) 42%,rgba(216,117,255,.4) 52%,rgba(255,119,115,.4) 62%);background-size:280% 280%;background-position:var(--fx,50%) var(--fy,50%);mix-blend-mode:color-dodge;filter:brightness(.92) contrast(1.12);transition:opacity .22s}' +
-      '.auth-rare .auth-foil{opacity:.16}.auth-elite .auth-foil{opacity:.24}.auth-legendary .auth-foil{opacity:.34;animation:authDrift 7s linear infinite}' +
+      '.auth-frame{position:absolute;inset:0;z-index:6;border-radius:13px;pointer-events:none}' +
+      '.auth-frame::before{content:"";position:absolute;left:16%;top:0;right:0;bottom:0;pointer-events:none}' +
+      '.auth-elite .auth-frame::before{box-shadow:inset 0 0 0 1.5px rgba(181,138,214,.35)}' +
+      '.auth-legendary .auth-frame::before{box-shadow:inset 0 0 0 1.5px rgba(232,194,74,.5)}' +
+      '.auth-legendary .auth-frame{box-shadow:inset 0 0 0 2px rgba(232,194,74,.85)}' +
+      '.auth-elite .auth-card{box-shadow:0 14px 34px -10px rgba(0,0,0,.6),0 0 16px rgba(181,138,214,.16)}' +
+      '.auth-legendary .auth-card{box-shadow:0 14px 34px -10px rgba(0,0,0,.6),0 0 26px rgba(232,194,74,.28)}' +
+      '.auth-foil{position:absolute;top:0;right:0;bottom:0;left:16%;z-index:7;pointer-events:none;opacity:0;background:repeating-linear-gradient(115deg,rgba(255,119,115,.4),rgba(255,237,95,.4) 11%,rgba(168,255,150,.4) 21%,rgba(131,255,247,.4) 31%,rgba(120,148,255,.4) 42%,rgba(216,117,255,.4) 52%,rgba(255,119,115,.4) 62%);background-size:280% 280%;background-position:var(--fx,50%) var(--fy,50%);mix-blend-mode:color-dodge;filter:brightness(.92) contrast(1.12);transition:opacity .22s}' +
+      '.auth-rare .auth-foil{opacity:.14}.auth-elite .auth-foil{opacity:.22}.auth-legendary .auth-foil{opacity:.32;animation:authDrift 7s linear infinite}' +
       // glitter layer: fine specular dots that travel with the cursor/tilt and read as metallic foil grain. Elite+ only, on hover/tilt.
       // Mask is STATIC (centred) on purpose: following --gx/--gy every frame forces a
       // per-frame mask recomposite that stutters on mobile. The sparkle still travels via
       // the background-position (--fx/--fy), which is cheap.
-      '.auth-glit{position:absolute;inset:0;z-index:7;pointer-events:none;opacity:0;background-image:radial-gradient(rgba(255,255,255,.85) 0 5%,transparent 8%),radial-gradient(rgba(255,255,255,.5) 0 4%,transparent 7%);background-size:7cqw 7cqw,4.6cqw 4.6cqw;background-position:var(--fx,50%) var(--fy,50%),calc(var(--fx,50%) + 2.3cqw) calc(var(--fy,50%) + 1.4cqw);-webkit-mask:radial-gradient(circle at 50% 46%,#000,rgba(0,0,0,.3) 30%,transparent 62%);mask:radial-gradient(circle at 50% 46%,#000,rgba(0,0,0,.3) 30%,transparent 62%);mix-blend-mode:screen;filter:brightness(1.1);transition:opacity .25s}' +
+      '.auth-glit{position:absolute;top:0;right:0;bottom:0;left:16%;z-index:7;pointer-events:none;opacity:0;background-image:radial-gradient(rgba(255,255,255,.85) 0 5%,transparent 8%),radial-gradient(rgba(255,255,255,.5) 0 4%,transparent 7%);background-size:7cqw 7cqw,4.6cqw 4.6cqw;background-position:var(--fx,50%) var(--fy,50%),calc(var(--fx,50%) + 2.3cqw) calc(var(--fy,50%) + 1.4cqw);-webkit-mask:radial-gradient(circle at 50% 46%,#000,rgba(0,0,0,.3) 30%,transparent 62%);mask:radial-gradient(circle at 50% 46%,#000,rgba(0,0,0,.3) 30%,transparent 62%);mix-blend-mode:screen;filter:brightness(1.1);transition:opacity .25s}' +
       '.auth-elite .auth-card:hover .auth-glit,.auth-elite .auth-card.tilted .auth-glit{opacity:.42}' +
       '.auth-legendary .auth-card:hover .auth-glit,.auth-legendary .auth-card.tilted .auth-glit{opacity:.6}' +
       // one-shot diagonal light sweep when the pointer enters a card
-      '.auth-sheen{position:absolute;inset:0;z-index:8;pointer-events:none;border-radius:12px;opacity:0;background:linear-gradient(105deg,transparent 36%,rgba(255,255,255,.55) 50%,transparent 64%)}' +
+      '.auth-sheen{position:absolute;inset:0;z-index:8;pointer-events:none;border-radius:13px;opacity:0;background:linear-gradient(105deg,transparent 36%,rgba(255,255,255,.55) 50%,transparent 64%)}' +
       '.auth-card:hover .auth-sheen,.auth-card.sheen-go .auth-sheen{animation:authSheen .7s ease-out}' +
       '@keyframes authSheen{0%{opacity:0;transform:translateX(-65%)}28%{opacity:.85}100%{opacity:0;transform:translateX(65%)}}' +
       // in-card depth parallax: while tilted the poster recedes (moves against the cursor) and the star/badges/title pop forward (move with it)
-      '.auth-bgimg,.auth-bgcv,.auth-star,.auth-corner,.auth-tags,.auth-text{transition:transform .34s cubic-bezier(.2,.8,.2,1)}' +
+      '.auth-bgimg,.auth-bgcv,.auth-tags,.auth-text{transition:transform .34s cubic-bezier(.2,.8,.2,1)}' +
       // While actively tilting, the layers track the finger every frame — a CSS transition
       // there re-interpolates each frame and stutters, so kill it and promote to GPU. The
       // .28s transition only applies on release (class removed) for a smooth settle.
-      '.auth-card.tilted .auth-bgimg,.auth-card.tilted .auth-bgcv,.auth-card.tilted .auth-star,.auth-card.tilted .auth-corner,.auth-card.tilted .auth-tags,.auth-card.tilted .auth-text{transition:none}' +
+      '.auth-card.tilted .auth-bgimg,.auth-card.tilted .auth-bgcv,.auth-card.tilted .auth-tags,.auth-card.tilted .auth-text{transition:none}' +
       '.auth-card.tilted{will-change:transform}' +
       // Poster parallax ONLY on fine pointers (desktop). On touch the photo stays put on
       // its stable GPU layer — transforming it every frame under the blend layers is what
@@ -1595,9 +1605,7 @@
       // swap and then the depth zoom eases in (the "jump between two zooms"). The shader
       // does the parallax itself, so the canvas only needs the scale, not the translate.
       '@media(pointer:fine){.auth-card.tilted .auth-bgcv,.ctc-inner.tilted .auth-bgcv{transform:scale(var(--ovs,1.0))}}' +
-      '.auth-card.tilted .auth-star{transform:translate(calc(var(--px,0) * 3.6cqw),calc(var(--py,0) * 3.6cqw))}' +
-      '.auth-card.tilted .auth-corner{transform:translate(calc(var(--px,0) * 2.6cqw),calc(var(--py,0) * 2.6cqw))}' +
-      '.auth-card.tilted .auth-tags{transform:translate(calc(var(--px,0) * 3cqw),calc(var(--py,0) * 3cqw))}' +
+            '.auth-card.tilted .auth-tags{transform:translate(calc(var(--px,0) * 3cqw),calc(var(--py,0) * 3cqw))}' +
       '.auth-card.tilted .auth-text{transform:translate(calc(var(--px,0) * 2.2cqw),calc(var(--py,0) * 2.2cqw))}' +
       '.auth-glare{position:absolute;inset:0;z-index:8;pointer-events:none;opacity:0;background:radial-gradient(circle at var(--gx,50%) var(--gy,50%),rgba(255,255,255,.42),rgba(255,255,255,.08) 30%,transparent 52%);mix-blend-mode:overlay;transition:opacity .2s}' +
       '.auth-card:hover .auth-glare,.auth-card.tilted .auth-glare{opacity:1}' +
@@ -1625,12 +1633,12 @@
       '@media(pointer:fine){.auth-card.tilted .auth-foil{filter:brightness(calc(.74 + var(--pfc,.5) * .55)) contrast(1.12)}.auth-card.tilted .auth-glit{filter:brightness(calc(.9 + var(--pfc,.5) * .5))}}' +
       // the WHOLE card tilts as one plane (no independent photo zoom); a moving inner
       // shade darkens the side that turns away, so it reads as a lit 3D surface.
-      '.auth-shade{position:absolute;inset:0;z-index:8;pointer-events:none;opacity:0;border-radius:12px;background:linear-gradient(var(--shang,105deg),rgba(0,0,0,.5),transparent 42%,transparent 58%,rgba(255,255,255,.14));transition:opacity .2s}' +
+      '.auth-shade{position:absolute;inset:0;z-index:8;pointer-events:none;opacity:0;border-radius:13px;background:linear-gradient(var(--shang,105deg),rgba(0,0,0,.5),transparent 42%,transparent 58%,rgba(255,255,255,.14));transition:opacity .2s}' +
       '.auth-card.tilted .auth-shade{opacity:1}' +
       '.auth-card:hover,.auth-card.tilted{box-shadow:0 20px 44px rgba(0,0,0,.64)}' +
       /* hover-out: force every added brightness/glow to ease off in sync with the depth zoom */
       '.auth-card.fx-out .auth-glare,.auth-card.fx-out .auth-glit,.auth-card.fx-out .auth-sheen{opacity:0!important;transition:opacity .4s ease!important}' +
-      '.auth-card.fx-out,.auth-rare .auth-card.fx-out,.auth-elite .auth-card.fx-out,.auth-legendary .auth-card.fx-out{box-shadow:0 8px 22px rgba(0,0,0,.55)!important;transition:box-shadow .4s ease!important}' +
+      '.auth-card.fx-out,.auth-rare .auth-card.fx-out,.auth-elite .auth-card.fx-out,.auth-legendary .auth-card.fx-out{box-shadow:0 14px 34px -10px rgba(0,0,0,.6)!important;transition:box-shadow .4s ease!important}' +
       '.auth-rare .auth-card:hover,.auth-rare .auth-card.tilted{box-shadow:0 20px 44px rgba(0,0,0,.64),0 0 26px rgba(122,166,232,.5)}' +
       '.auth-elite .auth-card:hover,.auth-elite .auth-card.tilted{box-shadow:0 20px 44px rgba(0,0,0,.64),0 0 26px rgba(181,138,214,.55)}' +
       '.auth-legendary .auth-card:hover,.auth-legendary .auth-card.tilted{box-shadow:0 20px 44px rgba(0,0,0,.64),0 0 30px rgba(232,194,74,.6)}' +
@@ -1647,7 +1655,7 @@
         'calc(var(--px,0) * -40px) calc(var(--py,0) * -40px) 0 #050910,' +
         'calc(var(--px,0) * -48px) calc(var(--py,0) * -48px) 0 #04070d,' +
         '0 34px 66px rgba(0,0,0,.72);transition:box-shadow 0s}}' +
-      '@media(prefers-reduced-motion:reduce){.auth{animation:none}.auth-star,.auth-legendary .auth-foil{animation:none}.auth-card{transition:none}.auth-sheen{animation:none;display:none}.auth-glit{display:none}.auth-refl,.auth-rim{display:none}.auth-bgimg,.auth-star,.auth-corner,.auth-tags,.auth-text{transition:none}.auth-legendary .auth-frame::after{animation:none}}' +
+      '@media(prefers-reduced-motion:reduce){.auth{animation:none}.auth-legendary .auth-foil{animation:none}.auth-card{transition:none}.auth-sheen{animation:none;display:none}.auth-glit{display:none}.auth-refl,.auth-rim{display:none}.auth-bgimg,.auth-tags,.auth-text{transition:none}}' +
       // Mobile (coarse pointer): kill the idle infinite animations. None of them can run on
       // Blink's compositor — authStar animates filter with a drop-shadow in the keyframe
       // (disqualifies compositor filters), authDrift animates background-position and
@@ -1656,7 +1664,7 @@
       // On Android that saturates the raster queue and Chrome draws missed tiles as black
       // flashes over the photo. Star/foil/frame remain visible, just static; the foil and
       // glare still move with the finger during the drag tilt.
-      '@media(pointer:coarse){.auth-star{animation:none;filter:none}.auth-legendary .auth-foil{animation:none}.auth-legendary .auth-frame::after{animation:none}' +
+      '@media(pointer:coarse){.auth-legendary .auth-foil{animation:none}' +
         // Compositing diet v2: layers were still vanishing/flashing — every mix-blend-mode
         // sibling forces the card group into an offscreen render surface, and dozens of grid
         // cards each held a promoted poster texture underneath the open detail view. Android
@@ -1665,14 +1673,14 @@
         // author ships exactly this tradeoff on mobile), no isolation (moot without blends),
         // and posters only get a GPU layer inside the drag-tilted detail/reveal cards.
         '.auth-card{isolation:auto}' +
-        '.auth-foil,.auth-glit,.auth-glare,.auth-frame::after{mix-blend-mode:normal}' +
+        '.auth-foil,.auth-glit,.auth-glare{mix-blend-mode:normal}' +
+        '.auth-scrim{mix-blend-mode:normal;background:linear-gradient(180deg,transparent,rgba(0,0,0,.82));opacity:1}' +
         '.auth-foil,.auth-glit{filter:none}' +
         '.auth-rare .auth-foil{opacity:.1}.auth-elite .auth-foil{opacity:.15}.auth-legendary .auth-foil{opacity:.22}' +
         '.auth-card:hover .auth-glare,.auth-card.tilted .auth-glare{opacity:.55}' +
         '.auth-elite .auth-card:hover .auth-glit,.auth-elite .auth-card.tilted .auth-glit{opacity:.25}' +
         '.auth-legendary .auth-card:hover .auth-glit,.auth-legendary .auth-card.tilted .auth-glit{opacity:.35}' +
-        '.auth-common .auth-frame::after{opacity:.18}.auth-rare .auth-frame::after{opacity:.32}.auth-elite .auth-frame::after{opacity:.42}.auth-legendary .auth-frame::after{opacity:.6}' +
-        '.auth-bgimg{transform:none;-webkit-backface-visibility:visible;backface-visibility:visible}' +
+                '.auth-bgimg{transform:none;-webkit-backface-visibility:visible;backface-visibility:visible}' +
         '#clDetailCard .auth-bgimg,#clrBody .auth-bgimg{transform:translateZ(0);-webkit-backface-visibility:hidden;backface-visibility:hidden}' +
       '}' +
       // when the WebGL canvas renders the holo (cv-holo — set on coarse pointers or
@@ -1710,16 +1718,16 @@
       // Meta line: its own positioned layer when the template splits it out; else
       // it rides inside the name-plate box (default + legacy).
       var hasMetaLayer = TL && tplGet(TL, 'meta');
-      var metaInside = hasMetaLayer ? '' : '<div class="auth-meta"><span class="auth-gem"></span><span class="auth-rar">' + rar.label + '</span><span class="sep">·</span><span>' + typeUp + '</span><span class="sep">·</span><span class="auth-no">' + no + '</span></div>';
       var metaLayer = hasMetaLayer ? ('<div class="auth-meta"' + tplMetaBoxStyle(TL, c.rarity) + '>' + tplMetaContent(TL, rar, typeUp, no) + '</div>') : '';
       return '<div class="auth auth-' + c.rarity + (person ? ' person' : '') + (c.shine ? ' cl-shine' : '') + (TL ? ' auth-tpl' : '') + '" style="--cr:' + rar.ring + ';--m1:' + (METAL[c.rarity] || '#fff') + ';animation-delay:' + Math.min(i, 16) * 22 + 'ms" title="' + nm + ' · ' + rar.label + ' · ' + no + (c.shine ? ' · Shined' : '') + '">' +
         '<div class="auth-card">' +
           (p ? '<img class="auth-bgimg" src="' + ctx.esc(p) + '" alt="" loading="lazy"' + O('poster') + '>' : '<div class="auth-noimg"></div>') +
-          '<div class="auth-scrim"' + O('scrim') + '></div><div class="auth-corner"' + O('corner') + '></div><div class="auth-star"' + O('star') + '></div>' +
+          '<div class="auth-scrim"' + O('scrim') + '></div>' +
+          '<div class="auth-spine"><span class="auth-sp-stripes"><i></i><i></i><i></i></span><span class="auth-sp-meta">' + rar.label + ' · ' + typeUp + '</span><span class="auth-sp-no">' + no + '</span></div>' +
           tagsHtml +
           '<div class="auth-text"' + (TL ? tplTextBoxStyle(TL, c.rarity) : '') + '>' +
+            '<div class="auth-bar"></div>' +
             '<div class="auth-name' + nmCls + '"' + (TL ? tplTitleStyle(TL, c.rarity) : '') + '>' + nm + '</div>' +
-            metaInside +
           '</div>' + metaLayer +
           '<div class="auth-frame"' + O('frame') + '></div><div class="auth-foil"' + O('foil') + '></div><div class="auth-glit"></div><div class="auth-shade"></div><div class="auth-sheen"></div><div class="auth-glare"></div><div class="auth-refl"></div>' +
           '<div class="auth-rim auth-rim-t"></div><div class="auth-rim auth-rim-b"></div><div class="auth-rim auth-rim-l"></div><div class="auth-rim auth-rim-r"></div>' +
