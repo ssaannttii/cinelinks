@@ -49,7 +49,7 @@
   function toast(msg) {
     var t = document.createElement('div');
     t.textContent = msg;
-    t.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(14px);background:#2c343f;border:1px solid rgba(91,189,122,.4);color:#f0f0f0;padding:11px 16px;border-radius:11px;font-family:Inter,-apple-system,sans-serif;font-size:.84rem;font-weight:600;box-shadow:0 14px 34px rgba(0,0,0,.5);opacity:0;transition:opacity .25s,transform .25s;z-index:1300';
+    t.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(14px);background:#2c343f;border:1px solid rgba(91,189,122,.4);color:#f0f0f0;padding:11px 16px;border-radius:12px;font-family:Inter,-apple-system,sans-serif;font-size:.84rem;font-weight:600;box-shadow:0 14px 34px rgba(0,0,0,.5);opacity:0;transition:opacity .25s,transform .25s;z-index:1300';
     document.body.appendChild(t);
     requestAnimationFrame(function () { t.style.opacity = '1'; t.style.transform = 'translateX(-50%) translateY(0)'; });
     setTimeout(function () { t.style.opacity = '0'; setTimeout(function () { t.remove(); }, 300); }, 3200);
@@ -198,5 +198,5 @@
   // the cached signed-in pill already rendered, and the button / silent re-auth
   // can wait a beat. Keeps GIS off the critical path (better TTI).
   var addGis = function () { document.head.appendChild(s); };
-  if (window.requestIdleCallback) requestIdleCallback(addGis, { timeout: 3000 }); else setTimeout(addGis, 1200);
+  if (window.requestIdleCallback) window.requestIdleCallback(addGis, { timeout: 3000 }); else setTimeout(addGis, 1200);
 })();

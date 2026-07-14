@@ -40,7 +40,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 .cx.green{background:var(--green);color:#fff;border-color:transparent}
 .cx.gold{background:var(--gold);color:#1a1200;border-color:transparent}
 .cx.red{background:var(--red);color:#fff;border-color:transparent}
-.cx .ar{font-weight:900;margin-left:2px}
+.cx .ar{font-weight:800;margin-left:2px}
 @keyframes pop{from{opacity:0;transform:translateY(6px) scale(.97)}to{opacity:1;transform:none}}
 .anchors{max-width:470px;margin:6px auto 0;text-align:left;font-size:.76rem;color:var(--txt);line-height:1.45;display:flex;flex-wrap:wrap;gap:1px 4px;align-items:baseline}
 .anchors .ak{opacity:.6;font-size:.82rem}
@@ -59,10 +59,10 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 .dot.win{background:var(--good)}
 .hint{color:var(--mut);font-size:.82rem;margin:0 0 10px}
 .guess{position:relative;max-width:440px;margin:0 auto}
-.guess input{width:100%;padding:13px 15px;border-radius:11px;border:1px solid var(--bdr);background:rgba(255,255,255,.05);color:var(--txt);font-family:inherit;font-size:.95rem;outline:none}
+.guess input{width:100%;padding:13px 15px;border-radius:12px;border:1px solid var(--bdr);background:rgba(255,255,255,.05);color:var(--txt);font-family:inherit;font-size:.95rem;outline:none}
 .guess input:focus{border-color:rgba(232,160,0,.55)}
 .guess input:disabled{opacity:.55}
-.ac{position:absolute;left:0;right:0;top:54px;background:#212831;border:1px solid var(--bdr);border-radius:11px;overflow:hidden;z-index:5;text-align:left;box-shadow:0 18px 50px rgba(0,0,0,.5)}
+.ac{position:absolute;left:0;right:0;top:54px;background:#212831;border:1px solid var(--bdr);border-radius:12px;overflow:hidden;z-index:5;text-align:left;box-shadow:0 18px 50px rgba(0,0,0,.5)}
 .ac-item{display:flex;align-items:center;gap:10px;padding:8px 11px;cursor:pointer}
 .ac-item:hover,.ac-item.sel{background:rgba(232,160,0,.12)}
 .ac-item img{width:28px;height:40px;object-fit:cover;border-radius:5px;background:#333;flex-shrink:0}
@@ -70,10 +70,10 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 .ac-item .kf{color:var(--mut);font-size:.72rem}
 .miss{min-height:20px;color:#d98b8b;font-size:.8rem;margin-top:9px}
 .row{display:flex;gap:8px;max-width:440px;margin:12px auto 0}
-.btn{flex:1;padding:11px;border-radius:11px;border:1px solid var(--bdr);background:transparent;color:var(--txt);font-family:inherit;font-weight:700;font-size:.85rem;cursor:pointer}
+.btn{flex:1;padding:11px;border-radius:12px;border:1px solid var(--bdr);background:transparent;color:var(--txt);font-family:inherit;font-weight:700;font-size:.85rem;cursor:pointer}
 .btn.gold{background:var(--gold);color:#1a1408;border-color:var(--gold)}
 .btn:hover{opacity:.92}
-.result{margin-top:16px;padding:18px;border-radius:14px;border:1px solid var(--bdr);background:rgba(255,255,255,.04);display:none}
+.result{margin-top:16px;padding:18px;border-radius:16px;border:1px solid var(--bdr);background:rgba(255,255,255,.04);display:none}
 .result.show{display:block;animation:pop .4s both}
 .result h2{font-size:1.3rem;margin-bottom:4px}
 .result h2.win{color:var(--good)}
@@ -108,7 +108,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
   <div id="stage"><div class="loading" style="padding:6px 0" aria-label="Loading">
     <div class="fx-skel-wrap" style="gap:10px;align-items:center">
       <div class="fx-skel-row" style="justify-content:center;gap:5px"><span class="fx-skel" style="width:60px;height:9px"></span><span class="fx-skel" style="width:60px;height:9px"></span><span class="fx-skel" style="width:60px;height:9px"></span></div>
-      <span class="fx-skel" style="width:100%;height:46px;border-radius:9px"></span>
+      <span class="fx-skel" style="width:100%;height:46px;border-radius:8px"></span>
       <span class="fx-skel" style="width:100%;height:46px;border-radius:12px"></span>
     </div>
   </div></div>
