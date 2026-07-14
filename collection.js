@@ -364,7 +364,8 @@
       var img = inner.querySelector('.auth-bgimg, .ctc-art img'); if (!img || !img.src) return;
       var cv = document.createElement('canvas');
       cv.className = 'auth-bgcv';
-      cv.style.cssText = 'position:absolute;top:-1px;bottom:-1px;right:-1px;left:' + (inner.classList.contains('auth-card') ? 'calc(16% - 1px)' : '-1px') + ';z-index:0;pointer-events:none';
+      var artCv = inner.classList.contains('auth-card');
+      cv.style.cssText = 'position:absolute;top:-1px;left:' + (artCv ? '16%' : '-1px') + ';width:' + (artCv ? 'calc(84% + 1px)' : 'calc(100% + 2px)') + ';height:calc(100% + 2px);z-index:0;pointer-events:none';
       var gl = cv.getContext('webgl', { alpha: false, antialias: false });
       if (!gl) return;
       var VS = 'attribute vec2 p;varying vec2 v;void main(){v=p*.5+.5;gl_Position=vec4(p,0.,1.);}';
@@ -1534,7 +1535,7 @@
       // against the page every frame — the canonical fix for the transform+blend+radius
       // flicker in Chrome/Blink & Safari (they'd otherwise flash the card bg to black).
       '.auth-card{position:relative;container-type:inline-size;aspect-ratio:5/7;border-radius:13px;overflow:hidden;isolation:isolate;transition:transform .16s ease,box-shadow .2s ease;background:var(--spbg,#0c1117);box-shadow:0 14px 34px -10px rgba(0,0,0,.6);-webkit-backface-visibility:hidden;backface-visibility:hidden}' +
-      '.auth-bgimg{position:absolute;top:-1px;bottom:-1px;left:16%;right:-1px;width:auto;height:auto;object-fit:cover;object-position:center top;z-index:0;transform:translateZ(0);-webkit-backface-visibility:hidden;backface-visibility:hidden}' +
+      '.auth-bgimg{position:absolute;top:-1px;left:16%;width:calc(84% + 1px);height:calc(100% + 2px);object-fit:cover;object-position:center top;z-index:0;transform:translateZ(0);-webkit-backface-visibility:hidden;backface-visibility:hidden}' +
       '.auth-noimg{position:absolute;top:0;bottom:0;left:16%;right:0;z-index:0;background:radial-gradient(120% 80% at 50% 0%,#17325e,#0a1830)}' +
       '.auth-scrim{position:absolute;left:16%;right:0;bottom:0;height:44%;z-index:1;pointer-events:none;background:linear-gradient(180deg,#ffffff,#000000);mix-blend-mode:multiply;opacity:.85}' +
       // Spine: left rail architecture (design 5) — stripes / vertical meta / card number.
