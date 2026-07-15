@@ -67,6 +67,30 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 .tl-slot:hover,.tl-slot:focus{color:var(--gold);outline:none}
 .tl-slot:hover::before,.tl-slot:focus::before{background:rgba(232,160,0,.6)}
 .tl-slot.done{display:none}
+/* Discover: every placed film is tappable → a compact info sheet (homage to learning about cinema). */
+.tl-item{cursor:pointer}
+.tl-item .tl-i{margin-left:auto;flex-shrink:0;width:18px;height:18px;border-radius:50%;border:1px solid rgba(232,160,0,.5);color:var(--gold);font-size:.66rem;font-weight:800;font-style:italic;display:flex;align-items:center;justify-content:center;opacity:.6;transition:opacity .15s}
+.tl-item:hover .tl-i,.tl-item:focus .tl-i{opacity:1}
+#clInfo{position:fixed;inset:0;z-index:120;display:none;align-items:flex-end;justify-content:center;padding:0;background:rgba(8,11,15,.72);backdrop-filter:blur(6px)}
+#clInfo.on{display:flex;animation:clifFade .2s ease both}
+@keyframes clifFade{from{opacity:0}to{opacity:1}}
+.clif-card{position:relative;width:100%;max-width:440px;background:var(--s1);border:1px solid var(--bdr);border-top:1px solid rgba(232,160,0,.35);border-radius:20px 20px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom));box-shadow:0 -20px 60px rgba(0,0,0,.5);animation:clifUp .34s cubic-bezier(.22,1,.36,1) both}
+@keyframes clifUp{from{transform:translateY(24px);opacity:.4}to{transform:none;opacity:1}}
+.clif-x{position:absolute;top:12px;right:12px;width:32px;height:32px;border:0;border-radius:50%;background:rgba(255,255,255,.06);color:var(--mut);font-size:1.1rem;line-height:1;cursor:pointer}
+.clif-top{display:flex;gap:14px}
+.clif-top img{width:78px;height:117px;border-radius:8px;object-fit:cover;flex-shrink:0;background:var(--s2);box-shadow:0 8px 20px rgba(0,0,0,.4)}
+.clif-h{min-width:0;flex:1;padding-right:26px}
+.clif-title{font-family:var(--fdisp);font-weight:600;font-size:1.2rem;line-height:1.15;color:var(--txt)}
+.clif-year{font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums}
+.clif-dir{font-size:.82rem;color:var(--mut);margin-top:6px;line-height:1.4}
+.clif-dir b{color:var(--txt);font-weight:700}
+.clif-genres{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+.clif-genres span{font-size:.64rem;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--gold);background:rgba(232,160,0,.13);border-radius:999px;padding:3px 9px}
+.clif-line{font-size:.9rem;line-height:1.55;color:var(--txt);margin-top:14px}
+.clif-line.tagline{font-family:var(--fdisp);font-style:italic;color:#e8d9b6}
+.clif-foot{font-size:.62rem;color:var(--mut);margin-top:14px;text-align:center}
+.clif-load{min-height:60px;display:flex;align-items:center;justify-content:center;color:var(--mut);font-size:.82rem}
+@media(prefers-reduced-motion:reduce){#clInfo.on,.clif-card{animation:none}}
 /* result */
 .result{text-align:center;margin-top:10px;background:linear-gradient(180deg,rgba(232,160,0,.08),transparent 140px),var(--s1);border:1px solid rgba(232,160,0,.18);border-radius:16px;padding:24px 18px;box-shadow:0 24px 60px rgba(0,0,0,.35);animation:fadeIn .35s ease both}
 .result.hidden{display:none}
@@ -176,6 +200,10 @@ var L = {
   newerAria:    { en:'place as the newest', es:'colocar como la más reciente', fr:'placer comme le plus récent', de:'als neuesten einordnen', pt:'colocar como o mais recente' },
   backTo:       { en:'Back to CineLinks', es:'Volver a CineLinks', fr:'Retour à CineLinks', de:'Zurück zu CineLinks', pt:'Voltar para CineLinks' },
   finalScore:   { en:'Final score', es:'Puntuación final', fr:'Score final', de:'Endstand', pt:'Pontuação final' },
+  learnAria:    { en:'tap to learn more', es:'toca para saber más', fr:'toucher pour en savoir plus', de:'tippen für mehr', pt:'toque para saber mais' },
+  directedBy:   { en:'Directed by', es:'Dirigida por', fr:'Réalisé par', de:'Regie', pt:'Dirigido por' },
+  infoFoot:     { en:'Data from TMDB', es:'Datos de TMDB', fr:'Données de TMDB', de:'Daten von TMDB', pt:'Dados do TMDB' },
+  infoNone:     { en:'No extra details for this film yet.', es:'Aún no hay más detalles de esta película.', fr:'Pas encore de détails pour ce film.', de:'Noch keine weiteren Details zu diesem Film.', pt:'Ainda sem mais detalhes deste filme.' },
   placed:       { en:'Placed', es:'Colocadas', fr:'Placés', de:'Platziert', pt:'Colocados' },
   placeHere:    { en:'place here', es:'colocar aquí', fr:'placer ici', de:'hier einordnen', pt:'colocar aqui' },
   film:         { en:'Film', es:'Película', fr:'Film', de:'Film', pt:'Filme' },
@@ -291,6 +319,72 @@ function renderProgress(){
   }
 }
 
+// ── Discover: lazy film info (director + genres + one evocative line) ──
+// Two allow-listed TMDB calls (details + credits), cached forever per id.
+const _finfoMem = {};
+function movieInfo(id){
+  if(_finfoMem[id]) return Promise.resolve(_finfoMem[id]);
+  try{ const c = localStorage.getItem('cl_finfo_' + id); if(c){ _finfoMem[id] = JSON.parse(c); return Promise.resolve(_finfoMem[id]); } }catch(_){}
+  const lang = (function(){ try{ const l = localStorage.getItem('clLang'); return (l && /^[a-z]{2}-[A-Z]{2}$/.test(l)) ? l : 'en-US'; }catch(_){ return 'en-US'; } })();
+  return Promise.all([
+    api('movie/' + id + '&language=' + lang).catch(() => null),
+    api('movie/' + id + '/credits&language=' + lang).catch(() => null)
+  ]).then(function(r){
+    const d = r[0] || {}, cr = r[1] || {};
+    const dirs = (cr.crew || []).filter(x => x.job === 'Director').map(x => x.name).slice(0, 2);
+    const info = {
+      dir: dirs,
+      genres: (d.genres || []).slice(0, 3).map(g => g.name),
+      tagline: (d.tagline || '').trim(),
+      overview: (d.overview || '').trim(),
+      runtime: d.runtime || 0
+    };
+    _finfoMem[id] = info; try{ localStorage.setItem('cl_finfo_' + id, JSON.stringify(info)); }catch(_){}
+    return info;
+  });
+}
+// Trim overview to one sentence (~160 chars) so the sheet stays a glance, not an essay.
+function briefLine(info){
+  if(info.tagline) return { t: info.tagline, cls: 'tagline' };
+  let o = info.overview; if(!o) return null;
+  if(o.length > 165){ const cut = o.slice(0, 165); const dot = cut.lastIndexOf('. '); o = (dot > 80 ? cut.slice(0, dot + 1) : cut.trim() + '…'); }
+  return { t: o, cls: '' };
+}
+function openFilmInfo(id, title, year, posterSrc){
+  if(!id) return;
+  let ov = document.getElementById('clInfo');
+  if(!ov){ ov = document.createElement('div'); ov.id = 'clInfo'; document.body.appendChild(ov); }
+  const head =
+    '<button class="clif-x" aria-label="Close">×</button>' +
+    '<div class="clif-top">' +
+      (posterSrc ? '<img src="' + posterSrc + '" alt="">' : '') +
+      '<div class="clif-h"><div class="clif-title">' + esc(title) + ' <span class="clif-year">' + esc(year) + '</span></div>' +
+      '<div id="clifMeta"></div></div>' +
+    '</div><div id="clifBody" class="clif-load">…</div>' +
+    '<div class="clif-foot">' + T('infoFoot') + '</div>';
+  ov.innerHTML = '<div class="clif-card">' + head + '</div>';
+  ov.classList.add('on');
+  const close = () => { ov.classList.remove('on'); document.removeEventListener('keydown', onKey); };
+  const onKey = e => { if(e.key === 'Escape') close(); };
+  document.addEventListener('keydown', onKey);
+  ov.onclick = e => { if(e.target === ov) close(); };
+  ov.querySelector('.clif-x').onclick = close;
+  try{ if(window.Sfx) Sfx.haptic([8]); }catch(_){}
+  movieInfo(id).then(function(info){
+    const meta = document.getElementById('clifMeta'); if(meta){
+      let m = '';
+      if(info.dir && info.dir.length) m += '<div class="clif-dir">' + T('directedBy') + ' <b>' + esc(info.dir.join(' · ')) + '</b></div>';
+      if(info.genres && info.genres.length) m += '<div class="clif-genres">' + info.genres.map(g => '<span>' + esc(g) + '</span>').join('') + '</div>';
+      meta.innerHTML = m;
+    }
+    const body = document.getElementById('clifBody'); if(body){
+      const bl = briefLine(info);
+      body.className = bl ? ('clif-line ' + bl.cls) : 'clif-load';
+      body.textContent = bl ? bl.t : T('infoNone');
+    }
+  }).catch(function(){ const body = document.getElementById('clifBody'); if(body){ body.className = 'clif-load'; body.textContent = T('infoNone'); } });
+}
+
 function renderTimeline(){
   const sorted = sortedPlaced(); // oldest → newest (top → bottom)
   let h = '';
@@ -300,9 +394,9 @@ function renderTimeline(){
       const c = sorted[i];
       const flash = (c === lastPlaced) ? (c._res === 'correct' ? ' fx-bounce' : ' fx-shake') : '';
       const cls = c._anchor ? ' anchor' : (c._res ? ' ' + c._res : '');
-      h += '<div class="tl-item' + cls + flash + '">' +
+      h += '<div class="tl-item' + cls + flash + '" data-mid="' + (c.id || '') + '" data-yr="' + c.year + '" role="button" tabindex="0" aria-label="' + esc(c.title) + ' — ' + T('learnAria') + '">' +
         (c.poster ? '<img src="' + poster(c.poster, 'w92') + '" alt="">' : '<div class="tl-ph"></div>') +
-        '<span class="tl-name">' + esc(c.title) + '</span><span class="tl-yr">' + c.year + '</span></div>';
+        '<span class="tl-name">' + esc(c.title) + '</span><span class="tl-yr">' + c.year + '</span>' + (c.id ? '<span class="tl-i" aria-hidden="true">i</span>' : '') + '</div>';
     }
   }
   const row = document.getElementById('timeline');
@@ -312,6 +406,11 @@ function renderTimeline(){
   const eo = document.getElementById('edgeOlder'), en = document.getElementById('edgeNewer');
   if(eo && en){ eo.disabled = finished; en.disabled = finished; eo.onclick = () => { if(!finished) place(0); }; en.onclick = () => { if(!finished) place(sorted.length); }; }
   if(!finished) row.querySelectorAll('.tl-slot').forEach(b => { b.onclick = () => place(+b.dataset.slot); });
+  row.querySelectorAll('.tl-item[data-mid]').forEach(it => {
+    const open = () => openFilmInfo(it.getAttribute('data-mid'), it.querySelector('.tl-name').textContent, it.getAttribute('data-yr'), it.querySelector('img') && it.querySelector('img').src);
+    it.onclick = open;
+    it.onkeydown = e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); open(); } };
+  });
 }
 
 function renderCurrent(){
