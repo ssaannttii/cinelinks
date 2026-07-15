@@ -1377,6 +1377,11 @@ function _detectLang() {
   return 'en-US';
 }
 let _lang = _detectLang();
+// Escape untrusted text before it lands in innerHTML (node names can arrive via
+// shared-challenge URL params, so they are attacker-controlled).
+function escHtml(v) {
+  return String(v == null ? '' : v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 function t(key, ...args) {
   const d = I18N[_lang] || I18N['en-US'];
   const v = d[key] ?? I18N['en-US'][key];
@@ -3480,7 +3485,7 @@ const game = window.game = {
       const banner = document.getElementById('goalBanner');
       if (banner) {
         if (goalItem) {
-          banner.querySelector('.goal-banner-text').innerHTML = t('goalBanner', this.end.name);
+          banner.querySelector('.goal-banner-text').innerHTML = t('goalBanner', escHtml(this.end.name));
           banner.classList.remove('visible');
           void banner.offsetWidth;
           banner.classList.add('visible');
@@ -4032,7 +4037,7 @@ const game = window.game = {
         '<div class="share-card-num">' + (i + 1) + '</div>' +
         '<div class="share-card-art ' + (isPerson ? '' : 'title') + '"' +
           (proxiedUrl ? ' style="background-image:url(\'' + proxiedUrl + '\')"' : '') + '></div>' +
-        '<div class="share-card-name">' + n.name + '</div>' +
+        '<div class="share-card-name">' + escHtml(n.name) + '</div>' +
         '<div class="share-card-type">' + (n.type === 'person' ? t('typePerson') : n.type === 'tv' ? t('typeTv') : t('typeMovieFull')) + '</div>';
       pathEl.appendChild(row);
     });
@@ -4318,7 +4323,7 @@ const creator = {
     const imgUrl = node.img ? 'https://image.tmdb.org/t/p/w92' + node.img : '';
     el.innerHTML = '<span class="creator-thumb ' + (isPerson ? '' : 'title') + '">' +
       (imgUrl ? '<img src="' + imgUrl + '" alt="">' : '') + '</span>' +
-      '<span>' + node.name + (node.yearLabel ? ' <span style="color:var(--mut);font-weight:400">(' + node.yearLabel + ')</span>' : '') + '</span>';
+      '<span>' + escHtml(node.name) + (node.yearLabel ? ' <span style="color:var(--mut);font-weight:400">(' + escHtml(node.yearLabel) + ')</span>' : '') + '</span>';
     this._updateLink();
   },
 
@@ -4348,7 +4353,7 @@ const creator = {
           btn.className = 'creator-result';
           btn.innerHTML = '<span class="creator-result-thumb ' + (type === 'person' ? '' : 'title') + '">' +
             (imgUrl ? '<img src="' + imgUrl + '" alt="">' : '') + '</span>' +
-            '<span><div class="creator-result-name">' + name + '</div>' +
+            '<span><div class="creator-result-name">' + escHtml(name) + '</div>' +
             '<div class="creator-result-meta">' + typeLabel + (year ? ' · ' + year : '') + '</div></span>';
           btn.onclick = () => {
             this.picked[slot] = { name, type, id: r.id, img, yearLabel: year };
