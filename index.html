@@ -256,6 +256,11 @@ body{font-family:var(--fui);background:var(--bg);color:var(--txt);min-height:100
 @keyframes celeSweep{0%{transform:translateX(-120%) skewX(-18deg);opacity:0}30%{opacity:.55}100%{transform:translateX(220%) skewX(-18deg);opacity:0}}
 @keyframes celePart{0%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(.25);opacity:0}}
 .game-card.celebrate{animation:cardCele 1.15s cubic-bezier(.2,.85,.25,1);z-index:3}
+/* Hero panel: same glow beats, no scale — the big card must not appear to resize. */
+@keyframes cardCeleFlat{0%{box-shadow:0 0 0 0 rgba(91,189,122,0)}16%{box-shadow:0 0 0 2px rgba(127,212,154,.6),0 18px 54px rgba(91,189,122,.42)}100%{box-shadow:0 0 0 0 rgba(91,189,122,0)}}
+.game-card.hero.celebrate{animation-name:cardCeleFlat}
+@keyframes cardWinFlat{0%{box-shadow:0 0 0 0 rgba(232,160,0,0)}18%{box-shadow:0 0 0 2px rgba(245,197,66,.72),0 18px 54px rgba(232,160,0,.42)}100%{box-shadow:0 0 0 0 rgba(232,160,0,0)}}
+.game-card.hero.cardwin{animation-name:cardWinFlat}
 .game-card.celebrate .game-done.on{animation:badgePop .72s .1s cubic-bezier(.3,1.5,.5,1) both}
 /* Finale of the ✓DONE bloom: the Results + Practice buttons reveal last, so the
    eye lands on the celebration first and the actions arrive as the payoff. */
@@ -1998,6 +2003,15 @@ function assignGamePosters() {
     // A single image must never land on two different game cards the same day. Every
     // path placed anywhere goes in `used`, and each card draws only from what's left.
     var used = {};
+    // Completed daily: the hero card wears today's TARGET (the film/person you reached)
+    // instead of the rotating ambient still — a quiet trophy until midnight.
+    try {
+      var res = JSON.parse(localStorage.getItem('clDailyResult'));
+      if (res && res.date === day && res.end && res.end.img) {
+        var hc = cardFor('cl');
+        if (hc) { used[res.end.img] = true; hc.style.setProperty('--poster', 'url(' + P + res.end.img + ')'); }
+      }
+    } catch (_) {}
     // Single-still cards: keep the daily rotation, but skip any still already shown.
     Object.keys(POOLS).forEach(k => {
       var card = cardFor(k);
@@ -2134,6 +2148,8 @@ function markDoneBadges() {
       if (daily) daily.textContent = done ? t('modeResults') : t('modeDaily');
     }
   });
+  // hero art follows the done-state (completed daily → target still), no reload needed
+  try { assignGamePosters(); } catch (_) {}
   return state;
 }
 
