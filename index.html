@@ -77,6 +77,13 @@ body{font-family:var(--fui);background:var(--bg);color:var(--txt);min-height:100
 }
 .start-kicker{font-size:.62rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:12px}
 .start-logo{width:100%;max-width:280px;height:auto;display:block;margin:0 auto 20px}
+/* Brand lockup — the CineLinks logo built in code (no raster), themeable + crisp. */
+.cl-brand{max-width:300px}
+.cl-brand-word{font-family:var(--fdisp);font-weight:600;font-size:2.9rem;line-height:.92;letter-spacing:-.015em;color:var(--gold)}
+.cl-brand-tag{display:flex;align-items:center;justify-content:center;gap:9px;margin-top:7px;font-family:var(--fui);font-size:.6rem;font-weight:700;letter-spacing:.26em;text-transform:uppercase;color:var(--goldsoft,#f5c542)}
+.cl-brand-tag i{height:1px;width:24px;background:currentColor;opacity:.55}
+.cl-brand-chain{width:46px;height:auto;display:block;margin:9px auto 0;color:var(--gold)}
+@media (min-width:1040px){.cl-brand-word{font-size:3.3rem}}
 .tagline{color:var(--mut);font-size:0.95rem;line-height:1.5;margin:0 auto 24px;max-width:360px}
 .first-loop{display:flex;align-items:center;justify-content:center;gap:9px;flex-wrap:wrap;margin:-2px auto 20px;color:var(--mut);font-size:.74rem;font-weight:500;letter-spacing:.01em}
 .first-loop span{border:0;background:none;padding:0;white-space:nowrap}
@@ -864,7 +871,14 @@ body{font-family:var(--fui);background:var(--bg);color:var(--txt);min-height:100
       <span class="profile-btn-lvl" id="profileBtnLvl">1</span>
       <span class="profile-btn-dot" id="profileBtnDot" style="display:none"></span>
     </button>
-    <img src="/logo.png" alt="CineLinks - A Cinematic Link Puzzle" class="start-logo">
+    <div class="start-logo cl-brand" role="img" aria-label="CineLinks — A Cinematic Link Puzzle">
+      <div class="cl-brand-word">CineLinks</div>
+      <div class="cl-brand-tag"><i></i>A Cinematic Link Puzzle<i></i></div>
+      <svg class="cl-brand-chain" viewBox="0 0 80 34" fill="none" aria-hidden="true">
+        <rect x="9" y="10" width="42" height="15" rx="7.5" stroke="currentColor" stroke-width="4.4" transform="rotate(-24 30 17.5)"/>
+        <rect x="29" y="10" width="42" height="15" rx="7.5" stroke="currentColor" stroke-width="4.4" transform="rotate(-24 50 17.5)"/>
+      </svg>
+    </div>
     <p class="tagline">A new film puzzle every day - pick your game.</p>
     <div class="first-loop" aria-label="CineLinks loop">
       <span id="loopPlay">Play daily</span><i>→</i><span id="loopCollect">Reveal cards</span><i>→</i><span id="loopShare">Share results</span>
