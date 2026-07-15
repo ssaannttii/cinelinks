@@ -32,12 +32,12 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 .kicker{margin-top:10px;font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
 .loading{color:var(--mut);font-size:.9rem;padding:48px 0}
 .solved-area{display:flex;flex-direction:column;gap:7px;margin:16px 0 7px}
-.solved{border-radius:8px;padding:9px 10px;color:#1a1408}
+.solved{position:relative;overflow:hidden;border-radius:8px;padding:9px 10px;color:#1a1408}.s-art{position:absolute;inset:0;z-index:0;background-size:cover;background-position:center 28%;opacity:0;transition:opacity .5s ease;-webkit-mask:linear-gradient(90deg,transparent 44%,rgba(0,0,0,.7) 72%,#000 100%);mask:linear-gradient(90deg,transparent 44%,rgba(0,0,0,.7) 72%,#000 100%);mix-blend-mode:soft-light}.s-art.on{opacity:.55}.solved .s-label,.solved .s-titles{position:relative;z-index:1}
 .solved .s-label{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
 .solved .s-titles{font-size:.74rem;font-weight:600;margin-top:1px;opacity:.85}
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
-.tile{display:flex;align-items:center;justify-content:center;text-align:center;min-height:74px;padding:5px 4px;border-radius:8px;background:var(--s2);border:1px solid var(--bdr);color:var(--txt);font-weight:700;font-size:.64rem;line-height:1.12;cursor:pointer;user-select:none;-webkit-user-select:none;transition:transform .1s,background .12s,border-color .12s,opacity .18s,box-shadow .12s;word-break:break-word;hyphens:auto;animation:tileIn .34s cubic-bezier(.2,.8,.2,1) backwards}
-.tile:hover{border-color:rgba(232,160,0,.4)}
+.tile{position:relative;overflow:hidden;isolation:isolate;display:flex;align-items:center;justify-content:center;text-align:center;min-height:74px;padding:5px 4px;border-radius:8px;background:var(--s2);border:1px solid var(--bdr);color:var(--txt);font-weight:700;font-size:.64rem;line-height:1.12;cursor:pointer;user-select:none;-webkit-user-select:none;transition:transform .1s,background .12s,border-color .12s,opacity .18s,box-shadow .12s;word-break:break-word;hyphens:auto;animation:tileIn .34s cubic-bezier(.2,.8,.2,1) backwards;text-shadow:0 1px 3px rgba(0,0,0,.55)}
+.tile:hover{border-color:rgba(232,160,0,.4)}.tile-bg{position:absolute;inset:0;z-index:-1;background-size:cover;background-position:center;transform:scale(1.16);opacity:0;transition:opacity .45s ease}.tile-bg.on{opacity:1}.tile.sel .tile-bg,.tile.solving .tile-bg,.tile.done .tile-bg{opacity:0}
 .tile:active{transform:scale(.92)}
 .tile.sel{background:var(--gold);color:#1a1408;border-color:var(--gold);transform:scale(.95);box-shadow:0 6px 18px rgba(232,160,0,.35)}
 .grid.focus .tile:not(.sel){opacity:.42}
@@ -475,6 +475,39 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
   let toastT=null;
   function toast(msg){ toastEl.textContent=msg; toastEl.classList.add('on'); clearTimeout(toastT); toastT=setTimeout(()=>toastEl.classList.remove('on'),1500); }
 
+  // ---------- poster art (lazy, permanently cached per movie id) ----------
+  // Each tile is a movie; posters never change, so a resolved poster_path is
+  // cached in localStorage forever. Decoupled from generation so it also works
+  // for already-cached daily puzzles. Missing/failed → tile keeps its flat bg.
+  const POSTER_LS='cg_pp_';
+  const posterMem={};
+  function moviePoster(id){
+    if(!id) return Promise.resolve('');
+    if(posterMem[id]!=null) return Promise.resolve(posterMem[id]);
+    try{ const c=localStorage.getItem(POSTER_LS+id); if(c!=null){ posterMem[id]=c; return Promise.resolve(c); } }catch(_){}
+    return fetch(IMG+'movie/'+id+'&language=en-US').then(r=>r.ok?r.json():null).then(d=>{
+      const pp=(d&&d.poster_path)||'';
+      posterMem[id]=pp; try{ localStorage.setItem(POSTER_LS+id,pp); }catch(_){}
+      return pp;
+    }).catch(()=>{ posterMem[id]=''; return ''; });
+  }
+  function paintArt(){
+    // tile backgrounds (unsolved tiles only)
+    document.querySelectorAll('.tile[data-id] .tile-bg').forEach(bg=>{
+      if(bg.dataset.done) return; const tile=bg.closest('.tile'); const t=tileMap[tile.dataset.id]; if(!t) return;
+      moviePoster(t.id).then(pp=>{ if(!pp) return; bg.dataset.done='1';
+        bg.style.backgroundImage="linear-gradient(rgba(18,22,28,.62),rgba(18,22,28,.82)),url('https://image.tmdb.org/t/p/w185"+pp+"')";
+        requestAnimationFrame(()=>bg.classList.add('on')); });
+    });
+    // solved-band accents (representative = first tile of the group)
+    document.querySelectorAll('.solved .s-art').forEach(art=>{
+      if(art.dataset.done) return; const mid=art.getAttribute('data-mid'); if(!mid) return;
+      moviePoster(mid).then(pp=>{ if(!pp) return; art.dataset.done='1';
+        art.style.backgroundImage="url('https://image.tmdb.org/t/p/w342"+pp+"')";
+        requestAnimationFrame(()=>art.classList.add('on')); });
+    });
+  }
+
   function buildTileMap(){
     tileMap={};
     for(const g of puzzle.groups) for(const t of g.tiles) tileMap[t.id]={id:t.id,title:t.title,key:g.key,sq:g.sq};
@@ -514,7 +547,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     h+='<div class="grid'+(selected.length?' focus':'')+'" id="grid">';
     let gi=0;
     board.forEach((id)=>{ const t=tileMap[id]; if(!t || solvedKeys.has(t.key)) return; const dl='animation-delay:'+((gi++)*0.022).toFixed(3)+'s';
-      h+='<div class="tile" data-id="'+id+'" style="'+dl+'">'+esc(t.title)+'</div>';
+      h+='<div class="tile" data-id="'+id+'" style="'+dl+'"><span class="tile-bg"></span>'+esc(t.title)+'</div>';
     });
     h+='</div>';
     h+='<div class="mistakes">'+T('mistakesRemaining')+' <span class="dots" id="dots">'+dotsHtml()+'</span></div>';
@@ -529,9 +562,10 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     document.getElementById('deselBtn').onclick=()=>{ selected=[]; syncSel(); };
     document.getElementById('goBtn').onclick=onSubmit;
     syncSel();
+    paintArt();
   }
   function dotsHtml(){ let h=''; for(let i=0;i<MAX_MIST;i++) h+='<span class="dot'+(i<mistakes?' gone':'')+'"></span>'; return h; }
-  function solvedRow(g,cls){ return '<div class="solved'+(cls?' '+cls:'')+'" style="background:'+g.color+'"><div class="s-label">'+esc(g.label)+'</div><div class="s-titles">'+g.tiles.map(t=>esc(t.title)).join(' · ')+'</div></div>'; }
+  function solvedRow(g,cls){ return '<div class="solved'+(cls?' '+cls:'')+'" style="background:'+g.color+'"><span class="s-art" data-mid="'+(g.tiles[0]&&g.tiles[0].id||'')+'"></span><div class="s-label">'+esc(g.label)+'</div><div class="s-titles">'+g.tiles.map(t=>esc(t.title)).join(' · ')+'</div></div>'; }
   // FLIP-style payoff: the four solved tiles physically converge into the freshly
   // formed category band at the top, which then pops in.
   function flyTiles(rects, g){
@@ -667,6 +701,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     h+=PRACTICE?'<button class="btn" id="againBtn">'+T('newPuzzle')+'</button>':'<a class="btn" href="?practice=1" style="display:flex;align-items:center;justify-content:center;text-decoration:none">'+T('practice')+'</a>';
     h+='</div></div>';
     stage.innerHTML=h;
+    paintArt();
     document.getElementById('shareBtn').onclick=doShare;
     if(PRACTICE){ const a=document.getElementById('againBtn'); if(a) a.onclick=()=>location.reload(); }
   }
