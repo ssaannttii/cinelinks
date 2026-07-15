@@ -2050,6 +2050,28 @@
       '.clr-back.cb-prism,.cb-swatch.cb-prism{--cbk-bg:linear-gradient(160deg,#191024,#0b0714);--cbk-perf:rgba(216,160,255,.4);--cbk-cross:rgba(216,160,255,.16);--cbk-ring:rgba(216,160,255,.6);--cbk-ring2:rgba(216,160,255,.28);--cbk-cl:linear-gradient(100deg,#ff9a9a,#fff39a,#9affb0,#9ad9ff,#c39aff);--cbk-glow:rgba(180,140,255,.5);--cbk-word:rgba(220,190,255,.55)}' +
       '.clr-back.cb-mastery,.cb-swatch.cb-mastery{--cbk-bg:conic-gradient(from 45deg,#0b0b0b,#2e2208,#4a3a12,#2e2208,#0b0b0b,#1a1206,#0b0b0b);--cbk-perf:rgba(232,194,74,.5);--cbk-cross:rgba(232,194,74,.2);--cbk-ring:rgba(232,194,74,.8);--cbk-ring2:rgba(232,194,74,.4);--cbk-cl:linear-gradient(160deg,#fff7dd,#e8c24a);--cbk-glow:rgba(232,194,74,.75);--cbk-word:rgba(255,240,200,.6)}' +
       '.clr-back.cb-obsidian,.cb-swatch.cb-obsidian{--cbk-bg:radial-gradient(120% 120% at 30% 20%,#22242a,#0a0a0c);--cbk-perf:rgba(150,170,200,.4);--cbk-cross:rgba(150,170,200,.15);--cbk-ring:rgba(150,170,200,.6);--cbk-ring2:rgba(150,170,200,.28);--cbk-cl:linear-gradient(120deg,#dfe7f2,#9fb2c9);--cbk-glow:rgba(150,180,220,.45);--cbk-word:rgba(190,205,225,.55)}' +
+      // ── Set-complete reward motion ──
+      '#clSetWin{position:fixed;inset:0;z-index:255;display:none;align-items:center;justify-content:center;padding:22px;background:rgba(8,11,15,.72);backdrop-filter:blur(6px)}' +
+      '#clSetWin.on{display:flex;animation:clswFade .25s ease both}' +
+      '@keyframes clswFade{from{opacity:0}to{opacity:1}}' +
+      '.clsw-card{position:relative;width:100%;max-width:340px;text-align:center;background:var(--s1,#2c343f);border:1px solid rgba(232,194,74,.4);border-radius:20px;padding:26px 22px 22px;box-shadow:0 24px 70px rgba(0,0,0,.5);animation:clswPop .42s cubic-bezier(.22,1,.36,1) both}' +
+      '@keyframes clswPop{from{opacity:0;transform:translateY(18px) scale(.94)}to{opacity:1;transform:none}}' +
+      '.clsw-badge{width:64px;height:64px;margin:0 auto 12px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#1a1408;background:linear-gradient(160deg,#f5d97a,#e8a000);box-shadow:0 0 0 6px rgba(232,194,74,.14),0 10px 26px rgba(232,160,0,.4)}' +
+      '.clsw-badge svg{width:34px;height:34px}' +
+      '.clsw-kicker{font-size:.62rem;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:#e8c24a}' +
+      '.clsw-name{font-family:var(--fdisp,Georgia,serif);font-weight:600;font-size:1.32rem;color:#f4f6f8;margin:5px 0 14px;line-height:1.15}' +
+      '.clsw-xp{display:inline-flex;align-items:center;gap:7px;font-weight:800;font-size:1.05rem;color:#1a1408;background:linear-gradient(135deg,#f5d97a,#e8a000);border-radius:999px;padding:8px 16px}' +
+      '.clsw-cta{margin-top:18px;width:100%;border:0;border-radius:999px;background:rgba(255,255,255,.06);color:var(--txt,#f0f0f0);font:inherit;font-weight:800;font-size:.88rem;padding:11px;cursor:pointer}' +
+      '.clsw-cta:hover{background:rgba(255,255,255,.11)}' +
+      // the flying XP coin that arcs from the card into the header level bar
+      '.cl-xp-coin{position:fixed;z-index:260;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.62rem;color:#1a1408;background:linear-gradient(160deg,#f5d97a,#e8a000);box-shadow:0 6px 18px rgba(232,160,0,.5);pointer-events:none;will-change:transform,opacity;transition:transform .62s cubic-bezier(.5,0,.6,1),opacity .62s ease}' +
+      // level bar / number reactions
+      '.cl-coll-xp-bar>i.gain{transition:width .8s cubic-bezier(.3,.9,.3,1)}' +
+      '.cl-coll-xp-bar.flash{box-shadow:0 0 0 0 rgba(232,194,74,.6);animation:clxpFlash .7s ease}' +
+      '@keyframes clxpFlash{0%{box-shadow:0 0 0 0 rgba(232,194,74,.55)}100%{box-shadow:0 0 0 7px rgba(232,194,74,0)}}' +
+      '.cl-lvl-ring.levelup{animation:clLvlPop .7s cubic-bezier(.2,1.4,.4,1) both}' +
+      '@keyframes clLvlPop{0%{transform:scale(1)}40%{transform:scale(1.28)}100%{transform:scale(1)}}' +
+      '@media(prefers-reduced-motion:reduce){.clsw-card,#clSetWin.on{animation:none}.cl-xp-coin{transition:opacity .3s ease}.cl-lvl-ring.levelup{animation:none}}' +
       '.cb-sub{font-size:.74rem;color:#9a9a9a;margin-bottom:14px}' +
       '.cb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:12px}' +
       '.cb-item{cursor:pointer;text-align:center}.cb-item.locked{cursor:default}' +
@@ -2473,9 +2495,71 @@
     } catch (_) { /* noop */ }
   }
 
+  // ── Set-complete reward: an XP coin arcs from the celebration card into the
+  //    vault's level bar, which then fills; a level-up pops the ring. Purely
+  //    visual — the XP was already credited by claimSets(). Reduced-motion safe.
+  var _setWinQ = [];
+  function playSetReward(sets, xpBefore, xpAfter, lvlBefore, lvlAfter) {
+    if (!sets || !sets.length) return;
+    var gain = xpAfter - xpBefore;
+    var reduce = false; try { reduce = matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (_) {}
+    // Build the celebration card (queue if several sets complete at once).
+    var ov = document.getElementById('clSetWin');
+    if (!ov) { ov = document.createElement('div'); ov.id = 'clSetWin'; document.body.appendChild(ov); }
+    var trophy = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v3.5a5 5 0 0 1-10 0z"/><path d="M7 5.5H4V7a3 3 0 0 0 3 3M17 5.5h3V7a3 3 0 0 1-3 3"/><path d="M12 12.5V16M9 20h6M9.6 20l.5-4M14.4 20l-.5-4"/></svg>';
+    var nm = sets.length > 1 ? (sets.length + ' sets complete') : esc(sets[0].name);
+    ov.innerHTML = '<div class="clsw-card">' +
+      '<div class="clsw-badge">' + trophy + '</div>' +
+      '<div class="clsw-kicker">Set complete</div>' +
+      '<div class="clsw-name">' + nm + '</div>' +
+      '<div class="clsw-xp">+' + gain + ' XP</div>' +
+      '<button class="clsw-cta" id="clswGo">Collect</button>' +
+      '</div>';
+    ov.classList.add('on');
+    try { if (window.Sfx) window.Sfx.haptic([10, 40, 12]); } catch (_) {}
+    var done = function () {
+      ov.classList.remove('on');
+      flyCoinToBar(gain, xpBefore, xpAfter, lvlBefore, lvlAfter, reduce);
+    };
+    var go = document.getElementById('clswGo'); if (go) go.onclick = done;
+    ov.onclick = function (e) { if (e.target === ov) done(); };
+    if (reduce) { setTimeout(done, 900); }
+  }
+  function flyCoinToBar(gain, xpBefore, xpAfter, lvlBefore, lvlAfter, reduce) {
+    var fill = document.getElementById('clCollXpFill');
+    var ring = document.querySelector('.cl-lvl-ring');
+    var bar = fill && fill.parentNode;
+    var applyBar = function () {
+      // recompute the bar for the post-claim state and animate the width
+      var lv = lvlAfter, into = xpAfter - xpForLevel(lv), span = xpForLevel(lv + 1) - xpForLevel(lv);
+      if (fill) { fill.classList.add('gain'); fill.style.width = Math.max(3, Math.min(100, span ? (into / span) * 100 : 0)) + '%'; }
+      if (bar) { bar.classList.remove('flash'); void bar.offsetWidth; bar.classList.add('flash'); }
+      var lvlEl = document.getElementById('clCollXpName'); if (lvlEl) lvlEl.textContent = 'Level ' + lv;
+      var lvlNum = document.getElementById('clCollLvl'); if (lvlNum) lvlNum.textContent = lv;
+      var xpNum = document.getElementById('clCollXpNum');
+      if (xpNum) xpNum.innerHTML = into + ' / ' + span + ' XP<span class="cl-xp-extra"> to level ' + (lv + 1) + '</span>';
+      if (lvlAfter > lvlBefore && ring) { ring.classList.remove('levelup'); void ring.offsetWidth; ring.classList.add('levelup'); try { if (window.Sfx) window.Sfx.haptic([12, 50, 12, 50, 20]); } catch (_) {} }
+    };
+    if (reduce || !fill) { applyBar(); return; }
+    // coin flies from centre to the bar
+    var br = fill.getBoundingClientRect();
+    var coin = document.createElement('div'); coin.className = 'cl-xp-coin'; coin.textContent = 'XP';
+    var sx = window.innerWidth / 2, sy = window.innerHeight / 2;
+    coin.style.left = (sx - 15) + 'px'; coin.style.top = (sy - 15) + 'px';
+    document.body.appendChild(coin);
+    requestAnimationFrame(function () { requestAnimationFrame(function () {
+      var tx = (br.left + br.width * 0.12) - sx, ty = (br.top + br.height / 2) - sy;
+      coin.style.transform = 'translate(' + tx.toFixed(0) + 'px,' + ty.toFixed(0) + 'px) scale(.5)';
+      coin.style.opacity = '.2';
+    }); });
+    setTimeout(function () { coin.remove(); applyBar(); }, 640);
+  }
+
   function renderSets() {
     var grid = document.getElementById('clCollGrid');
-    try { claimSets(); } catch (_) { /* claim passively-completed (milestone) sets */ }
+    var _sw = load() || blank(); var _xpB = _sw.xp || 0; var _lvB = levelFromXp(_xpB);
+    var _newSets = []; try { _newSets = claimSets() || []; } catch (_) { /* claim passively-completed (milestone) sets */ }
+    if (_newSets.length) { var _sa = load() || blank(); var _xpA = _sa.xp || 0; requestAnimationFrame(function () { playSetReward(_newSets, _xpB, _xpA, _lvB, levelFromXp(_xpA)); }); }
     var states = setsState();
     if (_setOpen) {
       var set = null; states.forEach(function (s) { if (s.id === _setOpen) set = s; });
