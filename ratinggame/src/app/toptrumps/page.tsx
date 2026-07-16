@@ -397,10 +397,12 @@ export default function TopTrumps() {
     const pv = sdef.val(pc), cv = sdef.val(cc);
     let res: Res = pv > cv ? "win" : cv > pv ? "lose" : "tie";
     let tb = false;
-    // Mastery: a card you hold in force (×3+ copies) HOLDS THE LINE on a hair's-
-    // breadth loss — the defeat becomes a WAR instead. Triggers far more than the
-    // old exact-tie rule, and fights for the pot rather than stealing a win outright.
-    if (res === "lose" && (pc.mastery || 0) > 0 && sdef.bar(cc) - sdef.bar(pc) <= 0.06) { res = "tie"; tb = true; }
+    // Mastery: a card you hold in force HOLDS THE LINE on a near loss — the defeat
+    // becomes a WAR for the pot. The margin it can hold SCALES with your copies:
+    // ×3 = 6%, ×5 = 12%, ×10 = 18%. Deeper duplicates fight harder; the raw stat
+    // is never altered (honest numbers), so this is collector reward, not pay-to-win.
+    const holdMargin = Math.min(0.18, 0.06 * (pc.mastery || 0));
+    if (res === "lose" && holdMargin > 0 && sdef.bar(cc) - sdef.bar(pc) <= holdMargin) { res = "tie"; tb = true; }
     const byPlayer = turn === "player";
     setChosen(stat); setRevealed(true); setPhase("reveal"); setClash(false);
     setSeenIds((prev) => { const add = [pc.id, cc.id].filter((id) => !prev.includes(id)); return add.length ? [...prev, ...add] : prev; });   // both cards shown this duel
@@ -941,7 +943,7 @@ function PlayerCard({ card, chosen, duel, clash, revealed, yourTurn, onPick, onF
             <div className="tt-hero-title">{card.title}</div>
             <div className="tt-hero-meta">
               <span>{card.year} · {card.genre}</span>
-              {(card.mastery || 0) > 0 && <span title="Mastery — holds the line on a close loss (turns it into WAR)" style={{ fontWeight: 900, color: card.mastery === 3 ? "#f5c542" : card.mastery === 2 ? "#dfe6f2" : "#cd8f52", textShadow: "0 0 8px rgba(245,197,66,.5)" }}>★ M{card.mastery}</span>}
+              {(card.mastery || 0) > 0 && <span title={`Mastery M${card.mastery} — holds the line on a close loss up to ${6 * (card.mastery || 0)}% behind (turns it into WAR). Deeper copies hold more.`} style={{ fontWeight: 900, color: card.mastery === 3 ? "#f5c542" : card.mastery === 2 ? "#dfe6f2" : "#cd8f52", textShadow: "0 0 8px rgba(245,197,66,.5)" }}>★ M{card.mastery}</span>}
               {card.shine && <span title="Shined — once per match you may re-pick after losing a duel">✨</span>}
             </div>
           </div>
@@ -955,7 +957,7 @@ function PlayerCard({ card, chosen, duel, clash, revealed, yourTurn, onPick, onF
             <div style={{ color: "var(--mut)", fontSize: ".78rem", marginTop: 2 }}>{card.year} · {card.genre}</div>
             <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 7, flexWrap: "wrap" }}>
               <span style={{ fontSize: ".58rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: ".07em", color: rar.ring, border: "1px solid " + rar.ring, borderRadius: 999, padding: "2px 8px" }}>{rar.label}{ownTag}</span>
-              {(card.mastery || 0) > 0 && <span title="Mastery — holds the line on a close loss (turns it into WAR)" style={{ fontSize: ".62rem", fontWeight: 900, color: card.mastery === 3 ? "#f5c542" : card.mastery === 2 ? "#dfe6f2" : "#cd8f52", textShadow: "0 0 8px rgba(245,197,66,.5)" }}>★ M{card.mastery}</span>}
+              {(card.mastery || 0) > 0 && <span title={`Mastery M${card.mastery} — holds the line on a close loss up to ${6 * (card.mastery || 0)}% behind (turns it into WAR). Deeper copies hold more.`} style={{ fontSize: ".62rem", fontWeight: 900, color: card.mastery === 3 ? "#f5c542" : card.mastery === 2 ? "#dfe6f2" : "#cd8f52", textShadow: "0 0 8px rgba(245,197,66,.5)" }}>★ M{card.mastery}</span>}
               {card.shine && <span title="Shined — once per match you may re-pick after losing a duel" style={{ fontSize: ".62rem" }}>✨</span>}
             </div>
           </div>
