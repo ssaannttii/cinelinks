@@ -822,6 +822,7 @@
       count: cards.length, films: films, people: people, byRarity: by,
       xp: s.xp || 0, level: lvl,
       xpInto: (s.xp || 0) - xpForLevel(lvl), xpSpan: xpForLevel(lvl + 1) - xpForLevel(lvl),
+      depth: cards.reduce(function (t, c) { return t + Math.max(0, (c.n || 1) - 1); }, 0),
       newCount: cards.filter(function (c) { return c.isNew; }).length
     };
   }
@@ -1159,6 +1160,9 @@
     { id: 'people25', icon: AI('<circle cx="8" cy="8" r="3"/><path d="M2 20a6 6 0 0 1 12 0"/><circle cx="16.5" cy="8.5" r="2.6"/><path d="M14 14.4a5.5 5.5 0 0 1 8 5.1"/>'), name: 'Ensemble', desc: 'Collect 25 people', goal: function (c) { return [c.st.people, 25]; } },
     { id: 'elite5', icon: AI('<path d="M12 3 4 9l8 12 8-12z"/><path d="M4 9h16M9 9l3 12 3-12"/><path d="M9.5 6.2 12 3l2.5 3.2"/>'), name: 'Elite Guard', desc: 'Own 5 Elite cards', goal: function (c) { return [c.st.byRarity.elite, 5]; } },
     { id: 'leg10', icon: AI('<path d="M3 8l3.5 3.2L12 5l5.5 6.2L21 8l-1.6 10.5H4.6z"/><path d="M5.5 18.5h13"/><circle cx="12" cy="12" r="1.3"/>'), name: 'Immortal', desc: 'Own 10 Legendary cards', goal: function (c) { return [c.st.byRarity.legendary, 10]; } },
+    { id: 'depth15', icon: AI('<rect x="6" y="3" width="12" height="15" rx="2"/><path d="M4 6v13a2 2 0 0 0 2 2h11" opacity=".65"/>'), name: 'Stacked', desc: 'Hold 15 spare copies', goal: function (c) { return [c.depth, 15]; } },
+    { id: 'depth60', icon: AI('<rect x="7" y="2.5" width="11" height="14" rx="2"/><path d="M4.5 5.5v13a2 2 0 0 0 2 2h10" opacity=".7"/><path d="M2.5 8v12a2 2 0 0 0 2 2h9" opacity=".4"/>'), name: 'Deep Vault', desc: 'Hold 60 spare copies', goal: function (c) { return [c.depth, 60]; } },
+    { id: 'ascend1', icon: AI('<path d="M12 4l6 7h-4v9h-4v-9H6z"/>'), name: 'Ascendant', desc: 'Ascend a card a rarity tier', goal: function (c) { return [c.asc, 1]; } },
     { id: 'copies5', icon: AI('<rect x="7" y="3" width="12" height="16" rx="2"/><path d="M5 6v13a2 2 0 0 0 2 2h9" opacity=".7"/><path d="M11 8h4M11 11h4"/>'), name: 'Deep Pull', desc: 'Pull 5 copies of one card', goal: function (c) { return [c.maxN, 5]; } },
     { id: 'lvl20', icon: AI('<circle cx="12" cy="8.5" r="5"/><path d="M7 8.5l3.4 2.5L15.5 6"/><path d="M8 13 6.5 21l5.5-2.8L17.5 21 16 13"/>'), name: 'Master Curator', desc: 'Reach level 20', goal: function (c) { return [c.st.level, 20]; } },
     { id: 'lvl5', icon: AI('<path d="M3 17 9 11l4 4 8-8"/><path d="M16 7h5v5"/>'), name: 'Rising Star', desc: 'Reach level 5', goal: function (c) { return [c.st.level, 5]; } },
@@ -1176,7 +1180,8 @@
     Object.keys(s.cards || {}).forEach(function (k) { var c = s.cards[k]; if (c.shine) sh++; if ((c.n || 1) > maxN) maxN = c.n || 1; });
     var cur = setsStateFrom(s).filter(function (x) { return x.kind === 'curated'; });
     var csTotal = cur.length, csDone = cur.filter(function (x) { return x.complete; }).length;
-    return { st: st, sd: s.setsDone ? Object.keys(s.setsDone).length : 0, cb: rawCardbackId(), sh: sh, maxN: maxN, csDone: csDone, csTotal: csTotal };
+    var depth = 0, ascN = 0; Object.keys(s.cards || {}).forEach(function (k) { var c = s.cards[k]; depth += Math.max(0, (c.n || 1) - 1); ascN += (c.asc || 0); });
+    return { st: st, sd: s.setsDone ? Object.keys(s.setsDone).length : 0, cb: rawCardbackId(), sh: sh, maxN: maxN, csDone: csDone, csTotal: csTotal, depth: depth, asc: ascN };
   }
   function achMet(a, ctx) { var g = a.goal(ctx); return g[0] >= g[1]; }
   // Record newly-satisfied achievements; returns the list newly unlocked this call.
@@ -1246,9 +1251,51 @@
     s.showcase.push(k); save(s); return { ok: true, on: true };
   }
 
+  // ── Duplicate value: spares power shine discounts and rarity ascension ──
+  // A "spare" is any copy beyond the first. Total spares of a rarity form a pool.
+  function spareCopies(rarity) {
+    var s = load() || blank(), n = 0;
+    Object.keys(s.cards || {}).forEach(function (k) { var c = s.cards[k]; if (!rarity || c.rarity === rarity) n += Math.max(0, (c.n || 1) - 1); });
+    return n;
+  }
+  // Shine gets cheaper the more copies of THAT card you hold (you have spares to burn):
+  // 10% off per spare, capped at 50%. Rounded to the nearest 5 dust.
+  function shineDiscount(rec) { return Math.min(0.5, Math.max(0, (rec ? (rec.n || 1) : 1) - 1) * 0.1); }
+  function shineCostFor(rec) {
+    var base = SHINE_COST[rec ? rec.rarity : 'common'] || 80;
+    return Math.max(5, Math.round(base * (1 - shineDiscount(rec)) / 5) * 5);
+  }
+  // Ascension: invest spare copies of a rarity to elevate ONE owned card a tier.
+  // Capped below legendary so pulled legendaries stay the real prize.
+  var ASCEND_NEXT = { common: 'rare', rare: 'elite' };
+  var ASCEND_SPARES = { common: 5, rare: 6 };
+  function ascendInfo(c) {
+    if (!c) return null;
+    var next = ASCEND_NEXT[c.rarity]; if (!next) return null;
+    var need = ASCEND_SPARES[c.rarity], have = spareCopies(c.rarity);
+    return { next: next, nextLabel: (RARITY[next] || {}).label || next, need: need, have: have, ok: have >= need };
+  }
+  function ascendCard(c) {
+    var s = load() || blank();
+    var rec = s.cards && s.cards[c.type + ':' + c.id]; if (!rec) return { ok: false, reason: 'notowned' };
+    var next = ASCEND_NEXT[rec.rarity]; if (!next) return { ok: false, reason: 'maxed' };
+    var need = ASCEND_SPARES[rec.rarity];
+    var pool = Object.keys(s.cards).map(function (k) { return s.cards[k]; })
+      .filter(function (x) { return x.rarity === rec.rarity && (x.n || 1) > 1; })
+      .sort(function (a2, b2) { return (b2.n || 1) - (a2.n || 1); });
+    var avail = pool.reduce(function (t, x) { return t + ((x.n || 1) - 1); }, 0);
+    if (avail < need) return { ok: false, reason: 'spares', need: need, have: avail };
+    var left = need;
+    for (var i = 0; i < pool.length && left > 0; i++) { var take = Math.min(left, (pool[i].n || 1) - 1); pool[i].n -= take; left -= take; }
+    var oldR = rec.rarity; rec.rarity = next; rec.asc = (rec.asc || 0) + 1;
+    s.xp += Math.max(0, (XP[next] || 0) - (XP[oldR] || 0));
+    payLevels(s); save(s); refreshOpen();
+    return { ok: true, next: next };
+  }
+
   // ── Dust economy (spend duplicate dust to "Shine" owned cards) ──
   function dustBalance() { return (load() || blank()).dust || 0; }
-  function shineCost(c) { return SHINE_COST[c && c.rarity] || 80; }
+  function shineCost(c) { return shineCostFor(cardRecord(c) || c); }
   function cardRecord(c) { var s = load(); return (c && s && s.cards) ? s.cards[c.type + ':' + c.id] : null; }
   function isShined(c) { var r = cardRecord(c); return !!(r && r.shine); }
   // Returns {ok, reason?, need?, have?, dust?}. Reasons: 'notowned','already','dust'.
@@ -1258,7 +1305,7 @@
     var rec = s.cards[c.type + ':' + c.id];
     if (!rec) return { ok: false, reason: 'notowned' };
     if (rec.shine) return { ok: false, reason: 'already' };
-    var cost = SHINE_COST[rec.rarity] || 80, have = s.dust || 0;
+    var cost = shineCostFor(rec), have = s.dust || 0;
     if (have < cost) return { ok: false, reason: 'dust', need: cost, have: have };
     s.dust = have - cost; rec.shine = 1; save(s); refreshOpen();
     return { ok: true, dust: s.dust };
@@ -1587,6 +1634,17 @@
       '.auth-legendary .auth-card{box-shadow:0 14px 34px -10px rgba(0,0,0,.6),0 0 26px rgba(232,194,74,.28)}' +
       '.auth-foil{position:absolute;top:0;right:0;bottom:0;left:16%;z-index:7;pointer-events:none;opacity:0;background:repeating-linear-gradient(115deg,rgba(255,119,115,.4),rgba(255,237,95,.4) 11%,rgba(168,255,150,.4) 21%,rgba(131,255,247,.4) 31%,rgba(120,148,255,.4) 42%,rgba(216,117,255,.4) 52%,rgba(255,119,115,.4) 62%);background-size:280% 280%;background-position:var(--fx,50%) var(--fy,50%);mix-blend-mode:color-dodge;filter:brightness(.92) contrast(1.12);transition:opacity .22s}' +
       '.auth-rare .auth-foil{opacity:.14}.auth-elite .auth-foil{opacity:.22}.auth-legendary .auth-foil{opacity:.32;animation:authDrift 7s linear infinite}' +
+      // Mastery (copies) upgrades the card's material: bronze rim (x3) -> silver + shimmer (x5) -> gold frame + foil floor (x10).
+      '.auth-mrim{position:absolute;inset:0;z-index:6;border-radius:13px;pointer-events:none}' +
+      '.auth.mst-m1 .auth-mrim{box-shadow:inset 0 0 0 1.4px rgba(205,143,82,.6)}' +
+      '.auth.mst-m2 .auth-mrim{box-shadow:inset 0 0 0 1.6px rgba(223,230,242,.72),0 0 14px rgba(223,230,242,.14)}' +
+      '.auth.mst-m2 .auth-foil{opacity:.2}' +
+      '.auth.mst-m3 .auth-mrim{box-shadow:inset 0 0 0 2px rgba(245,197,66,.9),0 0 22px rgba(245,197,66,.22)}' +
+      '.auth.mst-m3 .auth-foil{opacity:.34;animation:authDrift 9s linear infinite}' +
+      '.auth.mst-m3 .auth-mrim{animation:authMrim 3.6s ease-in-out infinite}' +
+      '@keyframes authMrim{0%,100%{filter:brightness(1)}50%{filter:brightness(1.25)}}' +
+      '@media(pointer:coarse){.auth.mst-m3 .auth-mrim,.auth.mst-m3 .auth-foil{animation:none}}' +
+      '@media(prefers-reduced-motion:reduce){.auth.mst-m3 .auth-mrim,.auth.mst-m3 .auth-foil{animation:none}}' +
       // glitter layer: fine specular dots that travel with the cursor/tilt and read as metallic foil grain. Elite+ only, on hover/tilt.
       // Mask is STATIC (centred) on purpose: following --gx/--gy every frame forces a
       // per-frame mask recomposite that stutters on mobile. The sparkle still travels via
@@ -1728,7 +1786,7 @@
       // it rides inside the name-plate box (default + legacy).
       var hasMetaLayer = TL && tplGet(TL, 'meta');
       var metaLayer = hasMetaLayer ? ('<div class="auth-meta"' + tplMetaBoxStyle(TL, c.rarity) + '>' + tplMetaContent(TL, rar, typeUp, no) + '</div>') : '';
-      return '<div class="auth auth-' + c.rarity + (person ? ' person' : '') + (c.shine ? ' cl-shine' : '') + (TL ? ' auth-tpl' : '') + '" style="--cr:' + rar.ring + ';--m1:' + (METAL[c.rarity] || '#fff') + ';animation-delay:' + Math.min(i, 16) * 22 + 'ms" title="' + nm + ' · ' + rar.label + ' · ' + no + (c.shine ? ' · Shined' : '') + '">' +
+      return '<div class="auth auth-' + c.rarity + (person ? ' person' : '') + (c.shine ? ' cl-shine' : '') + (mst ? ' mst-' + mst : '') + (TL ? ' auth-tpl' : '') + '" style="--cr:' + rar.ring + ';--m1:' + (METAL[c.rarity] || '#fff') + ';animation-delay:' + Math.min(i, 16) * 22 + 'ms" title="' + nm + ' · ' + rar.label + ' · ' + no + (c.shine ? ' · Shined' : '') + '">' +
         '<div class="auth-card">' +
           (p ? '<img class="auth-bgimg" src="' + ctx.esc(p) + '" alt="" loading="lazy"' + O('poster') + '>' : '<div class="auth-noimg"></div>') +
           '<div class="auth-scrim"' + O('scrim') + '></div>' +
@@ -1738,7 +1796,7 @@
             '<div class="auth-bar"></div>' +
             '<div class="auth-name' + nmCls + '"' + (TL ? tplTitleStyle(TL, c.rarity) : '') + '>' + nm + '</div>' +
           '</div>' + metaLayer +
-          '<div class="auth-frame"' + O('frame') + '></div><div class="auth-foil"' + O('foil') + '></div><div class="auth-glit"></div><div class="auth-shade"></div><div class="auth-sheen"></div><div class="auth-glare"></div><div class="auth-refl"></div>' +
+          '<div class="auth-frame"' + O('frame') + '></div>' + (mst ? '<div class="auth-mrim"></div>' : '') + '<div class="auth-foil"' + O('foil') + '></div><div class="auth-glit"></div><div class="auth-shade"></div><div class="auth-sheen"></div><div class="auth-glare"></div><div class="auth-refl"></div>' +
           '<div class="auth-rim auth-rim-t"></div><div class="auth-rim auth-rim-b"></div><div class="auth-rim auth-rim-l"></div><div class="auth-rim auth-rim-r"></div>' +
           (TL ? tplCustom(TL, c.rarity, { name: nm, no: no }) : '') +
         '</div>' +
@@ -1901,6 +1959,11 @@
       '.cl-shine-btn{width:100%;border:none;border-radius:12px;padding:12px 14px;font-size:.92rem;font-weight:800;cursor:pointer;color:#06121f;background:linear-gradient(135deg,#bfe6ff,#7ab8ff);box-shadow:0 6px 18px rgba(120,184,255,.32);transition:transform .12s ease,box-shadow .2s ease}' +
       '.cl-shine-btn:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(120,184,255,.45)}' +
       '.cl-shine-btn.off{background:#2a2a2a;color:#8a8a8a;box-shadow:none;cursor:not-allowed}' +
+      '.cl-shine-was{text-decoration:line-through;opacity:.6;font-weight:700;margin-left:4px}' +
+      '.cl-shine-off{font-size:.7rem;font-weight:800;color:#06121f;background:rgba(255,255,255,.55);border-radius:6px;padding:1px 5px}' +
+      '.cl-ascend-btn{width:100%;border:none;border-radius:12px;padding:12px 14px;font-size:.92rem;font-weight:800;cursor:pointer;color:#1a1408;background:linear-gradient(135deg,#f5d97a,#e8a000);box-shadow:0 6px 18px rgba(232,160,0,.32);transition:transform .12s ease,box-shadow .2s ease}' +
+      '.cl-ascend-btn:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(232,160,0,.45)}' +
+      '.cl-ascend-btn.off{background:#2a2a2a;color:#8a8a8a;box-shadow:none;cursor:not-allowed}' +
       '.cl-shine-btn.shake{animation:clShake .4s}' +
       '@keyframes clShake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}' +
       '.cl-shine-hint{font-size:.72rem;color:#9a9a9a;margin-top:7px;font-weight:600}' +
@@ -2296,6 +2359,7 @@
     if (sub) {
       var synced = false; try { synced = !!localStorage.getItem('gauth_in'); } catch (_) { /* noop */ }
       sub.innerHTML = st.count + ' cards · ' + st.films + ' films · ' + st.people + ' people' +
+        (st.depth > 0 ? ' · <span title="Vault depth — your total spare copies" style="color:#e8c24a">&#9707; depth ' + st.depth + '</span>' : '') +
         (synced ? ' · <span title="Signed in — your collection syncs across devices" style="color:#7fd49a">&#9729; synced</span>'
                 : ' · <span title="Sign in on the home page to back up your collection across devices" style="color:#8d8d8d">&#9729; local</span>');
     }
@@ -2807,14 +2871,22 @@
       [CT('Copies'), '×' + n, ''],
       mstRow
     ];
+    var rec0 = cardRecord(c) || c;
     var shined = isShined(c), cost = shineCost(c), bal = dustBalance(), afford = bal >= cost;
+    var disc = shineDiscount(rec0), base = SHINE_COST[rec0.rarity] || 80;
+    var discTag = (!shined && disc > 0) ? ' <span class="cl-shine-was">' + base + '</span> <span class="cl-shine-off">-' + Math.round(disc * 100) + '%</span>' : '';
     var shineBlock = shined
       ? '<div class="cl-shine-done">&#10024; Shined</div>'
-      : '<button class="cl-shine-btn' + (afford ? '' : ' off') + '" id="clShineBtn">&#10024; Shine &middot; ' + cost + ' dust</button>' +
-        '<div class="cl-shine-hint">You have ' + bal + ' dust' + (afford ? '' : ' &middot; need ' + (cost - bal) + ' more') + '</div>';
+      : '<button class="cl-shine-btn' + (afford ? '' : ' off') + '" id="clShineBtn">&#10024; Shine &middot; ' + cost + ' dust' + discTag + '</button>' +
+        '<div class="cl-shine-hint">You have ' + bal + ' dust' + (afford ? '' : ' &middot; need ' + (cost - bal) + ' more') + (disc > 0 ? ' &middot; ' + Math.max(0, (rec0.n || 1) - 1) + ' spare' + ((rec0.n || 1) - 1 === 1 ? '' : 's') + ' cut the cost' : '') + '</div>';
+    var asc = ascendInfo(rec0);
+    var ascBlock = asc
+      ? '<button class="cl-ascend-btn' + (asc.ok ? '' : ' off') + '" id="clAscendBtn">&#9650; Ascend to ' + esc(asc.nextLabel) + ' &middot; ' + asc.need + ' spare ' + (RARITY[rec0.rarity] || {}).label + ' copies</button>' +
+        '<div class="cl-shine-hint">' + (asc.ok ? 'Elevates this card a tier' : 'You have ' + asc.have + ' &middot; need ' + (asc.need - asc.have) + ' more') + '</div>'
+      : '';
     return '<div class="cl-di-name">' + esc(locName(c)) + '</div><div class="cl-di-rows">' +
       rows.map(function (r) { return '<div class="cl-di-row"><span>' + r[0] + '</span><b' + (r[2] ? ' style="color:' + r[2] + '"' : '') + '>' + esc(r[1]) + '</b></div>'; }).join('') +
-      '</div><div class="cl-shine-wrap">' + shineBlock + '</div>' +
+      '</div><div class="cl-shine-wrap">' + shineBlock + '</div>' + (ascBlock ? '<div class="cl-shine-wrap" style="margin-top:8px">' + ascBlock + '</div>' : '') +
       '<button class="cl-share-btn" id="clShareBtn">&#8599; Share card</button>' +
       '<button class="cl-share-btn" id="clShowTog" style="margin-top:7px">' + (inShowcase(c) ? '&#9733; In your showcase — remove' : '&#9734; Add to showcase') + '</button>';
   }
@@ -2907,6 +2979,12 @@
         var r = shineCard(c);
         if (r.ok) { c.shine = 1; try { if (window.Sfx) { window.Sfx.reveal('elite'); window.Sfx.haptic([12, 24]); } } catch (_) { /* noop */ } openDetail(c); }
         else { try { if (window.Sfx) window.Sfx.tap(); } catch (_) { /* noop */ } if (r.reason === 'dust') { sb.classList.add('shake'); setTimeout(function () { sb.classList.remove('shake'); }, 420); } }
+      });
+      var ab = document.getElementById('clAscendBtn');
+      if (ab) ab.addEventListener('click', function () {
+        var r = ascendCard(c);
+        if (r.ok) { c.rarity = r.next; try { if (window.Sfx) { window.Sfx.reveal(r.next); window.Sfx.haptic([16, 40, 16]); } } catch (_) { /* noop */ } try { if (window.Fx && window.Fx.confetti) window.Fx.confetti({ count: 70 }); } catch (_) { /* noop */ } openDetail(c); }
+        else { try { if (window.Sfx) window.Sfx.tap(); } catch (_) { /* noop */ } if (r.reason === 'spares') { ab.classList.add('shake'); setTimeout(function () { ab.classList.remove('shake'); }, 420); } }
       });
       var shb = document.getElementById('clShareBtn');
       if (shb) shb.addEventListener('click', function () { shareCard(c, shb); });
