@@ -2062,6 +2062,11 @@
       '.clr-flip.flip-go.live{animation:clrLive 5s ease-in-out infinite}' +
       '@keyframes clrLive{0%,100%{transform:rotateY(0) rotateX(0)}25%{transform:rotateY(6deg) rotateX(-2.5deg)}50%{transform:rotateY(0) rotateX(0)}75%{transform:rotateY(-6deg) rotateX(2.5deg)}}' +
       '.clr-face,.clr-back{position:absolute;inset:0;-webkit-backface-visibility:hidden;backface-visibility:hidden;border-radius:12px;overflow:hidden}' +
+      // The inner card tilts on hover after the flip settles; the face must NOT clip
+      // it (its own 13px radius/overflow handles the card shape) or the tilt gets
+      // cropped against this static rectangle. Content layers here are inset:0, so
+      // dropping the clip is safe.
+      '.clr-face{overflow:visible}' +
       // Real card THICKNESS: clr-flip is already preserve-3d, so push the front face
       // out by --thick and build 4 dark side walls (--cw = pixel width, set in JS) —
       // as the card spins through edge-on during the flip you see its physical side.
