@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CineMatch — prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#252c35;--s1:#2c343f;--s2:#343d49;--s3:#3a4450;--bdr:rgba(255,255,255,.08);
+  --txt:#f2f4f6;--mut:#9aa4b0;--gold:#e8a000;--goldsoft:#f5c542;
+  --leg:#e8c24a;--elite:#b58ad6;--rare:#7aa6e8;--common:#9aa3ad;--good:#5bbd7a;
+  --fdisp:'Fraunces',Georgia,serif;--fui:'Schibsted Grotesk',-apple-system,sans-serif;--fmono:'Space Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:var(--fui);min-height:100vh;-webkit-font-smoothing:antialiased}
+.wrap{max-width:620px;margin:0 auto;padding:16px 14px calc(40px + env(safe-area-inset-bottom))}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.brand{font-family:var(--fdisp);font-weight:600;font-size:1.35rem}.brand b{color:var(--gold)}
+.daynum{font-family:var(--fmono);font-size:.72rem;color:var(--mut)}
+
+.kick{font-size:.6rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);text-align:center;margin-bottom:6px}
+.theme{font-family:var(--fdisp);font-weight:600;font-size:1.25rem;text-align:center;margin-bottom:2px}
+.themesub{font-size:.8rem;color:var(--mut);text-align:center;margin-bottom:16px}
+
+/* anchor */
+.anchor-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:6px}
+.anchor{width:150px}
+.pairline{display:flex;align-items:center;justify-content:center;gap:12px;margin:14px 0 8px;color:var(--mut);font-weight:800;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+.pairline .lnk{color:var(--gold);font-size:1.1rem}
+
+/* card face */
+.card{position:relative;width:100%;aspect-ratio:5/7;border-radius:13px;overflow:hidden;display:flex;background:var(--s1);box-shadow:0 8px 22px rgba(0,0,0,.35)}
+.card .spine{flex:none;width:15%;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:9% 0;background:#20262e;border-right:2px solid var(--cr,#9aa3ad)}
+.card .spine i{display:block;width:56%;height:3px;border-radius:2px;background:var(--cr,#9aa3ad);margin:2px 0}
+.card .spine i:nth-child(2){opacity:.55}.card .spine i:nth-child(3){opacity:.25}
+.card .art{position:relative;flex:1;background:linear-gradient(150deg,var(--tint,#33414f),#1a2029)}
+.card .art .mono{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--fdisp);font-weight:600;font-size:2.1rem;color:rgba(255,255,255,.92)}
+.card .art .glyph{position:absolute;top:7px;right:8px;font-size:.9rem;opacity:.9}
+.card .cap{position:absolute;left:15%;right:0;bottom:0;padding:8px 8px 9px;background:linear-gradient(transparent,rgba(10,14,18,.92))}
+.card .cap b{display:block;font-family:var(--fdisp);font-weight:600;font-size:.82rem;color:#f4f6f8;text-shadow:0 1px 3px rgba(0,0,0,.8);line-height:1.05;max-height:2.1em;overflow:hidden}
+.card .cap span{font-size:.62rem;color:var(--mut);font-weight:700}
+.card.own::after{content:"";position:absolute;inset:0;border-radius:13px;box-shadow:inset 0 0 0 1.5px var(--cr);pointer-events:none}
+
+/* vault picker */
+.vault-h{font-size:.7rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);margin:16px 0 9px;text-align:center}
+.vault{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(min-width:440px){.vault{grid-template-columns:repeat(4,1fr)}}
+.pick{cursor:pointer;transition:transform .12s}
+.pick:active{transform:scale(.96)}
+.pick .card{box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.pick .thr{text-align:center;font-size:.62rem;font-weight:700;color:var(--mut);margin-top:4px}
+
+/* reveal */
+.reveal-bg{position:fixed;inset:0;z-index:40;background:rgba(8,11,15,.78);backdrop-filter:blur(7px);display:none;align-items:flex-end;justify-content:center}
+.reveal-bg.on{display:flex}
+.reveal{width:100%;max-width:620px;background:var(--s1);border-radius:22px 22px 0 0;border-top:1px solid rgba(232,160,0,.4);
+  padding:22px 16px calc(20px + env(safe-area-inset-bottom));transform:translateY(24px);opacity:0;transition:transform .4s cubic-bezier(.22,1,.36,1),opacity .3s;max-height:92vh;overflow-y:auto}
+.reveal-bg.on .reveal{transform:none;opacity:1}
+.reveal .duo{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:14px}
+.reveal .duo .card{width:96px}
+.reveal .duo .amp{font-family:var(--fdisp);font-size:1.4rem;color:var(--gold)}
+.rv-score{text-align:center;margin-bottom:4px}
+.rv-score .n{font-family:var(--fdisp);font-weight:600;font-size:2.6rem;color:var(--goldsoft);line-height:1}
+.rv-score .l{font-size:.62rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
+.threads{display:flex;flex-direction:column;gap:7px;margin:16px 0}
+.thread{display:flex;align-items:center;gap:11px;background:var(--s2);border-radius:12px;padding:10px 13px;
+  opacity:0;transform:translateX(-8px);animation:tin .4s ease forwards}
+@keyframes tin{to{opacity:1;transform:none}}
+.thread .ic{width:30px;height:30px;flex:none;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.95rem;background:rgba(232,160,0,.14)}
+.thread .tx{flex:1;font-size:.86rem;font-weight:600}
+.thread .tx small{display:block;color:var(--mut);font-weight:600;font-size:.68rem;margin-top:1px}
+.thread .pt{font-family:var(--fmono);font-weight:700;font-size:.8rem;color:var(--goldsoft)}
+.thread.miss{opacity:.55;background:rgba(255,255,255,.03)}
+.thread.miss .ic{background:rgba(255,255,255,.05)}
+.thread.miss .pt{color:var(--mut)}
+.eff{text-align:center;font-size:.82rem;color:var(--mut);margin:2px 0 14px}
+.eff b{color:var(--txt)}
+.fact{background:#20262e;border-left:3px solid var(--gold);border-radius:0 12px 12px 0;padding:11px 14px;margin:0 0 16px;
+  font-family:var(--fdisp);font-style:italic;font-size:.92rem;line-height:1.5;color:#e8d9b6}
+.rv-btns{display:flex;gap:9px}
+.btn{flex:1;border:0;border-radius:999px;padding:13px;font-family:inherit;font-weight:800;font-size:.9rem;cursor:pointer}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--gold);color:#1a1408}.btn-ghost{background:var(--s2);color:var(--txt)}
+.share{background:#20262e;border-radius:12px;padding:11px;font-family:var(--fmono);font-size:.78rem;line-height:1.5;color:#dfe6ee;white-space:pre-wrap;text-align:center;margin:0 0 14px;display:none}
+.share.on{display:block}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><div class="brand">Cine<b>Match</b></div><div class="daynum">Prototype · Match #001</div></div>
+  <div class="kick">Tonight's double feature</div>
+  <div class="theme" id="theme">Pair the anchor</div>
+  <div class="themesub" id="themesub">Play the film from your Vault that connects deepest to tonight's anchor.</div>
+
+  <div class="anchor-wrap"><div class="anchor" id="anchor"></div></div>
+  <div class="pairline"><span>Anchor</span><span class="lnk">⛓</span><span>Your pick</span></div>
+
+  <div class="vault-h">Your Vault · tap a film to pair it</div>
+  <div class="vault" id="vault"></div>
+</div>
+
+<div class="reveal-bg" id="revealBg">
+  <div class="reveal">
+    <div class="duo" id="duo"></div>
+    <div class="rv-score"><div class="n" id="rvN">0</div><div class="l">connection score</div></div>
+    <div class="eff" id="rvEff"></div>
+    <div class="threads" id="threads"></div>
+    <div class="fact" id="fact"></div>
+    <pre class="share" id="share"></pre>
+    <div class="rv-btns">
+      <button class="btn btn-ghost" id="again">Try another pairing</button>
+      <button class="btn btn-primary" id="lock">Lock it in</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- data (hardcoded, real credits) ---------- */
+const PEOPLE={
+  tarantino:'Quentin Tarantino', scorsese:'Martin Scorsese',
+  thurman:'Uma Thurman', travolta:'John Travolta', sljackson:'Samuel L. Jackson',
+  keitel:'Harvey Keitel', liu:'Lucy Liu', madsen:'Michael Madsen', buscemi:'Steve Buscemi',
+  deniro:'Robert De Niro', dicaprio:'Leonardo DiCaprio', waltz:'Christoph Waltz',
+  pesci:'Joe Pesci', liotta:'Ray Liotta', stone:'Sharon Stone', damon:'Matt Damon', nicholson:'Jack Nicholson'
+};
+const T={
+  pulp:{name:'Pulp Fiction',year:1994,dir:'tarantino',genre:'Crime',cast:['thurman','travolta','sljackson','keitel'],tint:'#3a1f22'},
+  jackie:{name:'Jackie Brown',year:1997,dir:'tarantino',genre:'Crime',cast:['sljackson','deniro','keitel'],tint:'#333f2a'},
+  killbill:{name:'Kill Bill: Vol. 1',year:2003,dir:'tarantino',genre:'Action',cast:['thurman','liu','madsen'],tint:'#4a3410'},
+  django:{name:'Django Unchained',year:2012,dir:'tarantino',genre:'Western',cast:['dicaprio','sljackson','waltz'],tint:'#402a1a'},
+  dogs:{name:'Reservoir Dogs',year:1992,dir:'tarantino',genre:'Crime',cast:['keitel','madsen','buscemi'],tint:'#2a2a30'},
+  goodfellas:{name:'Goodfellas',year:1990,dir:'scorsese',genre:'Crime',cast:['deniro','pesci','liotta'],tint:'#2f2a1f'},
+  casino:{name:'Casino',year:1995,dir:'scorsese',genre:'Crime',cast:['deniro','pesci','stone'],tint:'#3a2f14'},
+  departed:{name:'The Departed',year:2006,dir:'scorsese',genre:'Crime',cast:['dicaprio','damon','nicholson'],tint:'#243043'}
+};
+const OWNED={
+  pulp:{rarity:'legendary',anchor:true},   // anchor is shown separately
+  jackie:{rarity:'elite'}, dogs:{rarity:'rare'}, django:{rarity:'rare'},
+  killbill:{rarity:'common'}, goodfellas:{rarity:'elite'}, casino:{rarity:'common'}, departed:{rarity:'legendary'}
+};
+const ANCHOR='pulp';
+const VAULT=['jackie','dogs','django','killbill','goodfellas','casino','departed']; // your pickable films
+
+const RCOL={legendary:'#e8c24a',elite:'#b58ad6',rare:'#7aa6e8',common:'#9aa3ad'};
+const decade=y=>Math.floor(y/10)*10;
+
+/* ---------- connection engine ---------- */
+function threads(aId,bId){
+  const a=T[aId],b=T[bId],out=[];
+  if(a.dir===b.dir) out.push({ic:'🎬',t:`${PEOPLE[a.dir]} directed both`,s:'Same director',pt:3,key:'dir:'+a.dir});
+  a.cast.forEach(p=>{ if(b.cast.includes(p)) out.push({ic:'🎭',t:`${PEOPLE[p]} stars in both`,s:'Shared cast',pt:2,key:'act:'+p}); });
+  if(decade(a.year)===decade(b.year)) out.push({ic:'📅',t:`Both from the ${decade(a.year)}s`,s:'Same decade',pt:1,key:'dec'});
+  if(a.genre===b.genre) out.push({ic:'🏷️',t:`Both ${a.genre.toLowerCase()}`,s:'Same genre',pt:1,key:'gen'});
+  out.sort((x,y)=>y.pt-x.pt);
+  return out;
+}
+function totalOf(list){ return list.reduce((s,t)=>s+t.pt,0); }
+function bestPick(){ // best from vault
+  let best={id:null,score:-1,list:[]};
+  VAULT.forEach(id=>{ const l=threads(ANCHOR,id),s=totalOf(l); if(s>best.score) best={id,score:s,list:l}; });
+  return best;
+}
+
+/* ---------- rendering ---------- */
+function faceHTML(id,cls){
+  const r=(OWNED[id]||{}).rarity||'common', cr=RCOL[r];
+  const mono=T[id].name.split(/[:\s]+/).map(w=>w[0]).slice(0,2).join('');
+  return `<div class="card ${cls||''} ${OWNED[id]?'own':''}" style="--cr:${cr};--tint:${T[id].tint}">
+    <div class="spine"><i></i><i></i><i></i></div>
+    <div class="art"><span class="glyph">🎬</span><span class="mono">${mono}</span></div>
+    <div class="cap"><b>${T[id].name}</b><span>${T[id].year}</span></div></div>`;
+}
+document.getElementById('anchor').innerHTML=faceHTML(ANCHOR);
+document.getElementById('theme').textContent=`Anchor: ${T[ANCHOR].name}`;
+const vaultEl=document.getElementById('vault');
+VAULT.forEach(id=>{
+  const n=totalOf(threads(ANCHOR,id));
+  const d=document.createElement('div'); d.className='pick';
+  d.innerHTML=faceHTML(id)+`<div class="thr">tap to reveal</div>`;
+  d.onclick=()=>reveal(id);
+  vaultEl.appendChild(d);
+});
+
+/* ---------- reveal ---------- */
+let lastPick=null;
+function reveal(id){
+  lastPick=id;
+  const list=threads(ANCHOR,id), total=totalOf(list), best=bestPick();
+  const eff=best.score>0?Math.round(total/best.score*100):100;
+  document.getElementById('duo').innerHTML=faceHTML(ANCHOR)+`<span class="amp">&</span>`+faceHTML(id);
+  // count up score
+  const nEl=document.getElementById('rvN'); let c=0; clearInterval(window._t);
+  window._t=setInterval(()=>{ c++; nEl.textContent=c; if(c>=total){clearInterval(window._t); nEl.textContent=total;} }, 90);
+  // threads (found) + the one you missed vs best
+  const box=document.getElementById('threads'); box.innerHTML='';
+  list.forEach((t,i)=>{ const el=document.createElement('div'); el.className='thread'; el.style.animationDelay=(i*0.09+0.1)+'s';
+    el.innerHTML=`<span class="ic">${t.ic}</span><span class="tx">${t.t}<small>${t.s}</small></span><span class="pt">+${t.pt}</span>`;
+    box.appendChild(el); });
+  if(list.length===0){ box.innerHTML=`<div class="thread miss"><span class="ic">∅</span><span class="tx">No shared thread<small>These two don't connect — pick another</small></span></div>`; }
+  // "a stronger link existed" nudge
+  const effEl=document.getElementById('rvEff');
+  if(id===best.id){ effEl.innerHTML=`<b>Best possible pairing in your Vault.</b> Nothing connects deeper.`; }
+  else { const missing=best.list.filter(bt=>!list.some(t=>t.key===bt.key)); const ex=missing[0];
+    effEl.innerHTML=`<b>${eff}%</b> of your Vault's best link — <b>${T[best.id].name}</b> would've added ${ex?`“${ex.t}”`:'more'}.`; }
+  // did-you-know: strongest shared person
+  const top=list.find(t=>t.key.startsWith('act:'))||list.find(t=>t.key.startsWith('dir:'));
+  const factEl=document.getElementById('fact');
+  if(top){ const who=top.key.startsWith('dir:')?PEOPLE[top.key.slice(4)]:PEOPLE[top.key.slice(4)];
+    const other=Object.keys(T).filter(x=> (top.key.startsWith('dir:')? T[x].dir===top.key.slice(4) : T[x].cast.includes(top.key.slice(4))) && x!==ANCHOR && x!==id);
+    factEl.textContent=`Did you know — ${who} also appears in ${other.length} other film${other.length===1?'':'s'} you could pair here${other.length?`, like ${T[other[0]].name}`:''}.`;
+    factEl.style.display='block';
+  } else factEl.style.display='none';
+  // share
+  const rem={legendary:'🟨',elite:'🟪',rare:'🟦',common:'⬜'};
+  document.getElementById('share').textContent=
+`CineMatch #001
+${rem[OWNED[ANCHOR].rarity]} ${T[ANCHOR].name}
+   ⛓ ${'🔗'.repeat(Math.min(list.length,5))}
+${rem[(OWNED[id]||{}).rarity||'common']} ${T[id].name}
+${total} pts · ${eff}% of best`;
+  document.getElementById('revealBg').classList.add('on');
+}
+document.getElementById('again').onclick=()=>document.getElementById('revealBg').classList.remove('on');
+document.getElementById('revealBg').onclick=e=>{ if(e.target.id==='revealBg') document.getElementById('revealBg').classList.remove('on'); };
+document.getElementById('lock').onclick=()=>{
+  document.getElementById('share').classList.add('on');
+  const b=document.getElementById('lock'); b.textContent='Locked ✓ · shareable';
+};
+</script>
+</body>
+</html>
