@@ -1788,7 +1788,7 @@
       var metaLayer = hasMetaLayer ? ('<div class="auth-meta"' + tplMetaBoxStyle(TL, c.rarity) + '>' + tplMetaContent(TL, rar, typeUp, no) + '</div>') : '';
       return '<div class="auth auth-' + c.rarity + (person ? ' person' : '') + (c.shine ? ' cl-shine' : '') + (mst ? ' mst-' + mst : '') + (TL ? ' auth-tpl' : '') + '" style="--cr:' + rar.ring + ';--m1:' + (METAL[c.rarity] || '#fff') + ';animation-delay:' + Math.min(i, 16) * 22 + 'ms" title="' + nm + ' · ' + rar.label + ' · ' + no + (c.shine ? ' · Shined' : '') + '">' +
         '<div class="auth-card">' +
-          (p ? '<img class="auth-bgimg" src="' + ctx.esc(p) + '" alt="" loading="lazy"' + O('poster') + '>' : '<div class="auth-noimg"></div>') +
+          (p ? '<img class="auth-bgimg" src="' + ctx.esc(p) + '" alt="" loading="lazy" decoding="async"' + O('poster') + '>' : '<div class="auth-noimg"></div>') +
           '<div class="auth-scrim"' + O('scrim') + '></div>' +
           '<div class="auth-spine"><span class="auth-sp-stripes"><i></i><i></i><i></i></span><span class="auth-sp-meta">' + rar.label + ' · ' + typeUp + '</span><span class="auth-sp-no">' + no + '</span></div>' +
           tagsHtml +
