@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CineSlate — prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#252c35;--s1:#2c343f;--s2:#343d49;--s3:#3a4450;--bdr:rgba(255,255,255,.08);
+  --txt:#f2f4f6;--mut:#9aa4b0;--gold:#e8a000;--goldsoft:#f5c542;
+  --leg:#e8c24a;--elite:#b58ad6;--rare:#7aa6e8;--common:#9aa3ad;
+  --good:#5bbd7a;--bad:#d8503a;
+  --fdisp:'Fraunces',Georgia,serif;--fui:'Schibsted Grotesk',-apple-system,sans-serif;--fmono:'Space Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:var(--fui);min-height:100vh;-webkit-font-smoothing:antialiased}
+.wrap{max-width:640px;margin:0 auto;padding:16px 14px calc(120px + env(safe-area-inset-bottom))}
+
+/* header */
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.brand{font-family:var(--fdisp);font-weight:600;font-size:1.35rem;letter-spacing:-.01em}
+.brand b{color:var(--gold)}
+.daynum{font-family:var(--fmono);font-size:.72rem;color:var(--mut)}
+.grade-chip{display:inline-flex;align-items:center;gap:6px;background:var(--s2);border-radius:999px;padding:5px 12px;font-weight:800;font-size:.82rem}
+.grade-chip .g{font-family:var(--fdisp);font-size:1.05rem;color:var(--gold)}
+
+/* brief */
+.brief{background:var(--s1);border-radius:16px;padding:14px 15px;margin-bottom:14px}
+.brief h2{margin:0 0 3px;font-family:var(--fdisp);font-weight:600;font-size:1.1rem}
+.brief .kick{font-size:.6rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+.brief ul{margin:8px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px}
+.brief li{font-size:.82rem;color:var(--mut);display:flex;align-items:center;gap:8px}
+.brief li .tick{width:15px;text-align:center;color:var(--mut)}
+.brief li.on{color:var(--txt)}
+.brief li.on .tick{color:var(--good)}
+.award li .tick{color:var(--mut)}
+.award li.on .tick{color:var(--goldsoft)}
+.rule-lbl{font-size:.58rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin:12px 0 2px}
+
+/* board */
+.board{position:relative;margin:6px 0 4px;min-height:430px}
+.board svg.links{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.grid{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr;gap:16px 18px;align-items:start}
+.node-hub{grid-column:1/-1;justify-self:center;width:52%}
+@media(max-width:420px){.node-hub{width:66%}}
+
+.node{position:relative}
+.slot{position:relative;width:100%;aspect-ratio:5/7;border-radius:13px;border:1.5px dashed var(--bdr);background:var(--s1);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;overflow:hidden;
+  transition:border-color .15s,transform .1s,box-shadow .2s}
+.slot:active{transform:scale(.98)}
+.slot .role{font-size:.56rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
+.slot .plus{font-size:1.6rem;color:rgba(255,255,255,.28);line-height:1}
+.slot:hover{border-color:rgba(232,160,0,.5)}
+.slot.filled{border-style:solid;cursor:pointer;padding:0}
+
+/* filled card face — echoes the real spine design */
+.card{position:absolute;inset:0;display:flex;overflow:hidden;border-radius:12px}
+.card .spine{flex:none;width:16%;display:flex;flex-direction:column;align-items:center;justify-content:space-between;
+  padding:8% 0;background:#20262e;border-right:2px solid var(--cr)}
+.card .spine .stripes{display:flex;flex-direction:column;gap:3px;width:100%;padding:0 22%}
+.card .spine .stripes i{height:4px;border-radius:2px;background:var(--cr)}
+.card .spine .stripes i:nth-child(2){opacity:.55}.card .spine .stripes i:nth-child(3){opacity:.25}
+.card .spine .vmeta{writing-mode:vertical-rl;transform:rotate(180deg);font-family:var(--fmono);font-size:.42rem;
+  font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--cr);white-space:nowrap;overflow:hidden;max-height:70%}
+.card .art{position:relative;flex:1;min-width:0;background:linear-gradient(150deg,var(--tint),#1a2029)}
+.card .art .mono{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:var(--fdisp);font-weight:600;font-size:1.9rem;color:rgba(255,255,255,.9)}
+.card .art .glyph{position:absolute;top:6px;right:7px;font-size:.8rem;opacity:.9}
+.card .name{position:absolute;left:16%;right:0;bottom:0;padding:6px 7px 7px;
+  background:linear-gradient(transparent,rgba(10,14,18,.92));z-index:2}
+.card .name b{display:block;font-family:var(--fdisp);font-weight:600;font-size:.72rem;line-height:1.05;color:#f4f6f8;
+  text-shadow:0 1px 3px rgba(0,0,0,.8);max-height:2.1em;overflow:hidden}
+.card .name span{font-size:.58rem;color:var(--mut);font-weight:700}
+.card .bar{position:absolute;left:16%;bottom:26px;width:20px;height:3px;border-radius:2px;background:var(--cr);z-index:2;margin-left:7px}
+.card.own::after{content:"";position:absolute;inset:0;border-radius:12px;box-shadow:inset 0 0 0 1.5px var(--cr);pointer-events:none;z-index:3}
+.card.house{filter:saturate(.5)}
+.card.house .art{background:linear-gradient(150deg,#3a4450,#232a33)}
+.card.spot{animation:spotPulse 2.4s ease-in-out infinite}
+.card.spot .name b{color:var(--goldsoft)}
+@keyframes spotPulse{0%,100%{box-shadow:0 0 0 0 rgba(245,197,66,0)}50%{box-shadow:0 0 14px 1px rgba(245,197,66,.5)}}
+.node .badges{position:absolute;top:-8px;left:50%;transform:translateX(-50%);display:flex;gap:4px;z-index:5}
+.node .badge{font-size:.5rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;border-radius:5px;padding:2px 5px;white-space:nowrap}
+.badge.house{background:#3a4450;color:#c8d0da}
+.badge.mst{background:var(--goldsoft);color:#1a1408}
+.badge.spot{background:var(--gold);color:#1a1408}
+
+/* clear button on a filled slot */
+.node .clr{position:absolute;top:4px;left:5px;z-index:6;width:20px;height:20px;border:0;border-radius:50%;
+  background:rgba(10,14,18,.6);color:#cfd6de;font-size:.9rem;line-height:1;cursor:pointer;display:none}
+.node.isfilled .clr{display:block}
+
+/* score bar */
+.scorebar{display:flex;gap:10px;margin:12px 0 0}
+.scorecard{flex:1;background:var(--s1);border-radius:14px;padding:11px 13px;text-align:center}
+.scorecard .lbl{font-size:.56rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+.scorecard .val{font-family:var(--fdisp);font-weight:600;font-size:1.5rem;margin-top:2px}
+.scorecard.grade .val{color:var(--gold)}
+.scorecard.prestige .val{color:var(--goldsoft)}
+.scorecard .sub{font-size:.62rem;color:var(--mut);margin-top:1px}
+
+/* actions */
+.actions{display:flex;gap:9px;margin-top:12px}
+.btn{flex:1;border:0;border-radius:999px;padding:13px;font-family:inherit;font-weight:800;font-size:.9rem;cursor:pointer;transition:transform .1s,opacity .15s}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--gold);color:#1a1408}
+.btn-primary:disabled{background:var(--s3);color:var(--mut);cursor:not-allowed}
+.btn-ghost{background:var(--s2);color:var(--txt);flex:0 0 auto;padding:13px 16px}
+
+/* bottom sheet */
+.sheet-bg{position:fixed;inset:0;z-index:40;background:rgba(8,11,15,.6);backdrop-filter:blur(4px);display:none}
+.sheet-bg.on{display:block}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:41;max-width:640px;margin:0 auto;background:var(--s1);
+  border-radius:20px 20px 0 0;border-top:1px solid rgba(232,160,0,.3);padding:14px 14px calc(16px + env(safe-area-inset-bottom));
+  transform:translateY(100%);transition:transform .28s cubic-bezier(.22,1,.36,1);max-height:76vh;display:flex;flex-direction:column}
+.sheet.on{transform:none}
+.sheet-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.sheet-h b{font-family:var(--fdisp);font-weight:600;font-size:1.02rem}
+.sheet-h .x{border:0;background:var(--s2);color:var(--mut);width:32px;height:32px;border-radius:50%;font-size:1.1rem;cursor:pointer}
+.sheet-note{font-size:.72rem;color:var(--mut);margin:-4px 0 10px}
+.cands{overflow-y:auto;display:flex;flex-direction:column;gap:7px}
+.cand{display:flex;align-items:center;gap:11px;background:var(--s2);border:1px solid transparent;border-radius:13px;padding:8px 10px;cursor:pointer;text-align:left;color:var(--txt);font:inherit}
+.cand:hover{background:var(--s3)}
+.cand.perfect{border-color:rgba(91,189,122,.5)}
+.cand.invalid{opacity:.45}
+.cand.pulse{animation:candPulse 1.1s ease-in-out 3}
+@keyframes candPulse{0%,100%{box-shadow:0 0 0 0 rgba(232,160,0,0)}50%{box-shadow:0 0 0 2px rgba(232,160,0,.6)}}
+.cand .mini{width:34px;height:48px;border-radius:6px;flex:none;display:flex;align-items:center;justify-content:center;
+  font-family:var(--fdisp);font-weight:600;font-size:.9rem;color:#fff;background:linear-gradient(150deg,var(--tint),#1a2029);position:relative;box-shadow:inset 0 0 0 1.5px var(--cr)}
+.cand .mini .g{position:absolute;bottom:-3px;right:-3px;font-size:.6rem}
+.cand .ct{flex:1;min-width:0}
+.cand .ct .cn{font-weight:700;font-size:.86rem;display:flex;align-items:center;gap:6px}
+.cand .ct .cn .tag{font-size:.5rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:1px 5px;border-radius:4px}
+.tag.vault{background:rgba(232,194,74,.16);color:var(--goldsoft)}
+.tag.studio{background:#3a4450;color:#c8d0da}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.chip{font-size:.6rem;font-weight:600;color:var(--mut);background:rgba(255,255,255,.05);border-radius:5px;padding:2px 6px}
+.chip.ok{color:var(--good);background:rgba(91,189,122,.12)}
+.chip.no{color:var(--bad);background:rgba(216,80,58,.12)}
+.cand .status{flex:none;font-size:.62rem;font-weight:800}
+.status.perfect{color:var(--good)}.status.potential{color:var(--mut)}.status.invalid{color:var(--bad)}
+.spot-row{display:flex;align-items:center;gap:8px;margin-top:10px;padding:9px 11px;background:var(--s2);border-radius:12px;font-size:.78rem}
+.spot-row.dim{opacity:.5}
+.spot-row .sw{margin-left:auto;font-weight:800;color:var(--gold);cursor:pointer}
+
+/* result toast */
+.result{position:fixed;left:0;right:0;bottom:0;z-index:50;max-width:640px;margin:0 auto;background:var(--s1);
+  border-radius:20px 20px 0 0;border-top:1px solid rgba(232,160,0,.4);padding:20px 16px calc(18px + env(safe-area-inset-bottom));
+  transform:translateY(100%);transition:transform .34s cubic-bezier(.22,1,.36,1)}
+.result.on{transform:none}
+.result h3{margin:0 0 4px;font-family:var(--fdisp);font-weight:600;font-size:1.3rem;text-align:center}
+.result .rgrade{text-align:center;color:var(--gold);font-weight:800;margin-bottom:12px}
+.result pre{background:#20262e;border-radius:12px;padding:12px;font-family:var(--fmono);font-size:.8rem;line-height:1.5;
+  color:#dfe6ee;white-space:pre-wrap;text-align:center;margin:0 0 12px}
+.result .rbtns{display:flex;gap:9px}
+.hint-note{font-size:.66rem;color:var(--mut);text-align:center;margin-top:9px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div><div class="brand">Cine<b>Slate</b></div><div class="daynum">Prototype · Slate #001</div></div>
+    <div class="grade-chip">Grade <span class="g" id="gradeChip">—</span></div>
+  </div>
+
+  <div class="brief">
+    <div class="kick">Today's brief</div>
+    <h2>Repeat Collaborators</h2>
+    <div class="rule-lbl">Mandatory</div>
+    <ul id="mandatory">
+      <li data-req="hub"><span class="tick">○</span>The director must have directed both films</li>
+      <li data-req="acted"><span class="tick">○</span>Each lead must have acted in their film</li>
+      <li data-req="rule"><span class="tick">○</span>The two films must be from different decades</li>
+    </ul>
+    <div class="rule-lbl">Awards</div>
+    <ul id="awards" class="award">
+      <li data-aw="allvault"><span class="tick">○</span>Build the slate entirely from your own Vault</li>
+      <li data-aw="spotlight"><span class="tick">○</span>Spotlight a shined card</li>
+    </ul>
+  </div>
+
+  <div class="board">
+    <svg class="links" id="links"></svg>
+    <div class="grid">
+      <div class="node node-hub" data-node="hub"><div class="badges"></div><button class="clr">×</button>
+        <div class="slot"><span class="role">Director</span><span class="plus">+</span></div></div>
+      <div class="node" data-node="tA"><div class="badges"></div><button class="clr">×</button>
+        <div class="slot"><span class="role">Film A</span><span class="plus">+</span></div></div>
+      <div class="node" data-node="tB"><div class="badges"></div><button class="clr">×</button>
+        <div class="slot"><span class="role">Film B</span><span class="plus">+</span></div></div>
+      <div class="node" data-node="pA"><div class="badges"></div><button class="clr">×</button>
+        <div class="slot"><span class="role">Lead A</span><span class="plus">+</span></div></div>
+      <div class="node" data-node="pB"><div class="badges"></div><button class="clr">×</button>
+        <div class="slot"><span class="role">Lead B</span><span class="plus">+</span></div></div>
+    </div>
+  </div>
+
+  <div class="scorebar">
+    <div class="scorecard grade"><div class="lbl">Contract Grade</div><div class="val" id="gradeVal">—</div><div class="sub" id="gradeSub">0/4 links</div></div>
+    <div class="scorecard prestige"><div class="lbl">Vault Prestige</div><div class="val" id="prestigeVal">0</div><div class="sub" id="prestigeSub">0 of 5 own cards</div></div>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-ghost" id="hintBtn">Hint</button>
+    <button class="btn btn-primary" id="submitBtn" disabled>Submit production</button>
+  </div>
+  <div class="hint-note">Tap a slot to cast a card · tap a placed card to spotlight/clear</div>
+</div>
+
+<div class="sheet-bg" id="sheetBg"></div>
+<div class="sheet" id="sheet">
+  <div class="sheet-h"><b id="sheetTitle">Cast a card</b><button class="x" id="sheetX">×</button></div>
+  <div class="sheet-note" id="sheetNote"></div>
+  <div class="cands" id="cands"></div>
+</div>
+
+<div class="result" id="result">
+  <h3 id="resultH">Production wrapped</h3>
+  <div class="rgrade" id="resultG"></div>
+  <pre id="resultShare"></pre>
+  <div class="rbtns">
+    <button class="btn btn-ghost" id="resultEdit">Improve the slate</button>
+    <button class="btn btn-primary" id="resultCopy">Copy result</button>
+  </div>
+</div>
+
+<script>
+/* ---------- data (hardcoded: real credits for a Tarantino slate) ---------- */
+const PEOPLE = {
+  tarantino:{name:'Quentin Tarantino', role:'director', tint:'#3a2f14'},
+  travolta:{name:'John Travolta', role:'actor', tint:'#2a3550'},
+  thurman:{name:'Uma Thurman', role:'actor', tint:'#3a2440'},
+  sljackson:{name:'Samuel L. Jackson', role:'actor', tint:'#402424'},
+  liu:{name:'Lucy Liu', role:'actor', tint:'#243f34'},
+  dicaprio:{name:'Leonardo DiCaprio', role:'actor', tint:'#4a3a14'},
+  keitel:{name:'Harvey Keitel', role:'actor', tint:'#2f3a42'},
+  madsen:{name:'Michael Madsen', role:'actor', tint:'#33333a'},
+  waltz:{name:'Christoph Waltz', role:'actor', tint:'#3a2f22'}
+};
+const TITLES = {
+  pulp:{name:'Pulp Fiction', year:1994, dir:'tarantino', cast:['thurman','travolta','sljackson','keitel'], tint:'#3a1f22'},
+  killbill:{name:'Kill Bill: Vol. 1', year:2003, dir:'tarantino', cast:['thurman','liu','madsen'], tint:'#4a3410'},
+  jackie:{name:'Jackie Brown', year:1997, dir:'tarantino', cast:['sljackson','keitel'], tint:'#333f2a'},
+  django:{name:'Django Unchained', year:2012, dir:'tarantino', cast:['dicaprio','sljackson','waltz'], tint:'#402a1a'},
+  dogs:{name:'Reservoir Dogs', year:1992, dir:'tarantino', cast:['keitel','madsen'], tint:'#2a2a30'}
+};
+/* your Vault: owned cards carry earned rarity/copies/shine (automatic ownership if also in pool) */
+const OWNED = {
+  tarantino:{rarity:'elite', n:1},
+  pulp:{rarity:'common', n:1},
+  django:{rarity:'rare', n:3},              // bronze mastery
+  dicaprio:{rarity:'legendary', n:10, shine:true}, // gold + shined
+  sljackson:{rarity:'elite', n:5},          // silver mastery
+  keitel:{rarity:'rare', n:1}
+};
+/* today's Studio Pool (loaners guaranteeing a public solution) */
+const POOL = ['tarantino','travolta','thurman','liu','sljackson','pulp','killbill','jackie','django','dogs'];
+
+const RCOL = {legendary:'#e8c24a', elite:'#b58ad6', rare:'#7aa6e8', common:'#9aa3ad'};
+const RVAL = {legendary:15, elite:10, rare:5, common:0};
+const MST = n => n>=10?{t:'GOLD',m:1.20}:n>=5?{t:'SILVER',m:1.10}:n>=3?{t:'BRONZE',m:1.05}:null;
+
+/* board definition (5-node MVP) */
+const NODES = {
+  hub:{type:'person', role:'director', label:'Director'},
+  tA:{type:'title', label:'Film A'}, tB:{type:'title', label:'Film B'},
+  pA:{type:'person', role:'actor', label:'Lead A'}, pB:{type:'person', role:'actor', label:'Lead B'}
+};
+const EDGES = [
+  {a:'hub', b:'tA', rel:'directed'}, {a:'hub', b:'tB', rel:'directed'},
+  {a:'tA', b:'pA', rel:'acted'}, {a:'tB', b:'pB', rel:'acted'}
+];
+
+let placed = {hub:null, tA:null, tB:null, pA:null, pB:null}; // node -> card id
+let spotlight = null;   // node id holding the spotlight
+let hintsUsed = false;
+
+/* ---------- helpers ---------- */
+function isPerson(id){ return !!PEOPLE[id]; }
+function cardTint(id){ return isPerson(id)?PEOPLE[id].tint:TITLES[id].tint; }
+function cardName(id){ return isPerson(id)?PEOPLE[id].name:TITLES[id].name; }
+function rarityOf(id){ return OWNED[id]?OWNED[id].rarity:'common'; }
+function isOwned(id){ return !!OWNED[id]; }
+function decade(y){ return Math.floor(y/10)*10; }
+
+/* does person P satisfy `rel` with title T ? */
+function edgeValid(rel, personId, titleId){
+  if(!personId || !titleId) return null; // pending
+  const T = TITLES[titleId]; if(!T) return false;
+  if(rel==='directed') return T.dir===personId;
+  if(rel==='acted') return T.cast.includes(personId);
+  return false;
+}
+/* evaluate an edge given current placement: 'valid' | 'invalid' | 'pending' */
+function edgeState(e){
+  const av = placed[e.a], bv = placed[e.b];
+  const person = isPerson(NODES[e.a].type==='person'?av:bv) ? (NODES[e.a].type==='person'?av:bv) : (isPerson(av)?av:bv);
+  const title  = NODES[e.a].type==='title'?av:bv;
+  const p = NODES[e.a].type==='person'?av:bv;
+  const t = NODES[e.a].type==='title'?av:bv;
+  const r = edgeValid(e.rel, p, t);
+  if(r===null) return 'pending';
+  return r?'valid':'invalid';
+}
+function edgesOfNode(n){ return EDGES.filter(e=>e.a===n||e.b===n); }
+
+/* eligible + classified candidates for a node */
+function candidates(node){
+  const def = NODES[node];
+  let ids = def.type==='title' ? Object.keys(TITLES)
+          : Object.keys(PEOPLE).filter(id=>def.role==='director'?PEOPLE[id].role==='director':PEOPLE[id].role==='actor');
+  // union of pool + owned, dedup, keep only eligible type
+  const avail = new Set([...POOL, ...Object.keys(OWNED)]);
+  ids = ids.filter(id=>avail.has(id));
+  const usedElsewhere = new Set(Object.entries(placed).filter(([k,v])=>v&&k!==node).map(([,v])=>v));
+  return ids.map(id=>{
+    const disabled = usedElsewhere.has(id);
+    // classify against connected edges whose neighbor is filled
+    let sat=0, tot=0, broken=false;
+    edgesOfNode(node).forEach(e=>{
+      const other = e.a===node?e.b:e.a;
+      if(!placed[other]) return;
+      tot++;
+      const p = def.type==='person'?id:placed[other];
+      const t = def.type==='title'?id:placed[other];
+      const v = edgeValid(e.rel, p, t);
+      if(v) sat++; else broken=true;
+    });
+    let status = tot===0 ? 'potential' : broken ? 'invalid' : 'perfect';
+    return {id, disabled, status, sat, tot};
+  }).sort((a,b)=>{
+    const order={perfect:0,potential:1,invalid:2};
+    if(a.disabled!==b.disabled) return a.disabled?1:-1;
+    return order[a.status]-order[b.status];
+  });
+}
+
+/* explain chips for a candidate in a node context */
+function chipsFor(node, id){
+  const def = NODES[node]; const chips=[];
+  if(def.type==='title'){
+    const T=TITLES[id];
+    chips.push({t:`${T.year} · dir ${PEOPLE[T.dir].name.split(' ').slice(-1)}`,c:''});
+    edgesOfNode(node).forEach(e=>{ const other=e.a===node?e.b:e.a; const ov=placed[other]; if(!ov) return;
+      const v = e.rel==='directed' ? T.dir===ov : T.cast.includes(ov);
+      chips.push({t:(v?'✓ ':'✗ ')+(e.rel==='directed'?'directed by ':'features ')+cardName(ov).split(' ').slice(-1), c:v?'ok':'no'});
+    });
+  } else {
+    // person: show a notable credit + any filled-neighbour relation
+    const creds = Object.keys(TITLES).filter(t=> def.role==='director'?TITLES[t].dir===id:TITLES[t].cast.includes(id));
+    if(creds.length) chips.push({t:(def.role==='director'?'Directed ':'In ')+TITLES[creds[0]].name, c:''});
+    edgesOfNode(node).forEach(e=>{ const other=e.a===node?e.b:e.a; const ov=placed[other]; if(!ov) return;
+      const v = e.rel==='directed' ? TITLES[ov].dir===id : TITLES[ov].cast.includes(id);
+      chips.push({t:(v?'✓ ':'✗ ')+(e.rel==='directed'?'directed ':'in ')+cardName(ov), c:v?'ok':'no'});
+    });
+  }
+  return chips;
+}
+
+/* ---------- rendering ---------- */
+function cardFaceHTML(id){
+  const owned=isOwned(id), rar=rarityOf(id), cr=RCOL[rar];
+  const meta = isPerson(id)? (PEOPLE[id].role==='director'?'DIRECTOR':'ACTOR') : (TITLES[id].year+' · FILM');
+  const glyph = isPerson(id)?'🎭':'🎬';
+  const mono = cardName(id).split(' ').map(w=>w[0]).slice(0,2).join('');
+  const yr = isPerson(id)? (PEOPLE[id].role==='director'?'Director':'Actor') : TITLES[id].year;
+  return `<div class="card ${owned?'own':'house'}" style="--cr:${cr};--tint:${cardTint(id)}">
+    <div class="spine"><span class="stripes"><i></i><i></i><i></i></span>
+      <span class="vmeta">${rar} · ${isPerson(id)?'person':'film'}</span></div>
+    <div class="art"><span class="glyph">${glyph}</span><span class="mono">${mono}</span></div>
+    <div class="bar"></div>
+    <div class="name"><b>${cardName(id)}</b><span>${yr}</span></div>
+  </div>`;
+}
+
+function render(){
+  // slots
+  Object.keys(NODES).forEach(node=>{
+    const nodeEl=document.querySelector(`.node[data-node="${node}"]`);
+    const slot=nodeEl.querySelector('.slot');
+    const id=placed[node];
+    nodeEl.classList.toggle('isfilled',!!id);
+    const badges=nodeEl.querySelector('.badges'); badges.innerHTML='';
+    if(id){
+      slot.classList.add('filled'); slot.innerHTML=cardFaceHTML(id);
+      const card=slot.querySelector('.card');
+      if(!isOwned(id)) badges.innerHTML+='<span class="badge house">House</span>';
+      else { const m=MST(OWNED[id].n||1); if(m) badges.innerHTML+=`<span class="badge mst">★ ${m.t}</span>`; }
+      if(spotlight===node){ card.classList.add('spot'); badges.innerHTML+='<span class="badge spot">✨ Spotlight</span>'; }
+    } else {
+      slot.classList.remove('filled');
+      slot.innerHTML=`<span class="role">${NODES[node].label}</span><span class="plus">+</span>`;
+    }
+  });
+  drawLines();
+  score();
+}
+
+function drawLines(){
+  const svg=document.getElementById('links'); const board=document.querySelector('.board');
+  const br=board.getBoundingClientRect();
+  svg.setAttribute('viewBox',`0 0 ${br.width} ${br.height}`);
+  let h='';
+  EDGES.forEach(e=>{
+    const A=document.querySelector(`.node[data-node="${e.a}"] .slot`).getBoundingClientRect();
+    const B=document.querySelector(`.node[data-node="${e.b}"] .slot`).getBoundingClientRect();
+    const x1=A.left-br.left+A.width/2, y1=A.top-br.top+A.height/2;
+    const x2=B.left-br.left+B.width/2, y2=B.top-br.top+B.height/2;
+    const st=edgeState(e);
+    const col= st==='valid'?'var(--good)': st==='invalid'?'var(--bad)':'rgba(255,255,255,.14)';
+    const w = st==='valid'?3:2;
+    const dash = st==='pending'?'stroke-dasharray="4 5"':'';
+    // spotlight edges glow gold
+    const touchesSpot = spotlight && (e.a===spotlight||e.b===spotlight) && st==='valid';
+    const c2 = touchesSpot?'var(--goldsoft)':col;
+    h+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c2}" stroke-width="${touchesSpot?3.4:w}" ${dash} stroke-linecap="round"/>`;
+    if(e.rel==='directed' && st!=='pending'){ // double-line hint for "directed"
+      const ox=(y2-y1), oy=-(x2-x1), len=Math.hypot(ox,oy)||1, nx=ox/len*2.4, ny=oy/len*2.4;
+      h+=`<line x1="${x1+nx}" y1="${y1+ny}" x2="${x2+nx}" y2="${y2+ny}" stroke="${c2}" stroke-width="1" opacity=".5"/>`;
+    }
+  });
+  svg.innerHTML=h;
+}
+
+/* ---------- scoring ---------- */
+function score(){
+  const states=EDGES.map(edgeState);
+  const links=states.filter(s=>s==='valid').length;
+  const anyInvalid=states.some(s=>s==='invalid');
+  const allFilled=Object.values(placed).every(Boolean);
+  const bothTitles=placed.tA&&placed.tB;
+  const ruleOK=bothTitles && decade(TITLES[placed.tA].year)!==decade(TITLES[placed.tB].year);
+  const complete = links===4 && ruleOK;
+  // awards
+  const allVault = allFilled && Object.values(placed).every(id=>isOwned(id));
+  const spotUsed = spotlight!==null;
+  // update brief ticks
+  const hubOK = states[0]==='valid'&&states[1]==='valid';
+  const actedOK = states[2]==='valid'&&states[3]==='valid';
+  setTick('[data-req="hub"]',hubOK); setTick('[data-req="acted"]',actedOK); setTick('[data-req="rule"]',ruleOK);
+  setTick('[data-aw="allvault"]',allVault); setTick('[data-aw="spotlight"]',spotUsed);
+  // grade
+  let grade='—';
+  if(complete){
+    const awards=(allVault?1:0)+(spotUsed?1:0);
+    if(hintsUsed) grade='C';
+    else if(awards===2) grade='S';
+    else if(awards===1) grade='A';
+    else grade='B';
+  }
+  document.getElementById('gradeVal').textContent=grade;
+  document.getElementById('gradeChip').textContent=grade;
+  document.getElementById('gradeSub').textContent=`${links}/4 links${ruleOK?' · rule ✓':''}`;
+  // prestige
+  let prestige=0, ownN=0;
+  Object.entries(placed).forEach(([node,id])=>{ if(id&&isOwned(id)){ ownN++; prestige+=25+RVAL[rarityOf(id)]; } });
+  EDGES.forEach(e=>{ if(edgeState(e)!=='valid') return;
+    let base=100, mult=1;
+    [e.a,e.b].forEach(n=>{ const id=placed[n]; if(id&&isOwned(id)){ const m=MST(OWNED[id].n||1); if(m) mult=Math.max(mult,m.m); } });
+    if(spotlight&&(e.a===spotlight||e.b===spotlight)) mult*=1.25;
+    prestige+=Math.round(base*mult);
+  });
+  if(allVault) prestige+=250;
+  document.getElementById('prestigeVal').textContent=prestige.toLocaleString();
+  document.getElementById('prestigeSub').textContent=`${ownN} of 5 own cards`+(allVault?' · All Vault':'');
+  // submit enabled when complete
+  document.getElementById('submitBtn').disabled=!complete;
+  window._state={grade,links,ruleOK,complete,allVault,spotUsed,prestige,ownN};
+}
+function setTick(sel,on){ const li=document.querySelector(sel); if(!li)return; li.classList.toggle('on',on);
+  li.querySelector('.tick').textContent=on?'✓':'○'; }
+
+/* ---------- sheet ---------- */
+let sheetNode=null;
+function openSheet(node){
+  sheetNode=node;
+  document.getElementById('sheetTitle').textContent='Cast · '+NODES[node].label;
+  document.getElementById('sheetNote').textContent = NODES[node].type==='title'
+    ? 'Pick a film. Green = fits the cards already placed.'
+    : (NODES[node].role==='director'?'Pick a director who directed both films.':'Pick a lead who acted in this film.');
+  const list=candidates(node); const box=document.getElementById('cands'); box.innerHTML='';
+  list.forEach(c=>{
+    const chips=chipsFor(node,c.id);
+    const rar=rarityOf(c.id), cr=RCOL[rar];
+    const tagCls=isOwned(c.id)?'vault':'studio', tagTx=isOwned(c.id)?'Vault':'Studio';
+    const mono=cardName(c.id).split(' ').map(w=>w[0]).slice(0,2).join('');
+    const m=isOwned(c.id)?MST(OWNED[c.id].n||1):null;
+    const st = c.status;
+    const el=document.createElement('button');
+    el.className='cand '+(c.disabled?'invalid':st);
+    el.disabled=c.disabled;
+    el.innerHTML=`<span class="mini" style="--cr:${cr};--tint:${cardTint(c.id)}">${mono}${m?`<span class="g">★</span>`:''}</span>
+      <span class="ct"><span class="cn">${cardName(c.id)} <span class="tag ${tagCls}">${tagTx}</span>${m?`<span class="tag vault">${m.t}</span>`:''}</span>
+      <span class="chips">${chips.map(ch=>`<span class="chip ${ch.c}">${ch.t}</span>`).join('')}</span></span>
+      <span class="status ${st}">${c.disabled?'used':st==='perfect'?'fits':st==='invalid'?'no':'?'}</span>`;
+    if(!c.disabled) el.onclick=()=>{ place(node,c.id); closeSheet(); };
+    box.appendChild(el);
+  });
+  document.getElementById('sheetBg').classList.add('on');
+  document.getElementById('sheet').classList.add('on');
+}
+function closeSheet(){ document.getElementById('sheetBg').classList.remove('on'); document.getElementById('sheet').classList.remove('on'); }
+function place(node,id){ placed[node]=id; if(spotlight===node && !(isOwned(id)&&OWNED[id].shine)) spotlight=null; render(); }
+
+/* ---------- placed-card menu (spotlight / clear) ---------- */
+function onCardTap(node){
+  const id=placed[node]; if(!id) return;
+  const shined = isOwned(id)&&OWNED[id].shine;
+  if(shined){
+    // toggle spotlight
+    spotlight = (spotlight===node)?null:node;
+    render();
+  } else {
+    // brief flash: only shined cards can be spotlit; otherwise reopen the sheet to swap
+    openSheet(node);
+  }
+}
+
+/* ---------- wiring ---------- */
+document.querySelectorAll('.node').forEach(n=>{
+  const node=n.dataset.node;
+  n.querySelector('.slot').addEventListener('click',()=>{ if(placed[node]) onCardTap(node); else openSheet(node); });
+  n.querySelector('.clr').addEventListener('click',(e)=>{ e.stopPropagation(); if(spotlight===node)spotlight=null; placed[node]=null; render(); });
+});
+document.getElementById('sheetX').onclick=closeSheet;
+document.getElementById('sheetBg').onclick=closeSheet;
+document.getElementById('hintBtn').onclick=()=>{
+  const empty=Object.keys(placed).find(n=>!placed[n]); if(!empty) return;
+  hintsUsed=true; openSheet(empty);
+  setTimeout(()=>{ const first=document.querySelector('.cand.perfect')||document.querySelector('.cand:not([disabled])'); if(first) first.classList.add('pulse'); },60);
+  score();
+};
+document.getElementById('submitBtn').onclick=()=>{
+  const s=window._state; if(!s.complete) return;
+  const glyph=id=>isPerson(id)?'🎭':'🎬';
+  const rem={legendary:'🟨',elite:'🟪',rare:'🟦',common:'⬜'};
+  const face=node=>{ const id=placed[node]; if(!id) return '⬛'; return (spotlight===node?'✨':'')+(isOwned(id)?rem[rarityOf(id)]:'🏠'); };
+  const share=`CineSlate #001 · Repeat Collaborators
+      ${face('hub')}
+   ${face('tA')} ── ${face('tB')}
+   ${face('pA')}    ${face('pB')}
+${s.links}/4 links · ${s.allVault?'All Vault':'w/ house'} · Grade ${s.grade}
+${s.prestige.toLocaleString()} prestige`;
+  document.getElementById('resultG').textContent=`Grade ${s.grade} · ${s.prestige.toLocaleString()} prestige`;
+  document.getElementById('resultShare').textContent=share;
+  document.getElementById('result').classList.add('on');
+};
+document.getElementById('resultEdit').onclick=()=>document.getElementById('result').classList.remove('on');
+document.getElementById('resultCopy').onclick=()=>{ const t=document.getElementById('resultShare').textContent;
+  (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>{ document.getElementById('resultCopy').textContent='Copied ✓'; }).catch(()=>{}); };
+
+window.addEventListener('resize',drawLines);
+render();
+</script>
+</body>
+</html>
