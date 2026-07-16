@@ -651,6 +651,7 @@
       var k = it.type + ':' + it.id;
       if (s.cards[k]) {
         s.cards[k].n = (s.cards[k].n || 1) + 1;
+        ensureWeek(s).dup++;
         s.xp += XP.dupe;
         var gd = DUST[s.cards[k].rarity] || 5;
         s.dust = (s.dust || 0) + gd; _pendingDust += gd;
@@ -667,6 +668,7 @@
         else if (rar === 'elite') s.pityE = d;
         s.cards[k] = { id: it.id, type: it.type, name: it.name || '', img: it.img || '', rarity: rar, n: 1, first: d, no: (s.seq = (s.seq || 0) + 1), isNew: 1, i18n: (function () { var o = {}; o[currentLang()] = it.name || ''; return o; })() };
         s.xp += XP[rar] || 10;
+        ensureWeek(s).got++;
         added.push(s.cards[k]);
         if (ORDER[rar] < ORDER[top]) top = rar;
       }
@@ -1174,6 +1176,45 @@
   // achievement evaluation never calls activeCardbackId()→cbUnlocked()→achvCount() (would recurse).
   // useCardback() only ever stores an unlocked id, so the raw value is safe to trust here.
   function rawCardbackId() { var id = null; try { id = localStorage.getItem('cl_cardback'); } catch (_) {} return id || 'classic'; }
+  // ── Vault Quests: rotating weekly goals that give owned cards a job and a
+  //    short-horizon chase. Progress uses lightweight weekly counters (below) so
+  //    goals reset every week; completing one pays dust. Distinct from lifetime
+  //    Achievements (one-off) and Sets (franchise completion).
+  function weekKey() { return Math.floor(Date.now() / (7 * 864e5)); }   // rolling 7-day buckets
+  function ensureWeek(s) {
+    var wk = weekKey();
+    if (!s.wk || s.wk.key !== wk) s.wk = { key: wk, got: 0, dup: 0, xp0: s.xp || 0, acted: 0 };
+    return s.wk;
+  }
+  var QUESTS = [
+    { id: 'collect5', icon: '&#127916;', label: 'Add 5 new cards to your Vault', need: 5, dust: 40, have: function (w) { return w.got; } },
+    { id: 'collect8', icon: '&#128218;', label: 'Add 8 new cards to your Vault', need: 8, dust: 60, have: function (w) { return w.got; } },
+    { id: 'dupes3', icon: '&#9819;', label: 'Pull 3 duplicate copies', need: 3, dust: 40, have: function (w) { return w.dup; } },
+    { id: 'xp200', icon: '&#9889;', label: 'Earn 200 XP this week', need: 200, dust: 45, have: function (w, s) { return Math.max(0, (s.xp || 0) - (w.xp0 || 0)); } },
+    { id: 'act1', icon: '&#10024;', label: 'Shine or ascend any card', need: 1, dust: 50, have: function (w) { return w.acted; } }
+  ];
+  function questSeed(wk) { var a = QUESTS.slice(), out = [], r = wk * 2654435761 >>> 0; while (out.length < 3 && a.length) { r = (r * 1103515245 + 12345) >>> 0; out.push(a.splice(r % a.length, 1)[0]); } return out; }
+  function questsState() {
+    var s = load() || blank(); var w = ensureWeek(s); save(s);
+    if (!s.qDone) s.qDone = {};
+    var wk = weekKey();
+    return questSeed(wk).map(function (q) {
+      var have = Math.min(q.need, q.have(w, s));
+      var claimed = s.qDone[wk + ':' + q.id];
+      return { id: q.id, icon: q.icon, label: q.label, have: have, need: q.need, dust: q.dust, done: have >= q.need, claimed: !!claimed };
+    });
+  }
+  function claimQuest(id) {
+    var s = load() || blank(); var w = ensureWeek(s); if (!s.qDone) s.qDone = {};
+    var wk = weekKey(), q = QUESTS.filter(function (x) { return x.id === id; })[0]; if (!q) return { ok: false };
+    if (s.qDone[wk + ':' + id]) return { ok: false, reason: 'claimed' };
+    if (q.have(w, s) < q.need) return { ok: false, reason: 'incomplete' };
+    s.qDone[wk + ':' + id] = today();
+    s.dust = (s.dust || 0) + q.dust; _pendingDust += q.dust;
+    save(s); refreshOpen();
+    return { ok: true, dust: q.dust };
+  }
+
   function achCtx() {
     var st = stats(), s = load() || blank();
     var sh = 0, maxN = 0;
@@ -1289,6 +1330,7 @@
     for (var i = 0; i < pool.length && left > 0; i++) { var take = Math.min(left, (pool[i].n || 1) - 1); pool[i].n -= take; left -= take; }
     var oldR = rec.rarity; rec.rarity = next; rec.asc = (rec.asc || 0) + 1;
     s.xp += Math.max(0, (XP[next] || 0) - (XP[oldR] || 0));
+    ensureWeek(s).acted++;
     payLevels(s); save(s); refreshOpen();
     return { ok: true, next: next };
   }
@@ -1307,7 +1349,7 @@
     if (rec.shine) return { ok: false, reason: 'already' };
     var cost = shineCostFor(rec), have = s.dust || 0;
     if (have < cost) return { ok: false, reason: 'dust', need: cost, have: have };
-    s.dust = have - cost; rec.shine = 1; save(s); refreshOpen();
+    s.dust = have - cost; rec.shine = 1; ensureWeek(s).acted++; save(s); refreshOpen();
     return { ok: true, dust: s.dust };
   }
 
@@ -1874,6 +1916,24 @@
       // toolbar (Cards tab): search + one-tap rarity gems + sort. On mobile the
       // chips collapse to a single horizontally-scrollable row under the search.
       '.cl-vault-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:11px 0 4px}' +
+      // Weekly quests strip
+      '.cl-quests{width:100%}' +
+      '.cl-q-head{display:flex;align-items:center;justify-content:space-between;font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--mut,#9aa4b0);margin:12px 2px 7px}' +
+      '.cl-q-head b{color:#f5c542}.cl-q-head i{color:#8d8d8d;font-style:normal;font-weight:700}' +
+      '.cl-q-row{display:grid;grid-template-columns:1fr;gap:7px}' +
+      '@media(min-width:640px){.cl-q-row{grid-template-columns:1fr 1fr 1fr}}' +
+      '.cl-q{display:flex;align-items:center;gap:10px;background:#2c343f;border-radius:13px;padding:9px 11px}' +
+      '.cl-q.ready{background:linear-gradient(180deg,rgba(232,160,0,.14),#2c343f);box-shadow:inset 0 0 0 1px rgba(232,194,74,.35)}' +
+      '.cl-q.claimed{opacity:.55}' +
+      '.cl-q-ic{width:30px;height:30px;flex:none;border-radius:9px;background:rgba(232,160,0,.14);display:flex;align-items:center;justify-content:center;font-size:.95rem}' +
+      '.cl-q-body{flex:1;min-width:0}' +
+      '.cl-q-lbl{font-size:.76rem;font-weight:700;color:#f0f0f0;line-height:1.2;overflow:hidden;text-overflow:ellipsis}' +
+      '.cl-q-bar{height:5px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden;margin-top:5px}' +
+      '.cl-q-bar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#e8a000,#f5c542);transition:width .5s cubic-bezier(.3,.9,.3,1)}' +
+      '.cl-q-prog{flex:none;font-family:ui-monospace,Menlo,monospace;font-size:.72rem;font-weight:700;color:#9aa4b0}' +
+      '.cl-q-claim{flex:none;border:0;border-radius:999px;background:#e8a000;color:#1a1408;font:inherit;font-weight:800;font-size:.68rem;padding:6px 10px;cursor:pointer}' +
+      '.cl-q-claim:hover{filter:brightness(1.05)}' +
+      '.cl-q-ok{flex:none;color:#5bbd7a;font-weight:800}' +
       '.cl-vchips{display:flex;gap:8px;align-items:center;flex-wrap:wrap}' +
       '@media(max-width:640px){' +
         '.cl-vsearch{flex:1 1 100%}' +
@@ -2224,6 +2284,7 @@
           '</div>' +
         '</div>' +
         '<div class="cl-vault-tabs" id="clVaultTabs"></div>' +
+        '<div class="cl-quests" id="clQuests"></div>' +
         '<div class="cl-vault-tools" id="clCollChips"></div>' +
       '</div>' +
       '<div class="cl-coll-grid" id="clCollGrid"></div>';
@@ -2399,6 +2460,7 @@
 
     var tools = document.getElementById('clCollChips');
     var grid = document.getElementById('clCollGrid');
+    var _qs = document.getElementById('clQuests'); if (_qs && _tab !== 'cards') _qs.innerHTML = '';
     if (_tab === 'sets') { tools.innerHTML = ''; renderSets(); return; }
     if (_tab === 'show') { tools.innerHTML = ''; renderShowcase(); return; }
     if (_tab === 'backs') {
@@ -2414,6 +2476,7 @@
       renderAchv(); return;
     }
 
+    renderQuests();
     // ── Cards tab: toolbar (search / rarity gems / sort) + tier-sectioned grid ──
     var chips = [
       { k: 'all', label: CT('All') }, { k: 'film', label: CT('Films') }, { k: 'person', label: CT('People') },
@@ -3202,6 +3265,35 @@
       try { if (window.Track) window.Track('card_revealed', { n: queue.length, top: queue[queue.length - 1].rarity }); } catch (_) { /* noop */ }
       card(queue[0]);
     } catch (_) { /* noop */ }
+  }
+
+  function renderQuests() {
+    var el = document.getElementById('clQuests'); if (!el) return;
+    var qs; try { qs = questsState(); } catch (_) { el.innerHTML = ''; return; }
+    var claimable = qs.filter(function (q) { return q.done && !q.claimed; }).length;
+    el.innerHTML =
+      '<div class="cl-q-head"><span>Weekly quests</span>' + (claimable ? '<b>' + claimable + ' to claim</b>' : '<i>resets weekly</i>') + '</div>' +
+      '<div class="cl-q-row">' + qs.map(function (q) {
+        var pct = Math.round(q.have / q.need * 100);
+        var state = q.claimed ? 'claimed' : q.done ? 'ready' : '';
+        var right = q.claimed ? '<span class="cl-q-ok">&#10003;</span>'
+          : q.done ? '<button class="cl-q-claim" data-q="' + q.id + '">Claim &#10024;' + q.dust + '</button>'
+          : '<span class="cl-q-prog">' + q.have + '/' + q.need + '</span>';
+        return '<div class="cl-q ' + state + '"><div class="cl-q-ic">' + q.icon + '</div>' +
+          '<div class="cl-q-body"><div class="cl-q-lbl">' + q.label + '</div>' +
+          '<div class="cl-q-bar"><i style="width:' + pct + '%"></i></div></div>' + right + '</div>';
+      }).join('') + '</div>';
+    Array.prototype.forEach.call(el.querySelectorAll('.cl-q-claim'), function (b) {
+      b.addEventListener('click', function () {
+        var r = claimQuest(b.getAttribute('data-q'));
+        if (r.ok) {
+          try { if (window.Sfx) { window.Sfx.allDone(); window.Sfx.haptic([12, 30, 12]); } } catch (_) { /* noop */ }
+          try { if (window.Fx && window.Fx.confetti) window.Fx.confetti({ count: 60 }); } catch (_) { /* noop */ }
+          renderQuests();
+          var du = document.getElementById('clCollDust'); if (du) du.innerHTML = '&#10024; ' + dustBalance();
+        }
+      });
+    });
   }
 
   // ── Card-back picker (renders into the Vault's Backs tab) ──
