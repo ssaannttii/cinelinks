@@ -1912,6 +1912,8 @@
       // ── reveal sequence ──
       '#clCollReveal{position:fixed;inset:0;z-index:260;display:none;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 42%,rgba(26,32,41,.75),rgba(8,11,15,.93) 70%);backdrop-filter:blur(8px);overflow:hidden;cursor:pointer}' +
       '#clCollReveal.open{display:flex}' +
+      'html.cl-scroll-lock{overflow:hidden}' +
+      'body.cl-scroll-lock{position:fixed;left:0;right:0;width:100%;overflow:hidden;overscroll-behavior:none}' +
       '.clr-flash{position:absolute;inset:0;z-index:5;pointer-events:none;opacity:0;background:radial-gradient(circle at 50% 45%,rgba(232,160,0,.5),rgba(232,160,0,.12) 38%,transparent 66%)}' +
       '.clr-flash.go{animation:clrFlash .62s cubic-bezier(.22,1,.36,1)}' +
       '@keyframes clrFlash{0%{opacity:0;transform:scale(.7)}22%{opacity:1}100%{opacity:0;transform:scale(1.3)}}' +
@@ -2679,7 +2681,7 @@
     _tab = (typeof tab === 'string' && tab) ? tab : 'cards';
     _filter = 'all'; _query = ''; _setOpen = null;
     render();
-    document.getElementById('clCollModal').classList.add('open');
+    document.getElementById('clCollModal').classList.add('open'); lockScroll(true);
     try { if (window.Track) window.Track('collection_open', stats()); } catch (_) { /* noop */ }
     // one-shot orientation tip on the first real visit
     try {
@@ -2696,7 +2698,7 @@
   }
   // "New" badges live for the whole visit (Hearthstone-style) and clear on close,
   // not 600ms after opening — so the pinned "Just collected" section stays put.
-  function close() { stopHolo(); markSeen(); var m = document.getElementById('clCollModal'); if (m) m.classList.remove('open'); }
+  function close() { stopHolo(); markSeen(); var m = document.getElementById('clCollModal'); if (m && m.classList.contains('open')) { m.classList.remove('open'); lockScroll(false); } }
 
   // ─────────────────────────────── debug panel ───────────────────────────
   function debugEnabled() {
@@ -2996,6 +2998,16 @@
   // ── Reveal sequence: the "earn" moment. reveal(newCards) plays a per-card
   // flip with rarity-scaled flair (sound + haptics + legendary flash), then a
   // summary with XP and any level-up. Auto-plays after a win; skippable. ──
+  // Background scroll-lock for fullscreen overlays (reveal + vault). Pins the page
+  // with position:fixed (iOS-safe) so tapping through cards can't scroll the game
+  // behind it and the mobile toolbar can't show/hide and resize the fixed overlay.
+  var _lockN = 0, _lockY = 0;
+  function lockScroll(on) {
+    var d = document.documentElement, b = document.body;
+    if (on) { if (_lockN++ === 0) { _lockY = window.scrollY || window.pageYOffset || 0; b.style.top = (-_lockY) + 'px'; d.classList.add('cl-scroll-lock'); b.classList.add('cl-scroll-lock'); } }
+    else { if (_lockN > 0 && --_lockN === 0) { d.classList.remove('cl-scroll-lock'); b.classList.remove('cl-scroll-lock'); b.style.top = ''; window.scrollTo(0, _lockY); } }
+  }
+
   function buildReveal() {
     var ov = document.getElementById('clCollReveal');
     if (ov) return ov;
@@ -3006,7 +3018,7 @@
     document.body.appendChild(ov);
     return ov;
   }
-  function closeReveal() { stopShader(); stopGyro(); var ov = document.getElementById('clCollReveal'); if (ov) ov.classList.remove('open'); }
+  function closeReveal() { stopShader(); stopGyro(); var ov = document.getElementById('clCollReveal'); if (ov && ov.classList.contains('open')) { ov.classList.remove('open'); lockScroll(false); } }
   function reveal(cards) {
     try {
       if (!Array.isArray(cards)) return;
@@ -3107,7 +3119,7 @@
       var skip = document.getElementById('clrSkip');
       skip.style.display = ''; skip.onclick = function (e) { e.stopPropagation(); clearT(); summary(); };
       ov.onclick = function () { if (state === 'ready') next(); };
-      ov.classList.add('open');
+      ov.classList.add('open'); lockScroll(true);
       try { if (window.Sfx) window.Sfx.cardDeal(); } catch (_) { /* noop */ }
       try { if (window.Track) window.Track('card_revealed', { n: queue.length, top: queue[queue.length - 1].rarity }); } catch (_) { /* noop */ }
       card(queue[0]);

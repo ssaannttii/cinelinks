@@ -68,9 +68,8 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 .tl-slot:hover::before,.tl-slot:focus::before{background:rgba(232,160,0,.6)}
 .tl-slot.done{display:none}
 /* Discover: every placed film is tappable → a compact info sheet (homage to learning about cinema). */
-.tl-item{cursor:pointer}
-.tl-item .tl-i{margin-left:auto;flex-shrink:0;width:18px;height:18px;border-radius:50%;border:1px solid rgba(232,160,0,.5);color:var(--gold);font-size:.66rem;font-weight:800;font-style:italic;display:flex;align-items:center;justify-content:center;opacity:.6;transition:opacity .15s}
-.tl-item:hover .tl-i,.tl-item:focus .tl-i{opacity:1}
+.tl-item{cursor:pointer;transition:border-color .15s,background .15s}
+.tl-item:hover,.tl-item:focus-visible{border-color:rgba(232,160,0,.45);background:rgba(232,160,0,.05);outline:none}
 #clInfo{position:fixed;inset:0;z-index:120;display:none;align-items:flex-end;justify-content:center;padding:0;background:rgba(8,11,15,.72);backdrop-filter:blur(6px)}
 #clInfo.on{display:flex;animation:clifFade .2s ease both}
 @keyframes clifFade{from{opacity:0}to{opacity:1}}
@@ -94,6 +93,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 /* result */
 .result{text-align:center;margin-top:10px;background:linear-gradient(180deg,rgba(232,160,0,.08),transparent 140px),var(--s1);border:1px solid rgba(232,160,0,.18);border-radius:16px;padding:24px 18px;box-shadow:0 24px 60px rgba(0,0,0,.35);animation:fadeIn .35s ease both}
 .result.hidden{display:none}
+.result-learn{font-size:.74rem;font-weight:700;color:var(--gold);opacity:.85;margin-bottom:10px}
 .result-verdict{font-size:1.4rem;font-weight:800;margin-bottom:2px}
 .result-verdict.win{color:#5bbd7a}.result-verdict.lose{color:#e8a000}
 .result-sub{color:var(--mut);font-size:.85rem;margin-bottom:12px}
@@ -200,6 +200,7 @@ var L = {
   newerAria:    { en:'place as the newest', es:'colocar como la más reciente', fr:'placer comme le plus récent', de:'als neuesten einordnen', pt:'colocar como o mais recente' },
   backTo:       { en:'Back to CineLinks', es:'Volver a CineLinks', fr:'Retour à CineLinks', de:'Zurück zu CineLinks', pt:'Voltar para CineLinks' },
   finalScore:   { en:'Final score', es:'Puntuación final', fr:'Score final', de:'Endstand', pt:'Pontuação final' },
+  learnHint:    { en:'\u2191 Tap any film to discover it', es:'\u2191 Toca cualquier peli para descubrirla', fr:'\u2191 Touchez un film pour le d\u00e9couvrir', de:'\u2191 Tippe auf einen Film, um mehr zu erfahren', pt:'\u2191 Toque num filme para descobri-lo' },
   learnAria:    { en:'tap to learn more', es:'toca para saber más', fr:'toucher pour en savoir plus', de:'tippen für mehr', pt:'toque para saber mais' },
   directedBy:   { en:'Directed by', es:'Dirigida por', fr:'Réalisé par', de:'Regie', pt:'Dirigido por' },
   infoFoot:     { en:'Data from TMDB', es:'Datos de TMDB', fr:'Données de TMDB', de:'Daten von TMDB', pt:'Dados do TMDB' },
@@ -396,7 +397,7 @@ function renderTimeline(){
       const cls = c._anchor ? ' anchor' : (c._res ? ' ' + c._res : '');
       h += '<div class="tl-item' + cls + flash + '" data-mid="' + (c.id || '') + '" data-yr="' + c.year + '" role="button" tabindex="0" aria-label="' + esc(c.title) + ' — ' + T('learnAria') + '">' +
         (c.poster ? '<img src="' + poster(c.poster, 'w92') + '" alt="">' : '<div class="tl-ph"></div>') +
-        '<span class="tl-name">' + esc(c.title) + '</span><span class="tl-yr">' + c.year + '</span>' + (c.id ? '<span class="tl-i" aria-hidden="true">i</span>' : '') + '</div>';
+        '<span class="tl-name">' + esc(c.title) + '</span><span class="tl-yr">' + c.year + '</span>' + '</div>';
     }
   }
   const row = document.getElementById('timeline');
@@ -492,6 +493,7 @@ function renderResult(streak){
     ? '<button class="btn btn-gold" id="againBtn">' + T('newDeck') + '</button><button class="btn" id="shareBtn">' + T('share') + '</button>'
     : '<button class="btn btn-gold" id="shareBtn">' + T('share') + '</button><a class="btn" href="/">CineLinks</a>';
   el.innerHTML =
+    '<div class="result-learn">' + T('learnHint') + '</div>' +
     '<div class="result-verdict ' + (score >= PASS ? 'win' : 'lose') + '">' + score + ' / ' + total + '</div>' +
     '<div class="result-sub">' + verdict + '</div>' +
     '<div class="result-grid">' + emojiGrid().replace(/\n/g, '<br>') + '</div>' +
