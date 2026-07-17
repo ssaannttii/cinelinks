@@ -252,7 +252,7 @@
       function frame() {
         rx += (trx - rx) * 0.12; ry += (try_ - ry) * 0.12;
         px += (tpx - px) * 0.12; py += (tpy - py) * 0.12;
-        inner.style.transform = 'perspective(760px) rotateX(' + rx.toFixed(2) + 'deg) rotateY(' + ry.toFixed(2) + 'deg)';
+        inner.style.transform = 'perspective(700px) rotateX(' + rx.toFixed(2) + 'deg) rotateY(' + ry.toFixed(2) + 'deg)';
         inner.style.setProperty('--gx', (px * 100).toFixed(1) + '%');
         inner.style.setProperty('--gy', (py * 100).toFixed(1) + '%');
         inner.style.setProperty('--fx', (px * 200).toFixed(1) + '%');
@@ -269,8 +269,10 @@
       var b0 = null, g0 = null;
       function onOrient(e) {
         if (b0 === null) { b0 = e.beta || 0; g0 = e.gamma || 0; }
-        var g = clamp(((e.gamma || 0) - g0) / 32), b = clamp(((e.beta || 0) - b0) / 32);
-        tpx = 0.5 + g * 0.5; tpy = 0.5 + b * 0.5; try_ = g * 13; trx = -b * 13;
+        // More dramatic gyro on phones: reach the full range with less phone tilt
+        // (÷24) and lean the card harder (±22° instead of ±13°).
+        var g = clamp(((e.gamma || 0) - g0) / 24), b = clamp(((e.beta || 0) - b0) / 24);
+        tpx = 0.5 + g * 0.5; tpy = 0.5 + b * 0.5; try_ = g * 22; trx = -b * 22;
         if (!raf) raf = requestAnimationFrame(frame);
       }
       var bound = false;
@@ -2072,7 +2074,11 @@
       // as the card spins through edge-on during the flip you see its physical side.
       '.clr-flip{--thick:7px}' +
       '.clr-face{transform:translateZ(var(--thick))}' +
-      '.clr-edge{position:absolute;background:linear-gradient(180deg,#33456a,#1a2a48 45%,#0e1830);box-shadow:inset 0 1px 0 rgba(255,255,255,.16),inset 0 0 9px rgba(0,0,0,.45)}' +
+      '.clr-edge{position:absolute;background:linear-gradient(180deg,#33456a,#1a2a48 45%,#0e1830);box-shadow:inset 0 1px 0 rgba(255,255,255,.16),inset 0 0 9px rgba(0,0,0,.45);transition:opacity .35s ease}' +
+      // The 3D thickness walls are a flip-time effect. Once the card settles and the
+      // inner face tilts on hover/gyro, the walls (which sit on the static flip box)
+      // read as a stray blue rectangle behind the card — so fade them out once settled.
+      '.clr-flip.live .clr-edge,.clr-flip.flipped .clr-edge{opacity:0}' +
       '.clr-edge.e-l,.clr-edge.e-r{top:0;height:100%;width:calc(var(--thick) * 2);left:calc(50% - var(--thick))}' +
       '.clr-edge.e-r{transform:rotateY(90deg) translateZ(calc(var(--cw,300px) / 2))}' +
       '.clr-edge.e-l{transform:rotateY(-90deg) translateZ(calc(var(--cw,300px) / 2))}' +
