@@ -1888,6 +1888,15 @@
       // Short screens (landscape phones): the identity strip folds away so the
       // grid keeps real estate; everything it shows lives in the tabs/sub anyway.
       '@media(max-height:520px){.cl-vault-hd .cl-coll-lvl{display:none}.cl-vault-hd{padding-top:8px}.cl-vault-hd .cl-vault-tabs{margin-top:8px}}' +
+      // Phones: shrink the whole top block so cards appear sooner (tabs are bottom-fixed).
+      '@media(max-width:640px){' +
+        '.cl-vault-hd{padding:calc(10px + env(safe-area-inset-top)) 14px 0}' +
+        '.cl-coll-lvl{margin-top:9px;gap:10px}' +
+        '.cl-lvl-ring{width:42px;height:42px}.cl-lvl-ring b{font-size:1rem}' +
+        '.cl-coll-xp-l{font-size:.62rem}' +
+        '.cl-quests .cl-q-head{margin:9px 2px 5px}' +
+        '.cl-quests .cl-q{padding:7px 10px}.cl-quests .cl-q-ic{width:28px;height:28px}' +
+      '}' +
       '.cl-coll-x{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:999px;width:34px;height:34px;color:#bbb;font-size:1.05rem;cursor:pointer;line-height:1}.cl-coll-x:hover{color:#fff;border-color:rgba(255,255,255,.3)}' +
       // identity strip: SVG progress ring around the level + next-unlock teaser
       '.cl-coll-lvl{display:flex;align-items:center;gap:12px;margin-top:12px}' +
@@ -3280,8 +3289,12 @@
 
   function renderQuests() {
     var el = document.getElementById('clQuests'); if (!el) return;
-    var qs; try { qs = questsState(); } catch (_) { el.innerHTML = ''; return; }
-    var claimable = qs.filter(function (q) { return q.done && !q.claimed; }).length;
+    var all; try { all = questsState(); } catch (_) { el.innerHTML = ''; return; }
+    // Claimed quests drop out — only active ones take space. When all are claimed
+    // the whole strip collapses (nothing to do until next week's reset).
+    var qs = all.filter(function (q) { return !q.claimed; });
+    if (!qs.length) { el.innerHTML = ''; return; }
+    var claimable = qs.filter(function (q) { return q.done; }).length;
     el.innerHTML =
       '<div class="cl-q-head"><span>Weekly quests</span>' + (claimable ? '<b>' + claimable + ' to claim</b>' : '<i>resets weekly</i>') + '</div>' +
       '<div class="cl-q-row">' + qs.map(function (q) {
