@@ -12,7 +12,7 @@ const I18N = {
     descGuess: 'One film a day — guess it from clues, a frame, or the cast', descTrumps: 'Battle the CPU with cards from your collection', descRating: '3 ways to test your taste: Higher or Lower, Career and Guess the Score', todaysDaily: 'Today’s daily', metaDdHint: 'Play a second game today for a Daily Double bonus',
     ccName: 'Your collection', ccZero: 'Win any daily to pull your first card', ccHow: 'How it works', ccOpen: 'Open →', ccCards: 'cards', ccLevel: 'Level', ccNewSuf: 'new', featToday: '★ today', pwaAdd: '📲 Add CineLinks to your home screen', pwaInstall: 'Install',
     // hub mode labels
-    modeDaily: 'Daily', modePractice: 'Practice', modePlay: 'Play', modeResults: 'Results',
+    modeDaily: 'Daily', modePractice: 'Practice', modePlay: 'Play', modeResults: 'Results', ftLede: 'Connect the film world — a <b>new movie puzzle every day</b>. Win cards, keep a streak.', ftB1a: 'Solve today’s puzzle', ftB1b: 'Link films & actors in the fewest moves', ftB2a: 'Win collectible cards', ftB2b: 'Every win pulls a movie or star card', ftB3a: 'Come back daily', ftB3b: 'Build a streak — new puzzles every morning', ftPlay: 'Play today’s puzzle', ftBrowse: 'Browse all games',
     sectionDaily: 'Daily puzzles', sectionRating: 'Rating games', newTag: 'NEW',
     navCreate: '+ Create your own', navStats: '📊 Your stats',
     metaStreakL: 'day streak', metaDoneL: 'done today', metaShareBtn: 'Share today', metaNext: 'Next', metaStart: 'Start here', galleryTitle: '🎬 Today’s answers — revealed',
@@ -69,7 +69,7 @@ const I18N = {
     descGuess: 'Una película al día: adivínala por pistas, un fotograma o su reparto', descTrumps: 'Bate a la CPU con cartas de tu colección', descRating: '3 formas de poner a prueba tu ojo: Higher or Lower, Carrera y Adivina la nota', todaysDaily: 'Reto de hoy', metaDdHint: 'Juega un segundo juego hoy para el bonus Daily Double',
     ccName: 'Tu colección', ccZero: 'Gana cualquier daily para sacar tu primera carta', ccHow: 'Cómo funciona', ccOpen: 'Abrir →', ccCards: 'cartas', ccLevel: 'Nivel', ccNewSuf: 'nuevas', featToday: '★ hoy', pwaAdd: '📲 Añade CineLinks a tu pantalla de inicio', pwaInstall: 'Instalar',
     // hub mode labels
-    modeDaily: 'Diario', modePractice: 'Práctica', modePlay: 'Jugar', modeResults: 'Resultado',
+    modeDaily: 'Diario', modePractice: 'Práctica', modePlay: 'Jugar', modeResults: 'Resultado', ftLede: 'Conecta el mundo del cine — un <b>nuevo puzle de películas cada día</b>. Gana cartas, mantén tu racha.', ftB1a: 'Resuelve el puzle de hoy', ftB1b: 'Enlaza películas y actores en los menos pasos', ftB2a: 'Gana cartas coleccionables', ftB2b: 'Cada victoria te da una carta de peli o estrella', ftB3a: 'Vuelve cada día', ftB3b: 'Crea una racha — nuevos puzles cada mañana', ftPlay: 'Jugar el puzle de hoy', ftBrowse: 'Ver todos los juegos',
     sectionDaily: 'Retos diarios', sectionRating: 'Juegos de puntuación', newTag: 'NUEVO',
     navCreate: '+ Crea el tuyo', navStats: '📊 Tus estadísticas',
     metaStreakL: 'de racha', metaDoneL: 'hechos hoy', metaShareBtn: 'Compartir hoy', metaNext: 'Siguiente', metaStart: 'Empieza aquí', galleryTitle: '🎬 Respuestas de hoy',
@@ -126,7 +126,7 @@ const I18N = {
     descGuess: 'Una película al día: adivínala por pistas, un fotograma o su reparto', descTrumps: 'Vence a la CPU con cartas de tu colección', descRating: '3 formas de poner a prueba tu ojo: Higher or Lower, Carrera y Adivina la calificación', todaysDaily: 'Reto de hoy', metaDdHint: 'Juega un segundo juego hoy para el bonus Daily Double',
     ccName: 'Tu colección', ccZero: 'Gana cualquier daily para sacar tu primera carta', ccHow: 'Cómo funciona', ccOpen: 'Abrir →', ccCards: 'cartas', ccLevel: 'Nivel', ccNewSuf: 'nuevas', featToday: '★ hoy', pwaAdd: '📲 Agrega CineLinks a tu pantalla de inicio', pwaInstall: 'Instalar',
     // hub mode labels
-    modeDaily: 'Diario', modePractice: 'Práctica', modePlay: 'Jugar', modeResults: 'Resultado',
+    modeDaily: 'Diario', modePractice: 'Práctica', modePlay: 'Jugar', modeResults: 'Resultado', ftLede: 'Conecta el mundo del cine — un <b>nuevo puzle de películas cada día</b>. Gana cartas, mantén tu racha.', ftB1a: 'Resuelve el puzle de hoy', ftB1b: 'Enlaza películas y actores en los menos pasos', ftB2a: 'Gana cartas coleccionables', ftB2b: 'Cada victoria te da una carta de peli o estrella', ftB3a: 'Vuelve cada día', ftB3b: 'Crea una racha — nuevos puzles cada mañana', ftPlay: 'Jugar el puzle de hoy', ftBrowse: 'Ver todos los juegos',
     sectionDaily: 'Retos diarios', sectionRating: 'Juegos de puntuación', newTag: 'NUEVO',
     navCreate: '+ Crea el tuyo', navStats: '📊 Tus estadísticas',
     metaStreakL: 'de racha', metaDoneL: 'hechos hoy', metaShareBtn: 'Compartir hoy', metaNext: 'Siguiente', metaStart: 'Empieza aquí', galleryTitle: '🎬 Respuestas de hoy',
@@ -183,7 +183,7 @@ const I18N = {
     descGuess: 'Un film par jour : devine-le par indices, image ou casting', descTrumps: 'Bats l’ordi avec les cartes de ta collection', descRating: '3 façons de tester tes goûts : Higher or Lower, Carrière et Devine la note', todaysDaily: 'Le défi du jour', metaDdHint: 'Joue un deuxième jeu aujourd’hui pour le bonus Daily Double',
     ccName: 'Ta collection', ccZero: 'Gagne un daily pour tirer ta première carte', ccHow: 'Comment ça marche', ccOpen: 'Ouvrir →', ccCards: 'cartes', ccLevel: 'Niveau', ccNewSuf: 'nouvelles', featToday: '★ auj.', pwaAdd: '📲 Ajoute CineLinks à ton écran d’accueil', pwaInstall: 'Installer',
     // hub mode labels
-    modeDaily: 'Quotidien', modePractice: 'Entraînement', modePlay: 'Jouer', modeResults: 'Résultat',
+    modeDaily: 'Quotidien', modePractice: 'Entraînement', modePlay: 'Jouer', modeResults: 'Résultat', ftLede: 'Reliez le monde du cinéma — un <b>nouveau puzzle chaque jour</b>. Gagnez des cartes, gardez votre série.', ftB1a: 'Résolvez le puzzle du jour', ftB1b: 'Reliez films et acteurs en un minimum de coups', ftB2a: 'Gagnez des cartes à collectionner', ftB2b: 'Chaque victoire donne une carte film ou star', ftB3a: 'Revenez chaque jour', ftB3b: 'Construisez une série — de nouveaux puzzles chaque matin', ftPlay: 'Jouer le puzzle du jour', ftBrowse: 'Voir tous les jeux',
     // click singular + goal tag
     clickSingular: 'clic', goalTag: 'OBJECTIF',
     // difficulty labels (from par)
@@ -230,7 +230,7 @@ const I18N = {
     descGuess: 'Ein Film pro Tag – errate ihn über Hinweise, ein Bild oder die Besetzung', descTrumps: 'Schlag die CPU mit Karten deiner Sammlung', descRating: '3 Wege, deinen Geschmack zu testen: Higher or Lower, Karriere und Rate die Wertung', todaysDaily: 'Heutiges Rätsel', metaDdHint: 'Spiel heute ein zweites Spiel für den Daily-Double-Bonus',
     ccName: 'Deine Sammlung', ccZero: 'Gewinne ein Daily für deine erste Karte', ccHow: 'So funktioniert’s', ccOpen: 'Öffnen →', ccCards: 'Karten', ccLevel: 'Level', ccNewSuf: 'neu', featToday: '★ heute', pwaAdd: '📲 CineLinks zum Startbildschirm hinzufügen', pwaInstall: 'Installieren',
     // hub mode labels
-    modeDaily: 'Täglich', modePractice: 'Üben', modePlay: 'Spielen', modeResults: 'Ergebnis',
+    modeDaily: 'Täglich', modePractice: 'Üben', modePlay: 'Spielen', modeResults: 'Ergebnis', ftLede: 'Verbinde die Filmwelt — ein <b>neues Filmrätsel jeden Tag</b>. Gewinne Karten, halte deine Serie.', ftB1a: 'Löse das heutige Rätsel', ftB1b: 'Verbinde Filme & Stars in den wenigsten Zügen', ftB2a: 'Gewinne Sammelkarten', ftB2b: 'Jeder Sieg bringt eine Film- oder Star-Karte', ftB3a: 'Komm täglich wieder', ftB3b: 'Baue eine Serie auf — jeden Morgen neue Rätsel', ftPlay: 'Heutiges Rätsel spielen', ftBrowse: 'Alle Spiele ansehen',
     // click singular + goal tag
     clickSingular: 'Klick', goalTag: 'ZIEL',
     // difficulty labels (from par)
@@ -277,7 +277,7 @@ const I18N = {
     descGuess: 'Um filme por dia — adivinhe por pistas, um frame ou o elenco', descTrumps: 'Vença a CPU com cartas da sua coleção', descRating: '3 formas de testar seu gosto: Higher or Lower, Carreira e Adivinhe a nota', todaysDaily: 'Desafio de hoje', metaDdHint: 'Jogue um segundo jogo hoje para o bônus Daily Double',
     ccName: 'Sua coleção', ccZero: 'Vença qualquer daily para tirar sua primeira carta', ccHow: 'Como funciona', ccOpen: 'Abrir →', ccCards: 'cartas', ccLevel: 'Nível', ccNewSuf: 'novas', featToday: '★ hoje', pwaAdd: '📲 Adicione o CineLinks à tela inicial', pwaInstall: 'Instalar',
     // hub mode labels
-    modeDaily: 'Diário', modePractice: 'Treino', modePlay: 'Jogar', modeResults: 'Resultado',
+    modeDaily: 'Diário', modePractice: 'Treino', modePlay: 'Jogar', modeResults: 'Resultado', ftLede: 'Conecte o mundo do cinema — um <b>novo desafio de filmes todo dia</b>. Ganhe cartas, mantenha sua sequência.', ftB1a: 'Resolva o desafio de hoje', ftB1b: 'Ligue filmes e atores nos menos movimentos', ftB2a: 'Ganhe cartas colecionáveis', ftB2b: 'Cada vitória dá uma carta de filme ou estrela', ftB3a: 'Volte todo dia', ftB3b: 'Crie uma sequência — novos desafios toda manhã', ftPlay: 'Jogar o desafio de hoje', ftBrowse: 'Ver todos os jogos',
     // click singular + goal tag
     clickSingular: 'clique', goalTag: 'ALVO',
     // difficulty labels (from par)
