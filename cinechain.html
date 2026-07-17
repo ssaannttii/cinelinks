@@ -251,10 +251,10 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     res.innerHTML=
       '<h2>'+T('shareChainOf')+' '+links+'!</h2>'+
       '<div class="sub">'+(chain.length)+' '+T('filmsLinked')+(links>=8?T('masterful'):links>=4?T('niceRun'):'')+'</div>'+
-      '<div class="row-btns" style="margin-top:12px"><button class="btn" id="shareBtn">'+T('share')+'</button><button class="btn gold" id="again">'+(isDaily?T('mode_practice'):T('newChain'))+'</button></div>';
+      '<div class="row-btns" style="margin-top:12px"><button class="btn" id="shareBtn">'+T('share')+'</button>'+(isDaily?'<a class="btn gold" href="/" style="display:flex;align-items:center;justify-content:center;text-decoration:none">← CineLinks</a>':'<button class="btn gold" id="again">'+T('newChain')+'</button>')+'</div>';
     if(links>=1 && window.Fx) setTimeout(function(){ Fx.confetti({count:Math.min(50+links*12,130)}); }, 160);
     if(links>=1){ try{ if(window.Sfx){ (links>=8?Sfx.allDone():Sfx.win()); Sfx.haptic([12,40,12,70]); } }catch(_){} if(window.Fx) Fx.shake(links>=8?1.6:1.2); }
-    document.getElementById('again').onclick=function(){ location.href='/cinechain.html'+(isDaily?'?practice=1':'?practice=1&r='+Date.now()); };
+    (document.getElementById('again')||{}).onclick=function(){ location.href='/cinechain.html?practice=1&r='+Date.now(); };
     document.getElementById('shareBtn').onclick=function(){ if(navigator.share){navigator.share({text:share}).catch(function(){});} else { try{navigator.clipboard.writeText(share);}catch(_){ } const b=document.getElementById('shareBtn'); b.textContent=T('copied'); } };
   }
 

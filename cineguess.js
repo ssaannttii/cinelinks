@@ -314,7 +314,7 @@
     const streakLine = PRACTICE ? '' : '<div class="result-streak">🔥 ' + GT('streakW') + ' <strong class="js-streakn">' + streak.current + '</strong>' + bestPart + '</div>';
     const actions = PRACTICE
       ? '<button class="btn btn-gold" id="againBtn">' + GT('newTitle') + '</button><button class="btn" id="shareBtn">' + GT('share') + '</button>'
-      : '<button class="btn btn-gold" id="shareBtn">Share</button><a class="btn" href="/" style="display:flex;align-items:center;justify-content:center;text-decoration:none">CineLinks</a>';
+      : '<a class="btn btn-gold" href="/" style="display:flex;align-items:center;justify-content:center;text-decoration:none">← CineLinks</a><button class="btn" id="shareBtn">Share</button>';
     el.innerHTML =
       (target.posterPath ? '<img class="result-poster" src="' + poster(target.posterPath, 'w342') + '" alt="">' : '') +
       verdict +

@@ -454,9 +454,9 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
       '<h2 class="'+(win?'win':'')+'">'+headline+'</h2>'+
       '<div class="sub">'+(win?T('everySquare'):(filled?T('niceWork'):T('toughBoard')))+'</div>'+
       '<div class="stats"><div class="stat"><b id="rsFilled">0/9</b>'+T('correct')+'</div><div class="stat"><b id="rsBest">0</b>'+T('bestStreak')+'</div><div class="stat"><b id="rsRar">0</b>'+T('rarity')+'</div></div>'+
-      '<div class="row-btns"><button class="btn" id="shareBtn">'+T('share')+'</button><button class="btn gold" id="again">'+(isDaily?T('practiceGrid'):T('newGrid'))+'</button></div>';
+      '<div class="row-btns"><button class="btn" id="shareBtn">'+T('share')+'</button>'+(isDaily?'<a class="btn gold" href="/" style="display:flex;align-items:center;justify-content:center;text-decoration:none">← CineLinks</a>':'<button class="btn gold" id="again">'+T('newGrid')+'</button>')+'</div>';
     if(window.Fx&&Fx.countUp){ Fx.countUp(document.getElementById('rsFilled'),filled,{suffix:'/9',ms:650}); Fx.countUp(document.getElementById('rsBest'),bestCombo,{ms:700}); Fx.countUp(document.getElementById('rsRar'),rar,{ms:850}); }
-    document.getElementById('again').onclick=function(){ sfx('tap'); location.href='/cinegrid.html'+(isDaily?'?practice=1':'?practice=1&r='+Date.now()); };
+    (document.getElementById('again')||{}).onclick=function(){ sfx('tap'); location.href='/cinegrid.html?practice=1&r='+Date.now(); };
     document.getElementById('shareBtn').onclick=function(){ sfx('tap'); if(navigator.share){navigator.share({text:shareText}).catch(function(){});} else { try{navigator.clipboard.writeText(shareText);}catch(_){ } const b=document.getElementById('shareBtn'); b.textContent=T('copied'); } };
   }
 

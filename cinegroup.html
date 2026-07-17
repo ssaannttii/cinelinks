@@ -697,8 +697,8 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     h+='<p>'+(won?(T('foundPre')+mistakes+' '+(mistakes===1?T('mistakeSing'):T('mistakePlur'))+T('foundSuf')):T('hereWere'))+'</p>';
     if(puzzle.trap&&puzzle.trap.films&&puzzle.trap.films.length){ h+='<p class="trapline">'+T('trapPre')+'<b>'+esc(puzzle.trap.films[0])+'</b>'+T('trapSeg1')+esc(puzzle.trap.actor)+T('trapSeg2')+esc(puzzle.trap.director)+T('trapSeg3')+'</p>'; }
     if(!PRACTICE) h+='<div class="statline"><div class="stat"><b>'+st.streak+'</b>'+T('statStreak')+'</div><div class="stat"><b>'+st.best+'</b>'+T('statBest')+'</div><div class="stat"><b>'+st.won+'</b>'+T('statSolved')+'</div></div>';
-    h+='<div class="controls"><button class="btn btn-go" id="shareBtn">'+T('share')+'</button>';
-    h+=PRACTICE?'<button class="btn" id="againBtn">'+T('newPuzzle')+'</button>':'<a class="btn" href="?practice=1" style="display:flex;align-items:center;justify-content:center;text-decoration:none">'+T('practice')+'</a>';
+    h+='<div class="controls"><button class="btn" id="shareBtn">'+T('share')+'</button>';
+    h+=PRACTICE?'<button class="btn btn-go" id="againBtn">'+T('newPuzzle')+'</button>':'<a class="btn btn-go" href="/" style="display:flex;align-items:center;justify-content:center;text-decoration:none">← CineLinks</a>';
     h+='</div></div>';
     stage.innerHTML=h;
     paintArt();

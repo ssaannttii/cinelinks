@@ -449,9 +449,9 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
         '<div class="sub">'+(won?(TR('solvedIn')+' '+score+'/'+MAX+' '+TR('tries')):TR('theAnswer'))+'</div>'+
         (credit?'<div class="cred">'+esc(credit)+'</div>':'')+'</div></div>'+
       (stats?statsHTML(stats):'')+
-      '<div class="row"><button class="btn" id="shareBtn">'+TR('share')+'</button><button class="btn gold" id="again">'+(isDaily?TR('practice'):TR('again'))+'</button></div>';
+      '<div class="row"><button class="btn" id="shareBtn">'+TR('share')+'</button>'+(isDaily?'<a class="btn gold" href="/" style="display:flex;align-items:center;justify-content:center;text-decoration:none">← CineLinks</a>':'<button class="btn gold" id="again">'+TR('again')+'</button>')+'</div>';
     if(won && window.Fx) setTimeout(()=>Fx.confetti({count:90}),160);
-    document.getElementById('again').onclick=()=>{location.href='/cinecode.html'+(isDaily?'?practice=1':'?practice=1&r='+Date.now());};
+    (document.getElementById('again')||{}).onclick=()=>{location.href='/cinecode.html?practice=1&r='+Date.now();};
     document.getElementById('shareBtn').onclick=()=>{
       if(navigator.share){navigator.share({text:share}).catch(()=>{});}
       else{navigator.clipboard&&navigator.clipboard.writeText(share);const b=document.getElementById('shareBtn');b.textContent=TR('copied');}
@@ -470,7 +470,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
       '<div class="sub">'+(d.won?(TR('solvedIn')+' '+(d.score||'?')+'/'+MAX+' '+TR('tries')):TR('comeBack'))+'</div>'+
       ((d.dirName||d.lead)?'<div class="cred">'+esc((d.dirName?('dir. '+d.dirName):'')+(d.lead?(d.dirName?' · ':'')+d.lead:''))+'</div>':'')+'</div></div>'+
       statsHTML(loadStats())+
-      '<div class="row"><button class="btn gold" id="again">'+TR('practice')+'</button></div></div>';
+      '<div class="row"><a class="btn gold" href="/" style="display:flex;align-items:center;justify-content:center;text-decoration:none">← CineLinks</a><button class="btn" id="again">'+TR('practice')+'</button></div></div>';
     document.getElementById('again').onclick=()=>{location.href='/cinecode.html?practice=1';};
   }
 
