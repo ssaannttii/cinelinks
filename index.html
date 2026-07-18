@@ -4684,5 +4684,85 @@ window.addEventListener('storage', function (e) {
   window.addEventListener('load', function () { setTimeout(firstCardCoach, 1600); });
 })();
 </script>
+
+<!-- ── Daily reminder opt-in (web push) — inert until VAPID is configured ──── -->
+<style>
+#pushNudge{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:250;max-width:520px;margin:0 auto;display:none;align-items:center;gap:12px;background:var(--s1);border:1px solid rgba(232,160,0,.32);border-radius:16px;padding:12px 14px;box-shadow:0 16px 44px rgba(0,0,0,.5)}
+#pushNudge.on{display:flex;animation:pnIn .35s cubic-bezier(.22,1,.36,1) both}
+@keyframes pnIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+#pushNudge .pn-ic{width:34px;height:34px;flex:none;border-radius:10px;background:rgba(232,160,0,.14);color:var(--gold);display:flex;align-items:center;justify-content:center}
+#pushNudge .pn-tx{flex:1;min-width:0;font-size:.82rem;line-height:1.3;color:var(--txt)}
+#pushNudge .pn-tx span{display:block;color:var(--mut);font-size:.72rem}
+#pushNudge .pn-no{background:none;border:0;color:var(--mut);font-family:inherit;font-weight:700;font-size:.78rem;cursor:pointer;padding:6px}
+#pushNudge .pn-yes{background:var(--gold);color:#1a1408;border:0;border-radius:999px;font-family:inherit;font-weight:800;font-size:.8rem;padding:8px 14px;cursor:pointer;flex:none}
+</style>
+<div id="pushNudge" role="dialog" aria-label="Daily reminder">
+  <span class="pn-ic"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></span>
+  <span class="pn-tx" id="pnTx">Daily reminder?<span id="pnSub">A nudge when your new puzzle is ready.</span></span>
+  <button class="pn-no" id="pnNo">Not now</button>
+  <button class="pn-yes" id="pnYes">Remind me</button>
+</div>
+<script>
+(function () {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return;
+  function lang() { try { var l = localStorage.getItem('clLang'); return (l && /^[a-z]{2}-[A-Z]{2}$/.test(l)) ? l.slice(0, 2) : 'en'; } catch (_) { return 'en'; } }
+  var TX = {
+    en: ['Daily reminder?', 'A nudge when your new puzzle is ready.', 'Not now', 'Remind me'],
+    es: ['¿Recordatorio diario?', 'Un aviso cuando tu nuevo puzle esté listo.', 'Ahora no', 'Avísame'],
+    fr: ['Rappel quotidien ?', 'Une alerte quand votre puzzle est prêt.', 'Plus tard', 'Me rappeler'],
+    de: ['Tägliche Erinnerung?', 'Ein Hinweis, wenn dein Rätsel bereit ist.', 'Nicht jetzt', 'Erinnern'],
+    pt: ['Lembrete diário?', 'Um aviso quando seu desafio estiver pronto.', 'Agora não', 'Lembrar']
+  };
+  function invested() {
+    try { return !!(localStorage.getItem('clPlayed') || localStorage.getItem('clDailyResult') || localStorage.getItem('metaDays')); } catch (_) { return false; }
+  }
+  function decided() {
+    try {
+      var v = localStorage.getItem('cl_push'); if (v === 'on' || v === 'denied') return true;
+      if (v && v.indexOf('later:') === 0) { var ts = +v.slice(6); if (Date.now() - ts < 7 * 864e5) return true; }
+    } catch (_) {}
+    return false;
+  }
+  function b64(s) { var pad = '='.repeat((4 - s.length % 4) % 4); var b = (s + pad).replace(/-/g, '+').replace(/_/g, '/'); var raw = atob(b); var a = new Uint8Array(raw.length); for (var i = 0; i < raw.length; i++) a[i] = raw.charCodeAt(i); return a; }
+  async function subscribe(key) {
+    try {
+      var reg = await navigator.serviceWorker.ready;
+      var sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64(key) });
+      await fetch('/api/push-subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscription: sub }) });
+      localStorage.setItem('cl_push', 'on');
+      try { if (window.Track) Track('push_subscribed', {}); } catch (_) {}
+    } catch (_) { localStorage.setItem('cl_push', 'later:' + Date.now()); }
+  }
+  function show(key) {
+    var n = document.getElementById('pushNudge'); if (!n) return;
+    var tx = TX[lang()] || TX.en;
+    document.getElementById('pnTx').childNodes[0].nodeValue = tx[0];
+    document.getElementById('pnSub').textContent = tx[1];
+    document.getElementById('pnNo').textContent = tx[2];
+    document.getElementById('pnYes').textContent = tx[3];
+    n.classList.add('on');
+    document.getElementById('pnNo').onclick = function () { n.classList.remove('on'); try { localStorage.setItem('cl_push', 'later:' + Date.now()); } catch (_) {} };
+    document.getElementById('pnYes').onclick = async function () {
+      n.classList.remove('on');
+      try {
+        var perm = await Notification.requestPermission();
+        if (perm === 'granted') subscribe(key);
+        else localStorage.setItem('cl_push', perm === 'denied' ? 'denied' : 'later:' + Date.now());
+      } catch (_) {}
+    };
+  }
+  function maybePush() {
+    try {
+      if (Notification.permission === 'denied') return;
+      if (decided() || !invested()) return;
+      var ss = document.getElementById('startScreen'); if (!ss || !ss.classList.contains('active')) return;
+      fetch('/api/push-config').then(function (r) { return r.json(); }).then(function (c) {
+        if (c && c.key) setTimeout(function () { show(c.key); }, 3500);   // push enabled → offer it
+      }).catch(function () {});
+    } catch (_) {}
+  }
+  window.addEventListener('load', function () { setTimeout(maybePush, 2600); });
+})();
+</script>
 </body>
 </html>

@@ -5,7 +5,7 @@
  *   - other same-origin GETs (logo, icons, daily-challenges.js, i18n.js): stale-while-revalidate.
  * Bump CACHE_VERSION to invalidate old caches on deploy.
  */
-const CACHE_VERSION = 'cinelinks-v211';
+const CACHE_VERSION = 'cinelinks-v212';
 const SHELL = [
   '/',
   '/index.html',
@@ -103,6 +103,34 @@ self.addEventListener('fetch', (event) => {
         })
         .catch(() => cached);
       return cached || network;
+    })
+  );
+});
+
+// ── Web push (retention reminders) ───────────────────────────────────────────
+// Inert until a push actually arrives (i.e. until VAPID keys + a sender are set).
+self.addEventListener('push', (event) => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; }
+  catch (_) { data = { body: event.data ? event.data.text() : '' }; }
+  const title = data.title || 'CineLinks';
+  const opts = {
+    body: data.body || "Today's puzzle is ready 🎬",
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    tag: data.tag || 'cl-daily',
+    data: { url: data.url || '/' }
+  };
+  event.waitUntil(self.registration.showNotification(title, opts));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || '/';
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      for (const c of list) { if ('focus' in c) { try { c.navigate && c.navigate(url); } catch (_) {} return c.focus(); } }
+      if (self.clients.openWindow) return self.clients.openWindow(url);
     })
   );
 });
