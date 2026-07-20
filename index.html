@@ -4728,7 +4728,7 @@ window.addEventListener('storage', function (e) {
     try {
       var reg = await navigator.serviceWorker.ready;
       var sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64(key) });
-      await fetch('/api/push-subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscription: sub }) });
+      await fetch('/api/push?action=subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscription: sub }) });
       localStorage.setItem('cl_push', 'on');
       try { if (window.Track) Track('push_subscribed', {}); } catch (_) {}
     } catch (_) { localStorage.setItem('cl_push', 'later:' + Date.now()); }
@@ -4756,7 +4756,7 @@ window.addEventListener('storage', function (e) {
       if (Notification.permission === 'denied') return;
       if (decided() || !invested()) return;
       var ss = document.getElementById('startScreen'); if (!ss || !ss.classList.contains('active')) return;
-      fetch('/api/push-config').then(function (r) { return r.json(); }).then(function (c) {
+      fetch('/api/push?action=config').then(function (r) { return r.json(); }).then(function (c) {
         if (c && c.key) setTimeout(function () { show(c.key); }, 3500);   // push enabled → offer it
       }).catch(function () {});
     } catch (_) {}
