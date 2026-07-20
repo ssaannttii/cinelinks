@@ -278,7 +278,13 @@ async function practiceCandidates(){
   return poolCandidates(Math.floor(Math.random()*100003), 8);
 }
 async function loadTarget(){
-  const candidates = PRACTICE ? await practiceCandidates() : poolCandidates(DAY, 8);
+  let candidates;
+  if(PRACTICE){ candidates = await practiceCandidates(); }
+  else {
+    const fixed = poolCandidates(DAY, 8);
+    const recent = (window.Pool && Pool.recentDaily && (DAY % 3) === 0) ? await Pool.recentDaily(DAY, 2, api) : [];
+    candidates = recent.concat(fixed);
+  }
   if(!candidates.length) throw new Error('empty pool');
   for(const { type, id } of candidates){
     try{

@@ -295,6 +295,11 @@ async function loadDeck(){
   const order = PRACTICE
     ? Timeline.shuffle(pool, Math.floor(Math.random() * 1e9)).slice(0, 16)
     : dailyDeckOrder(pool, DAY, 16);
+  // Auto-freshness: ~1 in 3 daily decks leads with a very recent film (a fun
+  // "newest" card on the timeline). Deterministic + cached, fixed pool fills the rest.
+  if(!PRACTICE && window.Pool && Pool.recentDaily && (DAY % 3) === 0){
+    try{ const rec = await Pool.recentDaily(DAY, 1, api); if(rec.length && order.indexOf(rec[0].id) < 0) order.unshift(rec[0].id); }catch(_){}
+  }
   const ds = await Promise.all(order.map(id => api('movie/' + id).catch(()=>null)));
   const cards = [];
   for(const d of ds){

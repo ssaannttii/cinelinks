@@ -100,7 +100,14 @@
   }
 
   async function loadTarget() {
-    const candidates = PRACTICE ? await practiceCandidates() : poolCandidates(DAY + SALT, 8);
+    let candidates;
+    if (PRACTICE) { candidates = await practiceCandidates(); }
+    else {
+      const fixed = poolCandidates(DAY + SALT, 8);
+      // ~1 in 3 dailies leads with a current hit (auto-freshness); fixed pool is the fallback
+      const recent = (window.Pool && Pool.recentDaily && ((DAY + SALT) % 3) === 0) ? await Pool.recentDaily(DAY + SALT, 2, api) : [];
+      candidates = recent.concat(fixed);
+    }
     if (!candidates.length) throw new Error('empty pool');
     for (const { type, id } of candidates) {
       try {
