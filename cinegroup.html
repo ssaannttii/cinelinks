@@ -31,6 +31,10 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 .tag{color:var(--mut);font-size:.86rem;margin-top:4px}
 .kicker{display:inline-block;font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);background:rgba(232,160,0,.15);padding:4px 9px;border-radius:999px;margin-top:10px;}
 .loading{color:var(--mut);font-size:.9rem;padding:48px 0}
+.load-cap{text-align:center;color:var(--mut);font-size:.82rem;font-weight:700;margin-top:14px;min-height:1.2em;animation:loadPulse 1.7s ease-in-out infinite}
+.load-cap b{display:block;font-weight:600;font-size:.72rem;opacity:.8;margin-top:3px}
+@keyframes loadPulse{0%,100%{opacity:.55}50%{opacity:1}}
+@media(prefers-reduced-motion:reduce){.load-cap{animation:none}}
 .solved-area{display:flex;flex-direction:column;gap:7px;margin:16px 0 7px}
 .solved{position:relative;overflow:hidden;border-radius:8px;padding:9px 10px;color:#1a1408}.s-art{position:absolute;inset:0;z-index:0;background-size:cover;background-position:center 28%;opacity:0;transition:opacity .5s ease;-webkit-mask:linear-gradient(90deg,transparent 44%,rgba(0,0,0,.7) 72%,#000 100%);mask:linear-gradient(90deg,transparent 44%,rgba(0,0,0,.7) 72%,#000 100%);mix-blend-mode:soft-light}.s-art.on{opacity:.55}.solved .s-label,.solved .s-titles{position:relative;z-index:1}
 .solved .s-label{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
@@ -100,6 +104,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     <div class="grid" style="pointer-events:none">
       <span class="fx-skel" style="height:74px"></span><span class="fx-skel" style="height:74px"></span><span class="fx-skel" style="height:74px"></span><span class="fx-skel" style="height:74px"></span><span class="fx-skel" style="height:74px"></span><span class="fx-skel" style="height:74px"></span><span class="fx-skel" style="height:74px"></span><span class="fx-skel" style="height:74px"></span><span class="fx-skel" style="height:74px"></span><span class="fx-skel" style="height:74px"></span><span class="fx-skel" style="height:74px"></span><span class="fx-skel" style="height:74px"></span><span class="fx-skel" style="height:74px"></span><span class="fx-skel" style="height:74px"></span><span class="fx-skel" style="height:74px"></span><span class="fx-skel" style="height:74px"></span>
     </div>
+    <div class="load-cap" id="loadCap"></div>
   </div></div>
   <div class="foot">Data from TMDB · part of <a href="/">CineLinks</a></div>
 </div>
@@ -115,6 +120,8 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     tag:            { en:'Find the four hidden connections.', es:'Encuentra las cuatro conexiones ocultas.', fr:'Trouve les quatre connexions cachées.', de:'Finde die vier verborgenen Verbindungen.', pt:'Encontre as quatro conexões ocultas.' },
     homeAria:       { en:'Back to CineLinks', es:'Volver a CineLinks', fr:'Retour à CineLinks', de:'Zurück zu CineLinks', pt:'Voltar para CineLinks' },
     buildingAria:   { en:'Building puzzle', es:'Creando puzle', fr:'Création du puzzle', de:'Rätsel wird erstellt', pt:'Criando desafio' },
+    buildingCap:    { en:'Building a fresh puzzle…', es:'Creando un puzle nuevo…', fr:'Création d’un nouveau puzzle…', de:'Neues Rätsel wird erstellt…', pt:'Criando um novo desafio…' },
+    buildingSlow:   { en:'Practice puzzles are generated live — one moment', es:'Los puzles de práctica se generan al momento — un segundo', fr:'Les puzzles d’entraînement sont générés en direct — un instant', de:'Übungsrätsel werden live erstellt — einen Moment', pt:'Os desafios de treino são gerados na hora — um momento' },
     footData:       { en:'Data from TMDB · part of ', es:'Datos de TMDB · parte de ', fr:'Données de TMDB · fait partie de ', de:'Daten von TMDB · Teil von ', pt:'Dados do TMDB · parte de ' },
     daily:          { en:'Daily', es:'Diario', fr:'Quotidien', de:'Täglich', pt:'Diário' },
     practice:       { en:'Practice', es:'Práctica', fr:'Entraînement', de:'Übung', pt:'Treino' },
@@ -752,8 +759,9 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     return guesses.map(row=>row.map(keySq).join('')).join('\n');
   }
   function renderResult(){
-    const order=puzzle.groups.map(g=>g.key);
-    const sa='<div class="solved-area">'+order.map(k=>solved.find(s=>s.key===k)).filter(Boolean).map((s,i)=>solvedRow(s, won?'win':'')).join('')+'</div>';
+    // Keep the bands in the order the player SOLVED them (solved[] is push-ordered);
+    // on a loss the missed groups are appended, so they show last.
+    const sa='<div class="solved-area">'+solved.map(function(s){ return solvedRow(s, won?'win':''); }).join('')+'</div>';
     const st=getLS(STKEY)||{streak:0,best:0,won:0,played:0};
     let h=sa+'<div class="result">';
     h+='<h2>'+(won?T('solvedIt'):T('outOfGuesses'))+'</h2>';
@@ -796,7 +804,10 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     // Ignore caches from before v2 (groups now carry a per-group `key`/`color`).
     if(!PRACTICE){ const cp=getLS(PKEY); if(cp && cp.day===day && cp.puzzle && cp.puzzle.groups && cp.puzzle.groups[0] && cp.puzzle.groups[0].key){ puzzle=cp.puzzle; } }
     if(!puzzle){
+      var _lc=document.getElementById('loadCap'); if(_lc){ _lc.textContent=T('buildingCap'); }
+      var _slow=setTimeout(function(){ if(_lc) _lc.innerHTML=T('buildingCap')+'<b>'+T('buildingSlow')+'</b>'; },2400);
       puzzle=await generateWithRetry(seed);
+      clearTimeout(_slow);
       if(!puzzle){ stage.innerHTML='<div class="loading">'+T('couldNotBuild')+'</div>'; return; }
       if(!PRACTICE) setLS(PKEY,{day,puzzle});
     }
