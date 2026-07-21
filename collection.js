@@ -631,7 +631,9 @@
     var lv = levelFromXp(s.xp || 0);
     if (s.lvlPaid == null) { s.lvlPaid = lv; return 0; }
     var paid = 0;
-    while (s.lvlPaid < lv) { s.lvlPaid++; paid += 15 + 5 * s.lvlPaid; }
+    // Cap the per-level dust so high levels don't flood the economy (the escalating
+    // 15+5·lvl outran every sink past ~level 12). Capped at 70/level.
+    while (s.lvlPaid < lv) { s.lvlPaid++; paid += Math.min(70, 15 + 5 * s.lvlPaid); }
     if (paid) { s.dust = (s.dust || 0) + paid; _pendingDust += paid; }
     return paid;
   }
@@ -661,10 +663,12 @@
         if (ORDER[s.cards[k].rarity] < ORDER[top]) top = s.cards[k].rarity;
       } else {
         var rar = rarityOf(it);
-        if (it.rarityFloor) {                                  // prize card → pity applies
+        if (it.rarityFloor) {                                  // prize card → pity + paid Prime apply
           if (!s.pityE) s.pityE = d; if (!s.pityL) s.pityL = d;
           if (daysBetween(s.pityL, d) >= PITY_LEG_DAYS) rar = 'legendary';
           else if (daysBetween(s.pityE, d) >= PITY_ELITE_DAYS && TIERS.indexOf(rar) < 2) rar = 'elite';
+          if (s.prime && ORDER[s.prime] < ORDER[rar]) rar = s.prime;   // paid Prime floors the reveal up
+          s.prime = null;                                              // consumed by the next prize card
         }
         if (rar === 'legendary') { s.pityL = d; s.pityE = d; }
         else if (rar === 'elite') s.pityE = d;
@@ -1355,6 +1359,28 @@
     return { ok: true, dust: s.dust };
   }
 
+  // ── Prime: spend dust to guarantee your NEXT daily prize card is at least a
+  // given rarity. The one repeatable, always-useful dust sink — it never runs
+  // dry (unlike Forge), turns surplus dust back into collection quality, and
+  // feeds every downstream system (sets, mastery, Arena, depth). One prime is
+  // held at a time and consumed by the next prize reveal. Cheaper than Forge
+  // per tier because it's a floor, not a guaranteed specific card.
+  var PRIME_COST = { rare: 45, elite: 150, legendary: 450 };
+  function primeCost(tier) { return PRIME_COST[tier] || 0; }
+  function primeState() { var s = load() || blank(); return { tier: s.prime || null, dust: s.dust || 0 }; }
+  // Returns {ok, tier?} or {ok:false, reason:'dust'|'bad'|'lower', need?, have?}.
+  function primeNext(tier) {
+    var s = load() || blank();
+    var cost = PRIME_COST[tier];
+    if (!cost) return { ok: false, reason: 'bad' };
+    // Don't let a player pay to downgrade an already-held higher prime.
+    if (s.prime && ORDER[s.prime] <= ORDER[tier]) return { ok: false, reason: 'lower', tier: s.prime };
+    var have = s.dust || 0;
+    if (have < cost) return { ok: false, reason: 'dust', need: cost, have: have };
+    s.dust = have - cost; s.prime = tier; save(s); refreshOpen();
+    return { ok: true, tier: tier, dust: s.dust };
+  }
+
   // ─────────────────────────── admin / debug ops ─────────────────────────
   function reset() { try { localStorage.removeItem(KEY); } catch (_) { /* noop */ } refreshOpen(); }
   function grant(items) { var r = add(items); refreshOpen(); return r; }
@@ -1945,6 +1971,22 @@
       '.cl-q-claim{flex:none;border:0;border-radius:999px;background:#e8a000;color:#1a1408;font:inherit;font-weight:800;font-size:.68rem;padding:6px 10px;cursor:pointer}' +
       '.cl-q-claim:hover{filter:brightness(1.05)}' +
       '.cl-q-ok{flex:none;color:#5bbd7a;font-weight:800}' +
+      // Prime strip — the always-open dust sink (guarantee the next card's rarity)
+      '.cl-prime{width:100%}' +
+      '.cl-prime-box{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#2c343f;border-radius:13px;padding:9px 11px;margin-top:9px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.05)}' +
+      '.cl-prime.armed .cl-prime-box{background:linear-gradient(180deg,rgba(232,160,0,.16),#2c343f);box-shadow:inset 0 0 0 1px rgba(232,194,74,.4)}' +
+      '.cl-prime-ic{width:30px;height:30px;flex:none;border-radius:9px;background:rgba(232,160,0,.14);display:flex;align-items:center;justify-content:center;font-size:1rem}' +
+      '.cl-prime-body{flex:1;min-width:120px}' +
+      '.cl-prime-ttl{font-size:.72rem;font-weight:800;color:#f0f0f0;line-height:1.25}' +
+      '.cl-prime-sub{font-size:.62rem;font-weight:700;color:#9aa4b0;margin-top:2px}' +
+      '.cl-prime-btns{display:flex;gap:6px;flex:none}' +
+      '.cl-prime-b{border:0;border-radius:999px;background:rgba(255,255,255,.08);color:#f0f0f0;font:inherit;font-weight:800;font-size:.66rem;padding:6px 10px;cursor:pointer;white-space:nowrap;transition:filter .12s,background .12s}' +
+      '.cl-prime-b:hover{filter:brightness(1.12)}' +
+      '.cl-prime-b.rare{background:rgba(122,166,232,.22);color:#bcd3f7}' +
+      '.cl-prime-b.elite{background:rgba(181,138,214,.22);color:#e0cdf2}' +
+      '.cl-prime-b.legendary{background:rgba(232,194,74,.24);color:#f6e2a0}' +
+      '.cl-prime-b:disabled{opacity:.4;cursor:default;filter:none}' +
+      '.cl-prime-armed{flex:none;font-weight:800;font-size:.68rem;color:#f5c542}' +
       '.cl-vchips{display:flex;gap:8px;align-items:center;flex-wrap:wrap}' +
       '@media(max-width:640px){' +
         '.cl-vsearch{flex:1 1 100%}' +
@@ -2293,7 +2335,7 @@
       '<div class="cl-vault-hd">' +
         '<div class="cl-coll-hd-top">' +
           '<div><div class="cl-coll-title">Your <span>collection</span></div><div class="cl-coll-sub" id="clCollSub"></div></div>' +
-          '<div class="cl-coll-hd-btns" id="clCollHdBtns"><a class="cl-coll-dust cl-coll-battle" href="/rating/toptrumps" title="Top Trumps — battle the CPU with cards from this collection">&#9876;&#65039;<span class="lbl">&nbsp;Battle</span></a><span class="cl-coll-dust" id="clCollDD" title="Daily Double — win two daily games today for bonus dust">&#9889; 0/2</span><span class="cl-coll-dust" id="clCollDust" title="Dust — earned from duplicate cards, leveling up, the Daily Double and trophies. Spend it to Shine a card (permanent foil) or Forge a missing set card.">&#10024; 0</span><button class="cl-coll-x" aria-label="Close">&#10005;</button></div>' +
+          '<div class="cl-coll-hd-btns" id="clCollHdBtns"><a class="cl-coll-dust cl-coll-battle" href="/rating/toptrumps" title="Top Trumps — battle the CPU with cards from this collection">&#9876;&#65039;<span class="lbl">&nbsp;Battle</span></a><span class="cl-coll-dust" id="clCollDD" title="Daily Double — win two daily games today for bonus dust">&#9889; 0/2</span><span class="cl-coll-dust" id="clCollDust" title="Dust — earned from duplicate cards, leveling up, the Daily Double and trophies. Spend it to Prime your next card (guarantee its rarity), Shine a card (permanent foil) or Forge a missing set card.">&#10024; 0</span><button class="cl-coll-x" aria-label="Close">&#10005;</button></div>' +
         '</div>' +
         '<div class="cl-coll-lvl">' +
           '<div class="cl-lvl-ring"><svg viewBox="0 0 52 52"><circle class="bg" cx="26" cy="26" r="22"></circle><circle class="fg" id="clCollRing" cx="26" cy="26" r="22" stroke-dasharray="' + RING_C + '" stroke-dashoffset="' + RING_C + '"></circle></svg><b id="clCollLvl">1</b></div>' +
@@ -2305,6 +2347,7 @@
         '</div>' +
         '<div class="cl-vault-tabs" id="clVaultTabs"></div>' +
         '<div class="cl-quests" id="clQuests"></div>' +
+        '<div class="cl-prime" id="clPrime"></div>' +
         '<div class="cl-vault-tools" id="clCollChips"></div>' +
       '</div>' +
       '<div class="cl-coll-grid" id="clCollGrid"></div>';
@@ -2481,6 +2524,7 @@
     var tools = document.getElementById('clCollChips');
     var grid = document.getElementById('clCollGrid');
     var _qs = document.getElementById('clQuests'); if (_qs && _tab !== 'cards') _qs.innerHTML = '';
+    var _pr = document.getElementById('clPrime'); if (_pr && _tab !== 'cards') { _pr.innerHTML = ''; _pr.className = 'cl-prime'; }
     if (_tab === 'sets') { tools.innerHTML = ''; renderSets(); return; }
     if (_tab === 'show') { tools.innerHTML = ''; renderShowcase(); return; }
     if (_tab === 'backs') {
@@ -2497,6 +2541,7 @@
     }
 
     renderQuests();
+    renderPrime();
     // ── Cards tab: toolbar (search / rarity gems / sort) + tier-sectioned grid ──
     var chips = [
       { k: 'all', label: CT('All') }, { k: 'film', label: CT('Films') }, { k: 'person', label: CT('People') },
@@ -3320,6 +3365,45 @@
     });
   }
 
+  // ── Prime strip (the always-open dust sink; sits under the cards-tab header) ──
+  function renderPrime() {
+    var el = document.getElementById('clPrime'); if (!el) return;
+    var st; try { st = primeState(); } catch (_) { el.innerHTML = ''; el.className = 'cl-prime'; return; }
+    var d = st.dust || 0;
+    if (st.tier) {
+      var nm = st.tier.charAt(0).toUpperCase() + st.tier.slice(1);
+      el.className = 'cl-prime armed';
+      el.innerHTML = '<div class="cl-prime-box">' +
+        '<div class="cl-prime-ic">&#9889;</div>' +
+        '<div class="cl-prime-body"><div class="cl-prime-ttl">Next card guaranteed ' + nm + '</div>' +
+        '<div class="cl-prime-sub">Applies to your next daily prize card</div></div>' +
+        '<span class="cl-prime-armed">&#10003; Armed</span></div>';
+      return;
+    }
+    el.className = 'cl-prime';
+    var tiers = [['rare', 'Rare'], ['elite', 'Elite'], ['legendary', 'Legendary']];
+    var btns = tiers.map(function (t) {
+      var c = primeCost(t[0]);
+      return '<button class="cl-prime-b ' + t[0] + '" data-tier="' + t[0] + '"' + (d < c ? ' disabled' : '') + '>' + t[1] + ' &#10024;' + c + '</button>';
+    }).join('');
+    el.innerHTML = '<div class="cl-prime-box">' +
+      '<div class="cl-prime-ic">&#9889;</div>' +
+      '<div class="cl-prime-body"><div class="cl-prime-ttl">Prime your next card</div>' +
+      '<div class="cl-prime-sub">Spend dust to floor the rarity of your next prize</div></div>' +
+      '<div class="cl-prime-btns">' + btns + '</div></div>';
+    Array.prototype.forEach.call(el.querySelectorAll('.cl-prime-b'), function (b) {
+      b.addEventListener('click', function () {
+        if (b.disabled) return;
+        var r = primeNext(b.getAttribute('data-tier'));
+        if (r.ok) {
+          try { if (window.Sfx) { window.Sfx.allDone && window.Sfx.allDone(); window.Sfx.haptic && window.Sfx.haptic([10, 22, 10]); } } catch (_) { /* noop */ }
+          renderPrime();
+          var du = document.getElementById('clCollDust'); if (du) du.innerHTML = '&#10024; ' + dustBalance();
+        }
+      });
+    });
+  }
+
   // ── Card-back picker (renders into the Vault's Backs tab) ──
   function renderCardbacks() {
     var grid = document.getElementById('cbGrid'); if (!grid) return;
@@ -3362,6 +3446,7 @@
     cardbacks: cardbacksState, useCardback: useCardback, openCardbacks: openCardbacks,
     achievements: achievementsState, openAchievements: openAchievements,
     dust: dustBalance, shine: shineCard, shineCost: shineCost, isShined: isShined,
+    prime: primeNext, primeCost: primeCost, primeState: primeState,
     addDust: function (n) { var s = load() || blank(); s.dust = Math.max(0, (s.dust || 0) + (+n || 0)); save(s); refreshOpen(); return s.dust; },
     forge: forgeCard, forgeCost: forgeCost, toggleShowcase: toggleShowcase, showcase: showcaseCards,
     reset: reset, grant: grant, addXp: addXp, setLevel: setLevel, exportData: exportData, importData: importData, seed: function () { return grant(SEED.map(function (s) { return s; })); },
