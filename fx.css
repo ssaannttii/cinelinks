@@ -54,3 +54,15 @@ html{scrollbar-width:thin;scrollbar-color:rgba(232,160,0,.5) rgba(255,255,255,.0
 :focus-visible{outline:2px solid var(--gold,#e8a000);outline-offset:2px;border-radius:6px;box-shadow:0 0 0 4px rgba(0,0,0,.45)}
 /* elements that hide the default outline still get the visible ring */
 a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible,[role="button"]:focus-visible{outline:2px solid var(--gold,#e8a000);outline-offset:2px}
+
+/* ── Tactile press feedback ─────────────────────────────────────────────────
+   Every control springs slightly inward on tap/click — the interaction layer
+   that pairs with the focus ring. Transform-only (compositor-safe); the
+   transition lives inside :active so it never overrides a control's own base
+   transition, and it's disabled under reduced-motion. */
+button:not(:disabled):not(.off):active,
+[role="button"]:not([aria-disabled="true"]):active,
+.mode:active,summary:active{transform:scale(.96);transition:transform .1s cubic-bezier(.3,.9,.3,1)}
+@media(prefers-reduced-motion:reduce){
+  button:active,[role="button"]:active,.mode:active,summary:active{transform:none}
+}

@@ -34,6 +34,9 @@
 /* Keyboard focus ring (a11y) — keyboard/AT only, never on mouse/touch. */
 :focus-visible{outline:2px solid var(--gold,#e8a000);outline-offset:2px;border-radius:6px;box-shadow:0 0 0 4px rgba(0,0,0,.45)}
 a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible,[role="button"]:focus-visible{outline:2px solid var(--gold,#e8a000);outline-offset:2px}
+/* Tactile press feedback — every control springs inward on tap (transform-only, reduced-motion aware). */
+button:not(:disabled):not(.off):active,[role="button"]:not([aria-disabled="true"]):active,.mode:active,summary:active{transform:scale(.96);transition:transform .1s cubic-bezier(.3,.9,.3,1)}
+@media(prefers-reduced-motion:reduce){button:active,[role="button"]:active,.mode:active,summary:active{transform:none}}
 /* Elegant custom scrollbar (dark track, soft gold thumb) — global. */
 html{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.25) rgba(255,255,255,.04)}
 html.cl-hidden *,html.cl-hidden *::before,html.cl-hidden *::after{animation-play-state:paused!important}
