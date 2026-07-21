@@ -599,6 +599,8 @@ body{font-family:var(--fui);background:var(--bg);color:var(--txt);min-height:100
 @keyframes goalCardGlow{0%,100%{box-shadow:0 0 14px rgba(232,160,0,.28),0 0 0 2px rgba(232,160,0,.34)}50%{box-shadow:0 0 36px rgba(232,160,0,.6),0 0 0 2px rgba(232,160,0,.62)}}
 /* GOAL badge on the target card */
 .card-goal-tag{position:absolute;top:8px;left:8px;z-index:3;display:flex;align-items:center;gap:4px;background:var(--gold);color:#1a1200;font-size:.56rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:4px 7px;border-radius:7px;box-shadow:0 3px 8px rgba(0,0,0,.42),0 1px 4px rgba(232,160,0,.32);animation:goalTagPop .42s cubic-bezier(.22,1,.36,1) both;pointer-events:none}
+/* "New to collect" mark — subtle amber star on nodes not yet in your Vault. */
+.card-new-mark{position:absolute;top:6px;right:7px;z-index:3;font-size:.72rem;line-height:1;color:var(--goldsoft);text-shadow:0 1px 3px rgba(0,0,0,.55);opacity:.85;pointer-events:none;cursor:help}
 @keyframes goalTagPop{0%{transform:scale(0) translateY(-4px);opacity:0}70%{transform:scale(1.14)}100%{transform:scale(1);opacity:1}}
 @keyframes goalShine{0%{transform:translateX(0) skewX(-12deg);opacity:0}8%{opacity:1}28%{transform:translateX(320%) skewX(-12deg);opacity:0}100%{transform:translateX(320%) skewX(-12deg);opacity:0}}
 .card.visited{opacity:.38;cursor:not-allowed;pointer-events:none;position:relative}
@@ -2259,6 +2261,44 @@ function burstParticles(card, badge) {
     p.style.animationDelay = (Math.random() * 0.05) + 's';
     card.appendChild(p); setTimeout(() => p.remove(), 950);
   }
+}
+
+// First time a "new to collect" (✦) mark shows, explain it once.
+let _newmarkCoaching = false;
+function newCardMarkCoach() {
+  try {
+    if (_newmarkCoaching || localStorage.getItem('cl_newmark_seen')) return;
+    const mark = document.querySelector('#grid .card-new-mark'); if (!mark) return;
+    const card = mark.closest('.card'); if (!card) return;
+    _newmarkCoaching = true;
+    localStorage.setItem('cl_newmark_seen', '1');
+    const TX = {
+      en: '<b>✦ = not in your collection yet.</b> Win by routing through these to add their cards to your Vault.',
+      es: '<b>✦ = aún no está en tu colección.</b> Gana pasando por ellas para añadir su carta a tu Vault.',
+      fr: '<b>✦ = pas encore dans votre collection.</b> Passez par elles pour ajouter leur carte à votre Vault.',
+      de: '<b>✦ = noch nicht in deiner Sammlung.</b> Leite deinen Weg über sie, um ihre Karte zu erhalten.',
+      pt: '<b>✦ = ainda não está na sua coleção.</b> Passe por elas para adicionar a carta ao seu Vault.'
+    };
+    const GOT = { en: 'Got it', es: 'Entendido', fr: 'Compris', de: 'Alles klar', pt: 'Entendi' };
+    let lg = 'en'; try { const l = localStorage.getItem('clLang'); if (l && /^[a-z]{2}-[A-Z]{2}$/.test(l)) lg = l.slice(0, 2); } catch (_) {}
+    const b = document.createElement('div'); b.className = 'coach';
+    b.innerHTML = '<div class="coach-tx">' + (TX[lg] || TX.en) + '</div><button class="coach-x">' + (GOT[lg] || GOT.en) + '</button><span class="coach-arrow"></span>';
+    document.body.appendChild(b);
+    const place = () => {
+      const r = card.getBoundingClientRect();
+      const bw = Math.min(b.offsetWidth || 300, window.innerWidth - 20);
+      const left = Math.max(10, Math.min(r.left + r.width / 2 - bw / 2, window.innerWidth - bw - 10));
+      let top = r.top - (b.offsetHeight || 80) - 12, below = false;
+      if (top < 12) { top = r.bottom + 12; below = true; }
+      b.style.left = left + 'px'; b.style.top = top + 'px';
+      b.style.setProperty('--ax', (r.left + r.width / 2 - left) + 'px');
+      if (below) { const ar = b.querySelector('.coach-arrow'); if (ar) { ar.style.bottom = 'auto'; ar.style.top = '-8px'; ar.style.transform = 'translateX(-50%) rotate(225deg)'; } }
+    };
+    setTimeout(place, 60); window.addEventListener('resize', place);
+    const kill = () => { try { window.removeEventListener('resize', place); b.remove(); } catch (_) {} };
+    b.querySelector('.coach-x').onclick = kill;
+    setTimeout(kill, 10000);
+  } catch (_) {}
 }
 
 // ── Meta layer: portfolio streak + unified "share my whole day" ──────────────
@@ -3952,6 +3992,17 @@ const game = window.game = {
       tag.className = 'card-goal-tag';
       tag.innerHTML = '🎯 ' + t('goalTag');
       div.appendChild(tag);
+    }
+    // Collector layer: a subtle amber mark on nodes you don't own yet — route
+    // through them to add new cards to your Vault. Marks the aspirational few, so
+    // the board stays clean as your collection grows. First one triggers a coach.
+    else if (!isVisited && item.type && item.id != null && window.Collection && Collection.owns && !Collection.owns(item.type, item.id)) {
+      const nm = document.createElement('span');
+      nm.className = 'card-new-mark';
+      nm.title = 'Not in your collection yet — win here to add it';
+      nm.textContent = '✦';
+      div.appendChild(nm);
+      try { setTimeout(newCardMarkCoach, 400); } catch (_) {}
     }
     if (!isVisited) {
       attachCardTilt(div);

@@ -3352,9 +3352,13 @@
   }
   function openAchievements() { syncAchievements(); _tab = 'trophies'; if (isOpen()) render(); else openGallery('trophies'); }
 
+  // Do you already own a card of this entity? (used by CineLinks to mark
+  // "new to collect" nodes during play.)
+  function owns(type, id) { try { var s = load(); return !!(s && s.cards && s.cards[type + ':' + id]); } catch (_) { return false; } }
+
   // expose + init
   window.Collection = {
-    add: add, stats: stats, all: allCards, openGallery: openGallery, markSeen: markSeen, reveal: reveal, sets: setsState,
+    add: add, stats: stats, all: allCards, owns: owns, openGallery: openGallery, markSeen: markSeen, reveal: reveal, sets: setsState,
     cardbacks: cardbacksState, useCardback: useCardback, openCardbacks: openCardbacks,
     achievements: achievementsState, openAchievements: openAchievements,
     dust: dustBalance, shine: shineCard, shineCost: shineCost, isShined: isShined,
