@@ -2161,7 +2161,7 @@
       '.cl-share-btn:disabled{opacity:.85;cursor:default;transform:none}' +
       '.cl-share-btn.shake{animation:clShake .4s}' +
       // ── reveal sequence ──
-      '#clCollReveal{position:fixed;inset:0;z-index:260;display:none;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 42%,rgba(26,32,41,.75),rgba(8,11,15,.93) 70%);backdrop-filter:blur(8px);overflow:hidden;cursor:pointer}' +
+      '#clCollReveal{position:fixed;inset:0;bottom:auto;height:100vh;height:100dvh;z-index:260;display:none;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 42%,rgba(26,32,41,.75),rgba(8,11,15,.93) 70%);backdrop-filter:blur(8px);overflow:hidden;cursor:pointer}' +
       '#clCollReveal.open{display:flex}' +
       'html.cl-scroll-lock{overflow:hidden}' +
       'body.cl-scroll-lock{position:fixed;left:0;right:0;width:100%;overflow:hidden;overscroll-behavior:none}' +
@@ -2173,9 +2173,12 @@
       '.clr-dot.on{background:#e8a000}' +
       '.clr-skip{position:absolute;top:calc(18px + env(safe-area-inset-top));right:20px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#ccc;font:inherit;font-size:.74rem;font-weight:700;padding:6px 13px;border-radius:999px;cursor:pointer;z-index:8}' +
       '.clr-skip:hover{color:#fff}' +
-      // width also capped by HEIGHT (5/7 card ⇒ ~56vh wide fits with the caption)
-      // so landscape phones never clip the reveal card off-screen.
-      '.clr-stage{position:relative;width:300px;max-width:min(82vw,56vh);z-index:6;perspective:1200px;animation:clrStageIn .45s cubic-bezier(.2,.9,.3,1.2) both}' +
+      // Width is also capped by HEIGHT: a 5/7 card at width W is 1.4·W tall, so the
+      // cap must leave room for the caption + hint below it. 48dvh wide ⇒ ~67dvh
+      // tall, which fits the caption on phones. dvh (dynamic viewport) tracks the
+      // *visible* area, so the card shrinks when the mobile toolbar is showing and
+      // never clips off the bottom. vh kept as a fallback for old browsers.
+      '.clr-stage{position:relative;width:300px;max-width:min(82vw,56vh);max-width:min(82vw,48dvh);z-index:6;perspective:1200px;animation:clrStageIn .45s cubic-bezier(.2,.9,.3,1.2) both}' +
       '@keyframes clrStageIn{from{opacity:0;transform:translateY(16px) scale(.93)}to{opacity:1;transform:none}}' +
       '.clr-stage::after{content:"";position:absolute;left:50%;bottom:-22px;width:60%;height:24px;transform:translateX(-50%);background:radial-gradient(ellipse at center,rgba(0,0,0,.6),transparent 72%);filter:blur(5px);z-index:-1}' +
       // elite+ crossover shockwave: a rarity-coloured ring that blasts outward.
@@ -2439,6 +2442,7 @@
   }
 
   var _filter = 'all', _setOpen = null, _tab = 'cards', _query = '', _sort = 'rarity';
+  var _setsScrollTop = 0, _setsRestore = false;   // remember sets-list scroll across a set open/close
   function isOpen() { var m = document.getElementById('clCollModal'); return m && m.classList.contains('open'); }
   function refreshOpen() { if (isOpen()) render(); if (document.getElementById('clCollDebug') && document.getElementById('clCollDebug').classList.contains('open')) renderDebug(); }
 
@@ -2847,7 +2851,7 @@
           return '<div class="cl-slot"><div class="cl-slot-q">?</div><div class="cl-slot-nm">' + esc(m.name) + '</div>' +
             '<button class="cl-slot-forge' + (dustNow >= fc ? '' : ' off') + '" data-fi="' + i + '" title="Forge this card with dust">&#9874; ' + fc + '</button></div>';
         }).join('');
-      document.getElementById('clSetBack').addEventListener('click', function () { _setOpen = null; render(); });
+      document.getElementById('clSetBack').addEventListener('click', function () { _setOpen = null; _setsRestore = true; render(); });
       // Forge a missing member: spend dust → the card is added and revealed like a win.
       Array.prototype.forEach.call(grid.querySelectorAll('.cl-slot-forge'), function (b) {
         b.addEventListener('click', function (e) {
@@ -2885,8 +2889,10 @@
     var found = curated.filter(function (s) { return s.discovered; });
     var locked = curated.filter(function (s) { return !s.discovered; });
     var miles = states.filter(function (s) { return s.kind === 'milestone'; });
-    // sort discovered: completed first, then by progress — the closest-to-done bubbles up
-    found.sort(function (a, b) { return (b.complete - a.complete) || (b.pct - a.pct); });
+    // Sort discovered: the sets you're still working on come FIRST (closest-to-done
+    // at the top, so what you care about is reachable without scrolling), and the
+    // already-completed sets sink to the bottom.
+    found.sort(function (a, b) { return (a.complete - b.complete) || (b.pct - a.pct); });
     var doneN = curated.filter(function (s) { return s.complete; }).length;
 
     // a fanned hand of member posters — owned = real poster, missing = silhouette slot
@@ -2940,11 +2946,14 @@
     if (miles.length) html += sec('Milestones') + '<div class="cl-sx-grid">' + miles.map(milestoneCard).join('') + '</div>';
     if (locked.length) html += sec('Undiscovered', locked.length + ' to find') + '<div class="cl-sx-grid">' + locked.map(lockedCard).join('') + '</div>';
     grid.innerHTML = html;
+    // Coming back from a set → restore the list scroll so you land where you left,
+    // not at the top. rAF: wait for layout before setting scrollTop.
+    if (_setsRestore) { _setsRestore = false; var _y = _setsScrollTop; requestAnimationFrame(function () { try { grid.scrollTop = _y; } catch (_) { /* noop */ } }); }
 
     Array.prototype.forEach.call(grid.querySelectorAll('.cl-sx[data-set]'), function (el) {
       el.addEventListener('click', function () {
         var sid = el.getAttribute('data-set'), s = null; states.forEach(function (x) { if (x.id === sid) s = x; });
-        if (s && s.kind === 'curated' && s.discovered) { try { if (window.Sfx) window.Sfx.tap(); } catch (_) { /* noop */ } _setOpen = sid; render(); }
+        if (s && s.kind === 'curated' && s.discovered) { try { if (window.Sfx) window.Sfx.tap(); } catch (_) { /* noop */ } var _g = document.getElementById('clCollGrid'); _setsScrollTop = _g ? _g.scrollTop : 0; _setOpen = sid; render(); }
       });
     });
     // Draw: spend dust for a random unowned card, revealed like a win.
