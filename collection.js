@@ -1110,8 +1110,23 @@
   // Met trophy count (matches the trophy case). Safe from recursion because achievement
   // evaluation uses rawCardbackId(), not activeCardbackId() (see achCtx).
   function achvCount() { return achievementsState().filter(function (a) { return a.unlocked; }).length; }
-  function cbUnlocked(cb) { return cb.achv ? achvCount() >= cb.achv : stats().level >= (cb.level || 1); }
+  // A locked back can be bought outright with dust — a clean, non-inflating home
+  // for surplus dust (cosmetic, so it never distorts progression). Price scales
+  // with how "deep" the back is (its level/trophy gate). Classic is free.
+  function backCost(cb) { if (!cb || cb.level === 1) return 0; return cb.achv ? (200 + cb.achv * 20) : (55 + (cb.level || 1) * 16); }
+  function cbBought(cb) { var s = load() || blank(); return !!(s.backs && s.backs[cb.id]); }
+  function cbUnlocked(cb) { return cbBought(cb) || (cb.achv ? achvCount() >= cb.achv : stats().level >= (cb.level || 1)); }
   function cbReq(cb) { return cb.achv ? { type: 'achv', need: cb.achv } : { type: 'level', need: cb.level || 1 }; }
+  // Returns {ok} or {ok:false, reason:'bad'|'already'|'dust', need?, have?}.
+  function buyBack(id) {
+    var cb = null; CARDBACKS.forEach(function (c) { if (c.id === id) cb = c; });
+    if (!cb) return { ok: false, reason: 'bad' };
+    if (cbUnlocked(cb)) return { ok: false, reason: 'already' };
+    var cost = backCost(cb), s = load() || blank(), have = s.dust || 0;
+    if (have < cost) return { ok: false, reason: 'dust', need: cost, have: have };
+    s.dust = have - cost; if (!s.backs) s.backs = {}; s.backs[id] = 1; save(s);
+    return { ok: true, dust: s.dust };
+  }
   function activeCardbackId() {
     var id = null; try { id = localStorage.getItem('cl_cardback'); } catch (_) {}
     var cb = CARDBACKS.filter(function (c) { return c.id === id; })[0];
@@ -1120,7 +1135,7 @@
   function activeCardbackClass() { var cb = CARDBACKS.filter(function (c) { return c.id === activeCardbackId(); })[0]; return cb ? cb.css : ''; }
   function cardbacksState() {
     var active = activeCardbackId();
-    return CARDBACKS.map(function (cb) { return { id: cb.id, name: cb.name, css: cb.css, unlocked: cbUnlocked(cb), active: cb.id === active, req: cbReq(cb) }; });
+    return CARDBACKS.map(function (cb) { return { id: cb.id, name: cb.name, css: cb.css, unlocked: cbUnlocked(cb), active: cb.id === active, req: cbReq(cb), cost: backCost(cb) }; });
   }
   function useCardback(id) {
     var cb = CARDBACKS.filter(function (c) { return c.id === id; })[0];
@@ -1276,6 +1291,51 @@
       if ((s2.dust || 0) < cost) return { ok: false, reason: 'dust', need: cost, have: s2.dust || 0 };
       s2.dust = (s2.dust || 0) - cost; save(s2);
       var added = add([{ id: member.id, type: member.type, name: member.name, img: img, rarity: rar }]);
+      return { ok: true, cards: added, dust: dustBalance() };
+    });
+  }
+
+  // ── Draw: spend dust to pull a random card you don't yet own, from the whole
+  // collectible universe (every set's members). The instant-gratification dust
+  // sink — distinct from Prime (floors a card you still have to EARN) and Forge
+  // (a SPECIFIC set card at a premium). Biased toward sets you've already started,
+  // so it accelerates completion. Terminal-safe: once you own the whole universe
+  // there's nothing to draw. Uses the same fetch→add→reveal flow as Forge.
+  var DRAW_COST = 90;
+  function drawPool() {
+    var seen = {}, out = [];
+    SETS.forEach(function (set) {
+      (set.members || []).forEach(function (m) {
+        var k = m.type + ':' + m.id; if (seen[k]) return; seen[k] = 1;
+        out.push({ id: m.id, type: m.type, name: m.name, set: set.id });
+      });
+    });
+    return out;
+  }
+  function drawInfo() {
+    var s = load() || blank(), pool = drawPool();
+    var left = pool.filter(function (m) { return !(s.cards && s.cards[m.type + ':' + m.id]); }).length;
+    return { cost: DRAW_COST, dust: s.dust || 0, left: left, total: pool.length };
+  }
+  function drawPack() {
+    var s = load() || blank();
+    if ((s.dust || 0) < DRAW_COST) return Promise.resolve({ ok: false, reason: 'dust', need: DRAW_COST, have: s.dust || 0 });
+    var pool = drawPool(), owned = {};
+    Object.keys(s.cards || {}).forEach(function (k) { owned[k] = 1; });
+    var setOwned = {}, setTotal = {};
+    pool.forEach(function (m) { setTotal[m.set] = (setTotal[m.set] || 0) + 1; if (owned[m.type + ':' + m.id]) setOwned[m.set] = (setOwned[m.set] || 0) + 1; });
+    var unowned = pool.filter(function (m) { return !owned[m.type + ':' + m.id]; });
+    if (!unowned.length) return Promise.resolve({ ok: false, reason: 'complete' });
+    var bag = [];
+    unowned.forEach(function (m) { var o = setOwned[m.set] || 0, t = setTotal[m.set] || 1, w = (o > 0 && o < t) ? 3 : 1; for (var i = 0; i < w; i++) bag.push(m); });
+    var pick = bag[Math.floor(Math.random() * bag.length)];
+    var rar = rarityOf({ id: pick.id, type: pick.type });
+    return tmdbPoster(pick.type, pick.id).then(function (img) {
+      var s2 = load() || blank(), k = pick.type + ':' + pick.id;
+      if (s2.cards && s2.cards[k]) return { ok: false, reason: 'owned' };            // raced with another grant
+      if ((s2.dust || 0) < DRAW_COST) return { ok: false, reason: 'dust', need: DRAW_COST, have: s2.dust || 0 };
+      s2.dust = (s2.dust || 0) - DRAW_COST; save(s2);
+      var added = add([{ id: pick.id, type: pick.type, name: pick.name, img: img, rarity: rar }]);
       return { ok: true, cards: added, dust: dustBalance() };
     });
   }
@@ -1987,6 +2047,21 @@
       '.cl-prime-b.legendary{background:rgba(232,194,74,.24);color:#f6e2a0}' +
       '.cl-prime-b:disabled{opacity:.4;cursor:default;filter:none}' +
       '.cl-prime-armed{flex:none;font-weight:800;font-size:.68rem;color:#f5c542}' +
+      // Buyable card back button (in the Backs tab)
+      '.cb-buy{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);border:0;border-radius:999px;background:#e8a000;color:#1a1408;font:inherit;font-weight:800;font-size:.66rem;padding:5px 11px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.4);z-index:3}' +
+      '.cb-buy:hover{filter:brightness(1.08)}.cb-buy.off{background:#5a5348;color:#2a2620;cursor:default}' +
+      '.cb-buy.shake{animation:clShake .4s}' +
+      // Draw strip (dust → random unowned card) — sits under the Collections hero
+      '.cl-draw{display:flex;align-items:center;gap:11px;background:linear-gradient(180deg,rgba(232,160,0,.12),#2c343f);border-radius:14px;padding:11px 13px;margin:2px 0 16px;box-shadow:inset 0 0 0 1px rgba(232,194,74,.28)}' +
+      '.cl-draw[data-complete="1"]{background:#2c343f;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);opacity:.75}' +
+      '.cl-draw-ic{width:34px;height:34px;flex:none;border-radius:10px;background:rgba(232,160,0,.16);display:flex;align-items:center;justify-content:center;font-size:1.15rem}' +
+      '.cl-draw-b{flex:1;min-width:0}' +
+      '.cl-draw-t{font-size:.82rem;font-weight:800;color:#f0f0f0;line-height:1.2}' +
+      '.cl-draw-s{font-size:.64rem;font-weight:600;color:#9aa4b0;margin-top:2px;line-height:1.3}' +
+      '.cl-draw-go{flex:none;border:0;border-radius:999px;background:#e8a000;color:#1a1408;font:inherit;font-weight:800;font-size:.74rem;padding:8px 14px;cursor:pointer;white-space:nowrap}' +
+      '.cl-draw-go:hover{filter:brightness(1.08)}.cl-draw.off .cl-draw-go{background:#5a5348;color:#2a2620}' +
+      '.cl-draw-go.shake{animation:clShake .4s}' +
+      '@keyframes clShake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}' +
       '.cl-vchips{display:flex;gap:8px;align-items:center;flex-wrap:wrap}' +
       '@media(max-width:640px){' +
         '.cl-vsearch{flex:1 1 100%}' +
@@ -2266,7 +2341,7 @@
       '' +
       '.cb-item.active .cb-swatch{outline:2px solid #e8a000;outline-offset:2px}' +
       '.cb-item.locked .cb-swatch{filter:grayscale(.7) brightness(.5)}' +
-      '.cb-item.locked .cb-swatch::after{content:attr(data-req);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:6px;color:#fff;font-size:.66rem;font-weight:800;background:rgba(0,0,0,.55)}' +
+      '.cb-item.locked .cb-swatch::after{content:attr(data-req);position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;text-align:center;padding:12px 6px;color:#fff;font-size:.66rem;font-weight:800;background:rgba(0,0,0,.55)}' +
       '.cb-nm{font-size:.7rem;font-weight:700;color:#cfcfcf;margin-top:6px}.cb-item.locked .cb-nm{color:#777}' +
       '.ac-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:11px}' +
       '.ac-item{position:relative;border-radius:12px;padding:13px 11px 12px;text-align:center;background:#2c343f;border:1px solid rgba(255,255,255,.06)}' +
@@ -2530,7 +2605,7 @@
     if (_tab === 'backs') {
       tools.innerHTML = '';
       grid.style.display = 'block';
-      grid.innerHTML = '<div class="cb-sub" style="margin:8px 2px 12px">Unlock card backs by leveling up — or earn Mastery in the trophy case. Tap to equip.</div><div class="cb-grid" id="cbGrid"></div>';
+      grid.innerHTML = '<div class="cb-sub" style="margin:8px 2px 12px">Unlock card backs by leveling up or earning Mastery — or buy any locked back with &#10024;dust. Tap to equip.</div><div class="cb-grid" id="cbGrid"></div>';
       renderCardbacks(); return;
     }
     if (_tab === 'trophies') {
@@ -2855,6 +2930,12 @@
 
     var html = '<div class="cl-sx-hero"><div class="cl-sx-hero-n">' + doneN + '<i>/' + curated.length + '</i></div>' +
       '<div class="cl-sx-hero-t"><b>Collections</b><span>Complete a set to bank a big XP bonus. Sets reveal once you collect one of their cards.</span></div></div>';
+    var _di = drawInfo();
+    html += '<div class="cl-draw' + (_di.dust >= _di.cost ? '' : ' off') + '"' + (_di.left ? '' : ' data-complete="1"') + '>' +
+      '<div class="cl-draw-ic">&#127183;</div>' +
+      '<div class="cl-draw-b"><div class="cl-draw-t">' + (_di.left ? 'Draw a random card' : 'You own every set card') + '</div>' +
+      '<div class="cl-draw-s">' + (_di.left ? ('Pull one of ' + _di.left + ' cards you don\'t own yet — favours sets you\'ve started') : 'Nothing left to draw here') + '</div></div>' +
+      (_di.left ? '<button class="cl-draw-go" id="clDrawGo">&#10024; ' + _di.cost + '</button>' : '') + '</div>';
     if (found.length) html += sec('Your sets', found.length + (found.length === 1 ? ' unlocked' : ' unlocked')) + '<div class="cl-sx-grid">' + found.map(premiumCard).join('') + '</div>';
     if (miles.length) html += sec('Milestones') + '<div class="cl-sx-grid">' + miles.map(milestoneCard).join('') + '</div>';
     if (locked.length) html += sec('Undiscovered', locked.length + ' to find') + '<div class="cl-sx-grid">' + locked.map(lockedCard).join('') + '</div>';
@@ -2864,6 +2945,23 @@
       el.addEventListener('click', function () {
         var sid = el.getAttribute('data-set'), s = null; states.forEach(function (x) { if (x.id === sid) s = x; });
         if (s && s.kind === 'curated' && s.discovered) { try { if (window.Sfx) window.Sfx.tap(); } catch (_) { /* noop */ } _setOpen = sid; render(); }
+      });
+    });
+    // Draw: spend dust for a random unowned card, revealed like a win.
+    var drawGo = grid.querySelector('#clDrawGo');
+    if (drawGo) drawGo.addEventListener('click', function () {
+      drawGo.disabled = true;
+      drawPack().then(function (r) {
+        if (r.ok) {
+          try { if (window.Sfx) window.Sfx.haptic([12, 30]); } catch (_) { /* noop */ }
+          try { if (window.Track) window.Track('card_drawn', { rarity: r.cards && r.cards[0] && r.cards[0].rarity }); } catch (_) { /* noop */ }
+          render();                                              // refresh hero counts + dust chip
+          if (r.cards && r.cards.length) setTimeout(function () { reveal(r.cards); }, 250);
+        } else {
+          drawGo.disabled = false;
+          try { if (window.Sfx) window.Sfx.tap(); } catch (_) { /* noop */ }
+          if (r.reason === 'dust') { drawGo.classList.add('shake'); setTimeout(function () { drawGo.classList.remove('shake'); }, 420); }
+        }
       });
     });
   }
@@ -3407,16 +3505,36 @@
   // ── Card-back picker (renders into the Vault's Backs tab) ──
   function renderCardbacks() {
     var grid = document.getElementById('cbGrid'); if (!grid) return;
+    var dustNow = dustBalance();
     grid.innerHTML = cardbacksState().map(function (cb) {
       var lock = cb.req.type === 'achv' ? ('🔒 ' + cb.req.need + ' trophies') : ('🔒 Lvl ' + cb.req.need);
+      var buy = (!cb.unlocked && cb.cost) ? '<button class="cb-buy' + (dustNow >= cb.cost ? '' : ' off') + '" data-buy="' + cb.id + '" title="Unlock this back with dust">&#10024; ' + cb.cost + '</button>' : '';
       return '<div class="cb-item' + (cb.active ? ' active' : '') + (cb.unlocked ? '' : ' locked') + '" data-id="' + cb.id + '">' +
-        '<div class="cb-swatch ' + cb.css + '" data-req="' + lock + '">' + cbBackHtml() + '</div>' +
+        '<div class="cb-swatch ' + cb.css + '" data-req="' + lock + '">' + cbBackHtml() + buy + '</div>' +
         '<div class="cb-nm">' + esc(cb.name) + '</div></div>';
     }).join('');
     Array.prototype.forEach.call(grid.querySelectorAll('.cb-item'), function (el) {
       el.addEventListener('click', function () {
         if (el.classList.contains('locked')) return;
         if (useCardback(el.getAttribute('data-id'))) { renderCardbacks(); try { if (window.Sfx) window.Sfx.tap(); } catch (_) { /* noop */ } }
+      });
+    });
+    // Buy a locked back with dust → auto-equip it.
+    Array.prototype.forEach.call(grid.querySelectorAll('.cb-buy'), function (b) {
+      b.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var id = b.getAttribute('data-buy'), r = buyBack(id);
+        if (r.ok) {
+          useCardback(id);
+          try { if (window.Sfx) { window.Sfx.reveal && window.Sfx.reveal('elite'); window.Sfx.haptic && window.Sfx.haptic([12, 30, 12]); } } catch (_) { /* noop */ }
+          try { if (window.Fx && window.Fx.confetti) window.Fx.confetti({ count: 50 }); } catch (_) { /* noop */ }
+          try { if (window.Track) window.Track('cardback_bought', { id: id }); } catch (_) { /* noop */ }
+          renderCardbacks();
+          var du = document.getElementById('clCollDust'); if (du) du.innerHTML = '&#10024; ' + dustBalance();
+        } else {
+          try { if (window.Sfx) window.Sfx.tap(); } catch (_) { /* noop */ }
+          if (r.reason === 'dust') { b.classList.add('shake'); setTimeout(function () { b.classList.remove('shake'); }, 420); }
+        }
       });
     });
   }
@@ -3447,6 +3565,7 @@
     achievements: achievementsState, openAchievements: openAchievements,
     dust: dustBalance, shine: shineCard, shineCost: shineCost, isShined: isShined,
     prime: primeNext, primeCost: primeCost, primeState: primeState,
+    draw: drawPack, drawInfo: drawInfo, buyBack: buyBack, backCost: backCost,
     addDust: function (n) { var s = load() || blank(); s.dust = Math.max(0, (s.dust || 0) + (+n || 0)); save(s); refreshOpen(); return s.dust; },
     forge: forgeCard, forgeCost: forgeCost, toggleShowcase: toggleShowcase, showcase: showcaseCards,
     reset: reset, grant: grant, addXp: addXp, setLevel: setLevel, exportData: exportData, importData: importData, seed: function () { return grant(SEED.map(function (s) { return s; })); },
