@@ -2072,6 +2072,9 @@
       '.cl-prime-b.legendary{background:rgba(232,194,74,.24);color:#f6e2a0}' +
       '.cl-prime-b:disabled{opacity:.4;cursor:default;filter:none}' +
       '.cl-prime-armed{flex:none;font-weight:800;font-size:.68rem;color:#f5c542}' +
+      // one-time attention pulse to point first-time players at the meta strips
+      '.cl-ft-glow{border-radius:13px;animation:clFtGlow 2.1s ease 2}' +
+      '@keyframes clFtGlow{0%,100%{box-shadow:inset 0 0 0 1px rgba(232,194,74,0)}50%{box-shadow:inset 0 0 0 2px rgba(232,194,74,.75),0 0 16px rgba(232,160,0,.4)}}' +
       // Buyable card back button (in the Backs tab)
       '.cb-buy{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);border:0;border-radius:999px;background:#e8a000;color:#1a1408;font:inherit;font-weight:800;font-size:.66rem;padding:5px 11px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.4);z-index:3}' +
       '.cb-buy:hover{filter:brightness(1.08)}.cb-buy.off{background:#5a5348;color:#2a2620;cursor:default}' +
@@ -3007,16 +3010,30 @@
     render();
     document.getElementById('clCollModal').classList.add('open'); lockScroll(true);
     try { if (window.Track) window.Track('collection_open', stats()); } catch (_) { /* noop */ }
-    // one-shot orientation tip on the first real visit
+    // one-shot meta-layer intro on the first real visit — teaches the loop that
+    // drives long-term engagement (collect → complete sets → spend dust), which the
+    // old one-liner glossed over.
     try {
       if (!localStorage.getItem('clVaultTip') && stats().count > 0) {
         localStorage.setItem('clVaultTip', '1');
+        var lg = currentLang().slice(0, 2);
+        var M = {
+          title: { en: 'How your vault works', es: 'Cómo funciona tu bóveda', fr: 'Comment marche ton coffre', de: 'So funktioniert dein Vault', pt: 'Como funciona seu vault' },
+          l1: { en: '🎴 Every win adds a card — duplicates become ✨dust.', es: '🎴 Cada victoria añade una carta — las repetidas dan ✨dust.', fr: '🎴 Chaque victoire ajoute une carte — les doublons donnent du ✨dust.', de: '🎴 Jeder Sieg bringt eine Karte — Duplikate werden zu ✨Dust.', pt: '🎴 Cada vitória adiciona uma carta — repetidas viram ✨dust.' },
+          l2: { en: '⭐ Complete sets for big XP; weekly quests pay more dust.', es: '⭐ Completa sets para XP; las quests semanales dan más dust.', fr: '⭐ Complète des séries pour de l’XP ; les quêtes hebdo donnent plus de dust.', de: '⭐ Vervollständige Sets für XP; Wochen-Quests bringen mehr Dust.', pt: '⭐ Complete sets para XP; quests semanais dão mais dust.' },
+          l3: { en: '✨ Spend dust: Prime your next pull, Draw a card, Forge or Shine.', es: '✨ Gasta dust: Prime tu próxima carta, Draw, Forge o Shine.', fr: '✨ Dépense le dust : Prime, Draw, Forge ou Shine.', de: '✨ Gib Dust aus: Prime, Draw, Forge oder Shine.', pt: '✨ Gaste dust: Prime, Draw, Forge ou Shine.' },
+          got: { en: 'Got it', es: 'Entendido', fr: 'Compris', de: 'Alles klar', pt: 'Entendi' }
+        };
+        var pick = function (o) { return o[lg] || o.en; };
         var tip = document.createElement('div');
-        tip.style.cssText = 'position:absolute;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:9;max-width:min(92vw,420px);background:#2f3540;border:1px solid rgba(232,160,0,.5);border-radius:12px;padding:11px 14px;font-size:.78rem;line-height:1.5;color:#e8dcc0;box-shadow:0 14px 40px rgba(0,0,0,.5)';
-        tip.innerHTML = '<b style="color:#f5c542">Welcome to your collection.</b> Tap any card for the 3D view. Duplicates become &#10024;dust — spend it to Shine a card or Forge missing set cards. Win two games in a day for the &#9889;Daily&nbsp;Double.';
+        tip.style.cssText = 'position:absolute;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:9;max-width:min(93vw,440px);background:#2f3540;border:1px solid rgba(232,160,0,.5);border-radius:14px;padding:14px 16px;color:#e8dcc0;box-shadow:0 14px 40px rgba(0,0,0,.5)';
+        tip.innerHTML = '<div style="font-weight:800;color:#f5c542;font-size:.9rem;margin-bottom:8px">' + pick(M.title) + '</div>' +
+          '<div style="font-size:.79rem;line-height:1.5;display:grid;gap:5px"><div>' + pick(M.l1) + '</div><div>' + pick(M.l2) + '</div><div>' + pick(M.l3) + '</div></div>' +
+          '<button class="cl-meta-got" style="display:block;margin:11px 0 0 auto;background:#e8a000;color:#1a1408;border:0;border-radius:999px;font:inherit;font-weight:800;font-size:.76rem;padding:6px 14px;cursor:pointer">' + pick(M.got) + '</button>';
         document.getElementById('clCollModal').appendChild(tip);
         var killTip = function () { try { tip.remove(); } catch (_) { /* noop */ } };
-        tip.addEventListener('click', killTip); setTimeout(killTip, 9000);
+        var gb = tip.querySelector('.cl-meta-got'); if (gb) gb.addEventListener('click', killTip);
+        setTimeout(killTip, 14000);
       }
     } catch (_) { /* noop */ }
   }
@@ -3484,6 +3501,7 @@
           '<div class="cl-q-body"><div class="cl-q-lbl">' + q.label + '</div>' +
           '<div class="cl-q-bar"><i style="width:' + pct + '%"></i></div></div>' + right + '</div>';
       }).join('') + '</div>';
+    try { if (!localStorage.getItem('cl_metastrips_pulsed')) { el.classList.add('cl-ft-glow'); setTimeout(function () { try { el.classList.remove('cl-ft-glow'); } catch (_) {} }, 4600); } } catch (_) { /* noop */ }
     Array.prototype.forEach.call(el.querySelectorAll('.cl-q-claim'), function (b) {
       b.addEventListener('click', function () {
         var r = claimQuest(b.getAttribute('data-q'));
@@ -3523,6 +3541,8 @@
       '<div class="cl-prime-body"><div class="cl-prime-ttl">Prime your next card</div>' +
       '<div class="cl-prime-sub">Spend dust to floor the rarity of your next prize</div></div>' +
       '<div class="cl-prime-btns">' + btns + '</div></div>';
+    // First-time attention pulse on the meta strips (Quests + Prime), once ever.
+    try { if (!localStorage.getItem('cl_metastrips_pulsed')) { el.classList.add('cl-ft-glow'); setTimeout(function () { try { el.classList.remove('cl-ft-glow'); } catch (_) {} }, 4600); localStorage.setItem('cl_metastrips_pulsed', '1'); } } catch (_) { /* noop */ }
     Array.prototype.forEach.call(el.querySelectorAll('.cl-prime-b'), function (b) {
       b.addEventListener('click', function () {
         if (b.disabled) return;

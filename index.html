@@ -2301,6 +2301,49 @@ function newCardMarkCoach() {
   } catch (_) {}
 }
 
+// First-board coach for the flagship CineLinks connect game: its "how do I move?"
+// mechanic is the least obvious in the suite, and its how-to is noAuto. On the very
+// first board (step 0), one inline bubble explains the hop rule, anchored above the
+// connections list. Once only; auto-dismisses on the first tap or after a while.
+let _clBoardCoachEl = null;
+function clFirstBoardCoach() {
+  try {
+    if (_clBoardCoachEl || localStorage.getItem('cl_clboard_seen')) return;
+    // Skip established players (they already know how to play).
+    try { if (window.Collection && Collection.stats && Collection.stats().count > 3) { localStorage.setItem('cl_clboard_seen', '1'); return; } } catch (_) {}
+    const anchor = document.getElementById('secLbl');
+    if (!anchor || anchor.offsetParent === null) return;   // board not visible yet
+    localStorage.setItem('cl_clboard_seen', '1');
+    const TX = {
+      en: '<b>Tap a connection to hop toward the target.</b> From a person → pick their film; from a film → pick its cast. Fewest clicks wins.',
+      es: '<b>Toca una conexión para acercarte al objetivo.</b> De una persona → su peli; de una peli → su reparto. Ganas con menos clics.',
+      fr: '<b>Touche une connexion pour te rapprocher de la cible.</b> D’une personne → son film ; d’un film → son casting. Moins de clics, c’est mieux.',
+      de: '<b>Tippe eine Verbindung, um dem Ziel näherzukommen.</b> Von einer Person → ihr Film; von einem Film → seine Besetzung. Weniger Klicks gewinnen.',
+      pt: '<b>Toque numa conexão para chegar ao alvo.</b> De uma pessoa → o filme dela; de um filme → o elenco. Menos cliques vence.'
+    };
+    const GOT = { en: 'Got it', es: 'Entendido', fr: 'Compris', de: 'Alles klar', pt: 'Entendi' };
+    let lg = 'en'; try { const l = localStorage.getItem('clLang'); if (l && /^[a-z]{2}-[A-Z]{2}$/.test(l)) lg = l.slice(0, 2); } catch (_) {}
+    const b = document.createElement('div'); b.className = 'coach'; _clBoardCoachEl = b;
+    b.innerHTML = '<div class="coach-tx">👆 ' + (TX[lg] || TX.en) + '</div><button class="coach-x">' + (GOT[lg] || GOT.en) + '</button><span class="coach-arrow"></span>';
+    document.body.appendChild(b);
+    const place = () => {
+      const r = anchor.getBoundingClientRect();
+      const bw = Math.min(b.offsetWidth || 320, window.innerWidth - 20);
+      const left = Math.max(10, Math.min(r.left + r.width / 2 - bw / 2, window.innerWidth - bw - 10));
+      let top = r.top - (b.offsetHeight || 90) - 12, below = false;
+      if (top < 12) { top = r.bottom + 12; below = true; }
+      b.style.left = left + 'px'; b.style.top = top + 'px';
+      b.style.setProperty('--ax', (r.left + r.width / 2 - left) + 'px');
+      if (below) { const ar = b.querySelector('.coach-arrow'); if (ar) { ar.style.bottom = 'auto'; ar.style.top = '-8px'; ar.style.transform = 'translateX(-50%) rotate(225deg)'; } }
+    };
+    setTimeout(place, 80); window.addEventListener('resize', place);
+    const kill = () => { try { window.removeEventListener('resize', place); b.remove(); } catch (_) {} _clBoardCoachEl = null; };
+    b.querySelector('.coach-x').onclick = kill;
+    try { const g = document.getElementById('grid'); if (g) g.addEventListener('click', kill, { once: true }); } catch (_) {}
+    setTimeout(kill, 12000);
+  } catch (_) {}
+}
+
 // ── Meta layer: portfolio streak + unified "share my whole day" ──────────────
 // Reads each game's own today-state (same signals markDoneBadges uses) and turns
 // the day into one shareable block — the cross-game retention/virality hook.
@@ -2669,6 +2712,32 @@ function metaAllDone(items) {
   const done = items.filter(i => i.done).length;
   return items.length > 0 && items[0].done && done >= DAY_GOAL;
 }
+// Daily Double reinforcement: the "⚡ +60" chip uses a title tooltip that's invisible
+// on touch. Once per day, when a second game would still bank the bonus, surface a
+// short auto-dismissing toast so the cross-game hook is actually seen.
+function dailyDoubleToast() {
+  try {
+    var ud = new Date().toISOString().slice(0, 10);
+    if (localStorage.getItem('cl_dd_toast') === ud) return;
+    localStorage.setItem('cl_dd_toast', ud);
+    var lg = 'en'; try { var l = localStorage.getItem('clLang'); if (l && /^[a-z]{2}-[A-Z]{2}$/.test(l)) lg = l.slice(0, 2); } catch (_) {}
+    var TX = {
+      en: '⚡ One more game today = +60 dust (Daily Double)',
+      es: '⚡ Un juego más hoy = +60 dust (Daily Double)',
+      fr: '⚡ Un jeu de plus aujourd’hui = +60 dust (Daily Double)',
+      de: '⚡ Noch ein Spiel heute = +60 Dust (Daily Double)',
+      pt: '⚡ Mais um jogo hoje = +60 dust (Daily Double)'
+    };
+    var el = document.createElement('div'); el.setAttribute('role', 'status');
+    el.style.cssText = 'position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(16px);z-index:240;max-width:min(92vw,420px);background:var(--s1,#2c343f);border:1px solid rgba(232,160,0,.4);border-radius:14px;padding:11px 15px;font-size:.82rem;font-weight:700;line-height:1.35;color:var(--txt,#f0f0f0);box-shadow:0 16px 44px rgba(0,0,0,.5);opacity:0;transition:opacity .3s,transform .3s;cursor:pointer';
+    el.textContent = TX[lg] || TX.en;
+    document.body.appendChild(el);
+    requestAnimationFrame(function () { requestAnimationFrame(function () { el.style.opacity = '1'; el.style.transform = 'translateX(-50%) translateY(0)'; }); });
+    var kill = function () { try { el.style.opacity = '0'; el.style.transform = 'translateX(-50%) translateY(16px)'; setTimeout(function () { el.remove(); }, 320); } catch (_) {} };
+    el.addEventListener('click', kill);
+    setTimeout(kill, 6000);
+  } catch (_) {}
+}
 function renderMetaBar() {
   const bar = document.getElementById('metaBar'); if (!bar) return;
   const items = metaItems();
@@ -2687,12 +2756,12 @@ function renderMetaBar() {
   else left = chip + '<span class="meta-prog"><b>' + Math.min(done, total) + '/' + total + '</b> ' + t('metaDoneL') + (done > total ? ' · +' + (done - total) : '') + '</span>';
   // Daily Double nudge: once one game is done (and the +60 bonus is still unclaimed),
   // surface the incentive on the next-game link so players know a 2nd game pays off.
-  let ddHint = '';
+  let ddHint = '', ddAvailable = false;
   try {
     const _b = JSON.parse(localStorage.getItem('cl_collection'));
     const _td = new Date().toISOString().slice(0, 10);
     const _dd = (_b && _b.dd && _b.dd.d === _td) ? _b.dd : null;
-    if (done >= 1 && !allDone && (!_dd || (!_dd.done && (_dd.n | 0) < 2))) ddHint = '<span class="meta-dd" title="' + t('metaDdHint') + '">⚡ +60</span>';
+    if (done >= 1 && !allDone && (!_dd || (!_dd.done && (_dd.n | 0) < 2))) { ddHint = '<span class="meta-dd" title="' + t('metaDdHint') + '">⚡ +60</span>'; ddAvailable = true; }
   } catch (_) {}
   let nudge = '';
   if (nextIdx >= 0) {
@@ -2702,6 +2771,7 @@ function renderMetaBar() {
   }
   const right = done > 0 ? '<button class="meta-share" id="metaShareBtn">' + t('metaShareBtn') + '</button>' : '';
   bar.innerHTML = '<div class="meta-info">' + left + nudge + '</div>' + right;
+  try { if (ddAvailable) dailyDoubleToast(); } catch (_) {}
   const chipEl = document.getElementById('metaStreakChip');
   if (chipEl) chipEl.onclick = openStreakModal;
   const nb = document.getElementById('metaNextBtn');
@@ -3238,11 +3308,12 @@ const game = window.game = {
     const prompt = document.getElementById('curPrompt');
     if (!prompt) return;
     // Only show prompt on first step - after that the player knows how it works
-    if (this.clicks > 0) { prompt.style.display = 'none'; return; }
+    if (this.clicks > 0) { prompt.style.display = 'none'; try { if (_clBoardCoachEl) { _clBoardCoachEl.remove(); _clBoardCoachEl = null; } } catch (_) {} return; }
     prompt.style.display = '';
     prompt.textContent = this.cur.type === 'person'
       ? t('curPromptPerson')
       : t('curPromptTitle');
+    try { setTimeout(clFirstBoardCoach, 500); } catch (_) {}   // one-time "how to move" bubble on the very first board
   },
 
   renderCurrentMeta() {
@@ -4697,6 +4768,7 @@ window.addEventListener('storage', function (e) {
     pt: 'Você ganhou sua <b>primeira carta</b> — ela fica na sua coleção. Volte amanhã para um novo desafio e mantenha sua sequência.'
   };
   var GOT = { en: 'Got it', es: 'Entendido', fr: 'Compris', de: 'Alles klar', pt: 'Entendi' };
+  var SEE = { en: 'Open collection', es: 'Ver colección', fr: 'Voir la collection', de: 'Sammlung öffnen', pt: 'Ver coleção' };
   var tries = 0;
   function place(b, card) {
     var r = card.getBoundingClientRect();
@@ -4722,12 +4794,16 @@ window.addEventListener('storage', function (e) {
       localStorage.setItem('cl_first_card_seen', '1');
       try { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (_) {}
       var b = document.createElement('div'); b.className = 'coach';
-      b.innerHTML = '<div class="coach-tx">🎉 ' + (TXT[lang()] || TXT.en) + '</div><button class="coach-x">' + (GOT[lang()] || GOT.en) + '</button><span class="coach-arrow"></span>';
+      b.innerHTML = '<div class="coach-tx">🎉 ' + (TXT[lang()] || TXT.en) + '</div>' +
+        '<div class="coach-row" style="display:flex;align-items:center;gap:8px;margin-top:9px">' +
+        '<button class="coach-see" style="background:none;border:0;color:var(--goldsoft);font-family:inherit;font-weight:800;font-size:.78rem;padding:6px 8px;cursor:pointer">' + (SEE[lang()] || SEE.en) + '</button>' +
+        '<button class="coach-x" style="margin:0 0 0 auto">' + (GOT[lang()] || GOT.en) + '</button></div><span class="coach-arrow"></span>';
       document.body.appendChild(b);
       var pos = function () { place(b, card); };
       setTimeout(pos, 380); window.addEventListener('resize', pos);
       var kill = function () { try { window.removeEventListener('resize', pos); b.remove(); } catch (_) {} };
       b.querySelector('.coach-x').onclick = kill;
+      var see = b.querySelector('.coach-see'); if (see) see.onclick = function () { kill(); try { if (window.Collection && Collection.openGallery) Collection.openGallery(); } catch (_) {} };
       setTimeout(kill, 11000);
       try { if (window.Sfx) Sfx.haptic([10]); } catch (_) {}
     } catch (_) {}
@@ -4808,8 +4884,11 @@ window.addEventListener('storage', function (e) {
       if (decided() || !invested()) return;
       var ss = document.getElementById('startScreen'); if (!ss || !ss.classList.contains('active')) return;
       fetch('/api/push?action=config').then(function (r) { return r.json(); }).then(function (c) {
-        if (c && c.key) setTimeout(function () { show(c.key); }, 3500);   // push enabled → offer it
-      }).catch(function () {});
+        if (c && c.key) { setTimeout(function () { show(c.key); }, 3500); return; }   // push enabled → offer it
+        // Push not configured (no VAPID key) → fall back to the PWA install prompt,
+        // the best return lever that doesn't depend on notifications.
+        try { if (window.maybeShowInstall) setTimeout(function () { maybeShowInstall(); }, 3500); } catch (_) {}
+      }).catch(function () { try { if (window.maybeShowInstall) maybeShowInstall(); } catch (_) {} });
     } catch (_) {}
   }
   window.addEventListener('load', function () { setTimeout(maybePush, 2600); });
