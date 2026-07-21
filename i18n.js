@@ -184,6 +184,16 @@ const I18N = {
     ccName: 'Ta collection', ccZero: 'Gagne un daily pour tirer ta première carte', ccHow: 'Comment ça marche', ccOpen: 'Ouvrir →', ccCards: 'cartes', ccLevel: 'Niveau', ccNewSuf: 'nouvelles', featToday: '★ auj.', pwaAdd: '📲 Ajoute CineLinks à ton écran d’accueil', pwaInstall: 'Installer',
     // hub mode labels
     modeDaily: 'Quotidien', modePractice: 'Entraînement', modePlay: 'Jouer', modeResults: 'Résultat', ftLede: 'Reliez le monde du cinéma — un <b>nouveau puzzle chaque jour</b>. Gagnez des cartes, gardez votre série.', ftB1a: 'Résolvez le puzzle du jour', ftB1b: 'Reliez films et acteurs en un minimum de coups', ftB2a: 'Gagnez des cartes à collectionner', ftB2b: 'Chaque victoire donne une carte film ou star', ftB3a: 'Revenez chaque jour', ftB3b: 'Construisez une série — de nouveaux puzzles chaque matin', ftPlay: 'Jouer le puzzle du jour', ftBrowse: 'Voir tous les jeux',
+    sectionDaily: 'Puzzles du jour', sectionRating: 'Jeux de notation', newTag: 'NOUVEAU',
+    navCreate: '+ Crée le tien', navStats: '📊 Tes stats',
+    metaStreakL: 'de série', metaDoneL: 'faits aujourd’hui', metaShareBtn: 'Partager', metaNext: 'Suivant', metaStart: 'Commence ici', galleryTitle: '🎬 Réponses du jour',
+    authSyncedTitle: '✓ Progression synchronisée', authBackedAccount: 'Sauvegardé sur ton compte Google · ', authBackedDevices: 'Sauvegardé sur tous tes appareils', authSyncTitle: 'Synchronisation multi-appareils', authSyncDesc: 'Connecte-toi avec Google pour sauvegarder tes séries sur tous tes appareils.', authSyncedPill: '✓ Synchronisé', authSignOut: 'Se déconnecter', authDelete: 'Supprimer mes données synchronisées', authPrivacy: 'Confidentialité', authMenuBlurb: 'Tes séries et ton historique sont sauvegardés et synchronisés entre appareils. Nous ne stockons que des stats de jeu et ton identifiant Google.',
+    descCl: 'Relie acteurs → films → séries en un minimum de clics', descClue: 'Devine le film d’après le synopsis et des indices', descFrame: 'Devine le film d’après une image', descCast: 'Devine le film d’après son casting', descPlot: 'Devine le film d’après son synopsis', descLine: 'Place les films sur une frise chronologique', descReel: 'Devine l’acteur d’après ses films', descGrid: 'Trouve un film reliant chaque paire', descChain: 'Construis la plus longue chaîne de films', descGroup: 'Regroupe 16 titres en 4 connexions',
+    howWorksTitle: 'Comment ça marche', howWorks1: 'Un nouveau puzzle ciné & séries chaque jour', howWorks2: 'Le Quotidien est un puzzle partagé — il garde ta série', howWorks3: 'L’Entraînement est illimité, à tout moment',
+    moreGames: '+ Plus de jeux', fewerGames: '− Moins de jeux',
+    streakDays: 'jours de série', streakClose: 'Fermer', streakMile: 'Nouveau palier !', streakTap: 'touche pour continuer', streakModeAny: 'N’importe quel jeu', streakModeCl: 'Quotidien CineLinks', metaAllDone: 'Journée terminée !',
+    loopPlay: 'Joue au quotidien', loopCollect: 'Révèle des cartes', loopShare: 'Partage tes résultats',
+    betaTitle: 'BÊTA privée', betaSub: 'Essaie un quotidien, puis touche Feedback si quelque chose cloche.',
     // click singular + goal tag
     clickSingular: 'clic', goalTag: 'OBJECTIF',
     // difficulty labels (from par)
@@ -231,6 +241,16 @@ const I18N = {
     ccName: 'Deine Sammlung', ccZero: 'Gewinne ein Daily für deine erste Karte', ccHow: 'So funktioniert’s', ccOpen: 'Öffnen →', ccCards: 'Karten', ccLevel: 'Level', ccNewSuf: 'neu', featToday: '★ heute', pwaAdd: '📲 CineLinks zum Startbildschirm hinzufügen', pwaInstall: 'Installieren',
     // hub mode labels
     modeDaily: 'Täglich', modePractice: 'Üben', modePlay: 'Spielen', modeResults: 'Ergebnis', ftLede: 'Verbinde die Filmwelt — ein <b>neues Filmrätsel jeden Tag</b>. Gewinne Karten, halte deine Serie.', ftB1a: 'Löse das heutige Rätsel', ftB1b: 'Verbinde Filme & Stars in den wenigsten Zügen', ftB2a: 'Gewinne Sammelkarten', ftB2b: 'Jeder Sieg bringt eine Film- oder Star-Karte', ftB3a: 'Komm täglich wieder', ftB3b: 'Baue eine Serie auf — jeden Morgen neue Rätsel', ftPlay: 'Heutiges Rätsel spielen', ftBrowse: 'Alle Spiele ansehen',
+    sectionDaily: 'Tägliche Rätsel', sectionRating: 'Bewertungsspiele', newTag: 'NEU',
+    navCreate: '+ Erstelle dein eigenes', navStats: '📊 Deine Statistiken',
+    metaStreakL: 'Tage Serie', metaDoneL: 'heute erledigt', metaShareBtn: 'Teilen', metaNext: 'Weiter', metaStart: 'Hier starten', galleryTitle: '🎬 Heutige Lösungen',
+    authSyncedTitle: '✓ Fortschritt synchronisiert', authBackedAccount: 'In deinem Google-Konto gesichert · ', authBackedDevices: 'Auf all deinen Geräten gesichert', authSyncTitle: 'Geräteübergreifende Synchronisierung', authSyncDesc: 'Melde dich mit Google an, um deine Serien auf jedem Gerät zu speichern.', authSyncedPill: '✓ Synchronisiert', authSignOut: 'Abmelden', authDelete: 'Meine synchronisierten Daten löschen', authPrivacy: 'Datenschutz', authMenuBlurb: 'Deine Serien und dein Verlauf werden gesichert und geräteübergreifend synchronisiert. Wir speichern nur Spielstatistiken und deine Google-ID.',
+    descCl: 'Verbinde Schauspieler → Filme → Serien mit den wenigsten Klicks', descClue: 'Errate den Film anhand von Handlung & Hinweisen', descFrame: 'Errate den Film anhand eines Bildes', descCast: 'Errate den Film anhand seiner Besetzung', descPlot: 'Errate den Film anhand seiner Handlung', descLine: 'Ordne Filme auf einem Zeitstrahl', descReel: 'Errate den Schauspieler anhand seiner Filme', descGrid: 'Nenne einen Film, der jedes Paar verbindet', descChain: 'Baue die längste Filmkette', descGroup: 'Gruppiere 16 Titel in 4 Verbindungen',
+    howWorksTitle: 'So funktioniert’s', howWorks1: 'Jeden Tag ein neues Film- & Serienrätsel', howWorks2: 'Das Tägliche ist ein gemeinsames Rätsel — es hält deine Serie', howWorks3: 'Das Üben ist unbegrenzt, jederzeit',
+    moreGames: '+ Mehr Spiele', fewerGames: '− Weniger Spiele',
+    streakDays: 'Tage Serie', streakClose: 'Schließen', streakMile: 'Neuer Meilenstein!', streakTap: 'tippen zum Fortfahren', streakModeAny: 'Beliebiges Spiel', streakModeCl: 'CineLinks täglich', metaAllDone: 'Tag abgeschlossen!',
+    loopPlay: 'Täglich spielen', loopCollect: 'Karten aufdecken', loopShare: 'Ergebnisse teilen',
+    betaTitle: 'Private BETA', betaSub: 'Probier ein Daily und tippe auf Feedback, wenn etwas nicht stimmt.',
     // click singular + goal tag
     clickSingular: 'Klick', goalTag: 'ZIEL',
     // difficulty labels (from par)
@@ -278,6 +298,16 @@ const I18N = {
     ccName: 'Sua coleção', ccZero: 'Vença qualquer daily para tirar sua primeira carta', ccHow: 'Como funciona', ccOpen: 'Abrir →', ccCards: 'cartas', ccLevel: 'Nível', ccNewSuf: 'novas', featToday: '★ hoje', pwaAdd: '📲 Adicione o CineLinks à tela inicial', pwaInstall: 'Instalar',
     // hub mode labels
     modeDaily: 'Diário', modePractice: 'Treino', modePlay: 'Jogar', modeResults: 'Resultado', ftLede: 'Conecte o mundo do cinema — um <b>novo desafio de filmes todo dia</b>. Ganhe cartas, mantenha sua sequência.', ftB1a: 'Resolva o desafio de hoje', ftB1b: 'Ligue filmes e atores nos menos movimentos', ftB2a: 'Ganhe cartas colecionáveis', ftB2b: 'Cada vitória dá uma carta de filme ou estrela', ftB3a: 'Volte todo dia', ftB3b: 'Crie uma sequência — novos desafios toda manhã', ftPlay: 'Jogar o desafio de hoje', ftBrowse: 'Ver todos os jogos',
+    sectionDaily: 'Desafios diários', sectionRating: 'Jogos de nota', newTag: 'NOVO',
+    navCreate: '+ Crie o seu', navStats: '📊 Suas estatísticas',
+    metaStreakL: 'de sequência', metaDoneL: 'feitos hoje', metaShareBtn: 'Compartilhar', metaNext: 'Próximo', metaStart: 'Comece aqui', galleryTitle: '🎬 Respostas de hoje',
+    authSyncedTitle: '✓ Progresso sincronizado', authBackedAccount: 'Salvo na sua conta Google · ', authBackedDevices: 'Salvo em todos os seus dispositivos', authSyncTitle: 'Sincronização entre dispositivos', authSyncDesc: 'Entre com o Google para salvar suas sequências em todos os dispositivos.', authSyncedPill: '✓ Sincronizado', authSignOut: 'Sair', authDelete: 'Apagar meus dados sincronizados', authPrivacy: 'Privacidade', authMenuBlurb: 'Suas sequências e histórico são salvos e sincronizados entre dispositivos. Só armazenamos estatísticas de jogo e seu ID do Google.',
+    descCl: 'Conecte atores → filmes → séries nos menos cliques', descClue: 'Adivinhe o filme pela sinopse e pistas', descFrame: 'Adivinhe o filme por um frame', descCast: 'Adivinhe o filme pelo elenco', descPlot: 'Adivinhe o filme pela sinopse', descLine: 'Coloque filmes numa linha do tempo', descReel: 'Adivinhe o ator pelos filmes', descGrid: 'Diga um filme que une cada par', descChain: 'Monte a maior cadeia de filmes', descGroup: 'Agrupe 16 títulos em 4 conexões',
+    howWorksTitle: 'Como funciona', howWorks1: 'Um novo desafio de cinema e TV todo dia', howWorks2: 'O Diário é um desafio compartilhado — mantém sua sequência', howWorks3: 'O Treino é ilimitado, a qualquer hora',
+    moreGames: '+ Mais jogos', fewerGames: '− Menos jogos',
+    streakDays: 'dias de sequência', streakClose: 'Fechar', streakMile: 'Novo marco!', streakTap: 'toque para continuar', streakModeAny: 'Qualquer jogo', streakModeCl: 'Diário CineLinks', metaAllDone: 'Dia completo!',
+    loopPlay: 'Jogue diário', loopCollect: 'Revele cartas', loopShare: 'Compartilhe',
+    betaTitle: 'BETA privada', betaSub: 'Experimente um diário e toque em Feedback se algo parecer errado.',
     // click singular + goal tag
     clickSingular: 'clique', goalTag: 'ALVO',
     // difficulty labels (from par)

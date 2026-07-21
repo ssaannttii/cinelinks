@@ -713,6 +713,31 @@
     Mastery: { es: 'Maestria', fr: 'Maitrise', de: 'Meisterschaft', pt: 'Maestria' }
   };
   function CT(key) { var m = CT_STR[key]; if (!m) return key; var l = currentLang().slice(0, 2); return m[l] || key; }
+  // Reveal / summary strings — shown after EVERY win in every mode, so they get
+  // their own small dictionary (fallback: English). Currency/game-term proper
+  // nouns (dust, Shine, Prime…) are kept as-is for consistency across the app.
+  var RV_STR = {
+    New:        { en: 'New', es: 'Nueva', fr: 'Nouvelle', de: 'Neu', pt: 'Nova' },
+    Legendary:  { en: 'Legendary', es: 'Legendaria', fr: 'Légendaire', de: 'Legendär', pt: 'Lendária' },
+    Elite:      { en: 'Elite', es: 'Élite', fr: 'Élite', de: 'Elite', pt: 'Elite' },
+    Rare:       { en: 'Rare', es: 'Rara', fr: 'Rare', de: 'Selten', pt: 'Rara' },
+    Common:     { en: 'Common', es: 'Común', fr: 'Commune', de: 'Gewöhnlich', pt: 'Comum' },
+    tapNext:    { en: 'tap for next', es: 'toca para la siguiente', fr: 'touche pour la suivante', de: 'tippen für weiter', pt: 'toque para a próxima' },
+    tapFinish:  { en: 'tap to finish', es: 'toca para terminar', fr: 'touche pour terminer', de: 'tippen zum Beenden', pt: 'toque para finalizar' },
+    landTip:    { en: 'New cards land in <b>Your collection</b> on the home page', es: 'Las cartas nuevas aparecen en <b>Tu colección</b> en la página de inicio', fr: 'Les nouvelles cartes arrivent dans <b>Ta collection</b> sur la page d’accueil', de: 'Neue Karten landen in <b>Deine Sammlung</b> auf der Startseite', pt: 'As cartas novas aparecem em <b>Sua coleção</b> na página inicial' },
+    cardOne:    { en: 'card', es: 'carta', fr: 'carte', de: 'Karte', pt: 'carta' },
+    cardMany:   { en: 'cards', es: 'cartas', fr: 'cartes', de: 'Karten', pt: 'cartas' },
+    setComplete:{ en: 'Set complete', es: 'Set completado', fr: 'Série complétée', de: 'Set komplett', pt: 'Set completo' },
+    levelUp:    { en: 'Level up — level', es: '¡Subiste al nivel', fr: 'Niveau supérieur — niveau', de: 'Level-Up — Level', pt: 'Subiu de nível — nível' },
+    backUnlocked:{ en: 'Card back unlocked', es: 'Reverso desbloqueado', fr: 'Dos de carte débloqué', de: 'Kartenrücken freigeschaltet', pt: 'Verso desbloqueado' },
+    achievement:{ en: 'Achievement', es: 'Logro', fr: 'Succès', de: 'Erfolg', pt: 'Conquista' },
+    moreAchv:   { en: 'more achievements', es: 'logros más', fr: 'succès de plus', de: 'weitere Erfolge', pt: 'conquistas a mais' },
+    dustEarned: { en: 'dust earned', es: 'dust ganado', fr: 'dust gagné', de: 'Dust erhalten', pt: 'dust ganho' },
+    contBtn:    { en: 'Continue', es: 'Continuar', fr: 'Continuer', de: 'Weiter', pt: 'Continuar' },
+    viewColl:   { en: 'View collection', es: 'Ver colección', fr: 'Voir la collection', de: 'Sammlung ansehen', pt: 'Ver coleção' }
+  };
+  function LT(key) { var m = RV_STR[key]; if (!m) return key; var l = currentLang().slice(0, 2); return m[l] || m.en || key; }
+  function rarLabel(rarity) { var rl = RARITY[rarity]; return rl ? LT(rl.label) : rarity; }
   function locName(c) { return (c && c.i18n && c.i18n[_uiLang]) ? c.i18n[_uiLang] : (c ? (c.name || '') : ''); }
   function locCard(c) { var n = locName(c); return (n === c.name) ? c : Object.assign({}, c, { name: n }); }
   function tmdbTitle(type, id, lang) {
@@ -3359,7 +3384,7 @@
           '<div class="clr-edge e-l"></div><div class="clr-edge e-r"></div><div class="clr-edge e-t"></div><div class="clr-edge e-b"></div>' +
           '</div><div class="clr-shock" id="clrShock"></div></div>' +
           '<div class="clr-cap" id="clrCap"></div>' +
-          '<div class="clr-hint">' + (idx < queue.length - 1 ? 'tap for next' : 'tap to finish') + (function () { try { if (!localStorage.getItem('clRevealTip')) { localStorage.setItem('clRevealTip', '1'); return '<div style="margin-top:6px;font-size:.68rem;color:#b9a97f">New cards land in <b>Your collection</b> on the home page</div>'; } } catch (_) { /* noop */ } return ''; })() + '</div>';
+          '<div class="clr-hint">' + (idx < queue.length - 1 ? LT('tapNext') : LT('tapFinish')) + (function () { try { if (!localStorage.getItem('clRevealTip')) { localStorage.setItem('clRevealTip', '1'); return '<div style="margin-top:6px;font-size:.68rem;color:#b9a97f">' + LT('landTip') + '</div>'; } } catch (_) { /* noop */ } return ''; })() + '</div>';
         document.getElementById('clrFace').innerHTML = theme.card(c, CTX, 0);
         setDots();
         var flip = document.getElementById('clrFlip');
@@ -3396,7 +3421,7 @@
       function showCap(c) {
         var cap = document.getElementById('clrCap'); if (!cap) return;
         var rl = RARITY[c.rarity];
-        cap.innerHTML = '<span class="clr-tag new">New</span><span class="clr-rare-lbl" style="color:' + rl.ring + '">' + rl.label + '</span><span class="clr-xp">+' + (XP[c.rarity] || 10) + ' XP</span>';
+        cap.innerHTML = '<span class="clr-tag new">' + LT('New') + '</span><span class="clr-rare-lbl" style="color:' + rl.ring + '">' + rarLabel(c.rarity) + '</span><span class="clr-xp">+' + (XP[c.rarity] || 10) + ' XP</span>';
         try { if (window.Sfx) window.Sfx.haptic(c.rarity === 'legendary' ? [20, 40, 60] : c.rarity === 'elite' ? [15, 30] : 10); } catch (_) { /* noop */ }
       }
       function next() { clearT(); stopShader(); stopGyro(); idx++; if (idx >= queue.length) summary(); else card(queue[idx]); }
@@ -3406,24 +3431,24 @@
         var finalXp = (load() || blank()).xp || 0, lvlNow = levelFromXp(finalXp);
         if (lvlNow > lvlBefore) { try { if (window.Sfx) window.Sfx.levelUp(); } catch (_) { /* noop */ } }
         else if (newSets.length) { try { if (window.Sfx) window.Sfx.allDone(); } catch (_) { /* noop */ } }
-        var setLines = newSets.map(function (st) { return '<div class="clr-sum-lvl"><svg viewBox="0 0 24 24" width="1em" height="1em" style="vertical-align:-.12em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.6 6 .8-4.4 4.2 1.1 6L12 17.8 6.7 19.6l1.1-6L3.4 9.4l6-.8z"/></svg> Set complete: ' + esc(st.name) + ' &middot; +' + st.bonus + ' XP</div>'; }).join('');
-        var lvlLine = lvlNow > lvlBefore ? '<div class="clr-sum-lvl">Level up &mdash; level ' + lvlNow + '! 🎉</div>' : '';
+        var setLines = newSets.map(function (st) { return '<div class="clr-sum-lvl"><svg viewBox="0 0 24 24" width="1em" height="1em" style="vertical-align:-.12em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.6 6 .8-4.4 4.2 1.1 6L12 17.8 6.7 19.6l1.1-6L3.4 9.4l6-.8z"/></svg> ' + LT('setComplete') + ': ' + esc(st.name) + ' &middot; +' + st.bonus + ' XP</div>'; }).join('');
+        var lvlLine = lvlNow > lvlBefore ? '<div class="clr-sum-lvl">' + LT('levelUp') + ' ' + lvlNow + '! 🎉</div>' : '';
         var newBacks = lvlNow > lvlBefore ? cardbacksUnlockedBetween(lvlBefore, lvlNow) : [];
-        var backLine = newBacks.map(function (cb) { return '<div class="clr-sum-lvl"><svg viewBox="0 0 24 24" width="1em" height="1em" style="vertical-align:-.12em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2.4"/><circle cx="12" cy="12" r="3.2"/></svg> Card back unlocked: ' + esc(cb.name) + '</div>'; }).join('');
+        var backLine = newBacks.map(function (cb) { return '<div class="clr-sum-lvl"><svg viewBox="0 0 24 24" width="1em" height="1em" style="vertical-align:-.12em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2.4"/><circle cx="12" cy="12" r="3.2"/></svg> ' + LT('backUnlocked') + ': ' + esc(cb.name) + '</div>'; }).join('');
         var newAchv = []; try { newAchv = syncAchievements(); } catch (_) { /* noop */ }
         if (newAchv.length) { try { if (window.Sfx) window.Sfx.allDone(); } catch (_) { /* noop */ } }
-        var achLine = newAchv.slice(0, 3).map(function (a) { return '<div class="clr-sum-lvl">' + a.icon + ' Achievement: ' + esc(a.name) + '</div>'; }).join('') +
-          (newAchv.length > 3 ? '<div class="clr-sum-lvl"><svg viewBox="0 0 24 24" width="1em" height="1em" style="vertical-align:-.12em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="5.5"/><path d="M8.5 13.5 7 21l5-2.5L17 21l-1.5-7.5"/></svg> +' + (newAchv.length - 3) + ' more achievements</div>' : '');
+        var achLine = newAchv.slice(0, 3).map(function (a) { return '<div class="clr-sum-lvl">' + a.icon + ' ' + LT('achievement') + ': ' + esc(a.name) + '</div>'; }).join('') +
+          (newAchv.length > 3 ? '<div class="clr-sum-lvl"><svg viewBox="0 0 24 24" width="1em" height="1em" style="vertical-align:-.12em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="5.5"/><path d="M8.5 13.5 7 21l5-2.5L17 21l-1.5-7.5"/></svg> +' + (newAchv.length - 3) + ' ' + LT('moreAchv') + '</div>' : '');
         // achievement-gated card backs (e.g. Mastery) newly crossed this win
-        if (newAchv.length) { var ac2 = achvCount(); backLine += cardbacksUnlockedByAchv(ac2 - newAchv.length, ac2).map(function (cb) { return '<div class="clr-sum-lvl"><svg viewBox="0 0 24 24" width="1em" height="1em" style="vertical-align:-.12em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2.4"/><circle cx="12" cy="12" r="3.2"/></svg> Card back unlocked: ' + esc(cb.name) + '</div>'; }).join(''); }
+        if (newAchv.length) { var ac2 = achvCount(); backLine += cardbacksUnlockedByAchv(ac2 - newAchv.length, ac2).map(function (cb) { return '<div class="clr-sum-lvl"><svg viewBox="0 0 24 24" width="1em" height="1em" style="vertical-align:-.12em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2.4"/><circle cx="12" cy="12" r="3.2"/></svg> ' + LT('backUnlocked') + ': ' + esc(cb.name) + '</div>'; }).join(''); }
         // _pendingDust bundles every source this session (dupes, level-ups, the
         // Daily Double, trophies) — so label it generically, not "from duplicates".
-        var dustLine = _pendingDust > 0 ? '<div class="clr-sum-lvl">&#10024; +' + _pendingDust + ' dust earned</div>' : '';
+        var dustLine = _pendingDust > 0 ? '<div class="clr-sum-lvl">&#10024; +' + _pendingDust + ' ' + LT('dustEarned') + '</div>' : '';
         _pendingDust = 0;
         document.getElementById('clrBody').innerHTML =
-          '<div class="clr-sum"><div class="clr-sum-h">+' + queue.length + (queue.length === 1 ? ' card' : ' cards') + '</div>' +
+          '<div class="clr-sum"><div class="clr-sum-h">+' + queue.length + ' ' + (queue.length === 1 ? LT('cardOne') : LT('cardMany')) + '</div>' +
           '<div class="clr-sum-x">+' + gained + ' XP</div>' + setLines + lvlLine + backLine + achLine + dustLine +
-          '<div class="clr-sum-btns"><button class="clr-btn" id="clrAgain">Continue</button><button class="clr-btn gold" id="clrView">View collection</button></div></div>';
+          '<div class="clr-sum-btns"><button class="clr-btn" id="clrAgain">' + LT('contBtn') + '</button><button class="clr-btn gold" id="clrView">' + LT('viewColl') + '</button></div></div>';
         var sk = document.getElementById('clrSkip'); if (sk) sk.style.display = 'none';
         ov.onclick = null;
         document.getElementById('clrView').onclick = function (e) { e.stopPropagation(); closeReveal(); openGallery(); };
