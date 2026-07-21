@@ -734,7 +734,44 @@
     moreAchv:   { en: 'more achievements', es: 'logros más', fr: 'succès de plus', de: 'weitere Erfolge', pt: 'conquistas a mais' },
     dustEarned: { en: 'dust earned', es: 'dust ganado', fr: 'dust gagné', de: 'Dust erhalten', pt: 'dust ganho' },
     contBtn:    { en: 'Continue', es: 'Continuar', fr: 'Continuer', de: 'Weiter', pt: 'Continuar' },
-    viewColl:   { en: 'View collection', es: 'Ver colección', fr: 'Voir la collection', de: 'Sammlung ansehen', pt: 'Ver coleção' }
+    viewColl:   { en: 'View collection', es: 'Ver colección', fr: 'Voir la collection', de: 'Sammlung ansehen', pt: 'Ver coleção' },
+    // ── Vault chrome (tabs, header, quests, prime, draw, sets, backs, trophies) ──
+    Cards:      { en: 'Cards', es: 'Cartas', fr: 'Cartes', de: 'Karten', pt: 'Cartas' },
+    Showcase:   { en: 'Showcase', es: 'Vitrina', fr: 'Vitrine', de: 'Vitrine', pt: 'Vitrine' },
+    Backs:      { en: 'Backs', es: 'Reversos', fr: 'Dos', de: 'Rücken', pt: 'Versos' },
+    Trophies:   { en: 'Trophies', es: 'Trofeos', fr: 'Trophées', de: 'Trophäen', pt: 'Troféus' },
+    collTitle:  { en: 'Your <span>collection</span>', es: 'Tu <span>colección</span>', fr: 'Ta <span>collection</span>', de: 'Deine <span>Sammlung</span>', pt: 'Sua <span>coleção</span>' },
+    qWeekly:    { en: 'Weekly quests', es: 'Misiones semanales', fr: 'Quêtes hebdo', de: 'Wochen-Quests', pt: 'Missões semanais' },
+    qToClaim:   { en: 'to claim', es: 'por reclamar', fr: 'à réclamer', de: 'einlösbar', pt: 'para resgatar' },
+    qResets:    { en: 'resets weekly', es: 'se renueva cada semana', fr: 'réinit. chaque semaine', de: 'wöchentlich neu', pt: 'renova toda semana' },
+    qClaim:     { en: 'Claim', es: 'Reclamar', fr: 'Réclamer', de: 'Einlösen', pt: 'Resgatar' },
+    pTitle:     { en: 'Prime your next card', es: 'Prime tu próxima carta', fr: 'Prime ta prochaine carte', de: 'Prime deine nächste Karte', pt: 'Prime sua próxima carta' },
+    pSub:       { en: 'Spend dust to floor the rarity of your next prize', es: 'Gasta dust para asegurar la rareza de tu próximo premio', fr: 'Dépense du dust pour garantir la rareté de ton prochain gain', de: 'Gib Dust aus, um die Seltenheit deines nächsten Gewinns zu sichern', pt: 'Gaste dust para garantir a raridade do seu próximo prêmio' },
+    pGuaranteed:{ en: 'Next card guaranteed', es: 'Próxima carta garantizada', fr: 'Prochaine carte garantie', de: 'Nächste Karte garantiert', pt: 'Próxima carta garantida' },
+    pApplies:   { en: 'Applies to your next daily prize card', es: 'Se aplica a tu próxima carta-premio diaria', fr: 'S’applique à ta prochaine carte-prix quotidienne', de: 'Gilt für deine nächste tägliche Preiskarte', pt: 'Aplica-se à sua próxima carta-prêmio diária' },
+    pArmed:     { en: 'Armed', es: 'Activo', fr: 'Armé', de: 'Bereit', pt: 'Ativo' },
+    dTitle:     { en: 'Draw a random card', es: 'Saca una carta al azar', fr: 'Tire une carte au hasard', de: 'Ziehe eine zufällige Karte', pt: 'Sorteie uma carta aleatória' },
+    dOwnedAll:  { en: 'You own every set card', es: 'Ya tienes todas las cartas de sets', fr: 'Tu as toutes les cartes de séries', de: 'Du hast alle Set-Karten', pt: 'Você tem todas as cartas de sets' },
+    dNothing:   { en: 'Nothing left to draw here', es: 'No queda nada que sacar', fr: 'Plus rien à tirer ici', de: 'Nichts mehr zum Ziehen', pt: 'Nada mais para sortear' },
+    dSubA:      { en: 'Pull one of', es: 'Saca una de', fr: 'Tire une des', de: 'Zieh eine von', pt: 'Puxe uma de' },
+    dSubB:      { en: 'cards you don’t own yet — favours sets you’ve started', es: 'cartas que aún no tienes — prioriza sets que empezaste', fr: 'cartes que tu n’as pas encore — priorise les séries commencées', de: 'Karten, die dir noch fehlen — bevorzugt begonnene Sets', pt: 'cartas que ainda faltam — prioriza sets começados' },
+    sCollections:{ en: 'Collections', es: 'Colecciones', fr: 'Collections', de: 'Sammlungen', pt: 'Coleções' },
+    sHeroSub:   { en: 'Complete a set to bank a big XP bonus. Sets reveal once you collect one of their cards.', es: 'Completa un set para llevarte un gran bonus de XP. Los sets se revelan al conseguir una de sus cartas.', fr: 'Complète une série pour empocher un gros bonus d’XP. Les séries se révèlent dès que tu obtiens une de leurs cartes.', de: 'Vervollständige ein Set für einen großen XP-Bonus. Sets erscheinen, sobald du eine ihrer Karten sammelst.', pt: 'Complete um set para ganhar um grande bônus de XP. Os sets aparecem ao conseguir uma de suas cartas.' },
+    sYours:     { en: 'Your sets', es: 'Tus sets', fr: 'Tes séries', de: 'Deine Sets', pt: 'Seus sets' },
+    sUnlocked:  { en: 'unlocked', es: 'desbloqueados', fr: 'débloquées', de: 'freigeschaltet', pt: 'desbloqueados' },
+    sMilestones:{ en: 'Milestones', es: 'Hitos', fr: 'Paliers', de: 'Meilensteine', pt: 'Marcos' },
+    sUndiscovered:{ en: 'Undiscovered', es: 'Por descubrir', fr: 'À découvrir', de: 'Unentdeckt', pt: 'Por descobrir' },
+    sToFind:    { en: 'to find', es: 'por encontrar', fr: 'à trouver', de: 'zu finden', pt: 'para encontrar' },
+    backsSub:   { en: 'Unlock card backs by leveling up or earning Mastery — or buy any locked back with ✨dust. Tap to equip.', es: 'Desbloquea reversos subiendo de nivel o ganando Maestría — o compra cualquiera con ✨dust. Toca para equipar.', fr: 'Débloque des dos en montant de niveau ou via la Maîtrise — ou achète-en un avec du ✨dust. Touche pour équiper.', de: 'Schalte Kartenrücken per Level oder Meisterschaft frei — oder kauf einen mit ✨Dust. Zum Ausrüsten tippen.', pt: 'Desbloqueie versos subindo de nível ou com Maestria — ou compre qualquer um com ✨dust. Toque para equipar.' },
+    trophyBounty:{ en: 'Each trophy pays a one-time ✨40 dust bounty.', es: 'Cada trofeo da una recompensa única de ✨40 dust.', fr: 'Chaque trophée verse une prime unique de ✨40 dust.', de: 'Jede Trophäe zahlt einmalig ✨40 Dust.', pt: 'Cada troféu dá uma recompensa única de ✨40 dust.' },
+    searchCards:{ en: 'Search cards…', es: 'Buscar cartas…', fr: 'Rechercher…', de: 'Karten suchen…', pt: 'Buscar cartas…' },
+    noMatch:    { en: 'No cards match', es: 'Ninguna carta coincide con', fr: 'Aucune carte pour', de: 'Keine Karten für', pt: 'Nenhuma carta corresponde a' },
+    allBacks:   { en: 'All card backs unlocked', es: 'Todos los reversos desbloqueados', fr: 'Tous les dos débloqués', de: 'Alle Kartenrücken freigeschaltet', pt: 'Todos os versos desbloqueados' },
+    lvlWord:    { en: 'Level', es: 'Nivel', fr: 'Niveau', de: 'Level', pt: 'Nível' },
+    scRemove:   { en: 'In your showcase — remove', es: 'En tu vitrina — quitar', fr: 'Dans ta vitrine — retirer', de: 'In deiner Vitrine — entfernen', pt: 'Na sua vitrine — remover' },
+    scAdd:      { en: 'Add to showcase', es: 'Añadir a la vitrina', fr: 'Ajouter à la vitrine', de: 'Zur Vitrine hinzufügen', pt: 'Adicionar à vitrine' },
+    scSubA:     { en: 'Your vitrine — up to', es: 'Tu vitrina — hasta', fr: 'Ta vitrine — jusqu’à', de: 'Deine Vitrine — bis zu', pt: 'Sua vitrine — até' },
+    scSubB:     { en: 'cards. Open a card and tap ★ Showcase to feature it.', es: 'cartas. Abre una carta y toca ★ Vitrina para destacarla.', fr: 'cartes. Ouvre une carte et touche ★ Vitrine pour la mettre en avant.', de: 'Karten. Öffne eine Karte und tippe ★ Vitrine, um sie zu zeigen.', pt: 'cartas. Abra uma carta e toque ★ Vitrine para destacá-la.' }
   };
   function LT(key) { var m = RV_STR[key]; if (!m) return key; var l = currentLang().slice(0, 2); return m[l] || m.en || key; }
   function rarLabel(rarity) { var rl = RARITY[rarity]; return rl ? LT(rl.label) : rarity; }
@@ -2454,13 +2491,13 @@
     m.innerHTML =
       '<div class="cl-vault-hd">' +
         '<div class="cl-coll-hd-top">' +
-          '<div><div class="cl-coll-title">Your <span>collection</span></div><div class="cl-coll-sub" id="clCollSub"></div></div>' +
+          '<div><div class="cl-coll-title">' + LT('collTitle') + '</div><div class="cl-coll-sub" id="clCollSub"></div></div>' +
           '<div class="cl-coll-hd-btns" id="clCollHdBtns"><a class="cl-coll-dust cl-coll-battle" href="/rating/toptrumps" title="Top Trumps — battle the CPU with cards from this collection">&#9876;&#65039;<span class="lbl">&nbsp;Battle</span></a><span class="cl-coll-dust" id="clCollDD" title="Daily Double — win two daily games today for bonus dust">&#9889; 0/2</span><span class="cl-coll-dust" id="clCollDust" title="Dust — earned from duplicate cards, leveling up, the Daily Double and trophies. Spend it to Prime your next card (guarantee its rarity), Shine a card (permanent foil) or Forge a missing set card.">&#10024; 0</span><button class="cl-coll-x" aria-label="Close">&#10005;</button></div>' +
         '</div>' +
         '<div class="cl-coll-lvl">' +
           '<div class="cl-lvl-ring"><svg viewBox="0 0 52 52"><circle class="bg" cx="26" cy="26" r="22"></circle><circle class="fg" id="clCollRing" cx="26" cy="26" r="22" stroke-dasharray="' + RING_C + '" stroke-dashoffset="' + RING_C + '"></circle></svg><b id="clCollLvl">1</b></div>' +
           '<div class="cl-coll-xp">' +
-            '<div class="cl-coll-xp-l"><span id="clCollXpName">Level 1</span><span class="cl-coll-next" id="clCollNext"></span></div>' +
+            '<div class="cl-coll-xp-l"><span id="clCollXpName">' + LT('lvlWord') + ' 1</span><span class="cl-coll-next" id="clCollNext"></span></div>' +
             '<div class="cl-coll-xp-bar"><i id="clCollXpFill" style="width:0%"></i></div>' +
             '<div class="cl-coll-xp-l" style="margin-top:4px"><span id="clCollXpNum"></span><span id="clCollPity" title="Guaranteed floors: a dry streak always self-corrects"></span></div>' +
           '</div>' +
@@ -2559,7 +2596,7 @@
     var have = achvCount();
     var ac = CARDBACKS.filter(function (cb) { return cb.achv && have < cb.achv; }).sort(function (a, b) { return a.achv - b.achv; })[0];
     if (ac) return 'Next: ' + ac.name + ' back &middot; ' + ac.achv + ' trophies';
-    return 'All card backs unlocked';
+    return LT('allBacks');
   }
   // Tier sections get physically larger cards as rarity climbs (presence = status);
   // min() keeps phones at 2 columns instead of blowing up to a single giant card.
@@ -2594,7 +2631,7 @@
     _uiLang = currentLang();
     var st = stats();
     document.getElementById('clCollLvl').textContent = st.level;
-    document.getElementById('clCollXpName').textContent = 'Level ' + st.level;
+    document.getElementById('clCollXpName').textContent = LT('lvlWord') + ' ' + st.level;
     document.getElementById('clCollXpNum').innerHTML = st.xpInto + ' / ' + st.xpSpan + ' XP<span class="cl-xp-extra"> to level ' + (st.level + 1) + '</span>';
     document.getElementById('clCollXpFill').style.width = Math.max(3, Math.min(100, st.xpSpan ? (st.xpInto / st.xpSpan) * 100 : 0)) + '%';
     var ring = document.getElementById('clCollRing');
@@ -2631,7 +2668,7 @@
     // nav tabs (Cards badge = unseen new cards)
     document.getElementById('clVaultTabs').innerHTML = TABS.map(function (t) {
       var bdg = (t.k === 'cards' && st.newCount) ? '<span class="bdg">' + st.newCount + '</span>' : '';
-      return '<button class="cl-vtab' + (_tab === t.k ? ' on' : '') + '" data-k="' + t.k + '"><span class="ic">' + t.ic + '</span><span>' + t.label + '</span>' + bdg + '</button>';
+      return '<button class="cl-vtab' + (_tab === t.k ? ' on' : '') + '" data-k="' + t.k + '"><span class="ic">' + t.ic + '</span><span>' + LT(t.label) + '</span>' + bdg + '</button>';
     }).join('');
     Array.prototype.forEach.call(document.querySelectorAll('#clVaultTabs .cl-vtab'), function (b) {
       b.addEventListener('click', function () {
@@ -2651,13 +2688,13 @@
     if (_tab === 'backs') {
       tools.innerHTML = '';
       grid.style.display = 'block';
-      grid.innerHTML = '<div class="cb-sub" style="margin:8px 2px 12px">Unlock card backs by leveling up or earning Mastery — or buy any locked back with &#10024;dust. Tap to equip.</div><div class="cb-grid" id="cbGrid"></div>';
+      grid.innerHTML = '<div class="cb-sub" style="margin:8px 2px 12px">' + LT('backsSub') + '</div><div class="cb-grid" id="cbGrid"></div>';
       renderCardbacks(); return;
     }
     if (_tab === 'trophies') {
       tools.innerHTML = '';
       grid.style.display = 'block';
-      grid.innerHTML = '<div class="cb-sub" id="acSub" style="margin:8px 2px 12px"></div><div class="cb-sub" style="margin:-6px 2px 12px">Each trophy pays a one-time &#10024;40 dust bounty.</div><div class="ac-grid" id="acGrid"></div>';
+      grid.innerHTML = '<div class="cb-sub" id="acSub" style="margin:8px 2px 12px"></div><div class="cb-sub" style="margin:-6px 2px 12px">' + LT('trophyBounty') + '</div><div class="ac-grid" id="acGrid"></div>';
       renderAchv(); return;
     }
 
@@ -2670,7 +2707,7 @@
       { k: 'rare', gem: RARITY.rare.ring, label: st.byRarity.rare }, { k: 'common', gem: '#9a9a9a', label: st.byRarity.common }
     ];
     tools.innerHTML =
-      '<span class="cl-vsearch"><input id="clVaultQ" type="search" placeholder="Search cards…" autocomplete="off" value="' + esc(_query) + '"></span>' +
+      '<span class="cl-vsearch"><input id="clVaultQ" type="search" placeholder="' + LT('searchCards') + '" autocomplete="off" value="' + esc(_query) + '"></span>' +
       '<div class="cl-vchips">' +
         chips.map(function (c) {
           return '<button class="cl-coll-chip' + (_filter === c.k ? ' on' : '') + '" data-k="' + c.k + '"' + (c.gem ? ' style="--gc:' + c.gem + '"' : '') + '>' + (c.gem ? '<span class="gem"></span>' : '') + c.label + '</button>';
@@ -2705,7 +2742,7 @@
     grid.style.gridTemplateColumns = ''; grid.style.justifyContent = ''; grid.style.gap = '';
     if (!cards.length) {
       grid.innerHTML = query
-        ? '<div class="cl-coll-empty"><div class="cl-empty-row"><div class="cl-ghost">?</div><div class="cl-ghost">?</div><div class="cl-ghost">?</div></div>No cards match &ldquo;' + esc(_query) + '&rdquo;.</div>'
+        ? '<div class="cl-coll-empty"><div class="cl-empty-row"><div class="cl-ghost">?</div><div class="cl-ghost">?</div><div class="cl-ghost">?</div></div>' + LT('noMatch') + ' &ldquo;' + esc(_query) + '&rdquo;.</div>'
         : '<div class="cl-coll-empty"><div class="cl-empty-row"><div class="cl-ghost">?</div><div class="cl-ghost">?</div><div class="cl-ghost">?</div></div>' +
           '<div class="cl-empty-title">Start your collection</div>' +
           '<div>Win a daily game to pull your first card. Better solves can upgrade the prize.</div>' +
@@ -2775,7 +2812,7 @@
     var cells = cards.map(function (c, i) { return theme.card(c, CTX, i); }).join('');
     for (var i = cards.length; i < SHOWCASE_MAX; i++) cells += '<div class="cl-slot"><div class="cl-slot-q">&#9733;</div><div class="cl-slot-nm">Empty slot</div></div>';
     grid.innerHTML =
-      '<div class="cb-sub" style="margin:8px 2px 12px">Your vitrine — up to ' + SHOWCASE_MAX + ' cards. Open any card and tap &#9733; Showcase to feature it here.</div>' +
+      '<div class="cb-sub" style="margin:8px 2px 12px">' + LT('scSubA') + ' ' + SHOWCASE_MAX + ' ' + LT('scSubB') + '</div>' +
       '<div class="cl-sec-grid" style="grid-template-columns:repeat(auto-fill,' + tierCols(theme, 'legendary') + ')">' + cells + '</div>' +
       (cards.length ? '<button class="cl-share-btn" id="clShowShare" style="max-width:340px;display:block;margin:16px auto 0">&#8599; Share my showcase</button>' : '');
     try { if (theme.mount) theme.mount(grid); } catch (_) { /* noop */ }
@@ -2849,7 +2886,7 @@
       var lv = lvlAfter, into = xpAfter - xpForLevel(lv), span = xpForLevel(lv + 1) - xpForLevel(lv);
       if (fill) { fill.classList.add('gain'); fill.style.width = Math.max(3, Math.min(100, span ? (into / span) * 100 : 0)) + '%'; }
       if (bar) { bar.classList.remove('flash'); void bar.offsetWidth; bar.classList.add('flash'); }
-      var lvlEl = document.getElementById('clCollXpName'); if (lvlEl) lvlEl.textContent = 'Level ' + lv;
+      var lvlEl = document.getElementById('clCollXpName'); if (lvlEl) lvlEl.textContent = LT('lvlWord') + ' ' + lv;
       var lvlNum = document.getElementById('clCollLvl'); if (lvlNum) lvlNum.textContent = lv;
       var xpNum = document.getElementById('clCollXpNum');
       if (xpNum) xpNum.innerHTML = into + ' / ' + span + ' XP<span class="cl-xp-extra"> to level ' + (lv + 1) + '</span>';
@@ -2977,16 +3014,16 @@
     function sec(title, note) { return '<div class="cl-sx-sec"><span>' + title + '</span>' + (note ? '<em>' + note + '</em>' : '') + '</div>'; }
 
     var html = '<div class="cl-sx-hero"><div class="cl-sx-hero-n">' + doneN + '<i>/' + curated.length + '</i></div>' +
-      '<div class="cl-sx-hero-t"><b>Collections</b><span>Complete a set to bank a big XP bonus. Sets reveal once you collect one of their cards.</span></div></div>';
+      '<div class="cl-sx-hero-t"><b>' + LT('sCollections') + '</b><span>' + LT('sHeroSub') + '</span></div></div>';
     var _di = drawInfo();
     html += '<div class="cl-draw' + (_di.dust >= _di.cost ? '' : ' off') + '"' + (_di.left ? '' : ' data-complete="1"') + '>' +
       '<div class="cl-draw-ic">&#127183;</div>' +
-      '<div class="cl-draw-b"><div class="cl-draw-t">' + (_di.left ? 'Draw a random card' : 'You own every set card') + '</div>' +
-      '<div class="cl-draw-s">' + (_di.left ? ('Pull one of ' + _di.left + ' cards you don\'t own yet — favours sets you\'ve started') : 'Nothing left to draw here') + '</div></div>' +
+      '<div class="cl-draw-b"><div class="cl-draw-t">' + (_di.left ? LT('dTitle') : LT('dOwnedAll')) + '</div>' +
+      '<div class="cl-draw-s">' + (_di.left ? (LT('dSubA') + ' ' + _di.left + ' ' + LT('dSubB')) : LT('dNothing')) + '</div></div>' +
       (_di.left ? '<button class="cl-draw-go" id="clDrawGo">&#10024; ' + _di.cost + '</button>' : '') + '</div>';
-    if (found.length) html += sec('Your sets', found.length + (found.length === 1 ? ' unlocked' : ' unlocked')) + '<div class="cl-sx-grid">' + found.map(premiumCard).join('') + '</div>';
-    if (miles.length) html += sec('Milestones') + '<div class="cl-sx-grid">' + miles.map(milestoneCard).join('') + '</div>';
-    if (locked.length) html += sec('Undiscovered', locked.length + ' to find') + '<div class="cl-sx-grid">' + locked.map(lockedCard).join('') + '</div>';
+    if (found.length) html += sec(LT('sYours'), found.length + ' ' + LT('sUnlocked')) + '<div class="cl-sx-grid">' + found.map(premiumCard).join('') + '</div>';
+    if (miles.length) html += sec(LT('sMilestones')) + '<div class="cl-sx-grid">' + miles.map(milestoneCard).join('') + '</div>';
+    if (locked.length) html += sec(LT('sUndiscovered'), locked.length + ' ' + LT('sToFind')) + '<div class="cl-sx-grid">' + locked.map(lockedCard).join('') + '</div>';
     grid.innerHTML = html;
     // Coming back from a set → restore the list scroll so you land where you left,
     // not at the top. rAF: wait for layout before setting scrollTop.
@@ -3180,7 +3217,7 @@
       rows.map(function (r) { return '<div class="cl-di-row"><span>' + r[0] + '</span><b' + (r[2] ? ' style="color:' + r[2] + '"' : '') + '>' + esc(r[1]) + '</b></div>'; }).join('') +
       '</div><div class="cl-shine-wrap">' + shineBlock + '</div>' + (ascBlock ? '<div class="cl-shine-wrap" style="margin-top:8px">' + ascBlock + '</div>' : '') +
       '<button class="cl-share-btn" id="clShareBtn">&#8599; Share card</button>' +
-      '<button class="cl-share-btn" id="clShowTog" style="margin-top:7px">' + (inShowcase(c) ? '&#9733; In your showcase — remove' : '&#9734; Add to showcase') + '</button>';
+      '<button class="cl-share-btn" id="clShowTog" style="margin-top:7px">' + (inShowcase(c) ? '&#9733; ' + LT('scRemove') : '&#9734; ' + LT('scAdd')) + '</button>';
   }
   var _cineStop = null;
   function closeCine() {
@@ -3285,7 +3322,7 @@
         var r = toggleShowcase(c);
         if (r.ok) {
           try { if (window.Sfx) window.Sfx.tap(); } catch (_) { /* noop */ }
-          stg.innerHTML = r.on ? '&#9733; In your showcase — remove' : '&#9734; Add to showcase';
+          stg.innerHTML = r.on ? '&#9733; ' + LT('scRemove') : '&#9734; ' + LT('scAdd');
           refreshOpen();
         } else if (r.full) {
           try { if (window.Sfx) window.Sfx.tap(); } catch (_) { /* noop */ }
@@ -3507,12 +3544,12 @@
     if (!qs.length) { el.innerHTML = ''; return; }
     var claimable = qs.filter(function (q) { return q.done; }).length;
     el.innerHTML =
-      '<div class="cl-q-head"><span>Weekly quests</span>' + (claimable ? '<b>' + claimable + ' to claim</b>' : '<i>resets weekly</i>') + '</div>' +
+      '<div class="cl-q-head"><span>' + LT('qWeekly') + '</span>' + (claimable ? '<b>' + claimable + ' ' + LT('qToClaim') + '</b>' : '<i>' + LT('qResets') + '</i>') + '</div>' +
       '<div class="cl-q-row">' + qs.map(function (q) {
         var pct = Math.round(q.have / q.need * 100);
         var state = q.claimed ? 'claimed' : q.done ? 'ready' : '';
         var right = q.claimed ? '<span class="cl-q-ok">&#10003;</span>'
-          : q.done ? '<button class="cl-q-claim" data-q="' + q.id + '">Claim &#10024;' + q.dust + '</button>'
+          : q.done ? '<button class="cl-q-claim" data-q="' + q.id + '">' + LT('qClaim') + ' &#10024;' + q.dust + '</button>'
           : '<span class="cl-q-prog">' + q.have + '/' + q.need + '</span>';
         return '<div class="cl-q ' + state + '"><div class="cl-q-ic">' + q.icon + '</div>' +
           '<div class="cl-q-body"><div class="cl-q-lbl">' + q.label + '</div>' +
@@ -3538,25 +3575,24 @@
     var st; try { st = primeState(); } catch (_) { el.innerHTML = ''; el.className = 'cl-prime'; return; }
     var d = st.dust || 0;
     if (st.tier) {
-      var nm = st.tier.charAt(0).toUpperCase() + st.tier.slice(1);
       el.className = 'cl-prime armed';
       el.innerHTML = '<div class="cl-prime-box">' +
         '<div class="cl-prime-ic">&#9889;</div>' +
-        '<div class="cl-prime-body"><div class="cl-prime-ttl">Next card guaranteed ' + nm + '</div>' +
-        '<div class="cl-prime-sub">Applies to your next daily prize card</div></div>' +
-        '<span class="cl-prime-armed">&#10003; Armed</span></div>';
+        '<div class="cl-prime-body"><div class="cl-prime-ttl">' + LT('pGuaranteed') + ' ' + rarLabel(st.tier) + '</div>' +
+        '<div class="cl-prime-sub">' + LT('pApplies') + '</div></div>' +
+        '<span class="cl-prime-armed">&#10003; ' + LT('pArmed') + '</span></div>';
       return;
     }
     el.className = 'cl-prime';
     var tiers = [['rare', 'Rare'], ['elite', 'Elite'], ['legendary', 'Legendary']];
     var btns = tiers.map(function (t) {
       var c = primeCost(t[0]);
-      return '<button class="cl-prime-b ' + t[0] + '" data-tier="' + t[0] + '"' + (d < c ? ' disabled' : '') + '>' + t[1] + ' &#10024;' + c + '</button>';
+      return '<button class="cl-prime-b ' + t[0] + '" data-tier="' + t[0] + '"' + (d < c ? ' disabled' : '') + '>' + LT(t[1]) + ' &#10024;' + c + '</button>';
     }).join('');
     el.innerHTML = '<div class="cl-prime-box">' +
       '<div class="cl-prime-ic">&#9889;</div>' +
-      '<div class="cl-prime-body"><div class="cl-prime-ttl">Prime your next card</div>' +
-      '<div class="cl-prime-sub">Spend dust to floor the rarity of your next prize</div></div>' +
+      '<div class="cl-prime-body"><div class="cl-prime-ttl">' + LT('pTitle') + '</div>' +
+      '<div class="cl-prime-sub">' + LT('pSub') + '</div></div>' +
       '<div class="cl-prime-btns">' + btns + '</div></div>';
     // First-time attention pulse on the meta strips (Quests + Prime), once ever.
     try { if (!localStorage.getItem('cl_metastrips_pulsed')) { el.classList.add('cl-ft-glow'); setTimeout(function () { try { el.classList.remove('cl-ft-glow'); } catch (_) {} }, 4600); localStorage.setItem('cl_metastrips_pulsed', '1'); } } catch (_) { /* noop */ }
@@ -3615,7 +3651,7 @@
   function renderAchv() {
     var grid = document.getElementById('acGrid'); if (!grid) return;
     var st = achievementsState(), got = st.filter(function (a) { return a.unlocked; }).length;
-    var sub = document.getElementById('acSub'); if (sub) sub.innerHTML = got + ' / ' + st.length + ' unlocked';
+    var sub = document.getElementById('acSub'); if (sub) sub.innerHTML = got + ' / ' + st.length + ' ' + LT('sUnlocked');
     grid.innerHTML = st.map(function (a) {
       var pct = Math.max(0, Math.min(100, Math.round(a.have / a.need * 100)));
       var bar = a.unlocked ? '' : '<div class="ac-bar"><i style="width:' + pct + '%"></i></div><div class="ac-pg">' + a.have + ' / ' + a.need + '</div>';
