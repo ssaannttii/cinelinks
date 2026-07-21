@@ -102,6 +102,37 @@
   }
   window.Fx = { confetti: confetti, burstFrom: burstFrom, play: play, reduced: reduced, countUp: countUp, shake: shake, popText: popText, popFrom: popFrom };
 
+  // ── Accessible modal focus trap (a11y) ──────────────────────────────────────
+  // fxTrapFocus(container) moves focus into the dialog, keeps Tab/Shift+Tab cycling
+  // within it, and returns a release() that restores focus to whatever was focused
+  // before it opened. Shared by every overlay so keyboard/AT users can't fall
+  // behind the modal. Safe to call with a missing element.
+  var FOCUSABLE = 'a[href],area[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+  window.fxTrapFocus = function (container) {
+    if (!container) return function () {};
+    var prev = document.activeElement;
+    function items() {
+      return Array.prototype.slice.call(container.querySelectorAll(FOCUSABLE))
+        .filter(function (el) { return el.offsetWidth > 0 || el.offsetHeight > 0 || el === document.activeElement; });
+    }
+    function onKey(e) {
+      if (e.key !== 'Tab') return;
+      var f = items(); if (!f.length) { e.preventDefault(); try { container.focus(); } catch (_) {} return; }
+      var first = f[0], last = f[f.length - 1], a = document.activeElement;
+      if (e.shiftKey) { if (a === first || !container.contains(a)) { e.preventDefault(); last.focus(); } }
+      else { if (a === last || !container.contains(a)) { e.preventDefault(); first.focus(); } }
+    }
+    if (container.getAttribute && container.getAttribute('tabindex') == null) container.setAttribute('tabindex', '-1');
+    setTimeout(function () { try { var f = items(); (f[0] || container).focus(); } catch (_) {} }, 30);
+    document.addEventListener('keydown', onKey, true);
+    var released = false;
+    return function release() {
+      if (released) return; released = true;
+      document.removeEventListener('keydown', onKey, true);
+      try { if (prev && prev.focus) prev.focus(); } catch (_) {}
+    };
+  };
+
   // Pause all CSS animations while the tab is backgrounded (fx.css does the work).
   try {
     document.addEventListener('visibilitychange', function () {

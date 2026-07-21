@@ -1520,6 +1520,18 @@
     document.head.appendChild(s);
   }
   var CTX = { RARITY: RARITY, posterUrl: posterUrl, esc: esc, typeLabel: typeLabel, IMG: IMG };
+  // a11y: a plain-text label so screen readers announce each card (name, type,
+  // rarity, and its new/dupe/shine state). The poster <img> stays alt="" so it
+  // isn't read twice. Cards carry role="img" + this label.
+  function cardAria(c) {
+    var rl = (RARITY[c.rarity] || RARITY.common).label;
+    var parts = [c.name || '', typeLabel(c), rl];
+    if (c.shine) parts.push('Shined');
+    if (c.isNew) parts.push('New');
+    if ((c.n || 1) > 1) parts.push('×' + c.n);
+    return esc(parts.filter(Boolean).join(', '));
+  }
+  CTX.cardAria = cardAria;
 
   // ── Built-in theme #1: AAA "trading" card (default) ──
   defineTheme({
@@ -1572,7 +1584,7 @@
       var rar = ctx.RARITY[c.rarity] || ctx.RARITY.common;
       var p = ctx.posterUrl(c.img);
       var person = c.type === 'person';
-      return '<div class="ctc ctc-' + c.rarity + (person ? ' person' : '') + (c.shine ? ' cl-shine' : '') + '" style="--cr:' + rar.ring + ';animation-delay:' + Math.min(i, 16) * 22 + 'ms" title="' + ctx.esc(c.name) + ' · ' + rar.label + (c.shine ? ' · Shined' : '') + '">' +
+      return '<div class="ctc ctc-' + c.rarity + (person ? ' person' : '') + (c.shine ? ' cl-shine' : '') + '" role="img" aria-label="' + (ctx.cardAria ? ctx.cardAria(c) : ctx.esc(c.name)) + '" style="--cr:' + rar.ring + ';animation-delay:' + Math.min(i, 16) * 22 + 'ms" title="' + ctx.esc(c.name) + ' · ' + rar.label + (c.shine ? ' · Shined' : '') + '">' +
         '<div class="ctc-inner"><div class="ctc-frame"><div class="ctc-art">' +
           (p ? '<img src="' + ctx.esc(p) + '" alt="" loading="lazy">' : '<div class="ctc-noimg"></div>') +
           '<div class="ctc-foil"></div><div class="ctc-glare"></div>' +
@@ -1603,7 +1615,7 @@
       var rar = ctx.RARITY[c.rarity] || ctx.RARITY.common;
       var p = ctx.posterUrl(c.img);
       var person = c.type === 'person';
-      return '<div class="clc-card' + (person ? ' person' : '') + '" style="--cr:' + rar.ring + '" title="' + ctx.esc(c.name) + ' · ' + rar.label + '">' +
+      return '<div class="clc-card' + (person ? ' person' : '') + '" role="img" aria-label="' + (ctx.cardAria ? ctx.cardAria(c) : ctx.esc(c.name)) + '" style="--cr:' + rar.ring + '" title="' + ctx.esc(c.name) + ' · ' + rar.label + '">' +
         (c.isNew ? '<span class="clc-new">New</span>' : '') +
         (c.n > 1 ? '<span class="clc-dupe">×' + c.n + '</span>' : '') +
         (p ? '<img class="clc-img" src="' + ctx.esc(p) + '" alt="" loading="lazy">' : '<div class="clc-img"></div>') +
@@ -1941,7 +1953,7 @@
       // it rides inside the name-plate box (default + legacy).
       var hasMetaLayer = TL && tplGet(TL, 'meta');
       var metaLayer = hasMetaLayer ? ('<div class="auth-meta"' + tplMetaBoxStyle(TL, c.rarity) + '>' + tplMetaContent(TL, rar, typeUp, no) + '</div>') : '';
-      return '<div class="auth auth-' + c.rarity + (person ? ' person' : '') + (c.shine ? ' cl-shine' : '') + (mst ? ' mst-' + mst : '') + (TL ? ' auth-tpl' : '') + '" style="--cr:' + rar.ring + ';--m1:' + (METAL[c.rarity] || '#fff') + ';animation-delay:' + Math.min(i, 16) * 22 + 'ms" title="' + nm + ' · ' + rar.label + ' · ' + no + (c.shine ? ' · Shined' : '') + '">' +
+      return '<div class="auth auth-' + c.rarity + (person ? ' person' : '') + (c.shine ? ' cl-shine' : '') + (mst ? ' mst-' + mst : '') + (TL ? ' auth-tpl' : '') + '" role="img" aria-label="' + (ctx.cardAria ? ctx.cardAria(c) : nm) + '" style="--cr:' + rar.ring + ';--m1:' + (METAL[c.rarity] || '#fff') + ';animation-delay:' + Math.min(i, 16) * 22 + 'ms" title="' + nm + ' · ' + rar.label + ' · ' + no + (c.shine ? ' · Shined' : '') + '">' +
         '<div class="auth-card">' +
           (p ? '<img class="auth-bgimg" src="' + ctx.esc(p) + '" alt="" loading="lazy" decoding="async"' + O('poster') + '>' : '<div class="auth-noimg"></div>') +
           '<div class="auth-scrim"' + O('scrim') + '></div>' +
@@ -2105,6 +2117,8 @@
       '.cl-coll-chip.on{border-color:rgba(232,160,0,.6);background:rgba(232,160,0,.14);color:#e8a000}' +
       '.cl-coll-chip .gem{width:8px;height:8px;border-radius:2px;transform:rotate(45deg);background:var(--gc,#888);box-shadow:0 0 6px var(--gc,transparent)}' +
       '.cl-vsort{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:99px;color:#cfcfcf;font:inherit;font-size:.7rem;font-weight:800;padding:6px 10px;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none}' +
+      // keyboard focus ring inside the vault (these controls reset the default outline)
+      '.cl-vsearch input:focus-visible,.cl-vsort:focus-visible{outline:2px solid #e8a000;outline-offset:2px;border-color:rgba(232,160,0,.5)}' +
       '.cl-vsort:focus{border-color:rgba(232,160,0,.5)}' +
       // scroller + tier sections with sticky headers
       '.cl-coll-grid{flex:1;overflow-y:auto;width:100%;max-width:1192px;margin:0 auto;padding:6px 16px 26px}' +
@@ -3009,6 +3023,7 @@
     _filter = 'all'; _query = ''; _setOpen = null;
     render();
     document.getElementById('clCollModal').classList.add('open'); lockScroll(true);
+    try { if (window.fxTrapFocus) _vaultRelease = fxTrapFocus(document.getElementById('clCollModal')); } catch (_) { /* noop */ }
     try { if (window.Track) window.Track('collection_open', stats()); } catch (_) { /* noop */ }
     // one-shot meta-layer intro on the first real visit — teaches the loop that
     // drives long-term engagement (collect → complete sets → spend dust), which the
@@ -3039,7 +3054,7 @@
   }
   // "New" badges live for the whole visit (Hearthstone-style) and clear on close,
   // not 600ms after opening — so the pinned "Just collected" section stays put.
-  function close() { stopHolo(); markSeen(); var m = document.getElementById('clCollModal'); if (m && m.classList.contains('open')) { m.classList.remove('open'); lockScroll(false); } }
+  function close() { stopHolo(); markSeen(); var m = document.getElementById('clCollModal'); if (m && m.classList.contains('open')) { m.classList.remove('open'); lockScroll(false); try { if (_vaultRelease) { _vaultRelease(); _vaultRelease = null; } } catch (_) { /* noop */ } } }
 
   // ─────────────────────────────── debug panel ───────────────────────────
   function debugEnabled() {
@@ -3357,6 +3372,7 @@
   // with position:fixed (iOS-safe) so tapping through cards can't scroll the game
   // behind it and the mobile toolbar can't show/hide and resize the fixed overlay.
   var _lockN = 0, _lockY = 0;
+  var _vaultRelease = null, _revealRelease = null;   // a11y focus-trap release handles
   function lockScroll(on) {
     var d = document.documentElement, b = document.body;
     if (on) { if (_lockN++ === 0) { _lockY = window.scrollY || window.pageYOffset || 0; b.style.top = (-_lockY) + 'px'; d.classList.add('cl-scroll-lock'); b.classList.add('cl-scroll-lock'); } }
@@ -3373,7 +3389,7 @@
     document.body.appendChild(ov);
     return ov;
   }
-  function closeReveal() { stopShader(); stopGyro(); var ov = document.getElementById('clCollReveal'); if (ov && ov.classList.contains('open')) { ov.classList.remove('open'); lockScroll(false); } }
+  function closeReveal() { stopShader(); stopGyro(); var ov = document.getElementById('clCollReveal'); if (ov && ov.classList.contains('open')) { ov.classList.remove('open'); lockScroll(false); try { if (_revealRelease) { _revealRelease(); _revealRelease = null; } } catch (_) { /* noop */ } } }
   function reveal(cards) {
     try {
       if (!Array.isArray(cards)) return;
@@ -3475,6 +3491,7 @@
       skip.style.display = ''; skip.onclick = function (e) { e.stopPropagation(); clearT(); summary(); };
       ov.onclick = function () { if (state === 'ready') next(); };
       ov.classList.add('open'); lockScroll(true);
+      try { if (window.fxTrapFocus) _revealRelease = fxTrapFocus(ov); } catch (_) { /* noop */ }
       try { if (window.Sfx) window.Sfx.cardDeal(); } catch (_) { /* noop */ }
       try { if (window.Track) window.Track('card_revealed', { n: queue.length, top: queue[queue.length - 1].rarity }); } catch (_) { /* noop */ }
       card(queue[0]);

@@ -31,6 +31,9 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#252c35;--s1:#2c343f;--s2:#343d49;--bdr:rgba(255,255,255,0.08);--txt:#f5f5f5;--mut:#a9b2bd;--gold:#e8a000;--golddim:rgba(232,160,0,0.15);--fdisp:'Fraunces',Georgia,'Times New Roman',serif;--fui:'Schibsted Grotesk','Inter',-apple-system,sans-serif}
+/* Keyboard focus ring (a11y) — keyboard/AT only, never on mouse/touch. */
+:focus-visible{outline:2px solid var(--gold,#e8a000);outline-offset:2px;border-radius:6px;box-shadow:0 0 0 4px rgba(0,0,0,.45)}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible,[role="button"]:focus-visible{outline:2px solid var(--gold,#e8a000);outline-offset:2px}
 /* Elegant custom scrollbar (dark track, soft gold thumb) — global. */
 html{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.25) rgba(255,255,255,.04)}
 html.cl-hidden *,html.cl-hidden *::before,html.cl-hidden *::after{animation-play-state:paused!important}
@@ -1961,6 +1964,13 @@ function renderCollCard() {
   }
   el.style.display = '';
   el.onclick = () => { try { Collection.openGallery(); } catch(_) {} };
+  // a11y: make the summary card a real, keyboard-operable button with a spoken label.
+  try {
+    el.setAttribute('role', 'button');
+    if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '0');
+    el.setAttribute('aria-label', tt('ccName') + '. ' + (sub ? sub.textContent : ''));
+    if (!el._kbd) { el._kbd = 1; el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); try { Collection.openGallery(); } catch(_) {} } }); }
+  } catch(_) {}
 }
 // Three rotating "★ Today" chips steer the day's menu (pure guidance — any five
 // dailies complete the day). Deterministic by UTC day so everyone sees the same.
@@ -4707,10 +4717,12 @@ window.addEventListener('storage', function (e) {
     } catch (_) {}
     return false;
   }
+  var _ftRelease = null;
   function close() {
     var ov = document.getElementById('ftue'); if (ov) ov.classList.remove('on');
     try { localStorage.setItem('cl_ftue_done', '1'); } catch (_) {}
     document.removeEventListener('keydown', onKey);
+    try { if (_ftRelease) { _ftRelease(); _ftRelease = null; } } catch (_) {}
   }
   function onKey(e) { if (e.key === 'Escape') close(); }
   function open() {
@@ -4724,6 +4736,7 @@ window.addEventListener('storage', function (e) {
       }
     } catch (_) {}
     ov.classList.add('on');
+    try { if (window.fxTrapFocus) _ftRelease = fxTrapFocus(ov); } catch (_) {}
     document.addEventListener('keydown', onKey);
     document.getElementById('ftX').onclick = function () { close(); };
     document.getElementById('ftBrowse').onclick = function () { close(); };

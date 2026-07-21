@@ -79,10 +79,12 @@
   ov.querySelectorAll('.ht-num').forEach(function (n) { n.textContent = i++; });
   void nums;
 
-  function open() { ov.style.display = 'flex'; requestAnimationFrame(function () { ov.classList.add('show'); }); }
+  var _htRelease = null;
+  function open() { ov.style.display = 'flex'; requestAnimationFrame(function () { ov.classList.add('show'); }); try { if (window.fxTrapFocus) _htRelease = fxTrapFocus(ov); } catch (_) {} }
   function close() {
     ov.classList.remove('show');
     try { localStorage.setItem(seenKey, '1'); } catch (_) {}
+    try { if (_htRelease) { _htRelease(); _htRelease = null; } } catch (_) {}
     setTimeout(function () { ov.style.display = 'none'; }, 240);
   }
   btn.onclick = open;
