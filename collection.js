@@ -1465,6 +1465,21 @@
 
   // ── Dust economy (spend duplicate dust to "Shine" owned cards) ──
   function dustBalance() { return (load() || blank()).dust || 0; }
+  // Animate the header dust chip from a captured previous value to the current
+  // balance (count-up + a gold bump). Callers capture `from` before the spend/earn.
+  function animDust(from) {
+    var du = document.getElementById('clCollDust'); if (!du) return;
+    var to = dustBalance();
+    var reduced = false; try { reduced = !!(window.Fx && Fx.reduced && Fx.reduced()); } catch (_) {}
+    if (reduced || from == null || from === to) { du.innerHTML = '&#10024; ' + to; return; }
+    du.classList.remove('cl-dust-bump'); void du.offsetWidth; du.classList.add('cl-dust-bump');
+    var t0 = performance.now(), ms = 620;
+    (function step(t) {
+      var p = Math.min(1, (t - t0) / ms), e = 1 - Math.pow(1 - p, 3);
+      du.innerHTML = '&#10024; ' + Math.round(from + (to - from) * e);
+      if (p < 1) requestAnimationFrame(step); else du.innerHTML = '&#10024; ' + to;
+    })(performance.now());
+  }
   function shineCost(c) { return shineCostFor(cardRecord(c) || c); }
   function cardRecord(c) { var s = load(); return (c && s && s.cards) ? s.cards[c.type + ':' + c.id] : null; }
   function isShined(c) { var r = cardRecord(c); return !!(r && r.shine); }
@@ -2127,7 +2142,10 @@
       // Tab-switch crossfade: the vault content settles in when you change tabs
       '.cl-tab-in{animation:clTabIn .28s cubic-bezier(.2,.8,.2,1) both}' +
       '@keyframes clTabIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}' +
-      '@media(prefers-reduced-motion:reduce){.cl-tab-in{animation:none}.cl-ft-glow{animation:none}}' +
+      // Dust chip reacts when the balance changes (count-up + a gold bump)
+      '.cl-dust-bump{animation:clDustBump .5s cubic-bezier(.3,1.3,.5,1)}' +
+      '@keyframes clDustBump{0%{transform:scale(1)}35%{transform:scale(1.18);color:#f5c542}100%{transform:scale(1)}}' +
+      '@media(prefers-reduced-motion:reduce){.cl-tab-in{animation:none}.cl-ft-glow{animation:none}.cl-dust-bump{animation:none}}' +
       // Buyable card back button (in the Backs tab)
       '.cb-buy{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);border:0;border-radius:999px;background:#e8a000;color:#1a1408;font:inherit;font-weight:800;font-size:.66rem;padding:5px 11px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.4);z-index:3}' +
       '.cb-buy:hover{filter:brightness(1.08)}.cb-buy.off{background:#5a5348;color:#2a2620;cursor:default}' +
@@ -3044,11 +3062,13 @@
     var drawGo = grid.querySelector('#clDrawGo');
     if (drawGo) drawGo.addEventListener('click', function () {
       drawGo.disabled = true;
+      var d0 = dustBalance();
       drawPack().then(function (r) {
         if (r.ok) {
           try { if (window.Sfx) window.Sfx.haptic([12, 30]); } catch (_) { /* noop */ }
           try { if (window.Track) window.Track('card_drawn', { rarity: r.cards && r.cards[0] && r.cards[0].rarity }); } catch (_) { /* noop */ }
           render();                                              // refresh hero counts + dust chip
+          animDust(d0);
           if (r.cards && r.cards.length) setTimeout(function () { reveal(r.cards); }, 250);
         } else {
           drawGo.disabled = false;
@@ -3563,12 +3583,13 @@
     try { if (!localStorage.getItem('cl_metastrips_pulsed')) { el.classList.add('cl-ft-glow'); setTimeout(function () { try { el.classList.remove('cl-ft-glow'); } catch (_) {} }, 4600); } } catch (_) { /* noop */ }
     Array.prototype.forEach.call(el.querySelectorAll('.cl-q-claim'), function (b) {
       b.addEventListener('click', function () {
+        var d0 = dustBalance();
         var r = claimQuest(b.getAttribute('data-q'));
         if (r.ok) {
           try { if (window.Sfx) { window.Sfx.allDone(); window.Sfx.haptic([12, 30, 12]); } } catch (_) { /* noop */ }
           try { if (window.Fx && window.Fx.confetti) window.Fx.confetti({ count: 60 }); } catch (_) { /* noop */ }
           renderQuests();
-          var du = document.getElementById('clCollDust'); if (du) du.innerHTML = '&#10024; ' + dustBalance();
+          animDust(d0);
         }
       });
     });
@@ -3604,11 +3625,12 @@
     Array.prototype.forEach.call(el.querySelectorAll('.cl-prime-b'), function (b) {
       b.addEventListener('click', function () {
         if (b.disabled) return;
+        var d0 = dustBalance();
         var r = primeNext(b.getAttribute('data-tier'));
         if (r.ok) {
           try { if (window.Sfx) { window.Sfx.allDone && window.Sfx.allDone(); window.Sfx.haptic && window.Sfx.haptic([10, 22, 10]); } } catch (_) { /* noop */ }
           renderPrime();
-          var du = document.getElementById('clCollDust'); if (du) du.innerHTML = '&#10024; ' + dustBalance();
+          animDust(d0);
         }
       });
     });
@@ -3635,6 +3657,7 @@
     Array.prototype.forEach.call(grid.querySelectorAll('.cb-buy'), function (b) {
       b.addEventListener('click', function (e) {
         e.stopPropagation();
+        var d0 = dustBalance();
         var id = b.getAttribute('data-buy'), r = buyBack(id);
         if (r.ok) {
           useCardback(id);
@@ -3642,7 +3665,7 @@
           try { if (window.Fx && window.Fx.confetti) window.Fx.confetti({ count: 50 }); } catch (_) { /* noop */ }
           try { if (window.Track) window.Track('cardback_bought', { id: id }); } catch (_) { /* noop */ }
           renderCardbacks();
-          var du = document.getElementById('clCollDust'); if (du) du.innerHTML = '&#10024; ' + dustBalance();
+          animDust(d0);
         } else {
           try { if (window.Sfx) window.Sfx.tap(); } catch (_) { /* noop */ }
           if (r.reason === 'dust') { b.classList.add('shake'); setTimeout(function () { b.classList.remove('shake'); }, 420); }
