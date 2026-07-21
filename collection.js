@@ -2124,6 +2124,10 @@
       // one-time attention pulse to point first-time players at the meta strips
       '.cl-ft-glow{border-radius:13px;animation:clFtGlow 2.1s ease 2}' +
       '@keyframes clFtGlow{0%,100%{box-shadow:inset 0 0 0 1px rgba(232,194,74,0)}50%{box-shadow:inset 0 0 0 2px rgba(232,194,74,.75),0 0 16px rgba(232,160,0,.4)}}' +
+      // Tab-switch crossfade: the vault content settles in when you change tabs
+      '.cl-tab-in{animation:clTabIn .28s cubic-bezier(.2,.8,.2,1) both}' +
+      '@keyframes clTabIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}' +
+      '@media(prefers-reduced-motion:reduce){.cl-tab-in{animation:none}.cl-ft-glow{animation:none}}' +
       // Buyable card back button (in the Backs tab)
       '.cb-buy{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);border:0;border-radius:999px;background:#e8a000;color:#1a1408;font:inherit;font-weight:800;font-size:.66rem;padding:5px 11px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.4);z-index:3}' +
       '.cb-buy:hover{filter:brightness(1.08)}.cb-buy.off{background:#5a5348;color:#2a2620;cursor:default}' +
@@ -2676,6 +2680,7 @@
         _tab = b.dataset.k; _setOpen = null;
         try { if (window.Sfx) window.Sfx.tap(); } catch (_) { /* noop */ }
         render();
+        try { var g = document.getElementById('clCollGrid'); if (g) { g.classList.remove('cl-tab-in'); void g.offsetWidth; g.classList.add('cl-tab-in'); } } catch (_) { /* noop */ }
       });
     });
 

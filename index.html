@@ -37,6 +37,16 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 /* Tactile press feedback — every control springs inward on tap (transform-only, reduced-motion aware). */
 button:not(:disabled):not(.off):active,[role="button"]:not([aria-disabled="true"]):active,.mode:active,summary:active{transform:scale(.96);transition:transform .1s cubic-bezier(.3,.9,.3,1)}
 @media(prefers-reduced-motion:reduce){button:active,[role="button"]:active,.mode:active,summary:active{transform:none}}
+/* Home cards cascade in on load — hero stays instant (primary CTA); secondary cards
+   stagger up. Transform/opacity only, settled by ~.6s, never blocks tapping. */
+@keyframes homeCardIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.games .game-card:not(.hero){animation:homeCardIn .42s cubic-bezier(.2,.8,.2,1) both}
+.games .game-card:nth-child(2){animation-delay:.04s}
+.games .game-card:nth-child(3){animation-delay:.09s}
+.games .game-card:nth-child(4){animation-delay:.14s}
+.games .game-card:nth-child(5){animation-delay:.19s}
+.games .game-card:nth-child(n+6){animation-delay:.23s}
+@media(prefers-reduced-motion:reduce){.games .game-card:not(.hero){animation:none}}
 /* Elegant custom scrollbar (dark track, soft gold thumb) — global. */
 html{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.25) rgba(255,255,255,.04)}
 html.cl-hidden *,html.cl-hidden *::before,html.cl-hidden *::after{animation-play-state:paused!important}
