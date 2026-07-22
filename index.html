@@ -467,6 +467,25 @@ body{font-family:var(--fui);background:var(--bg);color:var(--txt);min-height:100
 .pf-cine .pf-c-k{display:block;font-size:.58rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
 .pf-cine .pf-c-v{display:block;font-size:.8rem;font-weight:800;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pf-cine .pf-c-s{display:block;font-size:.63rem;font-weight:700;color:var(--mut)}
+.pf-recs{display:flex;flex-direction:column;gap:8px}
+.pf-r-top{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pf-r-top .pf-r-b{padding:10px;border-radius:12px;background:var(--s2);text-align:center}
+.pf-r-top .pf-r-b b{display:block;font-size:1.05rem;font-weight:900;color:var(--gold);line-height:1.1;font-variant-numeric:tabular-nums}
+.pf-r-top .pf-r-b span{display:block;font-size:.58rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--mut);margin-top:3px}
+.pf-r-list{display:flex;flex-direction:column;gap:1px;border-radius:12px;overflow:hidden;border:1px solid var(--bdr)}
+.pf-r-row{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--s2);font-size:.79rem}
+.pf-r-row .nm{flex:1;font-weight:700;color:var(--txt)}
+.pf-r-row .cur{font-weight:800;color:var(--goldsoft);font-variant-numeric:tabular-nums}
+.pf-r-row .bst{color:var(--mut);font-weight:700;font-variant-numeric:tabular-nums}
+.pf-r-row .tk{color:#7fd49a;font-weight:800}
+.pf-set{display:flex;flex-direction:column;gap:1px;border-radius:12px;overflow:hidden;border:1px solid var(--bdr)}
+.pf-set-row{display:flex;align-items:center;gap:10px;padding:11px 12px;background:var(--s2);font-size:.82rem;color:var(--txt);text-align:left;border:0;font-family:inherit;width:100%;cursor:pointer}
+.pf-set-row .nm{flex:1;font-weight:700}
+.pf-set-row .val{color:var(--mut);font-weight:700;font-size:.76rem}
+.pf-set-row.danger .nm{color:#e88}
+.pf-set-langs{display:flex;flex-wrap:wrap;gap:5px;padding:9px 12px;background:var(--s2)}
+.pf-set-langs button{padding:5px 10px;border-radius:999px;border:1px solid var(--bdr);background:transparent;color:var(--mut);font-family:inherit;font-weight:700;font-size:.7rem;cursor:pointer}
+.pf-set-langs button.on{border-color:var(--gold);color:var(--goldsoft);background:rgba(232,160,0,.14)}
 .pf-tro{display:flex;gap:8px;flex-wrap:wrap}
 .pf-tro .pf-t{display:flex;align-items:center;gap:6px;padding:7px 11px;border-radius:999px;background:var(--s2);font-size:.74rem;font-weight:800;color:var(--txt)}
 .pf-tro .pf-t-none{color:var(--mut);font-weight:700}
@@ -1084,7 +1103,9 @@ body{font-family:var(--fui);background:var(--bg);color:var(--txt);min-height:100
     <div class="secondary-actions">
       <button class="archive-btn" id="archiveBtn" onclick="game.openArchive()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-2px;margin-right:6px"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Past challenges</button>
       <button class="archive-btn" onclick="creator.open()">+ Create your own</button>
-      <a href="/stats.html" class="archive-btn" style="text-decoration:none;text-align:center">📊 Your stats</a>
+      <!-- Opens the profile's Records rather than /stats.html: same numbers, one
+           surface. The page still resolves for anyone holding a direct link. -->
+      <button type="button" class="archive-btn" id="statsBtn" style="text-align:center" onclick="openProfile()">📊 Your stats</button>
     </div>
     <div class="how">
       <div class="how-title">How it works</div>
@@ -1149,6 +1170,13 @@ body{font-family:var(--fui);background:var(--bg);color:var(--txt);min-height:100
       <div class="pf-sec-h"><span id="pfCineH">Your cinema</span></div>
       <div class="pf-cine" id="pfCine"></div>
     </div>
+
+    <!-- Records: absorbs stats.html, which read this exact localStorage. Keeping it
+         as its own page would have left the fifth surface this rebuild set out to fix. -->
+    <div class="pf-sec">
+      <div class="pf-sec-h"><span id="pfRecH">Records</span></div>
+      <div class="pf-recs" id="pfRecs"></div>
+    </div>
     <div class="profile-actions">
       <button class="prow primary" type="button" onclick="closeProfile();try{Collection.openGallery()}catch(_){}">
         <span class="prow-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="16" rx="2.5"/><path d="M7 4v16M17 4v16M2.5 9.5H7M17 9.5h4.5M2.5 14.5H7M17 14.5h4.5"/></svg></span><span class="prow-tx"><b>Your collection</b><span id="prowCollSub">Play to start collecting</span></span>
@@ -1164,6 +1192,13 @@ body{font-family:var(--fui);background:var(--bg);color:var(--txt);min-height:100
       <div class="account-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 0 0 .5-8.97A6 6 0 0 0 6.3 9.5 3.5 3.5 0 0 0 7 19z"/><path d="M12 12v6M12 12l2.2 2.2M12 12l-2.2 2.2"/></svg></div>
       <div class="account-tx"><b>Cross-device sync</b><span>Sign in with Google to save your progress on every device.</span></div>
       <div id="authInline"></div>
+    </div>
+
+    <!-- Settings: sound, language and data controls had no single home — they were
+         scattered or invisible. This is the one place a player looks for them. -->
+    <div class="pf-sec" style="margin-top:14px">
+      <div class="pf-sec-h"><span id="pfSetH">Settings</span></div>
+      <div class="pf-set" id="pfSet"></div>
     </div>
   </div>
 </div>
@@ -1545,7 +1580,7 @@ function applyI18n() {
   document.querySelectorAll('.hero-eyebrow').forEach(el => el.textContent = t('todaysDaily'));
   document.querySelectorAll('.game-done[data-done]').forEach(el => { const k = _descMap[el.dataset.done]; if (k) { const card = el.closest('.game-card'); const d = card && card.querySelector('.game-desc'); if (d) d.textContent = t(k); } });
   const _cBtn = document.querySelector('.archive-btn[onclick*="creator"]'); if (_cBtn) _cBtn.textContent = t('navCreate');
-  const _sLink = document.querySelector('a.archive-btn[href="/stats.html"]'); if (_sLink) _sLink.textContent = t('navStats');
+  const _sLink = document.getElementById('statsBtn'); if (_sLink) _sLink.textContent = t('navStats');
   const archBtn = document.getElementById('archiveBtn');
   if (archBtn) archBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-2px;margin-right:7px"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>' + t('archiveBtn');
   const archTitle = document.getElementById('archiveTitle');
@@ -2796,17 +2831,108 @@ function renderProfile() {
     }
   } catch (_) {}
 
+  // Section chrome is localised here so the renderers stay about data.
+  var L = function (id, k) { var e = document.getElementById(id); if (e) e.textContent = PT(k); };
+  L('pfShowH', 'pfShow'); L('pfShowEdit', 'pfEdit'); L('pfCineH', 'pfCine');
+  L('pfRecH', 'pfRec'); L('pfTroAll', 'pfAll'); L('pfSetH', 'pfSet');
   renderTitleBtn();
   renderShowcase();
   renderCine();
+  renderRecords();
   renderAccolades(troph, trophTotal);
+  renderSettings();
 }
+// ── Records ──────────────────────────────────────────────────────────────────
+// Reads exactly the localStorage stats.html read (<mode>Streak / <mode>State),
+// so absorbing that page loses nothing.
+var PF_MODES = [
+  { k: 'cl', n: 'CineLinks', s: 'clStreak', st: null },
+  { k: 'clue', n: 'CineClue', s: 'cineclueStreak', st: 'cineclueState' },
+  { k: 'frame', n: 'CineFrame', s: 'cineframeStreak', st: 'cineframeState' },
+  { k: 'cast', n: 'CineCast', s: 'cinecastStreak', st: 'cinecastState' },
+  { k: 'line', n: 'CineLine', s: 'cinelineStreak', st: 'cinelineState' },
+  { k: 'reel', n: 'CineReel', s: 'cinereelStreak', st: 'cinereelState' },
+  { k: 'code', n: 'CineCode', s: 'cinecodeStreak', st: 'cinecodeState' },
+  { k: 'grid', n: 'CineGrid', s: 'cinegridStreak', st: 'cinegridState' },
+  { k: 'chain', n: 'CineChain', s: 'cinechainStreak', st: 'cinechainState' },
+  { k: 'group', n: 'CineGroup', s: 'cinegroupStreak', st: 'cinegroupState' }
+];
+function renderRecords() {
+  var el = document.getElementById('pfRecs'); if (!el) return;
+  var LS = function (k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (_) { return null; } };
+  var days = LS('metaDays') || [];
+  var played = LS('clPlayed') || {};
+  var daysPlayed = Array.isArray(days) ? days.length : 0;
+  var bestClicks = null;
+  try { var ds = Object.keys(played); if (ds.length) bestClicks = Math.min.apply(null, ds.map(function (d) { return played[d]; })); } catch (_) {}
+  var dayStreak = 0; try { dayStreak = metaStreakValue(false) || 0; } catch (_) {}
+  var bestAny = 0;
+  PF_MODES.forEach(function (m) { var s = LS(m.s); if (s && (s.best | 0) > bestAny) bestAny = s.best | 0; });
+
+  var top = '<div class="pf-r-top">' +
+    '<div class="pf-r-b"><b>' + dayStreak + '</b><span>' + PT('pfDayStreak') + '</span></div>' +
+    '<div class="pf-r-b"><b>' + Math.max(bestAny, dayStreak) + '</b><span>' + PT('pfBestStreak') + '</span></div>' +
+    '<div class="pf-r-b"><b>' + daysPlayed + '</b><span>' + PT('pfDaysPlayed') + '</span></div>' +
+    '</div>';
+
+  var today = null; try { today = new Date().toISOString().slice(0, 10); } catch (_) {}
+  var rows = PF_MODES.map(function (m) {
+    var s = LS(m.s) || {}, stt = m.st ? LS(m.st) : null;
+    var cur = s.current | 0, bst = s.best | 0;
+    var done = m.st ? !!(stt && stt.finished) : (played && today && played[today] != null);
+    if (!cur && !bst && !done) return '';                       // never touched: don't pad the list
+    return '<div class="pf-r-row"><span class="nm">' + m.n + '</span>' +
+      (done ? '<span class="tk">✓</span>' : '') +
+      '<span class="cur">' + cur + '</span><span class="bst">/ ' + bst + '</span></div>';
+  }).filter(Boolean).join('');
+
+  el.innerHTML = top + (rows
+    ? '<div class="pf-r-list">' + rows + '</div><div class="pf-c-s" style="text-align:right;padding:0 2px">' + PT('pfCurBest') + (bestClicks != null ? ' · best CineLinks route: ' + bestClicks + ' clicks' : '') + '</div>'
+    : '<div class="pf-show-empty">' + PT('pfRecEmpty') + '</div>');
+}
+// ── Settings ─────────────────────────────────────────────────────────────────
+function renderSettings() {
+  var el = document.getElementById('pfSet'); if (!el) return;
+  var snd = true; try { snd = !!(window.Sfx && Sfx.enabled); } catch (_) {}
+  var lang = 'en-US'; try { lang = localStorage.getItem('clLang') || 'en-US'; } catch (_) {}
+  var LANGS = [['en-US', 'English'], ['es-ES', 'ES'], ['es-MX', 'MX'], ['fr-FR', 'FR'], ['de-DE', 'DE'], ['pt-BR', 'PT']];
+  el.innerHTML =
+    '<button class="pf-set-row" type="button" id="pfSnd"><span class="nm">' + PT('pfSound') + '</span><span class="val">' + PT(snd ? 'pfOn' : 'pfOff') + '</span></button>' +
+    '<div class="pf-set-langs">' + LANGS.map(function (l) {
+      return '<button type="button" data-l="' + l[0] + '" class="' + (lang === l[0] ? 'on' : '') + '">' + l[1] + '</button>';
+    }).join('') + '</div>' +
+    '<a class="pf-set-row" href="/privacy.html"><span class="nm">' + PT('pfPriv') + '</span><span class="val">›</span></a>' +
+    '<button class="pf-set-row danger" type="button" id="pfWipe"><span class="nm">' + PT('pfWipe') + '</span><span class="val">›</span></button>';
+
+  var sb = document.getElementById('pfSnd');
+  if (sb) sb.addEventListener('click', function () {
+    try { if (window.Sfx && Sfx.toggle) { Sfx.toggle(); Sfx.tap(); } } catch (_) {}
+    renderSettings();
+  });
+  Array.prototype.forEach.call(el.querySelectorAll('.pf-set-langs button'), function (b) {
+    b.addEventListener('click', function () { try { setLang(b.getAttribute('data-l')); } catch (_) {} renderSettings(); });
+  });
+  var wb = document.getElementById('pfWipe');
+  if (wb) wb.addEventListener('click', function () {
+    // Destructive and irreversible, so it asks — and says exactly what goes.
+    if (!window.confirm(PT('pfWipeAsk'))) return;
+    try { Collection.reset(); } catch (_) {}
+    try {
+      ['clStreak', 'clPlayed', 'metaDays', 'clDailyResult'].forEach(function (k) { localStorage.removeItem(k); });
+      PF_MODES.forEach(function (m) { if (m.s) localStorage.removeItem(m.s); if (m.st) localStorage.removeItem(m.st); });
+    } catch (_) {}
+    location.reload();
+  });
+}
+// t() echoes the key back when a string is missing; PT() turns that into a blank
+// rather than printing "pfShow" at the user.
+function PT(k) { try { var v = t(k); return (v && v !== k) ? v : ''; } catch (_) { return ''; } }
 // ── Title ────────────────────────────────────────────────────────────────────
 function renderTitleBtn() {
   var b = document.getElementById('pfTitle'); if (!b) return;
   var t2 = null; try { t2 = Collection.title(); } catch (_) {}
   var any = false; try { any = (Collection.titles() || []).some(function (x) { return x.unlocked; }); } catch (_) {}
-  b.innerHTML = t2 ? (t2.icon + ' ' + t2.name) : (any ? 'Choose a title' : 'Earn a trophy to unlock titles');
+  b.innerHTML = t2 ? (t2.icon + ' ' + t2.name) : (any ? PT('pfPickTitle') : PT('pfNoTitle'));
   b.disabled = !any;
   b.style.opacity = any ? '' : '.55';
 }
@@ -2816,7 +2942,7 @@ function openTitlePicker() {
   var list = []; try { list = Collection.titles() || []; } catch (_) {}
   var earned = list.filter(function (x) { return x.unlocked; });
   if (!earned.length) return;
-  w.innerHTML = '<button type="button" data-t="">— none —</button>' + earned.map(function (x) {
+  w.innerHTML = '<button type="button" data-t="">' + PT('pfNone') + '</button>' + earned.map(function (x) {
     return '<button type="button" data-t="' + x.id + '" class="' + (x.active ? 'on' : '') + '">' + x.icon + ' ' + x.name + '</button>';
   }).join('');
   Array.prototype.forEach.call(w.querySelectorAll('button'), function (btn) {
@@ -2834,7 +2960,7 @@ function renderShowcase() {
   var el = document.getElementById('pfShow'); if (!el) return;
   var cards = []; try { cards = Collection.showcase() || []; } catch (_) {}
   if (!cards.length) {
-    el.innerHTML = '<div class="pf-show-empty">Pick up to six cards in your vault to feature them here.</div>';
+    el.innerHTML = '<div class="pf-show-empty">' + PT('pfShowEmpty') + '</div>';
     return;
   }
   var img = function (c) { return c && c.img ? 'https://image.tmdb.org/t/p/w185' + c.img : ''; };
@@ -2850,7 +2976,7 @@ function renderCine() {
   var el = document.getElementById('pfCine'); if (!el) return;
   var p = null, st = null;
   try { p = Collection.portrait(); st = Collection.stats(); } catch (_) {}
-  if (!p || !st) { el.innerHTML = '<div class="pf-show-empty">Win a game to start your collection.</div>'; return; }
+  if (!p || !st) { el.innerHTML = '<div class="pf-show-empty">' + PT('pfCineEmpty') + '</div>'; return; }
   var thumb = function (c) { return (c && c.img) ? '<img class="pf-c-th" src="https://image.tmdb.org/t/p/w92' + c.img + '" alt="" loading="lazy">' : '<span class="pf-c-th"></span>'; };
   var row = function (k, v, s, c) {
     return '<div class="pf-c">' + (c ? thumb(c) : '') + '<span class="pf-c-tx"><span class="pf-c-k">' + k + '</span>' +
@@ -2858,18 +2984,18 @@ function renderCine() {
   };
   var esc = function (x) { return String(x || '').replace(/[<>&]/g, ''); };
   var out = '';
-  if (p.first) out += row('Where it started', esc(p.first.name), p.first.first || '', p.first);
-  if (p.rarest) out += row('Rarest pull', esc(p.rarest.name), (p.rarest.rarity || '') + ' · #' + ('00' + (p.rarest.no || 0)).slice(-3), p.rarest);
-  if (p.mostCopies) out += row('Keeps showing up', esc(p.mostCopies.name), '×' + p.mostCopies.n + ' copies', p.mostCopies);
-  out += row('Your vault', st.films + ' films · ' + st.people + ' people', st.depth ? (st.depth + ' spare copies') : '');
+  if (p.first) out += row(PT('pfStarted'), esc(p.first.name), p.first.first || '', p.first);
+  if (p.rarest) out += row(PT('pfRarest'), esc(p.rarest.name), (p.rarest.rarity || '') + ' · #' + ('00' + (p.rarest.no || 0)).slice(-3), p.rarest);
+  if (p.mostCopies) out += row(PT('pfRepeat'), esc(p.mostCopies.name), '×' + p.mostCopies.n, p.mostCopies);
+  out += row(PT('pfVault'), st.films + ' ' + PT('pfFilms') + ' · ' + st.people + ' ' + PT('pfPeople'), st.depth ? (st.depth + ' ' + PT('pfSpares')) : '');
   el.innerHTML = out;
 }
 // ── Accolades: the three most recent, curated (full case lives in the vault) ──
 function renderAccolades(got, total) {
   var el = document.getElementById('pfTro'); if (!el) return;
   var list = []; try { list = (Collection.achievements() || []).filter(function (a) { return a.unlocked; }); } catch (_) {}
-  var h = document.getElementById('pfTroH'); if (h) h.textContent = 'Accolades · ' + got + '/' + total;
-  if (!list.length) { el.innerHTML = '<span class="pf-t pf-t-none">No trophies yet — they come as you collect.</span>'; return; }
+  var h = document.getElementById('pfTroH'); if (h) h.textContent = PT('pfAcc') + ' · ' + got + '/' + total;
+  if (!list.length) { el.innerHTML = '<span class="pf-t pf-t-none">' + PT('pfNoTro') + '</span>'; return; }
   el.innerHTML = list.slice(-3).reverse().map(function (a) {
     return '<span class="pf-t">' + a.icon + ' ' + a.name + '</span>';
   }).join('');
