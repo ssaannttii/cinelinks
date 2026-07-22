@@ -2156,7 +2156,7 @@
       // when fill() swaps in the w780 poster and mounts gyro/depth/tilt. The spin
       // is the cover for that work instead of letting it pop on screen.
       '.cl-detail-stage{perspective:1400px}' +
-      '#clDetailCard.cld-spin{transform-style:preserve-3d;will-change:transform}' +
+      '#clDetailCard.cld-spin{position:relative;transform-style:preserve-3d;will-change:transform}' +
       '#clDetailCard.cld-spin>.ctc,#clDetailCard.cld-spin>.auth,#clDetailCard.cld-spin>.clc-card{-webkit-backface-visibility:hidden;backface-visibility:hidden}' +
       '.cld-back{position:absolute;inset:0;border-radius:14px;overflow:hidden;transform:rotateY(180deg);-webkit-backface-visibility:hidden;backface-visibility:hidden;display:flex;align-items:center;justify-content:center;background:var(--cbk-bg,#0c1117);border:1px solid rgba(255,255,255,.09)}' +
       '@media(prefers-reduced-motion:reduce){.cl-tab-in{animation:none}.cl-ft-glow{animation:none}.cl-dust-bump{animation:none}}' +
@@ -3328,14 +3328,18 @@
   function openDetail(c, srcEl, ctx) {
     if (!c) return;
     if (ctx) _detCtx = ctx;
-    function fill() {
+    // `defer` splits the open in two: the cheap half (card DOM + info, reusing the
+    // poster already cached by the grid) runs now so the card can start moving on the
+    // very next frame, and the expensive half — the w780 swap plus gyro/depth/tilt —
+    // is handed to upgradeDetail() to run later, hidden behind the flip's back face.
+    function fill(defer) {
       buildDetail();
       _uiLang = currentLang();
       var theme = activeTheme(); injectThemeCss(theme);
       var holder = document.getElementById('clDetailCard');
       holder.innerHTML = theme.card(locCard(c), CTX, 0);
       // the card renders at 2× here — pull a higher-res TMDB poster so it stays crisp
-      Array.prototype.forEach.call(holder.querySelectorAll('img'), function (im) { im.src = im.src.replace(/\/t\/p\/w\d+\//, '/t/p/w780/'); });
+      if (!defer) Array.prototype.forEach.call(holder.querySelectorAll('img'), function (im) { im.src = im.src.replace(/\/t\/p\/w\d+\//, '/t/p/w780/'); });
       try { if (theme.mount) theme.mount(holder); } catch (_) { /* noop */ }
       document.getElementById('clDetailInfo').innerHTML = detailInfo(c);
       // localise this card's title if we don't have the current language yet
@@ -3383,6 +3387,16 @@
       var cnt = document.getElementById('clDetCount');
       if (cnt) { cnt.style.display = hasNav ? '' : 'none'; if (hasNav) cnt.textContent = (_detCtx.i + 1) + ' / ' + _detCtx.list.length; }
       if (!_detKeysOn) { document.addEventListener('keydown', _detKeys); _detKeysOn = true; }
+      if (!defer) upgradeDetail();
+      try { if (window.Track) window.Track('collection_card', { rarity: c.rarity, type: c.type }); } catch (_) { /* noop */ }
+    }
+    // The expensive half of the open: full-res poster + the interactive layers. Safe to
+    // call once, and cheap to call late — which is what lets the flip hide it.
+    var _upgraded = false;
+    function upgradeDetail() {
+      if (_upgraded) return; _upgraded = true;
+      var holder = document.getElementById('clDetailCard'); if (!holder) return;
+      Array.prototype.forEach.call(holder.querySelectorAll('img'), function (im) { im.src = im.src.replace(/\/t\/p\/w\d+\//, '/t/p/w780/'); });
       stopGyro();
       _gyroOff = gyroMount(holder);      // tilt the phone and the card leans + holo shifts
       dragTiltMount(holder);             // touch: drag a finger on the card to tilt it
@@ -3394,37 +3408,51 @@
       // tap-to-open shimmer: a light sweep across the card as it appears
       var ac = holder.querySelector('.auth-card');
       if (ac && window.Fx && window.Fx.play) window.Fx.play(ac, 'sheen-go', 800);
-      try { if (window.Track) window.Track('collection_card', { rarity: c.rarity, type: c.type }); } catch (_) { /* noop */ }
     }
-    // Flip open: the card lands back-first and spins to its face. While the back is
-    // toward the viewer the front is hidden (backface-visibility), which is the window
-    // fill() uses to swap in the w780 poster and mount gyro/depth/tilt — so the quality
-    // upgrade is never seen popping in. Replaces the morph (which keeps the face
-    // visible the whole time and so has nowhere to hide the swap).
+    // Flip-morph open: ONE motion, not two. The tapped card literally travels from its
+    // slot in the grid, growing to full size, while spinning twice on its Y axis —
+    // translate + scale + rotateY interpolated together (manual FLIP: measure the source
+    // rect first, invert onto the detail card, then play to identity).
+    // It starts face-on so it's continuous with the card you tapped, and the two
+    // back-facing passes are the cover: upgradeDetail() runs inside the first one, so the
+    // jump from the grid's lightweight card to the full-res, fully-mounted one happens
+    // while the face is turned away and is never seen.
     if (cardFlipOn() && srcEl && !reducedMotion()) {
-      fill();
+      var r0 = null;
+      try { var sC = srcEl.querySelector('.auth-card,.ctc-inner,.clc-card') || srcEl; r0 = sC.getBoundingClientRect(); } catch (_) { /* noop */ }
+      fill(true);                                    // cheap half now, so motion starts next frame
       try {
         var fh = document.getElementById('clDetailCard');
-        if (fh && fh.animate) {
-          var back = document.createElement('div');
-          back.className = 'cld-back ' + activeCardbackClass();
-          back.innerHTML = cbBackHtml();
-          fh.appendChild(back);
-          fh.classList.add('cld-spin');
-          // decode the high-res poster during the spin so the face is crisp on landing
-          try { var fim = fh.querySelector('img'); if (fim && fim.decode) fim.decode().catch(function () { /* noop */ }); } catch (_) { /* noop */ }
-          try { if (window.Sfx && window.Sfx.cardFlip) window.Sfx.cardFlip(); } catch (_) { /* noop */ }
-          var spin = fh.animate(
-            [{ transform: 'rotateY(180deg)' }, { transform: 'rotateY(720deg)' }],
-            { duration: 1050, easing: 'cubic-bezier(.25,.75,.25,1)' }
-          );
-          var landed = function () {
-            try { fh.classList.remove('cld-spin'); back.remove(); } catch (_) { /* noop */ }
-            try { var ac2 = fh.querySelector('.auth-card'); if (ac2 && window.Fx && window.Fx.play) window.Fx.play(ac2, 'sheen-go', 800); } catch (_) { /* noop */ }
-          };
-          spin.onfinish = landed; spin.oncancel = landed;
-        }
-      } catch (_) { /* the card is already filled; worst case it opens without the spin */ }
+        if (!fh || !fh.animate || !r0 || !r0.width) { upgradeDetail(); return; }
+        var r1 = fh.getBoundingClientRect();
+        if (!r1.width) { upgradeDetail(); return; }
+        var dx = (r0.left + r0.width / 2) - (r1.left + r1.width / 2);
+        var dy = (r0.top + r0.height / 2) - (r1.top + r1.height / 2);
+        var sc = r0.width / r1.width;
+        var back = document.createElement('div');
+        back.className = 'cld-back ' + activeCardbackClass();
+        back.innerHTML = cbBackHtml();
+        fh.appendChild(back);
+        fh.classList.add('cld-spin');
+        try { if (window.Sfx && window.Sfx.cardFlip) window.Sfx.cardFlip(); } catch (_) { /* noop */ }
+        var DUR = 1150;
+        var spin = fh.animate([
+          { transform: 'translate(' + dx.toFixed(1) + 'px,' + dy.toFixed(1) + 'px) scale(' + sc.toFixed(4) + ') rotateY(0deg)' },
+          { transform: 'translate(0px,0px) scale(1) rotateY(720deg)' }
+        ], { duration: DUR, easing: 'cubic-bezier(.3,.75,.25,1)' });
+        // ~28% ≈ 100°: the face has just turned away for the first time.
+        setTimeout(function () {
+          try {
+            upgradeDetail();
+            var im = fh.querySelector('img'); if (im && im.decode) im.decode().catch(function () { /* noop */ });
+          } catch (_) { /* noop */ }
+        }, Math.round(DUR * 0.28));
+        var landed = function () {
+          try { fh.classList.remove('cld-spin'); back.remove(); } catch (_) { /* noop */ }
+          upgradeDetail();                            // safety net if the timer never ran
+        };
+        spin.onfinish = landed; spin.oncancel = landed;
+      } catch (_) { upgradeDetail(); }
       return;
     }
     // Shared-element morph: the tapped grid card grows seamlessly into the detail card.
