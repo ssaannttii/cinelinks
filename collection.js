@@ -772,7 +772,22 @@
     scAdd:      { en: 'Add to showcase', es: 'Añadir a la vitrina', fr: 'Ajouter à la vitrine', de: 'Zur Vitrine hinzufügen', pt: 'Adicionar à vitrine' },
     scSubA:     { en: 'Your vitrine — up to', es: 'Tu vitrina — hasta', fr: 'Ta vitrine — jusqu’à', de: 'Deine Vitrine — bis zu', pt: 'Sua vitrine — até' },
     scSubB:     { en: 'cards. Open a card and tap ★ Showcase to feature it.', es: 'cartas. Abre una carta y toca ★ Vitrina para destacarla.', fr: 'cartes. Ouvre une carte et touche ★ Vitrine pour la mettre en avant.', de: 'Karten. Öffne eine Karte und tippe ★ Vitrine, um sie zu zeigen.', pt: 'cartas. Abra uma carta e toque ★ Vitrine para destacá-la.' },
-    density:    { en: 'Card size', es: 'Tamaño de carta', fr: 'Taille des cartes', de: 'Kartengröße', pt: 'Tamanho da carta' }
+    density:    { en: 'Card size', es: 'Tamaño de carta', fr: 'Taille des cartes', de: 'Kartengröße', pt: 'Tamanho da carta' },
+    justGot:    { en: 'Just collected', es: 'Recién conseguidas', fr: 'Fraîchement obtenues', de: 'Gerade erhalten', pt: 'Recém-obtidas' },
+    wCards:     { en: 'cards', es: 'cartas', fr: 'cartes', de: 'Karten', pt: 'cartas' },
+    wFilms:     { en: 'films', es: 'películas', fr: 'films', de: 'Filme', pt: 'filmes' },
+    wPeople:    { en: 'people', es: 'personas', fr: 'personnes', de: 'Personen', pt: 'pessoas' },
+    nextWord:   { en: 'Next:', es: 'Siguiente:', fr: 'Suivant :', de: 'Als Nächstes:', pt: 'Próximo:' },
+    backWord:   { en: 'back', es: 'reverso', fr: 'dos', de: 'Rücken', pt: 'verso' },
+    trophiesLc: { en: 'trophies', es: 'trofeos', fr: 'trophées', de: 'Trophäen', pt: 'troféus' },
+    guaranteed: { en: 'Guaranteed: ', es: 'Garantizado: ', fr: 'Garanti : ', de: 'Garantiert: ', pt: 'Garantido: ' },
+    sortRarity: { en: 'Rarity', es: 'Rareza', fr: 'Rareté', de: 'Seltenheit', pt: 'Raridade' },
+    sortNewest: { en: 'Newest', es: 'Recientes', fr: 'Récentes', de: 'Neueste', pt: 'Recentes' },
+    qCollect5:  { en: 'Add 5 new cards to your Vault', es: 'Añade 5 cartas nuevas a tu bóveda', fr: 'Ajoute 5 nouvelles cartes à ton coffre', de: 'Füge 5 neue Karten hinzu', pt: 'Adicione 5 cartas novas ao seu vault' },
+    qCollect8:  { en: 'Add 8 new cards to your Vault', es: 'Añade 8 cartas nuevas a tu bóveda', fr: 'Ajoute 8 nouvelles cartes à ton coffre', de: 'Füge 8 neue Karten hinzu', pt: 'Adicione 8 cartas novas ao seu vault' },
+    qDupes3:    { en: 'Pull 3 duplicate copies', es: 'Consigue 3 copias repetidas', fr: 'Obtiens 3 doublons', de: 'Ziehe 3 Duplikate', pt: 'Consiga 3 cartas repetidas' },
+    qXp200:     { en: 'Earn 200 XP this week', es: 'Gana 200 XP esta semana', fr: 'Gagne 200 XP cette semaine', de: 'Verdiene 200 XP diese Woche', pt: 'Ganhe 200 XP esta semana' },
+    qAct1:      { en: 'Shine or ascend any card', es: 'Haz Shine o asciende una carta', fr: 'Fais un Shine ou ascensionne une carte', de: 'Shine oder Aufstieg bei einer Karte', pt: 'Faça Shine ou ascenda uma carta' }
   };
   function LT(key) { var m = RV_STR[key]; if (!m) return key; var l = currentLang().slice(0, 2); return m[l] || m.en || key; }
   function rarLabel(rarity) { var rl = RARITY[rarity]; return rl ? LT(rl.label) : rarity; }
@@ -1271,11 +1286,11 @@
     return s.wk;
   }
   var QUESTS = [
-    { id: 'collect5', icon: '&#127916;', label: 'Add 5 new cards to your Vault', need: 5, dust: 40, have: function (w) { return w.got; } },
-    { id: 'collect8', icon: '&#128218;', label: 'Add 8 new cards to your Vault', need: 8, dust: 60, have: function (w) { return w.got; } },
-    { id: 'dupes3', icon: '&#9819;', label: 'Pull 3 duplicate copies', need: 3, dust: 40, have: function (w) { return w.dup; } },
-    { id: 'xp200', icon: '&#9889;', label: 'Earn 200 XP this week', need: 200, dust: 45, have: function (w, s) { return Math.max(0, (s.xp || 0) - (w.xp0 || 0)); } },
-    { id: 'act1', icon: '&#10024;', label: 'Shine or ascend any card', need: 1, dust: 50, have: function (w) { return w.acted; } }
+    { id: 'collect5', icon: '&#127916;', label: LT('qCollect5'), need: 5, dust: 40, have: function (w) { return w.got; } },
+    { id: 'collect8', icon: '&#128218;', label: LT('qCollect8'), need: 8, dust: 60, have: function (w) { return w.got; } },
+    { id: 'dupes3', icon: '&#9819;', label: LT('qDupes3'), need: 3, dust: 40, have: function (w) { return w.dup; } },
+    { id: 'xp200', icon: '&#9889;', label: LT('qXp200'), need: 200, dust: 45, have: function (w, s) { return Math.max(0, (s.xp || 0) - (w.xp0 || 0)); } },
+    { id: 'act1', icon: '&#10024;', label: LT('qAct1'), need: 1, dust: 50, have: function (w) { return w.acted; } }
   ];
   function questSeed(wk) { var a = QUESTS.slice(), out = [], r = wk * 2654435761 >>> 0; while (out.length < 3 && a.length) { r = (r * 1103515245 + 12345) >>> 0; out.push(a.splice(r % a.length, 1)[0]); } return out; }
   function questsState() {
@@ -2675,10 +2690,10 @@
   // What leveling gives you next — the retention teaser beside the XP bar.
   function nextUnlock(st) {
     var lv = CARDBACKS.filter(function (cb) { return cb.level && cb.level > st.level; }).sort(function (a, b) { return a.level - b.level; })[0];
-    if (lv) return 'Next: ' + lv.name + ' back &middot; Lvl ' + lv.level;
+    if (lv) return LT('nextWord') + ' ' + lv.name + ' ' + LT('backWord') + ' &middot; Lvl ' + lv.level;
     var have = achvCount();
     var ac = CARDBACKS.filter(function (cb) { return cb.achv && have < cb.achv; }).sort(function (a, b) { return a.achv - b.achv; })[0];
-    if (ac) return 'Next: ' + ac.name + ' back &middot; ' + ac.achv + ' trophies';
+    if (ac) return LT('nextWord') + ' ' + ac.name + ' ' + LT('backWord') + ' &middot; ' + ac.achv + ' ' + LT('trophiesLc');
     return LT('allBacks');
   }
   // Tier sections get physically larger cards as rarity climbs (presence = status);
@@ -2700,7 +2715,7 @@
     return false;
   }
   var SORTS = [
-    { k: 'rarity', label: 'Rarity' }, { k: 'new', label: 'Newest' }, { k: 'name', label: 'A–Z' },
+    { k: 'rarity', label: LT('sortRarity') }, { k: 'new', label: LT('sortNewest') }, { k: 'name', label: 'A–Z' },
     { k: 'no', label: 'Number' }, { k: 'copies', label: 'Copies' }
   ];
   function sortCards(cards) {
@@ -2728,7 +2743,7 @@
     var sub = document.getElementById('clCollSub');
     if (sub) {
       var synced = false; try { synced = !!localStorage.getItem('gauth_in'); } catch (_) { /* noop */ }
-      sub.innerHTML = st.count + ' cards · ' + st.films + ' films · ' + st.people + ' people' +
+      sub.innerHTML = st.count + ' ' + LT('wCards') + ' · ' + st.films + ' ' + LT('wFilms') + ' · ' + st.people + ' ' + LT('wPeople') +
         (st.depth > 0 ? ' · <span title="Vault depth — your total spare copies" style="color:#e8c24a">&#9707; depth ' + st.depth + '</span>' : '') +
         (synced ? ' · <span title="Signed in — your collection syncs across devices" style="color:#7fd49a">&#9729; synced</span>'
                 : ' · <span title="Sign in on the home page to back up your collection across devices" style="color:#8d8d8d">&#9729; local</span>');
@@ -2756,7 +2771,7 @@
         var tD = today();
         var eLeft = Math.max(0, PITY_ELITE_DAYS - daysBetween(sNow.pityE, tD));
         var lLeft = Math.max(0, PITY_LEG_DAYS - daysBetween(sNow.pityL || tD, tD));
-        pit.innerHTML = '<span class="cl-xp-extra">Guaranteed: </span><span style="color:' + RARITY.elite.ring + '" title="An Elite or better prize is guaranteed within this many days">Elite &le;' + eLeft + 'd</span> · <span style="color:' + RARITY.legendary.ring + '" title="A Legendary prize is guaranteed within this many days">Legend. &le;' + lLeft + 'd</span>';
+        pit.innerHTML = '<span class="cl-xp-extra">' + LT('guaranteed') + '</span><span style="color:' + RARITY.elite.ring + '" title="An Elite or better prize is guaranteed within this many days">Elite &le;' + eLeft + 'd</span> · <span style="color:' + RARITY.legendary.ring + '" title="A Legendary prize is guaranteed within this many days">Legend. &le;' + lLeft + 'd</span>';
       } else pit.innerHTML = '';
     }
 
@@ -2856,7 +2871,7 @@
     var secs = [];
     if (_sort === 'rarity' && !query) {
       var news = cards.filter(function (c) { return c.isNew; });
-      if (news.length >= 2) secs.push({ id: 'new', name: 'Just collected', color: '#7fd49a', cards: news });
+      if (news.length >= 2) secs.push({ id: 'new', name: LT('justGot'), color: '#7fd49a', cards: news });
       TIERS.slice().reverse().forEach(function (t) {
         var tc = cards.filter(function (c) { return c.rarity === t && !(news.length >= 2 && c.isNew); });
         if (tc.length) secs.push({ id: t, name: RARITY[t].label, color: t === 'common' ? '#9a9a9a' : RARITY[t].ring, cards: tc });
@@ -3222,15 +3237,14 @@
     var grid = document.getElementById('clCollGrid'), hd = document.querySelector('#clCollModal .cl-vault-hd');
     if (!grid || !hd || grid._condOn) return;
     grid._condOn = 1;
-    var raf = 0;
+    // No rAF throttle here on purpose: a latched "pending frame" flag deadlocks if the
+    // callback never runs (backgrounded/occluded tab), which silently killed the
+    // handler for the rest of the session. Reading scrollTop inside a scroll listener
+    // is already cheap — it doesn't force layout — and this only toggles a class.
     grid.addEventListener('scroll', function () {
-      if (raf) return;
-      raf = requestAnimationFrame(function () {
-        raf = 0;
-        var y = grid.scrollTop;
-        if (y > 48) hd.classList.add('cond');
-        else if (y < 12) hd.classList.remove('cond');
-      });
+      var y = grid.scrollTop;
+      if (y > 48) hd.classList.add('cond');
+      else if (y < 12) hd.classList.remove('cond');
     }, { passive: true });
   }
   function openGallery(tab) {
