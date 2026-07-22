@@ -2145,6 +2145,20 @@
       // Dust chip reacts when the balance changes (count-up + a gold bump)
       '.cl-dust-bump{animation:clDustBump .5s cubic-bezier(.3,1.3,.5,1)}' +
       '@keyframes clDustBump{0%{transform:scale(1)}35%{transform:scale(1.18);color:#f5c542}100%{transform:scale(1)}}' +
+      // ── Grid cards run "lite" ────────────────────────────────────────────────
+      // The grid holds N cards, the detail holds one — so the effects budget belongs
+      // to the detail. Inside the grid the Shine foil stops DRIFTING (an infinite
+      // animation per shined card was the real cost) and settles to a static sheen,
+      // so rarity/shine still read at a glance. Detail + reveal keep the full effect.
+      '#clCollGrid .cl-shine .ctc-foil,#clCollGrid .cl-shine .auth-foil{animation:none;opacity:.34}' +
+      // ── Detail open flip (masks the quality upgrade) ─────────────────────────
+      // While the back faces the viewer the front face is hidden, which is exactly
+      // when fill() swaps in the w780 poster and mounts gyro/depth/tilt. The spin
+      // is the cover for that work instead of letting it pop on screen.
+      '.cl-detail-stage{perspective:1400px}' +
+      '#clDetailCard.cld-spin{transform-style:preserve-3d;will-change:transform}' +
+      '#clDetailCard.cld-spin>.ctc,#clDetailCard.cld-spin>.auth,#clDetailCard.cld-spin>.clc-card{-webkit-backface-visibility:hidden;backface-visibility:hidden}' +
+      '.cld-back{position:absolute;inset:0;border-radius:14px;overflow:hidden;transform:rotateY(180deg);-webkit-backface-visibility:hidden;backface-visibility:hidden;display:flex;align-items:center;justify-content:center;background:var(--cbk-bg,#0c1117);border:1px solid rgba(255,255,255,.09)}' +
       '@media(prefers-reduced-motion:reduce){.cl-tab-in{animation:none}.cl-ft-glow{animation:none}.cl-dust-bump{animation:none}}' +
       // Buyable card back button (in the Backs tab)
       '.cb-buy{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);border:0;border-radius:999px;background:#e8a000;color:#1a1408;font:inherit;font-weight:800;font-size:.66rem;padding:5px 11px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.4);z-index:3}' +
@@ -3304,6 +3318,13 @@
   }
 
   var DETAIL_SEL = '#clDetailCard .auth-card,#clDetailCard .ctc-inner,#clDetailCard .clc-card';
+  // Opt-in (?cardflip=1 once, or Collection.cardFlip(true)) so the flip can be
+  // judged live against the current shared-element morph before it becomes default.
+  function cardFlipOn() {
+    try { if (/[?&]cardflip=1\b/.test(location.search)) { localStorage.setItem('cl_cardflip', '1'); return true; } } catch (_) { /* noop */ }
+    try { if (/[?&]cardflip=0\b/.test(location.search)) { localStorage.setItem('cl_cardflip', '0'); return false; } } catch (_) { /* noop */ }
+    try { return localStorage.getItem('cl_cardflip') === '1'; } catch (_) { return false; }
+  }
   function openDetail(c, srcEl, ctx) {
     if (!c) return;
     if (ctx) _detCtx = ctx;
@@ -3374,6 +3395,37 @@
       var ac = holder.querySelector('.auth-card');
       if (ac && window.Fx && window.Fx.play) window.Fx.play(ac, 'sheen-go', 800);
       try { if (window.Track) window.Track('collection_card', { rarity: c.rarity, type: c.type }); } catch (_) { /* noop */ }
+    }
+    // Flip open: the card lands back-first and spins to its face. While the back is
+    // toward the viewer the front is hidden (backface-visibility), which is the window
+    // fill() uses to swap in the w780 poster and mount gyro/depth/tilt — so the quality
+    // upgrade is never seen popping in. Replaces the morph (which keeps the face
+    // visible the whole time and so has nowhere to hide the swap).
+    if (cardFlipOn() && srcEl && !reducedMotion()) {
+      fill();
+      try {
+        var fh = document.getElementById('clDetailCard');
+        if (fh && fh.animate) {
+          var back = document.createElement('div');
+          back.className = 'cld-back ' + activeCardbackClass();
+          back.innerHTML = cbBackHtml();
+          fh.appendChild(back);
+          fh.classList.add('cld-spin');
+          // decode the high-res poster during the spin so the face is crisp on landing
+          try { var fim = fh.querySelector('img'); if (fim && fim.decode) fim.decode().catch(function () { /* noop */ }); } catch (_) { /* noop */ }
+          try { if (window.Sfx && window.Sfx.cardFlip) window.Sfx.cardFlip(); } catch (_) { /* noop */ }
+          var spin = fh.animate(
+            [{ transform: 'rotateY(180deg)' }, { transform: 'rotateY(720deg)' }],
+            { duration: 1050, easing: 'cubic-bezier(.25,.75,.25,1)' }
+          );
+          var landed = function () {
+            try { fh.classList.remove('cld-spin'); back.remove(); } catch (_) { /* noop */ }
+            try { var ac2 = fh.querySelector('.auth-card'); if (ac2 && window.Fx && window.Fx.play) window.Fx.play(ac2, 'sheen-go', 800); } catch (_) { /* noop */ }
+          };
+          spin.onfinish = landed; spin.oncancel = landed;
+        }
+      } catch (_) { /* the card is already filled; worst case it opens without the spin */ }
+      return;
     }
     // Shared-element morph: the tapped grid card grows seamlessly into the detail card.
     var srcCard = (srcEl && srcEl.querySelector) ? srcEl.querySelector('.auth-card,.ctc-inner,.clc-card') : null;
@@ -3701,6 +3753,7 @@
     dust: dustBalance, shine: shineCard, shineCost: shineCost, isShined: isShined,
     prime: primeNext, primeCost: primeCost, primeState: primeState,
     draw: drawPack, drawInfo: drawInfo, buyBack: buyBack, backCost: backCost,
+    cardFlip: function (on) { try { localStorage.setItem('cl_cardflip', on ? '1' : '0'); } catch (_) { /* noop */ } return cardFlipOn(); },
     addDust: function (n) { var s = load() || blank(); s.dust = Math.max(0, (s.dust || 0) + (+n || 0)); save(s); refreshOpen(); return s.dust; },
     forge: forgeCard, forgeCost: forgeCost, toggleShowcase: toggleShowcase, showcase: showcaseCards,
     reset: reset, grant: grant, addXp: addXp, setLevel: setLevel, exportData: exportData, importData: importData, seed: function () { return grant(SEED.map(function (s) { return s; })); },
