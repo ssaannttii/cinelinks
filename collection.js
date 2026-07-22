@@ -3998,6 +3998,57 @@
   }
   function openAchievements() { syncAchievements(); _tab = 'trophies'; if (isOpen()) render(); else openGallery('trophies'); }
 
+  // ── Titles ─────────────────────────────────────────────────────────────────
+  // The 29 achievements are already written as titles ("Legend Hunter", "Century
+  // Club", "Vault Keeper"), so earning one unlocks its name as a wearable title —
+  // a whole identity layer with no new content to author. Unset = no title.
+  function titlesState() {
+    var cur = '';
+    try { cur = (load() || blank()).title || ''; } catch (_) { /* noop */ }
+    return achievementsState().map(function (a) {
+      return { id: a.id, name: a.name, icon: a.icon, unlocked: a.unlocked, active: a.id === cur };
+    });
+  }
+  function activeTitle() {
+    var cur = ''; try { cur = (load() || blank()).title || ''; } catch (_) { return null; }
+    if (!cur) return null;
+    var hit = null;
+    achievementsState().forEach(function (a) { if (a.id === cur && a.unlocked) hit = a; });
+    return hit ? { id: hit.id, name: hit.name, icon: hit.icon } : null;   // revoked if somehow not earned
+  }
+  function setTitle(id) {
+    var s = load() || blank();
+    if (!id) { s.title = ''; save(s); refreshOpen(); return { ok: true, title: null }; }
+    var ok = false;
+    achievementsState().forEach(function (a) { if (a.id === id && a.unlocked) ok = true; });
+    if (!ok) return { ok: false, reason: 'locked' };
+    s.title = id; save(s); refreshOpen();
+    return { ok: true, title: id };
+  }
+  // Portrait stats for the profile's "Your cinema" — everything derived from what a
+  // card already stores (serial, collected-on date, rarity, copies), so it needs no
+  // network and works offline.
+  function portrait() {
+    var s = load() || blank();
+    var cards = Object.keys(s.cards || {}).map(function (k) { return s.cards[k]; });
+    if (!cards.length) return null;
+    var bySerial = cards.slice().sort(function (a, b) { return (a.no || 0) - (b.no || 0); });
+    var rarest = cards.slice().sort(function (a, b) {
+      var d = ORDER[a.rarity] - ORDER[b.rarity];                 // legendary first
+      return d !== 0 ? d : (a.no || 0) - (b.no || 0);            // then the earliest pull
+    })[0];
+    var most = cards.slice().sort(function (a, b) { return (b.n || 1) - (a.n || 1); })[0];
+    var days = {};
+    cards.forEach(function (c) { if (c.first) days[c.first] = 1; });
+    return {
+      first: bySerial[0] || null,
+      rarest: rarest || null,
+      mostCopies: (most && (most.n || 1) > 1) ? most : null,
+      collectingDays: Object.keys(days).length,
+      since: bySerial[0] ? bySerial[0].first : null
+    };
+  }
+
   // Do you already own a card of this entity? (used by CineLinks to mark
   // "new to collect" nodes during play.)
   function owns(type, id) { try { var s = load(); return !!(s && s.cards && s.cards[type + ':' + id]); } catch (_) { return false; } }
@@ -4007,6 +4058,7 @@
     add: add, stats: stats, all: allCards, owns: owns, openGallery: openGallery, markSeen: markSeen, reveal: reveal, sets: setsState,
     cardbacks: cardbacksState, useCardback: useCardback, openCardbacks: openCardbacks,
     achievements: achievementsState, openAchievements: openAchievements,
+    titles: titlesState, title: activeTitle, setTitle: setTitle, portrait: portrait,
     dust: dustBalance, shine: shineCard, shineCost: shineCost, isShined: isShined,
     prime: primeNext, primeCost: primeCost, primeState: primeState,
     draw: drawPack, drawInfo: drawInfo, buyBack: buyBack, backCost: backCost,

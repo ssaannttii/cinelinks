@@ -440,6 +440,37 @@ body{font-family:var(--fui);background:var(--bg);color:var(--txt);min-height:100
 .profile-screen{position:fixed;inset:0;z-index:240;display:none;align-items:flex-start;justify-content:center;padding:20px 16px;overflow-y:auto;background:rgba(0,0,0,.78);backdrop-filter:blur(8px)}
 .profile-screen.open{display:flex}
 .profile-box{width:100%;max-width:460px;margin:auto;background:var(--s1);border:1px solid var(--bdr);border-radius:18px;padding:20px;box-shadow:0 24px 70px rgba(0,0,0,.4);animation:winBoxIn .34s cubic-bezier(.22,1,.36,1) both}
+/* ── Profile v2 ──────────────────────────────────────────────────────────────
+   The hero wears your EQUIPPED CARD BACK as its backdrop. Card backs are bought
+   with dust and unlocked by level, yet they're only ever glimpsed for a second
+   mid-flip — this finally gives that whole cosmetic economy a permanent stage. */
+.profile-hero{position:relative;overflow:hidden;background:var(--cbk-bg,var(--s2))}
+.profile-hero::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(37,44,53,.94),rgba(37,44,53,.66));pointer-events:none}
+.profile-hero > *{position:relative;z-index:1}
+.pf-title{display:block;width:100%;margin:0 0 14px;padding:7px 12px;border:1px dashed rgba(232,160,0,.4);border-radius:12px;background:rgba(232,160,0,.08);color:var(--goldsoft);font-family:inherit;font-weight:800;font-size:.8rem;cursor:pointer;text-align:center}
+.pf-title:hover{background:rgba(232,160,0,.15)}
+.pf-titles{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:-6px 0 14px;max-height:190px;overflow-y:auto;padding:2px}
+.pf-titles button{display:flex;align-items:center;gap:6px;padding:7px 9px;border:1px solid var(--bdr);border-radius:10px;background:var(--s2);color:var(--txt);font-family:inherit;font-weight:700;font-size:.74rem;cursor:pointer;text-align:left}
+.pf-titles button.on{border-color:var(--gold);background:rgba(232,160,0,.14);color:var(--goldsoft)}
+.pf-titles button:disabled{opacity:.4;cursor:default}
+.pf-sec{margin-bottom:14px}
+.pf-sec-h{display:flex;align-items:center;justify-content:space-between;font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin:0 2px 8px}
+.pf-edit{background:none;border:0;color:var(--gold);font-family:inherit;font-weight:800;font-size:.68rem;cursor:pointer;letter-spacing:.04em}
+.pf-show{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.pf-show .pf-slot{aspect-ratio:5/7;border-radius:8px;background:var(--s2);border:1px dashed var(--bdr);overflow:hidden;display:flex;align-items:center;justify-content:center}
+.pf-show .pf-slot img{width:100%;height:100%;object-fit:cover;display:block}
+.pf-show-empty{grid-column:1/-1;padding:14px;border-radius:12px;background:var(--s2);border:1px dashed var(--bdr);color:var(--mut);font-size:.78rem;text-align:center}
+.pf-cine{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pf-cine .pf-c{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:12px;background:var(--s2)}
+.pf-cine .pf-c-th{width:30px;height:42px;flex:none;border-radius:5px;object-fit:cover;background:#2a323c}
+.pf-cine .pf-c-tx{min-width:0;line-height:1.25}
+.pf-cine .pf-c-k{display:block;font-size:.58rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
+.pf-cine .pf-c-v{display:block;font-size:.8rem;font-weight:800;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pf-cine .pf-c-s{display:block;font-size:.63rem;font-weight:700;color:var(--mut)}
+.pf-tro{display:flex;gap:8px;flex-wrap:wrap}
+.pf-tro .pf-t{display:flex;align-items:center;gap:6px;padding:7px 11px;border-radius:999px;background:var(--s2);font-size:.74rem;font-weight:800;color:var(--txt)}
+.pf-tro .pf-t-none{color:var(--mut);font-weight:700}
+@media(max-width:640px){.pf-cine{grid-template-columns:1fr}.pf-titles{grid-template-columns:1fr}}
 .profile-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
 .profile-title{font-size:1.15rem;font-weight:800;color:#f5f5f5}.profile-title span{color:var(--gold)}
 .profile-x{background:none;border:none;color:#888;font-size:1.3rem;cursor:pointer;line-height:1;padding:2px 6px}.profile-x:hover{color:#f5f5f5}
@@ -1103,20 +1134,31 @@ body{font-family:var(--fui);background:var(--bg);color:var(--txt);min-height:100
         <div class="profile-xp-bar"><i id="profileXpFill" style="width:0%"></i></div>
       </div>
     </div>
-    <div class="profile-stats">
-      <div class="pstat"><b id="pstatCards">0</b><span>Cards</span></div>
-      <div class="pstat"><b id="pstatSets">0/63</b><span>Sets</span></div>
-      <div class="pstat"><b id="pstatDust">&#10024; 0</b><span>Dust</span></div>
-      <div class="pstat"><b id="pstatTrophies">0/16</b><span>Trophies</span></div>
+    <!-- Title: the 29 achievements double as wearable titles. -->
+    <button class="pf-title" id="pfTitle" type="button" onclick="openTitlePicker()"></button>
+    <div class="pf-titles" id="pfTitles" hidden></div>
+
+    <!-- Showcase: the only part of the game that is YOUR curation, so it leads. -->
+    <div class="pf-sec">
+      <div class="pf-sec-h"><span id="pfShowH">Showcase</span><button class="pf-edit" type="button" onclick="closeProfile();try{Collection.openGallery('show')}catch(_){}" id="pfShowEdit">Edit</button></div>
+      <div class="pf-show" id="pfShow"></div>
+    </div>
+
+    <!-- Your cinema: portrait stats — all derived from what a card already stores. -->
+    <div class="pf-sec">
+      <div class="pf-sec-h"><span id="pfCineH">Your cinema</span></div>
+      <div class="pf-cine" id="pfCine"></div>
     </div>
     <div class="profile-actions">
       <button class="prow primary" type="button" onclick="closeProfile();try{Collection.openGallery()}catch(_){}">
         <span class="prow-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="16" rx="2.5"/><path d="M7 4v16M17 4v16M2.5 9.5H7M17 9.5h4.5M2.5 14.5H7M17 14.5h4.5"/></svg></span><span class="prow-tx"><b>Your collection</b><span id="prowCollSub">Play to start collecting</span></span>
         <span class="prow-dot" id="prowCollDot" style="display:none"></span><span class="prow-arrow">›</span></button>
-      <button class="prow" type="button" onclick="closeProfile();try{Collection.openAchievements()}catch(_){}">
-        <span class="prow-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="5.5"/><path d="M8.5 13.5 7 21l5-2.5L17 21l-1.5-7.5"/></svg></span><span class="prow-tx"><b>Trophy case</b><span id="prowTroSub">Earn trophies as you collect</span></span><span class="prow-arrow">›</span></button>
-      <button class="prow" type="button" onclick="closeProfile();try{Collection.openCardbacks()}catch(_){}">
-        <span class="prow-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="3" width="12" height="16" rx="2.2"/><path d="M15.5 21H6a2 2 0 0 1-2-2V7.5"/></svg></span><span class="prow-tx"><b>Card backs</b><span>Unlock & equip card reverses</span></span><span class="prow-arrow">›</span></button>
+    </div>
+    <!-- Accolades: the three most recent, curated — not the whole case re-listed.
+         The full grid stays in the vault, which is its one canonical home. -->
+    <div class="pf-sec">
+      <div class="pf-sec-h"><span id="pfTroH">Accolades</span><button class="pf-edit" type="button" onclick="closeProfile();try{Collection.openAchievements()}catch(_){}" id="pfTroAll">All</button></div>
+      <div class="pf-tro" id="pfTro"></div>
     </div>
     <div class="profile-account">
       <div class="account-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 0 0 .5-8.97A6 6 0 0 0 6.3 9.5 3.5 3.5 0 0 0 7 19z"/><path d="M12 12v6M12 12l2.2 2.2M12 12l-2.2 2.2"/></svg></div>
@@ -2741,13 +2783,96 @@ function renderProfile() {
   var fill = document.getElementById('profileXpFill');
   if (fill) fill.style.width = Math.max(3, Math.min(100, st.xpSpan ? (st.xpInto / st.xpSpan) * 100 : 0)) + '%';
   var setsC = 0, setsT = 0; try { var ss = Collection.sets(); setsT = ss.length; setsC = ss.filter(function (x) { return x.complete; }).length; } catch (_) {}
-  set('pstatCards', st.count);
-  set('pstatSets', setsC + '/' + setsT);
-  set('pstatDust', '&#10024; ' + dust, true);
-  set('pstatTrophies', troph + '/' + trophTotal);
-  set('prowCollSub', st.count > 0 ? (st.count + ' cards · ' + st.films + ' films · ' + st.people + ' people' + (st.newCount ? ' · ' + st.newCount + ' new' : '')) : 'Play a game to start collecting');
-  set('prowTroSub', troph + ' of ' + trophTotal + ' trophies earned');
+  set('prowCollSub', st.count > 0 ? (st.count + ' cards · ' + setsC + '/' + setsT + ' sets · ✨' + dust) : 'Play a game to start collecting');
   var cdot = document.getElementById('prowCollDot'); if (cdot) cdot.style.display = st.newCount ? 'block' : 'none';
+
+  // Hero wears the equipped card back (its class carries --cbk-bg).
+  try {
+    var hero = document.querySelector('.profile-hero');
+    if (hero) {
+      var cbs = Collection.cardbacks() || [];
+      var act = cbs.filter(function (c) { return c.active; })[0];
+      hero.className = 'profile-hero' + (act && act.css ? ' ' + act.css : '');
+    }
+  } catch (_) {}
+
+  renderTitleBtn();
+  renderShowcase();
+  renderCine();
+  renderAccolades(troph, trophTotal);
+}
+// ── Title ────────────────────────────────────────────────────────────────────
+function renderTitleBtn() {
+  var b = document.getElementById('pfTitle'); if (!b) return;
+  var t2 = null; try { t2 = Collection.title(); } catch (_) {}
+  var any = false; try { any = (Collection.titles() || []).some(function (x) { return x.unlocked; }); } catch (_) {}
+  b.innerHTML = t2 ? (t2.icon + ' ' + t2.name) : (any ? 'Choose a title' : 'Earn a trophy to unlock titles');
+  b.disabled = !any;
+  b.style.opacity = any ? '' : '.55';
+}
+function openTitlePicker() {
+  var w = document.getElementById('pfTitles'); if (!w) return;
+  if (!w.hidden) { w.hidden = true; return; }
+  var list = []; try { list = Collection.titles() || []; } catch (_) {}
+  var earned = list.filter(function (x) { return x.unlocked; });
+  if (!earned.length) return;
+  w.innerHTML = '<button type="button" data-t="">— none —</button>' + earned.map(function (x) {
+    return '<button type="button" data-t="' + x.id + '" class="' + (x.active ? 'on' : '') + '">' + x.icon + ' ' + x.name + '</button>';
+  }).join('');
+  Array.prototype.forEach.call(w.querySelectorAll('button'), function (btn) {
+    btn.addEventListener('click', function () {
+      try { Collection.setTitle(btn.getAttribute('data-t')); } catch (_) {}
+      w.hidden = true; renderTitleBtn();
+      try { if (window.Sfx) Sfx.tap(); } catch (_) {}
+    });
+  });
+  w.hidden = false;
+}
+window.openTitlePicker = openTitlePicker;
+// ── Showcase: your six, the one piece of pure curation in the game ───────────
+function renderShowcase() {
+  var el = document.getElementById('pfShow'); if (!el) return;
+  var cards = []; try { cards = Collection.showcase() || []; } catch (_) {}
+  if (!cards.length) {
+    el.innerHTML = '<div class="pf-show-empty">Pick up to six cards in your vault to feature them here.</div>';
+    return;
+  }
+  var img = function (c) { return c && c.img ? 'https://image.tmdb.org/t/p/w185' + c.img : ''; };
+  var slots = '';
+  for (var i = 0; i < 6; i++) {
+    var c = cards[i];
+    slots += '<div class="pf-slot">' + (c && img(c) ? '<img src="' + img(c) + '" alt="' + (c.name || '').replace(/"/g, '') + '" loading="lazy">' : '') + '</div>';
+  }
+  el.innerHTML = slots;
+}
+// ── Your cinema: a portrait, not a scoreboard ────────────────────────────────
+function renderCine() {
+  var el = document.getElementById('pfCine'); if (!el) return;
+  var p = null, st = null;
+  try { p = Collection.portrait(); st = Collection.stats(); } catch (_) {}
+  if (!p || !st) { el.innerHTML = '<div class="pf-show-empty">Win a game to start your collection.</div>'; return; }
+  var thumb = function (c) { return (c && c.img) ? '<img class="pf-c-th" src="https://image.tmdb.org/t/p/w92' + c.img + '" alt="" loading="lazy">' : '<span class="pf-c-th"></span>'; };
+  var row = function (k, v, s, c) {
+    return '<div class="pf-c">' + (c ? thumb(c) : '') + '<span class="pf-c-tx"><span class="pf-c-k">' + k + '</span>' +
+      '<span class="pf-c-v">' + v + '</span>' + (s ? '<span class="pf-c-s">' + s + '</span>' : '') + '</span></div>';
+  };
+  var esc = function (x) { return String(x || '').replace(/[<>&]/g, ''); };
+  var out = '';
+  if (p.first) out += row('Where it started', esc(p.first.name), p.first.first || '', p.first);
+  if (p.rarest) out += row('Rarest pull', esc(p.rarest.name), (p.rarest.rarity || '') + ' · #' + ('00' + (p.rarest.no || 0)).slice(-3), p.rarest);
+  if (p.mostCopies) out += row('Keeps showing up', esc(p.mostCopies.name), '×' + p.mostCopies.n + ' copies', p.mostCopies);
+  out += row('Your vault', st.films + ' films · ' + st.people + ' people', st.depth ? (st.depth + ' spare copies') : '');
+  el.innerHTML = out;
+}
+// ── Accolades: the three most recent, curated (full case lives in the vault) ──
+function renderAccolades(got, total) {
+  var el = document.getElementById('pfTro'); if (!el) return;
+  var list = []; try { list = (Collection.achievements() || []).filter(function (a) { return a.unlocked; }); } catch (_) {}
+  var h = document.getElementById('pfTroH'); if (h) h.textContent = 'Accolades · ' + got + '/' + total;
+  if (!list.length) { el.innerHTML = '<span class="pf-t pf-t-none">No trophies yet — they come as you collect.</span>'; return; }
+  el.innerHTML = list.slice(-3).reverse().map(function (a) {
+    return '<span class="pf-t">' + a.icon + ' ' + a.name + '</span>';
+  }).join('');
 }
 function openProfile() { try { renderProfile(); } catch (_) {} var s = document.getElementById('profileScreen'); if (s) s.classList.add('open'); }
 function closeProfile() { var s = document.getElementById('profileScreen'); if (s) s.classList.remove('open'); }
