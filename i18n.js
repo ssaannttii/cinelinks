@@ -60,6 +60,9 @@ const I18N = {
     streakDays: 'day streak', streakClose: 'Close', streakMile: 'New milestone!', streakTap: 'tap to continue', streakModeAny: 'Any game', streakModeCl: 'CineLinks daily', metaAllDone: 'Day complete!',
     // click singular + goal tag
     clickSingular: 'click', goalTag: 'GOAL',
+    a11yBoard: (n, c, m) => `Now at ${n}. ${c} connections available. Move ${m}.`,
+    a11yGoalInSight: 'The target is among them.',
+    a11yWin: (m) => `Solved in ${m} ${m === 1 ? 'move' : 'moves'}.`,
     noImage: 'No image', cardChoose: 'Choose', cardVisited: 'Already visited', cardGoalA11y: 'target',
     // difficulty labels (from par)
     diffEasy: 'Easy', diffMedium: 'Medium', diffHard: 'Hard', diffExpert: 'Expert', difficultyLabel: 'Difficulty',
@@ -155,6 +158,9 @@ const I18N = {
     streakDays: 'días de racha', streakClose: 'Cerrar', streakMile: '¡Nuevo hito!', streakTap: 'toca para continuar', streakModeAny: 'Cualquier juego', streakModeCl: 'Diario CineLinks', metaAllDone: '¡Día completo!',
     // click singular + goal tag
     clickSingular: 'clic', goalTag: 'OBJETIVO',
+    a11yBoard: (n, c, m) => `Ahora en ${n}. ${c} conexiones disponibles. Movimiento ${m}.`,
+    a11yGoalInSight: 'El objetivo está entre ellas.',
+    a11yWin: (m) => `Resuelto en ${m} ${m === 1 ? 'movimiento' : 'movimientos'}.`,
     noImage: 'Sin imagen', cardChoose: 'Elegir', cardVisited: 'Ya visitada', cardGoalA11y: 'objetivo',
     // difficulty labels (from par)
     diffEasy: 'Fácil', diffMedium: 'Media', diffHard: 'Difícil', diffExpert: 'Experto', difficultyLabel: 'Dificultad',
@@ -250,6 +256,9 @@ const I18N = {
     streakDays: 'días de racha', streakClose: 'Cerrar', streakMile: '¡Nuevo hito!', streakTap: 'toca para continuar', streakModeAny: 'Cualquier juego', streakModeCl: 'Diario CineLinks', metaAllDone: '¡Día completo!',
     // click singular + goal tag
     clickSingular: 'clic', goalTag: 'OBJETIVO',
+    a11yBoard: (n, c, m) => `Ahora en ${n}. ${c} conexiones disponibles. Movimiento ${m}.`,
+    a11yGoalInSight: 'El objetivo está entre ellas.',
+    a11yWin: (m) => `Resuelto en ${m} ${m === 1 ? 'movimiento' : 'movimientos'}.`,
     noImage: 'Sin imagen', cardChoose: 'Elegir', cardVisited: 'Ya visitada', cardGoalA11y: 'objetivo',
     // difficulty labels (from par)
     diffEasy: 'Fácil', diffMedium: 'Media', diffHard: 'Difícil', diffExpert: 'Experto', difficultyLabel: 'Dificultad',
@@ -347,6 +356,9 @@ const I18N = {
     betaTitle: 'BÊTA privée', betaSub: 'Essaie un quotidien, puis touche Feedback si quelque chose cloche.',
     // click singular + goal tag
     clickSingular: 'clic', goalTag: 'OBJECTIF',
+    a11yBoard: (n, c, m) => `Maintenant sur ${n}. ${c} connexions disponibles. Coup ${m}.`,
+    a11yGoalInSight: `L'objectif est parmi elles.`,
+    a11yWin: (m) => `Résolu en ${m} ${m === 1 ? 'coup' : 'coups'}.`,
     noImage: 'Aucune image', cardChoose: 'Choisir', cardVisited: 'Déjà visitée', cardGoalA11y: 'objectif',
     // difficulty labels (from par)
     diffEasy: 'Facile', diffMedium: 'Moyen', diffHard: 'Difficile', diffExpert: 'Expert', difficultyLabel: 'Difficulté',
@@ -442,6 +454,9 @@ const I18N = {
     betaTitle: 'Private BETA', betaSub: 'Probier ein Daily und tippe auf Feedback, wenn etwas nicht stimmt.',
     // click singular + goal tag
     clickSingular: 'Klick', goalTag: 'ZIEL',
+    a11yBoard: (n, c, m) => `Jetzt bei ${n}. ${c} Verbindungen verfügbar. Zug ${m}.`,
+    a11yGoalInSight: 'Das Ziel ist darunter.',
+    a11yWin: (m) => `Gelöst in ${m} ${m === 1 ? 'Zug' : 'Zügen'}.`,
     noImage: 'Kein Bild', cardChoose: 'Wählen', cardVisited: 'Bereits besucht', cardGoalA11y: 'Ziel',
     // difficulty labels (from par)
     diffEasy: 'Leicht', diffMedium: 'Mittel', diffHard: 'Schwer', diffExpert: 'Experte', difficultyLabel: 'Schwierigkeit',
@@ -537,6 +552,9 @@ const I18N = {
     betaTitle: 'BETA privada', betaSub: 'Experimente um diário e toque em Feedback se algo parecer errado.',
     // click singular + goal tag
     clickSingular: 'clique', goalTag: 'ALVO',
+    a11yBoard: (n, c, m) => `Agora em ${n}. ${c} conexões disponíveis. Jogada ${m}.`,
+    a11yGoalInSight: 'O alvo está entre elas.',
+    a11yWin: (m) => `Resolvido em ${m} ${m === 1 ? 'jogada' : 'jogadas'}.`,
     noImage: 'Sem imagem', cardChoose: 'Escolher', cardVisited: 'Já visitada', cardGoalA11y: 'alvo',
     // difficulty labels (from par)
     diffEasy: 'Fácil', diffMedium: 'Média', diffHard: 'Difícil', diffExpert: 'Especialista', difficultyLabel: 'Dificuldade',

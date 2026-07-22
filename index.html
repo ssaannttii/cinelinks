@@ -720,6 +720,9 @@ body{font-family:var(--fui);background:var(--bg);color:var(--txt);min-height:100
 /* Connection cards are <button> elements (keyboard + screen reader access to the
    core game). These undo the UA button styling and restore block flow to the
    inner spans, which are inline by default. */
+/* Visible to assistive tech, invisible on screen. Not display:none, which would
+   hide it from screen readers too, and not width:0, which can collapse the text. */
+.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .card{display:block;width:100%;margin:0;padding:0;font:inherit;color:inherit;text-align:left;-webkit-appearance:none;appearance:none}
 .card:disabled{cursor:default}
 .card-img,.card-info{display:block}
@@ -1212,7 +1215,7 @@ body{font-family:var(--fui);background:var(--bg);color:var(--txt);min-height:100
   </div>
 </div>
 
-<div id="archiveModal" class="arch-modal" onclick="if(event.target===this)game.closeArchive()">
+<div id="archiveModal" class="arch-modal" role="dialog" aria-modal="true" aria-hidden="true" onclick="if(event.target===this)game.closeArchive()">
   <div class="arch-box">
     <div class="arch-head">
       <h2 id="archiveTitle">Past challenges</h2>
@@ -1361,9 +1364,13 @@ body{font-family:var(--fui);background:var(--bg);color:var(--txt);min-height:100
 </div>
 
 <div id="deadEndToast"></div>
+<!-- Game state for screen readers. Every board change (move count, where you are,
+     how many connections, target in sight, dead end, win) was communicated only
+     visually, so a non-sighted player got no feedback at all after acting. -->
+<div id="gameStatus" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 <div id="goalFlash" aria-hidden="true"></div>
 
-<div class="creator-modal" id="creatorModal">
+<div class="creator-modal" id="creatorModal" role="dialog" aria-modal="true" aria-hidden="true">
   <div class="creator-box">
     <button class="creator-close" onclick="creator.close()">✕</button>
     <div class="creator-title">Create a challenge</div>
@@ -2638,10 +2645,33 @@ function renderStreakCalendar(off) {
   });
   document.getElementById('calClose').onclick = closeStreakModal;
 }
-function openStreakModal() { const mo = document.getElementById('streakModal'); if (!mo) return; renderStreakCalendar(0); mo.classList.add('open'); mo.setAttribute('aria-hidden', 'false'); }
-function closeStreakModal() { const mo = document.getElementById('streakModal'); if (mo) { mo.classList.remove('open'); mo.setAttribute('aria-hidden', 'true'); } }
+let _streakRelease = null;
+function openStreakModal() {
+  const mo = document.getElementById('streakModal');
+  if (!mo) return;
+  renderStreakCalendar(0);
+  mo.classList.add('open');
+  mo.setAttribute('aria-hidden', 'false');
+  try { if (window.fxTrapFocus) _streakRelease = fxTrapFocus(mo); } catch (_) {}
+}
+function closeStreakModal() {
+  const mo = document.getElementById('streakModal');
+  if (mo) { mo.classList.remove('open'); mo.setAttribute('aria-hidden', 'true'); }
+  try { if (_streakRelease) { _streakRelease(); _streakRelease = null; } } catch (_) {}
+}
 document.addEventListener('click', function (e) { const mo = document.getElementById('streakModal'); if (mo && mo.classList.contains('open') && e.target === mo) closeStreakModal(); });
 document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeStreakModal(); });
+// Escape closes Archive and Creator too. Only the streak calendar had it, so the
+// other two could be entered by keyboard but not left by keyboard.
+document.addEventListener('keydown', function (e) {
+  if (e.key !== 'Escape') return;
+  var a = document.getElementById('archiveModal');
+  if (a && a.classList.contains('open')) { game.closeArchive(); return; }
+  var c = document.getElementById('creatorModal');
+  // `creator` is a top-level const, so it lives in the global lexical record and
+  // is NOT reachable as window.creator — reference it directly.
+  if (c && c.classList.contains('open') && typeof creator !== 'undefined') creator.close();
+});
 function _emberBurst(host) {
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const colors = ['#ffb02e', '#ff7a18', '#ffd36e', '#ff5722', '#ffffff'];
@@ -3537,12 +3567,20 @@ const game = window.game = {
   openArchive() {
     loadDailyChallenges().then(() => this.renderArchive());
     const m = document.getElementById('archiveModal');
-    if (m) m.classList.add('open');
+    if (!m) return;
+    m.classList.add('open');
+    m.setAttribute('aria-hidden', 'false');
+    // Same focus contract as every other dialog: trap Tab inside, Escape closes,
+    // focus returns where it came from. Archive, Creator and the streak calendar
+    // were the three that only toggled a class, so keyboard users kept tabbing
+    // into the page behind them.
+    try { if (window.fxTrapFocus) this._archiveRelease = fxTrapFocus(m); } catch (_) {}
   },
 
   closeArchive() {
     const m = document.getElementById('archiveModal');
-    if (m) m.classList.remove('open');
+    if (m) { m.classList.remove('open'); m.setAttribute('aria-hidden', 'true'); }
+    try { if (this._archiveRelease) { this._archiveRelease(); this._archiveRelease = null; } } catch (_) {}
   },
 
   renderArchive() {
@@ -4117,6 +4155,11 @@ const game = window.game = {
 
       animateGridIn();
 
+      // Announce the new board. Sighted players get the scroll-to-goal, the glow
+      // and the counter; this is the equivalent for everyone else.
+      this._announce(t('a11yBoard', node.name, items.length, this.clicks) +
+        (goalItem ? ' ' + t('a11yGoalInSight') : ''));
+
       // When the goal is on screen, scroll it into view so it's never missed.
       if (goalItem) {
         const goalCard = grid.querySelector('.card.goal');
@@ -4136,6 +4179,7 @@ const game = window.game = {
         await new Promise(r => setTimeout(r, 320));
         try { if (window.Sfx) { Sfx.deadEnd(); Sfx.haptic([15, 30]); } } catch (_) {}
         this._showToastNamed('deadEndToast', nodeName);
+        this._announce(t('deadEndToast', nodeName));
         await new Promise(r => setTimeout(r, 1800));
         this._goBack();
       }
@@ -4195,6 +4239,17 @@ const game = window.game = {
       .join(' <span class="dbg-arrow">→</span> ');
     el.innerHTML = '<div class="dbg-sol-label">Optimal path · ' + (pathArr.length - 1) + ' clicks</div>' + chain;
     el.style.display = 'block';
+  },
+
+  // Speak a state change to assistive tech. textContent, so untrusted node names
+  // are safe here by construction. Re-announcing the same string is a no-op in
+  // most screen readers, so a nudge blanks the region first.
+  _announce(msg) {
+    const el = document.getElementById('gameStatus');
+    if (!el) return;
+    if (el.textContent === msg) el.textContent = '';
+    clearTimeout(this._announceTimer);
+    this._announceTimer = setTimeout(() => { el.textContent = msg; }, 60);
   },
 
   // TRUSTED HTML ONLY. Never pass a node name, profile field, or anything else
@@ -4286,6 +4341,7 @@ const game = window.game = {
   async showWin(replay) {
     await Promise.all(this.path.map(n => hydrateNodeImage(n)));
     showOnly('winScreen');
+    this._announce(t('a11yWin', this.clicks));
     // Ambient backdrop of the target behind the win card (matches the other modes).
     const wbd = document.getElementById('winBackdrop');
     if (wbd) {
@@ -4949,12 +5005,20 @@ const creator = {
     document.getElementById('creatorPlayBtn').disabled = true;
     this._renderPicked('s');
     this._renderPicked('e');
-    document.getElementById('creatorModal').classList.add('open');
+    const m = document.getElementById('creatorModal');
+    m.classList.add('open');
+    m.setAttribute('aria-hidden', 'false');
+    // It already focused the first input, but nothing kept Tab inside or gave
+    // focus back on close.
+    try { if (window.fxTrapFocus) this._release = fxTrapFocus(m); } catch (_) {}
     document.getElementById('creatorInputS').focus();
   },
 
   close() {
-    document.getElementById('creatorModal').classList.remove('open');
+    const m = document.getElementById('creatorModal');
+    m.classList.remove('open');
+    m.setAttribute('aria-hidden', 'true');
+    try { if (this._release) { this._release(); this._release = null; } } catch (_) {}
   },
 
   _renderPicked(slot) {
@@ -5151,7 +5215,7 @@ window.addEventListener('storage', function (e) {
 </script>
 <!-- Streak overlays live at body level so position:fixed is viewport-relative
      (not trapped by the home's transformed .start-inner containing block). -->
-<div class="streak-modal" id="streakModal" aria-hidden="true"><div class="streak-card" id="streakCard"></div></div>
+<div class="streak-modal" id="streakModal" role="dialog" aria-modal="true" aria-hidden="true"><div class="streak-card" id="streakCard"></div></div>
 <div class="streak-cele" id="streakCele" aria-hidden="true"></div>
 <script defer src="/fx.js"></script>
 <script defer src="/sfx.js"></script>
