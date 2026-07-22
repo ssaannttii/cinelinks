@@ -3519,7 +3519,7 @@ async function hydrateNodeImage(node) {
 
 const game = window.game = {
   cur: null, start: null, end: null,
-  path: [], clicks: 0, visited: new Set(), optDist: null,
+  path: [], clicks: 0, visited: new Set(), dead: new Set(), optDist: null,
   scoreDate: null, dailyRecord: null, _scoreStats: null, scoreToken: null,
   _allItems: [], _tab: 'all', _debug: false,
 
@@ -3540,6 +3540,7 @@ const game = window.game = {
         this.cur = done.path[done.path.length - 1];
         this.scoreDate = key;
         this.visited = new Set(done.path.map(n => n.type + '-' + n.id));
+        this.dead = new Set();
         const badgeEl = document.getElementById('hdrDateBadge');
         if (badgeEl) { badgeEl.textContent = formatDailyDate(dateFromKey(key), {month:'short', day:'numeric'}); badgeEl.style.display = ''; }
         await this.showWin(true);
@@ -3697,6 +3698,7 @@ const game = window.game = {
     this.path = isAtStart ? [start] : [start, current];
     this.clicks = isAtStart ? 0 : 1;
     this.visited = new Set([start.type+'-'+start.id]);
+    this.dead = new Set(); // proven dead-ends; survives _goBack, reset per game
     if (!isAtStart) this.visited.add(current.type+'-'+current.id);
     const rb = document.getElementById('reverseBtn');
     if (rb) rb.style.display = isAtStart ? 'block' : 'none';
@@ -4180,10 +4182,21 @@ const game = window.game = {
         }
       }
 
-      // Dead-end detection: all connections already visited → auto go-back
-      const allVisited = items.every(i => this.visited.has(i.type + '-' + i.id));
-      if (allVisited && this.path.length > 1) {
+      // Dead-end detection: every connection is already visited OR a known dead-end.
+      // Dead-ends are remembered in this.dead, which — unlike this.visited — _goBack
+      // does NOT clear. So a branch proven to lead nowhere is never offered again,
+      // and a node whose every connection is exhausted becomes a dead-end itself.
+      // That makes the auto go-back RECURSIVE: it unwinds a whole trap chain (e.g. a
+      // tiny short film whose only cast are one-step dead-ends) until it lands on a
+      // node that still has a genuinely fresh connection, instead of bouncing forever
+      // between the trap and its children with no way out.
+      const allBlocked = items.every(i => {
+        const k = i.type + '-' + i.id;
+        return this.visited.has(k) || this.dead.has(k);
+      });
+      if (allBlocked && this.path.length > 1) {
         const nodeName = node.name;
+        this.dead.add(node.type + '-' + node.id);
         await new Promise(r => setTimeout(r, 320));
         try { if (window.Sfx) { Sfx.deadEnd(); Sfx.haptic([15, 30]); } } catch (_) {}
         this._showToastNamed('deadEndToast', nodeName);
@@ -4296,7 +4309,7 @@ const game = window.game = {
 
   async navigateTo(node) {
     const key = node.type + '-' + node.id;
-    if (this.visited.has(key)) return;
+    if (this.visited.has(key) || this.dead.has(key)) return;
     // Hide reverse button after first move
     const rb = document.getElementById('reverseBtn');
     if (rb) rb.style.display = 'none';
@@ -4596,7 +4609,7 @@ const game = window.game = {
 
   _makeCard(item) {
     const isGoal = item.id === this.end.id && item.type === this.end.type;
-    const isVisited = this.visited.has(item.type + '-' + item.id);
+    const isVisited = this.visited.has(item.type + '-' + item.id) || this.dead.has(item.type + '-' + item.id);
     // Note: don't skip start node - show it as visited/blocked instead
     // A real <button>, not a div: this is the primary action of the whole game,
     // and as a div it was unreachable by keyboard and invisible to screen readers
@@ -4687,6 +4700,7 @@ const game = window.game = {
     this.cur = this.start;
     this.path = [this.start];
     this.visited = new Set([this.start.type+'-'+this.start.id]);
+    this.dead = new Set();
     document.querySelector('.hdr-clicks')?.style.setProperty('--click-ring', this.clickRing());
     // Update header
     document.getElementById('startNodeName').textContent = this.start.name + nodeHeaderSuffix(this.start);
