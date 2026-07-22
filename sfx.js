@@ -191,7 +191,16 @@
       });
     },
     // duplicate → dust
-    dust: function () { go(function (t) { note(1175, t, 0.05, { type: 'triangle', gain: 0.08 }); note(1568, t + 0.04, 0.08, { type: 'triangle', gain: 0.07 }); }); }
+    dust: function () { go(function (t) { note(1175, t, 0.05, { type: 'triangle', gain: 0.08 }); note(1568, t + 0.04, 0.08, { type: 'triangle', gain: 0.07 }); }); },
+    // XP bar charging up — a rising glide stretched to match the fill segment, so the
+    // ear tracks the bar. Pass the segment's duration in ms.
+    xpFill: function (ms) {
+      var d = Math.max(0.12, Math.min(1.2, (ms || 600) / 1000));
+      go(function (t) {
+        note(320, t, d, { type: 'triangle', gain: 0.085, slideTo: 780, attack: 0.03 });
+        noise(t, d, { gain: 0.03, freq: 900, sweepTo: 2600, q: 1.1 });
+      });
+    }
   };
 
   window.Sfx = Sfx;

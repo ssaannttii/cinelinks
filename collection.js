@@ -2981,17 +2981,61 @@
     var fill = document.getElementById('clCollXpFill');
     var ring = document.querySelector('.cl-lvl-ring');
     var bar = fill && fill.parentNode;
-    var applyBar = function () {
-      // recompute the bar for the post-claim state and animate the width
-      var lv = lvlAfter, into = xpAfter - xpForLevel(lv), span = xpForLevel(lv + 1) - xpForLevel(lv);
-      if (fill) { fill.classList.add('gain'); fill.style.width = Math.max(3, Math.min(100, span ? (into / span) * 100 : 0)) + '%'; }
-      if (bar) { bar.classList.remove('flash'); void bar.offsetWidth; bar.classList.add('flash'); }
+    function spanOf(l) { return xpForLevel(l + 1) - xpForLevel(l); }
+    function pctAt(xp, l) { var s = spanOf(l); return s ? Math.max(0, Math.min(100, ((xp - xpForLevel(l)) / s) * 100)) : 0; }
+    function setLabels(lv, xp) {
+      var into = Math.max(0, xp - xpForLevel(lv)), span = spanOf(lv);
       var lvlEl = document.getElementById('clCollXpName'); if (lvlEl) lvlEl.textContent = LT('lvlWord') + ' ' + lv;
       var lvlNum = document.getElementById('clCollLvl'); if (lvlNum) lvlNum.textContent = lv;
       var xpNum = document.getElementById('clCollXpNum');
       if (xpNum) xpNum.innerHTML = into + ' / ' + span + ' XP<span class="cl-xp-extra"> to level ' + (lv + 1) + '</span>';
+    }
+    // Snap straight to the end state (reduced motion, or no bar on screen).
+    var applyBar = function () {
+      if (fill) { fill.classList.add('gain'); fill.style.transition = 'none'; fill.style.width = Math.max(3, pctAt(xpAfter, lvlAfter)) + '%'; }
+      if (bar) { bar.classList.remove('flash'); void bar.offsetWidth; bar.classList.add('flash'); }
+      setLabels(lvlAfter, xpAfter);
       if (lvlAfter > lvlBefore && ring) { ring.classList.remove('levelup'); void ring.offsetWidth; ring.classList.add('levelup'); try { if (window.Sfx) window.Sfx.haptic([12, 50, 12, 50, 20]); } catch (_) {} }
     };
+    // The bar earns each level: it runs to the end, the level ticks over, and it
+    // restarts from empty for the overflow — once per level gained, however many that
+    // is. Previously a level-up just re-pointed the bar at the new level's progress, so
+    // it appeared to jump backwards and the level-up itself was never shown.
+    function animateBar() {
+      if (!fill) { applyBar(); return; }
+      fill.classList.add('gain');
+      var seq = [], lv = lvlBefore, from = pctAt(xpBefore, lvlBefore);
+      while (lv < lvlAfter && seq.length < 12) { seq.push({ from: from, to: 100, lv: lv, up: true }); lv++; from = 0; }
+      seq.push({ from: from, to: Math.max(3, pctAt(xpAfter, lvlAfter)), lv: lvlAfter, up: false });
+      var i = 0;
+      function width(pct, ms) {
+        fill.style.transition = ms ? ('width ' + ms + 'ms cubic-bezier(.25,.8,.3,1)') : 'none';
+        fill.style.width = pct + '%';
+      }
+      (function step() {
+        if (i >= seq.length) {
+          fill.style.transition = '';                       // hand the bar back to normal renders
+          setLabels(lvlAfter, xpAfter);
+          return;
+        }
+        var s = seq[i++];
+        setLabels(s.lv, s.up ? xpForLevel(s.lv + 1) : xpAfter);
+        width(s.from, 0);                                    // empty (or current) without animating
+        requestAnimationFrame(function () {
+          // shorter hops get shorter fills so a sliver of XP doesn't take as long as a full bar
+          var dur = Math.round(620 * Math.max(0.4, (s.to - s.from) / 100));
+          try { if (window.Sfx && window.Sfx.xpFill) window.Sfx.xpFill(dur); } catch (_) { /* noop */ }
+          width(s.to, dur);
+          setTimeout(function () {
+            if (!s.up) { step(); return; }
+            try { if (window.Sfx) { window.Sfx.levelUp(); window.Sfx.haptic([12, 50, 12, 50, 20]); } } catch (_) { /* noop */ }
+            if (ring) { ring.classList.remove('levelup'); void ring.offsetWidth; ring.classList.add('levelup'); }
+            if (bar) { bar.classList.remove('flash'); void bar.offsetWidth; bar.classList.add('flash'); }
+            setTimeout(step, 300);                           // let the level-up land before refilling
+          }, dur + 40);
+        });
+      })();
+    }
     if (reduce || !fill) { applyBar(); return; }
     // coin flies from centre to the bar
     var br = fill.getBoundingClientRect();
@@ -3004,7 +3048,7 @@
       coin.style.transform = 'translate(' + tx.toFixed(0) + 'px,' + ty.toFixed(0) + 'px) scale(.5)';
       coin.style.opacity = '.2';
     }); });
-    setTimeout(function () { coin.remove(); applyBar(); }, 640);
+    setTimeout(function () { coin.remove(); animateBar(); }, 640);
   }
 
   function renderSets() {
