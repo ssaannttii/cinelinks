@@ -3323,12 +3323,12 @@
   }
 
   var DETAIL_SEL = '#clDetailCard .auth-card,#clDetailCard .ctc-inner,#clDetailCard .clc-card';
-  // Opt-in (?cardflip=1 once, or Collection.cardFlip(true)) so the flip can be
-  // judged live against the current shared-element morph before it becomes default.
+  // On by default. The opt-OUT stays as a safety valve only (?cardflip=0 once, or
+  // Collection.cardFlip(false)), which falls back to the old shared-element morph.
   function cardFlipOn() {
-    try { if (/[?&]cardflip=1\b/.test(location.search)) { localStorage.setItem('cl_cardflip', '1'); return true; } } catch (_) { /* noop */ }
     try { if (/[?&]cardflip=0\b/.test(location.search)) { localStorage.setItem('cl_cardflip', '0'); return false; } } catch (_) { /* noop */ }
-    try { return localStorage.getItem('cl_cardflip') === '1'; } catch (_) { return false; }
+    try { if (/[?&]cardflip=1\b/.test(location.search)) { localStorage.setItem('cl_cardflip', '1'); return true; } } catch (_) { /* noop */ }
+    try { return localStorage.getItem('cl_cardflip') !== '0'; } catch (_) { return true; }
   }
   function openDetail(c, srcEl, ctx) {
     if (!c) return;
@@ -3422,6 +3422,7 @@
     // back-facing passes are the cover: upgradeDetail() runs inside the first one, so the
     // jump from the grid's lightweight card to the full-res, fully-mounted one happens
     // while the face is turned away and is never seen.
+    // Default path; cardFlipOn() is only an escape hatch back to the morph.
     if (cardFlipOn() && srcEl && !reducedMotion()) {
       var r0 = null;
       try { var sC = srcEl.querySelector('.auth-card,.ctc-inner,.clc-card') || srcEl; r0 = sC.getBoundingClientRect(); } catch (_) { /* noop */ }
