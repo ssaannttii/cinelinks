@@ -2159,6 +2159,10 @@
       '#clDetailCard.cld-spin{position:relative;transform-style:preserve-3d;will-change:transform}' +
       '#clDetailCard.cld-spin>.ctc,#clDetailCard.cld-spin>.auth,#clDetailCard.cld-spin>.clc-card{-webkit-backface-visibility:hidden;backface-visibility:hidden}' +
       '.cld-back{position:absolute;inset:0;border-radius:14px;overflow:hidden;transform:rotateY(180deg);-webkit-backface-visibility:hidden;backface-visibility:hidden;display:flex;align-items:center;justify-content:center;background:var(--cbk-bg,#0c1117);border:1px solid rgba(255,255,255,.09)}' +
+      // Return trip: scrim and info clear out while the card flies home, so the grid is
+      // already readable by the time it lands back in its slot.
+      '#clCollDetail.cld-closing{pointer-events:none;background:rgba(0,0,0,0);backdrop-filter:none;-webkit-backdrop-filter:none;transition:background .34s ease}' +
+      '#clCollDetail.cld-closing .cl-di,#clCollDetail.cld-closing .cl-detail-x,#clCollDetail.cld-closing .cl-det-nav,#clCollDetail.cld-closing .cl-det-count{opacity:0;transition:opacity .18s ease}' +
       '@media(prefers-reduced-motion:reduce){.cl-tab-in{animation:none}.cl-ft-glow{animation:none}.cl-dust-bump{animation:none}}' +
       // Buyable card back button (in the Backs tab)
       '.cb-buy{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);border:0;border-radius:999px;background:#e8a000;color:#1a1408;font:inherit;font-weight:800;font-size:.66rem;padding:5px 11px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.4);z-index:3}' +
@@ -3212,6 +3216,7 @@
   }
   // Browse the current filtered list from inside the detail view (wraps around).
   var _detCtx = null, _detKeysOn = false;
+  var _detSrcEl = null, _detSrcKey = '';   // the grid tile this detail flew out of (for the return trip)
   function navDetail(dir) {
     if (!_detCtx || !_detCtx.list || _detCtx.list.length < 2) return;
     _detCtx.i = (_detCtx.i + dir + _detCtx.list.length) % _detCtx.list.length;
@@ -3420,6 +3425,11 @@
     if (cardFlipOn() && srcEl && !reducedMotion()) {
       var r0 = null;
       try { var sC = srcEl.querySelector('.auth-card,.ctc-inner,.clc-card') || srcEl; r0 = sC.getBoundingClientRect(); } catch (_) { /* noop */ }
+      _detSrcEl = srcEl; _detSrcKey = c.type + ':' + c.id;   // remember where to fly back to
+      // There must only ever be ONE of this card on screen: the tile empties the moment
+      // its card lifts out, so the big one IS the small one rather than a copy of it.
+      // visibility (not display) so the grid keeps its layout and the slot stays open.
+      try { srcEl.style.visibility = 'hidden'; } catch (_) { /* noop */ }
       fill(true);                                    // cheap half now, so motion starts next frame
       try {
         var fh = document.getElementById('clDetailCard');
@@ -3472,12 +3482,47 @@
     }
     fill();
   }
+  // Close mirrors the OPEN's travel but not its spin: the spin only ever existed to
+  // hide the quality upgrade, and on the way out there's nothing to hide. What matters
+  // is the spatial thread — the card goes back to the slot it came from — and that exits
+  // stay short (you close when you're done), so this is ~1/3 the duration and no turn.
   function closeDetail() {
     stopGyro();
     if (_detKeysOn) { document.removeEventListener('keydown', _detKeys); _detKeysOn = false; }
-    _detCtx = null;
     closeCine();
-    var d = document.getElementById('clCollDetail'); if (d) d.classList.remove('open');
+    var d = document.getElementById('clCollDetail');
+    var fh = document.getElementById('clDetailCard');
+    var cur = (_detCtx && _detCtx.list) ? _detCtx.list[_detCtx.i] : null;
+    var curKey = cur ? (cur.type + ':' + cur.id) : '';
+    _detCtx = null;
+    if (!d) return;
+    var r0 = null, r1 = null, canFly = false;
+    var srcRestore = _detSrcEl;
+    try {
+      // Only fly home if it's still the card we opened (prev/next moves on, so the
+      // original slot would be the wrong target) and that tile is still on screen.
+      if (cardFlipOn() && !reducedMotion() && fh && fh.animate && _detSrcEl && _detSrcEl.isConnected && curKey && curKey === _detSrcKey) {
+        var sC = _detSrcEl.querySelector('.auth-card,.ctc-inner,.clc-card') || _detSrcEl;
+        r0 = sC.getBoundingClientRect(); r1 = fh.getBoundingClientRect();
+        canFly = !!(r0.width && r1.width && r0.bottom > 0 && r0.top < (window.innerHeight || 0));
+      }
+    } catch (_) { /* noop */ }
+    _detSrcEl = null; _detSrcKey = '';
+    // Hand the card back to its tile. When it flew home this happens on the landing
+    // frame, so the big one becoming the small one again is a single seamless swap;
+    // otherwise (navigated away, tile gone) just put it back right now.
+    var showSrc = function () { try { if (srcRestore) srcRestore.style.visibility = ''; } catch (_) { /* noop */ } };
+    if (!canFly) { showSrc(); d.classList.remove('open'); return; }
+    var dx = (r0.left + r0.width / 2) - (r1.left + r1.width / 2);
+    var dy = (r0.top + r0.height / 2) - (r1.top + r1.height / 2);
+    var sc = r0.width / r1.width;
+    d.classList.add('cld-closing');
+    var back = fh.animate([
+      { transform: 'translate(0px,0px) scale(1)', opacity: 1 },
+      { transform: 'translate(' + dx.toFixed(1) + 'px,' + dy.toFixed(1) + 'px) scale(' + sc.toFixed(4) + ')', opacity: 0.9 }
+    ], { duration: 380, easing: 'cubic-bezier(.4,0,.7,1)' });
+    var fin = function () { showSrc(); try { d.classList.remove('open'); d.classList.remove('cld-closing'); fh.style.transform = ''; } catch (_) { /* noop */ } };
+    back.onfinish = fin; back.oncancel = fin;
   }
 
   // Share a single card: opens a /s link that unfurls to a dynamic OG image of the
