@@ -10,3 +10,6 @@ generated-challenges.txt
 *.log
 .env*
 _*.js
+
+# python venv for the depth-map pipeline
+.venv*/

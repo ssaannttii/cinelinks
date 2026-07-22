@@ -1,0 +1,8 @@
+# Python deps for scripts/build-depth-maps.py (the depth-map pipeline).
+# Install into a throwaway venv so nothing touches system Python:
+#   python3 -m venv .venv-depth
+#   ./.venv-depth/bin/pip install -r scripts/requirements.txt
+#   npm run depth:build
+numpy
+onnxruntime
+pillow

@@ -7,8 +7,13 @@ The card detail view loads /depth/<basename> as the displacement texture for the
 WebGL parallax; a 404 simply falls back to the procedural pseudo-depth.
 
 Usage:
-  node scripts/collect-depth-posters.js          # refresh the poster list
-  PYTHONPATH=~/.local/lib/python3.11/site-packages python3.11 scripts/build-depth-maps.py
+  npm run depth:collect                          # refresh the poster list
+  python3 -m venv .venv-depth                    # once: deps (numpy/onnxruntime/pillow)
+  ./.venv-depth/bin/pip install -r scripts/requirements.txt
+  ./.venv-depth/bin/python scripts/build-depth-maps.py
+
+A venv keeps this off system Python, which on current macOS refuses `pip install`
+outright (PEP 668, "externally-managed-environment").
 
 Incremental: existing depth/<basename> files are skipped, so re-runs only touch
 new pool entries. Model auto-downloads to ~/.cache/cinelinks-depth/ (~27 MB).
