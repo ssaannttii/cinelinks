@@ -771,7 +771,8 @@
     scRemove:   { en: 'In your showcase — remove', es: 'En tu vitrina — quitar', fr: 'Dans ta vitrine — retirer', de: 'In deiner Vitrine — entfernen', pt: 'Na sua vitrine — remover' },
     scAdd:      { en: 'Add to showcase', es: 'Añadir a la vitrina', fr: 'Ajouter à la vitrine', de: 'Zur Vitrine hinzufügen', pt: 'Adicionar à vitrine' },
     scSubA:     { en: 'Your vitrine — up to', es: 'Tu vitrina — hasta', fr: 'Ta vitrine — jusqu’à', de: 'Deine Vitrine — bis zu', pt: 'Sua vitrine — até' },
-    scSubB:     { en: 'cards. Open a card and tap ★ Showcase to feature it.', es: 'cartas. Abre una carta y toca ★ Vitrina para destacarla.', fr: 'cartes. Ouvre une carte et touche ★ Vitrine pour la mettre en avant.', de: 'Karten. Öffne eine Karte und tippe ★ Vitrine, um sie zu zeigen.', pt: 'cartas. Abra uma carta e toque ★ Vitrine para destacá-la.' }
+    scSubB:     { en: 'cards. Open a card and tap ★ Showcase to feature it.', es: 'cartas. Abre una carta y toca ★ Vitrina para destacarla.', fr: 'cartes. Ouvre une carte et touche ★ Vitrine pour la mettre en avant.', de: 'Karten. Öffne eine Karte und tippe ★ Vitrine, um sie zu zeigen.', pt: 'cartas. Abra uma carta e toque ★ Vitrine para destacá-la.' },
+    density:    { en: 'Card size', es: 'Tamaño de carta', fr: 'Taille des cartes', de: 'Kartengröße', pt: 'Tamanho da carta' }
   };
   function LT(key) { var m = RV_STR[key]; if (!m) return key; var l = currentLang().slice(0, 2); return m[l] || m.en || key; }
   function rarLabel(rarity) { var rl = RARITY[rarity]; return rl ? LT(rl.label) : rarity; }
@@ -1467,17 +1468,20 @@
   function dustBalance() { return (load() || blank()).dust || 0; }
   // Animate the header dust chip from a captured previous value to the current
   // balance (count-up + a gold bump). Callers capture `from` before the spend/earn.
+  // The chip is a button now (it opens the management sheet) with a badge inside, so
+  // the number lives in its own span and the count-up writes only there.
+  function setDustText(v) { var e = document.getElementById('clDustN') || document.getElementById('clCollDust'); if (e) e.innerHTML = '&#10024; ' + v; }
   function animDust(from) {
     var du = document.getElementById('clCollDust'); if (!du) return;
     var to = dustBalance();
     var reduced = false; try { reduced = !!(window.Fx && Fx.reduced && Fx.reduced()); } catch (_) {}
-    if (reduced || from == null || from === to) { du.innerHTML = '&#10024; ' + to; return; }
+    if (reduced || from == null || from === to) { setDustText(to); return; }
     du.classList.remove('cl-dust-bump'); void du.offsetWidth; du.classList.add('cl-dust-bump');
     var t0 = performance.now(), ms = 620;
     (function step(t) {
       var p = Math.min(1, (t - t0) / ms), e = 1 - Math.pow(1 - p, 3);
-      du.innerHTML = '&#10024; ' + Math.round(from + (to - from) * e);
-      if (p < 1) requestAnimationFrame(step); else du.innerHTML = '&#10024; ' + to;
+      setDustText(Math.round(from + (to - from) * e));
+      if (p < 1) requestAnimationFrame(step); else setDustText(to);
     })(performance.now());
   }
   function shineCost(c) { return shineCostFor(cardRecord(c) || c); }
@@ -2145,6 +2149,22 @@
       // Dust chip reacts when the balance changes (count-up + a gold bump)
       '.cl-dust-bump{animation:clDustBump .5s cubic-bezier(.3,1.3,.5,1)}' +
       '@keyframes clDustBump{0%{transform:scale(1)}35%{transform:scale(1.18);color:#f5c542}100%{transform:scale(1)}}' +
+      // ── Management sheet ─────────────────────────────────────────────────────
+      '.cl-sheet{position:absolute;inset:0;z-index:12;display:none}' +
+      '.cl-sheet.open{display:block}' +
+      '.cl-sheet-scrim{position:absolute;inset:0;background:rgba(8,11,15,.6);animation:clShScrim .22s ease both}' +
+      '@keyframes clShScrim{from{opacity:0}to{opacity:1}}' +
+      '.cl-sheet-panel{position:absolute;left:0;right:0;bottom:0;max-height:78%;overflow-y:auto;background:#252c35;border-radius:20px 20px 0 0;border-top:1px solid rgba(255,255,255,.1);box-shadow:0 -18px 50px rgba(0,0,0,.55);padding:6px 14px calc(18px + env(safe-area-inset-bottom));animation:clShUp .3s cubic-bezier(.2,.9,.3,1) both}' +
+      '@keyframes clShUp{from{transform:translateY(100%)}to{transform:none}}' +
+      '.cl-sheet-grab{width:40px;height:4px;border-radius:99px;background:rgba(255,255,255,.24);margin:6px auto 2px;cursor:pointer}' +
+      '.cl-sheet-body{padding-bottom:4px}' +
+      '.cl-dust-btn{position:relative;border:0;font:inherit;cursor:pointer}' +
+      '.cl-dust-badge{position:absolute;top:-5px;right:-5px;min-width:17px;height:17px;border-radius:99px;background:#e8a000;color:#1a1408;font-size:.62rem;font-weight:900;font-style:normal;display:flex;align-items:center;justify-content:center;padding:0 4px;box-shadow:0 0 0 2px #252c35}' +
+      '@media(prefers-reduced-motion:reduce){.cl-sheet-panel,.cl-sheet-scrim{animation:none}}' +
+      // ── Condensed header: the identity block yields to the cards while browsing ──
+      '.cl-vault-hd .cl-coll-lvl{overflow:hidden;transition:max-height .28s cubic-bezier(.2,.8,.2,1),opacity .18s ease,margin-top .28s cubic-bezier(.2,.8,.2,1);max-height:90px}' +
+      '.cl-vault-hd.cond .cl-coll-lvl{max-height:0;opacity:0;margin-top:0}' +
+      '@media(prefers-reduced-motion:reduce){.cl-vault-hd .cl-coll-lvl{transition:none}}' +
       // ── Grid cards run "lite" ────────────────────────────────────────────────
       // The grid holds N cards, the detail holds one — so the effects budget belongs
       // to the detail. Inside the grid the Shine foil stops DRIFTING (an infinite
@@ -2181,7 +2201,8 @@
       '@keyframes clShake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}' +
       '.cl-vchips{display:flex;gap:8px;align-items:center;flex-wrap:wrap}' +
       '@media(max-width:640px){' +
-        '.cl-vsearch{flex:1 1 100%}' +
+        // search shares the row with the chips instead of forcing a second line
+        '.cl-vsearch{flex:1 1 118px;min-width:104px}' +
         '.cl-vchips{flex:1 1 100%;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px}' +
         '.cl-vchips::-webkit-scrollbar{display:none}' +
         '.cl-coll-chip{flex-shrink:0}' +
@@ -2199,7 +2220,8 @@
       '.cl-vsort:focus{border-color:rgba(232,160,0,.5)}' +
       // scroller + tier sections with sticky headers
       '.cl-coll-grid{flex:1;overflow-y:auto;width:100%;max-width:1192px;margin:0 auto;padding:6px 16px 26px}' +
-      '@media(max-width:640px){.cl-coll-grid{padding-bottom:96px}}' +
+      // near edge-to-edge on a phone: those side gutters were width the cards wanted
+      '@media(max-width:640px){.cl-coll-grid{padding:6px 8px 96px}}' +
       '.cl-sec{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:9px;padding:12px 2px 9px;background:linear-gradient(180deg,#252c35 72%,rgba(37,44,53,0));font-weight:800;font-size:.76rem;letter-spacing:.09em;text-transform:uppercase;color:var(--sc,#cfcfcf)}' +
       '.cl-sec .gem{width:9px;height:9px;border-radius:2.5px;transform:rotate(45deg);background:var(--sc,#888);box-shadow:0 0 9px var(--sc,transparent);flex-shrink:0}' +
       '.cl-sec .n{color:#777;font-family:ui-monospace,Menlo,monospace;font-size:.72rem;letter-spacing:0}' +
@@ -2532,7 +2554,7 @@
       '<div class="cl-vault-hd">' +
         '<div class="cl-coll-hd-top">' +
           '<div><div class="cl-coll-title">' + LT('collTitle') + '</div><div class="cl-coll-sub" id="clCollSub"></div></div>' +
-          '<div class="cl-coll-hd-btns" id="clCollHdBtns"><a class="cl-coll-dust cl-coll-battle" href="/rating/toptrumps" title="Top Trumps — battle the CPU with cards from this collection">&#9876;&#65039;<span class="lbl">&nbsp;Battle</span></a><span class="cl-coll-dust" id="clCollDD" title="Daily Double — win two daily games today for bonus dust">&#9889; 0/2</span><span class="cl-coll-dust" id="clCollDust" title="Dust — earned from duplicate cards, leveling up, the Daily Double and trophies. Spend it to Prime your next card (guarantee its rarity), Shine a card (permanent foil) or Forge a missing set card.">&#10024; 0</span><button class="cl-coll-x" aria-label="Close">&#10005;</button></div>' +
+          '<div class="cl-coll-hd-btns" id="clCollHdBtns"><a class="cl-coll-dust cl-coll-battle" href="/rating/toptrumps" title="Top Trumps — battle the CPU with cards from this collection">&#9876;&#65039;<span class="lbl">&nbsp;Battle</span></a><span class="cl-coll-dust" id="clCollDD" title="Daily Double — win two daily games today for bonus dust">&#9889; 0/2</span><button class="cl-coll-dust cl-dust-btn" id="clCollDust" title="Dust — earned from duplicate cards, leveling up, the Daily Double and trophies. Tap for weekly quests and Prime."><span id="clDustN">&#10024; 0</span><i class="cl-dust-badge" id="clDustBadge" hidden></i></button><button class="cl-coll-x" aria-label="Close">&#10005;</button></div>' +
         '</div>' +
         '<div class="cl-coll-lvl">' +
           '<div class="cl-lvl-ring"><svg viewBox="0 0 52 52"><circle class="bg" cx="26" cy="26" r="22"></circle><circle class="fg" id="clCollRing" cx="26" cy="26" r="22" stroke-dasharray="' + RING_C + '" stroke-dashoffset="' + RING_C + '"></circle></svg><b id="clCollLvl">1</b></div>' +
@@ -2543,13 +2565,34 @@
           '</div>' +
         '</div>' +
         '<div class="cl-vault-tabs" id="clVaultTabs"></div>' +
-        '<div class="cl-quests" id="clQuests"></div>' +
-        '<div class="cl-prime" id="clPrime"></div>' +
         '<div class="cl-vault-tools" id="clCollChips"></div>' +
       '</div>' +
-      '<div class="cl-coll-grid" id="clCollGrid"></div>';
+      '<div class="cl-coll-grid" id="clCollGrid"></div>' +
+      // Management (weekly quests + Prime) lives one tap away instead of sitting on
+      // top of the collection: on a phone those two strips were ~210px of the ~400px
+      // of chrome above the first card. The dust chip opens this and carries a badge
+      // when something is claimable — a signal that still works on day 30, unlike a
+      // permanent strip you learn to look past.
+      '<div class="cl-sheet" id="clMetaSheet" role="dialog" aria-modal="true" aria-label="Vault management">' +
+        '<div class="cl-sheet-scrim" id="clSheetScrim"></div>' +
+        '<div class="cl-sheet-panel">' +
+          '<div class="cl-sheet-grab"></div>' +
+          '<div class="cl-sheet-body">' +
+            '<div class="cl-quests" id="clQuests"></div>' +
+            '<div class="cl-prime" id="clPrime"></div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
     document.body.appendChild(m);
     m.querySelector('.cl-coll-x').addEventListener('click', close);
+    // dust chip opens the management sheet; scrim / grab-handle / Escape close it
+    var dustBtn = m.querySelector('#clCollDust');
+    if (dustBtn) dustBtn.addEventListener('click', function (e) { e.stopPropagation(); metaSheetOpen() ? closeMetaSheet() : openMetaSheet(); });
+    var scrim = m.querySelector('#clSheetScrim');
+    if (scrim) scrim.addEventListener('click', closeMetaSheet);
+    var grab = m.querySelector('.cl-sheet-grab');
+    if (grab) grab.addEventListener('click', closeMetaSheet);
+    m.addEventListener('keydown', function (e) { if (e.key === 'Escape' && metaSheetOpen()) { e.stopPropagation(); closeMetaSheet(); } });
     // optional debug gear (only when enabled)
     if (debugEnabled()) {
       var gear = document.createElement('button');
@@ -2640,9 +2683,14 @@
   }
   // Tier sections get physically larger cards as rarity climbs (presence = status);
   // min() keeps phones at 2 columns instead of blowing up to a single giant card.
+  // Comfortable by default — in a card game the art IS the reward, and shrinking it to
+  // fit more per row turns collectibles into a spreadsheet. Compact is there for
+  // scanning a large vault, as a choice rather than a default.
+  function denseGrid() { try { return localStorage.getItem('cl_dense') === '1'; } catch (_) { return false; } }
   function tierCols(theme, tier) {
     var base = theme.gridCols || 'minmax(150px,1fr)';
     if (activeThemeName() !== 'authentic') return base;
+    if (denseGrid()) return 'minmax(min(112px,29vw),1fr)';
     return tier === 'legendary' ? 'minmax(min(178px,42vw),1fr)' : tier === 'elite' ? 'minmax(min(162px,41vw),1fr)' : 'minmax(min(150px,40vw),1fr)';
   }
   function cardMatches(c, q) {
@@ -2685,7 +2733,14 @@
         (synced ? ' · <span title="Signed in — your collection syncs across devices" style="color:#7fd49a">&#9729; synced</span>'
                 : ' · <span title="Sign in on the home page to back up your collection across devices" style="color:#8d8d8d">&#9729; local</span>');
     }
-    var du = document.getElementById('clCollDust'); if (du) du.innerHTML = '&#10024; ' + dustBalance();
+    setDustText(dustBalance());
+    // Badge the dust chip with whatever is claimable right now — the sheet's only
+    // permanent call to action, so it has to be honest: claimable quests only.
+    try {
+      var _cl = questsState().filter(function (q) { return q.done && !q.claimed; }).length;
+      var _bg = document.getElementById('clDustBadge');
+      if (_bg) { _bg.textContent = _cl ? String(_cl) : ''; _bg.hidden = !_cl; }
+    } catch (_) { /* noop */ }
     var sNow = load() || blank();
     // Daily Double chip: n/2 today, ✓ when banked
     var dd = document.getElementById('clCollDD');
@@ -2722,8 +2777,6 @@
 
     var tools = document.getElementById('clCollChips');
     var grid = document.getElementById('clCollGrid');
-    var _qs = document.getElementById('clQuests'); if (_qs && _tab !== 'cards') _qs.innerHTML = '';
-    var _pr = document.getElementById('clPrime'); if (_pr && _tab !== 'cards') { _pr.innerHTML = ''; _pr.className = 'cl-prime'; }
     if (_tab === 'sets') { tools.innerHTML = ''; renderSets(); return; }
     if (_tab === 'show') { tools.innerHTML = ''; renderShowcase(); return; }
     if (_tab === 'backs') {
@@ -2739,8 +2792,6 @@
       renderAchv(); return;
     }
 
-    renderQuests();
-    renderPrime();
     // ── Cards tab: toolbar (search / rarity gems / sort) + tier-sectioned grid ──
     var chips = [
       { k: 'all', label: CT('All') }, { k: 'film', label: CT('Films') }, { k: 'person', label: CT('People') },
@@ -2754,8 +2805,16 @@
           return '<button class="cl-coll-chip' + (_filter === c.k ? ' on' : '') + '" data-k="' + c.k + '"' + (c.gem ? ' style="--gc:' + c.gem + '"' : '') + '>' + (c.gem ? '<span class="gem"></span>' : '') + c.label + '</button>';
         }).join('') +
         '<select class="cl-vsort" id="clVaultSort" title="Sort">' + SORTS.map(function (s) { return '<option value="' + s.k + '"' + (_sort === s.k ? ' selected' : '') + '>' + s.label + '</option>'; }).join('') + '</select>' +
+        '<button class="cl-coll-chip cl-dense-t' + (denseGrid() ? ' on' : '') + '" id="clDenseT" title="' + LT('density') + '" aria-label="' + LT('density') + '">' + (denseGrid() ? '&#9636;' : '&#9635;') + '</button>' +
       '</div>';
+    var dt = document.getElementById('clDenseT');
+    if (dt) dt.addEventListener('click', function () {
+      try { localStorage.setItem('cl_dense', denseGrid() ? '0' : '1'); } catch (_) { /* noop */ }
+      try { if (window.Sfx) window.Sfx.tap(); } catch (_) { /* noop */ }
+      render();
+    });
     Array.prototype.forEach.call(tools.querySelectorAll('.cl-coll-chip'), function (b) {
+      if (b.id === 'clDenseT') return;
       b.addEventListener('click', function () { _filter = _filter === b.dataset.k ? 'all' : b.dataset.k; render(); });
     });
     var q = document.getElementById('clVaultQ'), qT = 0;
@@ -3097,12 +3156,46 @@
     });
   }
 
+  // ── Management sheet (weekly quests + Prime) ───────────────────────────────
+  var _sheetRelease = null;
+  function openMetaSheet() {
+    var s = document.getElementById('clMetaSheet'); if (!s) return;
+    try { renderQuests(); renderPrime(); } catch (_) { /* noop */ }
+    s.classList.add('open');
+    try { if (window.Sfx) window.Sfx.tap(); } catch (_) { /* noop */ }
+    try { if (window.fxTrapFocus) _sheetRelease = fxTrapFocus(s.querySelector('.cl-sheet-panel')); } catch (_) { /* noop */ }
+  }
+  function closeMetaSheet() {
+    var s = document.getElementById('clMetaSheet'); if (!s || !s.classList.contains('open')) return;
+    s.classList.remove('open');
+    try { if (_sheetRelease) { _sheetRelease(); _sheetRelease = null; } } catch (_) { /* noop */ }
+  }
+  function metaSheetOpen() { var s = document.getElementById('clMetaSheet'); return !!(s && s.classList.contains('open')); }
+  // Condense the identity block once you start browsing: at rest you get the full
+  // player card (ring, XP, next unlock); scrolling hands that space to the cards and
+  // leaves a slim bar. Hysteresis so it can't flicker on the threshold.
+  function mountHeaderCondense() {
+    var grid = document.getElementById('clCollGrid'), hd = document.querySelector('#clCollModal .cl-vault-hd');
+    if (!grid || !hd || grid._condOn) return;
+    grid._condOn = 1;
+    var raf = 0;
+    grid.addEventListener('scroll', function () {
+      if (raf) return;
+      raf = requestAnimationFrame(function () {
+        raf = 0;
+        var y = grid.scrollTop;
+        if (y > 48) hd.classList.add('cond');
+        else if (y < 12) hd.classList.remove('cond');
+      });
+    }, { passive: true });
+  }
   function openGallery(tab) {
     injectShell(); buildModal(); injectThemeCss(activeTheme());
     _tab = (typeof tab === 'string' && tab) ? tab : 'cards';
     _filter = 'all'; _query = ''; _setOpen = null;
     render();
     document.getElementById('clCollModal').classList.add('open'); lockScroll(true);
+    try { mountHeaderCondense(); } catch (_) { /* noop */ }
     try { if (window.fxTrapFocus) _vaultRelease = fxTrapFocus(document.getElementById('clCollModal')); } catch (_) { /* noop */ }
     try { if (window.Track) window.Track('collection_open', stats()); } catch (_) { /* noop */ }
     // one-shot meta-layer intro on the first real visit — teaches the loop that
@@ -3134,7 +3227,7 @@
   }
   // "New" badges live for the whole visit (Hearthstone-style) and clear on close,
   // not 600ms after opening — so the pinned "Just collected" section stays put.
-  function close() { stopHolo(); markSeen(); var m = document.getElementById('clCollModal'); if (m && m.classList.contains('open')) { m.classList.remove('open'); lockScroll(false); try { if (_vaultRelease) { _vaultRelease(); _vaultRelease = null; } } catch (_) { /* noop */ } } }
+  function close() { closeMetaSheet(); stopHolo(); markSeen(); var m = document.getElementById('clCollModal'); if (m && m.classList.contains('open')) { m.classList.remove('open'); lockScroll(false); try { if (_vaultRelease) { _vaultRelease(); _vaultRelease = null; } } catch (_) { /* noop */ } } }
 
   // ─────────────────────────────── debug panel ───────────────────────────
   function debugEnabled() {
