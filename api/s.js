@@ -36,7 +36,9 @@ module.exports = function handler(req, res) {
     }
   } catch (_) { to = '/'; }
 
-  const title = q.g === 'show'
+  const title = q.g === 'profile'
+    ? (q.title ? String(q.title) + ' · Level ' + (q.n || '1') : 'Level ' + (q.n || '1')) + ' · CineLinks'
+    : q.g === 'show'
     ? 'My CineLinks showcase — ' + (q.n || '') + ' cards'
     : q.g === 'card'
     ? 'I collected ' + (q.title || 'a card') + (q.n ? ' #' + String(q.n).replace(/^#/, '') : '') + ' · CineLinks'
@@ -47,7 +49,9 @@ module.exports = function handler(req, res) {
             : (q.a && q.b
                 ? q.a + ' → ' + q.b + ' in ' + (q.n || '?') + ' clicks'
                 : 'CineLinks — a daily film puzzle')));
-  const desc = q.g === 'card'
+  const desc = q.g === 'profile'
+    ? (q.sub ? String(q.sub) + ' — ' : '') + 'Play the daily film puzzles and build your own collection.'
+    : q.g === 'card'
     ? 'Win games to collect film & star cards. Can you complete the set?'
     : 'A daily film-connection puzzle. Think you can beat it?';
 

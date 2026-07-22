@@ -124,7 +124,9 @@ export default function handler(req) {
     kicker = 'Top Trumps · vs CPU';
     main = (p.get('w') || '0') + ' – ' + (p.get('l') || '0');
     sub = 'Movie card battle';
-  } else if (g === 'generic' || p.get('title')) {
+  } else if (g === 'profile' || g === 'generic' || p.get('title')) {
+    // Profile shares ride this branch on purpose: it already renders title+sub and
+    // is battle-tested, and a bespoke satori layout couldn't be render-checked here.
     kicker = 'CineLinks';
     main = clamp(p.get('title') || 'CineLinks', 42);
     sub = clamp(p.get('sub') || 'A daily film puzzle', 60);

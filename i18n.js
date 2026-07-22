@@ -10,6 +10,11 @@ const LANGS = {
 const I18N = {
   'en-US': {
     // profile v2
+    pfDecade: 'Your decade',
+    pfNick: 'Nickname',
+    pfNickSet: 'Set one',
+    pfNickAsk: 'What should we call you?',
+    pfShare: 'Share profile',
     pfShow: 'Showcase',
     pfEdit: 'Edit',
     pfCine: 'Your cinema',
@@ -99,6 +104,11 @@ const I18N = {
   },
   'es-ES': {
     // profile v2
+    pfDecade: 'Tu década',
+    pfNick: 'Apodo',
+    pfNickSet: 'Elegir',
+    pfNickAsk: '¿Cómo te llamamos?',
+    pfShare: 'Compartir perfil',
     pfShow: 'Vitrina',
     pfEdit: 'Editar',
     pfCine: 'Tu cine',
@@ -188,6 +198,11 @@ const I18N = {
   },
   'es-MX': {
     // profile v2
+    pfDecade: 'Tu década',
+    pfNick: 'Apodo',
+    pfNickSet: 'Elegir',
+    pfNickAsk: '¿Cómo te llamamos?',
+    pfShare: 'Compartir perfil',
     pfShow: 'Vitrina',
     pfEdit: 'Editar',
     pfCine: 'Tu cine',
@@ -277,6 +292,11 @@ const I18N = {
   },
   'fr-FR': {
     // profile v2
+    pfDecade: 'Ta décennie',
+    pfNick: 'Pseudo',
+    pfNickSet: 'Choisir',
+    pfNickAsk: 'Comment t\'appeler ?',
+    pfShare: 'Partager le profil',
     pfShow: 'Vitrine',
     pfEdit: 'Modifier',
     pfCine: 'Ton cinéma',
@@ -366,6 +386,11 @@ const I18N = {
   },
   'de-DE': {
     // profile v2
+    pfDecade: 'Dein Jahrzehnt',
+    pfNick: 'Spitzname',
+    pfNickSet: 'Wählen',
+    pfNickAsk: 'Wie sollen wir dich nennen?',
+    pfShare: 'Profil teilen',
     pfShow: 'Vitrine',
     pfEdit: 'Bearbeiten',
     pfCine: 'Dein Kino',
@@ -455,6 +480,11 @@ const I18N = {
   },
   'pt-BR': {
     // profile v2
+    pfDecade: 'Sua década',
+    pfNick: 'Apelido',
+    pfNickSet: 'Escolher',
+    pfNickAsk: 'Como devemos te chamar?',
+    pfShare: 'Compartilhar perfil',
     pfShow: 'Vitrine',
     pfEdit: 'Editar',
     pfCine: 'Seu cinema',

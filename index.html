@@ -2767,7 +2767,8 @@ function renderHud(animate) {
   if (lvlB) { lvlB.style.display = ''; lvlB.classList.toggle('badge', signedIn); }
   var lvlWord = t('ccLevel') === 'ccLevel' ? 'Level' : t('ccLevel');
   var cardsWord = t('ccCards') === 'ccCards' ? 'cards' : t('ccCards');
-  set('hudName', signedIn ? String(prof.name || '').split(' ')[0] : lvlWord + ' ' + st.level);
+  var nick = ''; try { nick = Collection.nickname() || ''; } catch (_) {}
+  set('hudName', signedIn ? String(prof.name || '').split(' ')[0] : (nick || lvlWord + ' ' + st.level));
   set('hudSub', (signedIn ? lvlWord + ' ' + st.level + ' · ' : '') + st.count + ' ' + cardsWord);
 
   // XP arc: how far into the current level (same maths as the vault ring).
@@ -2835,12 +2836,38 @@ function renderProfile() {
   var L = function (id, k) { var e = document.getElementById(id); if (e) e.textContent = PT(k); };
   L('pfShowH', 'pfShow'); L('pfShowEdit', 'pfEdit'); L('pfCineH', 'pfCine');
   L('pfRecH', 'pfRec'); L('pfTroAll', 'pfAll'); L('pfSetH', 'pfSet');
+  try { if (Collection.enrichYears) Collection.enrichYears(12).then(function (n) { if (n) renderCine(); }); } catch (_) {}
   renderTitleBtn();
   renderShowcase();
   renderCine();
   renderRecords();
   renderAccolades(troph, trophTotal);
   renderSettings();
+}
+// Share uses the EXISTING /s + /og routes with a new g=profile variant. api/ is
+// already at Vercel Hobby's 12-function ceiling (the limit that broke a deploy
+// earlier), so a dedicated endpoint wasn't an option — and these already dispatch
+// on g, so it's the right seam anyway.
+function shareProfile() {
+  try {
+    var st = Collection.stats();
+    var ti = null; try { ti = Collection.title(); } catch (_) {}
+    var prof = null; try { prof = JSON.parse(localStorage.getItem('gauth_profile') || 'null'); } catch (_) {}
+    var nick = ''; try { nick = Collection.nickname() || ''; } catch (_) {}
+    var who = (prof && prof.name) ? String(prof.name).split(' ')[0] : (nick || '');
+    var qs = 'g=profile&n=' + encodeURIComponent(st.level) +
+      '&title=' + encodeURIComponent(who || ('Level ' + st.level)) +
+      '&sub=' + encodeURIComponent((ti ? ti.name + ' · ' : '') + st.count + ' cards') + '&to=/';
+    var url = location.origin + '/s?' + qs;
+    var text = (ti ? ti.name + ' · ' : '') + 'Level ' + st.level + ' · ' + st.count + ' cards on CineLinks';
+    try { if (window.Sfx) Sfx.tap(); } catch (_) {}
+    if (navigator.share) { navigator.share({ title: 'CineLinks', text: text, url: url }).catch(function () {}); return; }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(function () {
+        var b = document.getElementById('pfShare'); if (b) { var v = b.querySelector('.val'); if (v) { v.textContent = '✓'; setTimeout(function () { v.textContent = '›'; }, 1600); } }
+      }).catch(function () { window.prompt('Copy this link', url); });
+    } else window.prompt('Copy this link', url);
+  } catch (_) {}
 }
 // ── Records ──────────────────────────────────────────────────────────────────
 // Reads exactly the localStorage stats.html read (<mode>Streak / <mode>State),
@@ -2894,6 +2921,7 @@ function renderRecords() {
 function renderSettings() {
   var el = document.getElementById('pfSet'); if (!el) return;
   var snd = true; try { snd = !!(window.Sfx && Sfx.enabled); } catch (_) {}
+  var nick = ''; try { nick = Collection.nickname() || ''; } catch (_) {}
   var lang = 'en-US'; try { lang = localStorage.getItem('clLang') || 'en-US'; } catch (_) {}
   var LANGS = [['en-US', 'English'], ['es-ES', 'ES'], ['es-MX', 'MX'], ['fr-FR', 'FR'], ['de-DE', 'DE'], ['pt-BR', 'PT']];
   el.innerHTML =
@@ -2901,6 +2929,8 @@ function renderSettings() {
     '<div class="pf-set-langs">' + LANGS.map(function (l) {
       return '<button type="button" data-l="' + l[0] + '" class="' + (lang === l[0] ? 'on' : '') + '">' + l[1] + '</button>';
     }).join('') + '</div>' +
+    '<button class="pf-set-row" type="button" id="pfNick"><span class="nm">' + PT('pfNick') + '</span><span class="val">' + (nick ? nick.replace(/[<>&]/g, '') : PT('pfNickSet')) + '</span></button>' +
+    '<button class="pf-set-row" type="button" id="pfShare"><span class="nm">' + PT('pfShare') + '</span><span class="val">›</span></button>' +
     '<a class="pf-set-row" href="/privacy.html"><span class="nm">' + PT('pfPriv') + '</span><span class="val">›</span></a>' +
     '<button class="pf-set-row danger" type="button" id="pfWipe"><span class="nm">' + PT('pfWipe') + '</span><span class="val">›</span></button>';
 
@@ -2912,6 +2942,15 @@ function renderSettings() {
   Array.prototype.forEach.call(el.querySelectorAll('.pf-set-langs button'), function (b) {
     b.addEventListener('click', function () { try { setLang(b.getAttribute('data-l')); } catch (_) {} renderSettings(); });
   });
+  var nb = document.getElementById('pfNick');
+  if (nb) nb.addEventListener('click', function () {
+    var v = window.prompt(PT('pfNickAsk'), nick || '');
+    if (v === null) return;
+    try { Collection.setNickname(v); } catch (_) {}
+    renderSettings(); renderProfile(); try { renderHud(); } catch (_) {}
+  });
+  var shb = document.getElementById('pfShare');
+  if (shb) shb.addEventListener('click', shareProfile);
   var wb = document.getElementById('pfWipe');
   if (wb) wb.addEventListener('click', function () {
     // Destructive and irreversible, so it asks — and says exactly what goes.
@@ -2988,6 +3027,11 @@ function renderCine() {
   if (p.rarest) out += row(PT('pfRarest'), esc(p.rarest.name), (p.rarest.rarity || '') + ' · #' + ('00' + (p.rarest.no || 0)).slice(-3), p.rarest);
   if (p.mostCopies) out += row(PT('pfRepeat'), esc(p.mostCopies.name), '×' + p.mostCopies.n, p.mostCopies);
   out += row(PT('pfVault'), st.films + ' ' + PT('pfFilms') + ' · ' + st.people + ' ' + PT('pfPeople'), st.depth ? (st.depth + ' ' + PT('pfSpares')) : '');
+  // Only claim a decade once a real majority of titles have a year, and always
+  // show the sample it's based on.
+  if (p.decade && p.decade.known >= 5 && p.decade.known >= p.decade.titles * 0.6) {
+    out += row(PT('pfDecade'), p.decade.decade + 's', p.decade.count + '/' + p.decade.known);
+  }
   el.innerHTML = out;
 }
 // ── Accolades: the three most recent, curated (full case lives in the vault) ──

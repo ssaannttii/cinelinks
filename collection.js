@@ -673,6 +673,10 @@
         if (rar === 'legendary') { s.pityL = d; s.pityE = d; }
         else if (rar === 'elite') s.pityE = d;
         s.cards[k] = { id: it.id, type: it.type, name: it.name || '', img: it.img || '', rarity: rar, n: 1, first: d, no: (s.seq = (s.seq || 0) + 1), isNew: 1, i18n: (function () { var o = {}; o[currentLang()] = it.name || ''; return o; })() };
+        // Release year, when the granting game happens to know it. Optional on
+        // purpose: enrichYears() backfills everything else from TMDB later, so no
+        // call site is forced to change and old cards aren't stranded.
+        if (it.y) s.cards[k].y = +it.y || 0;
         s.xp += XP[rar] || 10;
         ensureWeek(s).got++;
         added.push(s.cards[k]);
@@ -4025,6 +4029,43 @@
     s.title = id; save(s); refreshOpen();
     return { ok: true, title: id };
   }
+  // ── Year backfill ──────────────────────────────────────────────────────────
+  // Decade taste is the one portrait stat a card can't answer on its own, because
+  // release year was never stored. Rather than force every game to pass it, this
+  // trickles missing years in from TMDB a few at a time whenever the profile is
+  // opened, and caches them on the card. Films/shows only — a person's birth year
+  // isn't a cinema decade. Bounded per call so it can't turn into a crawl.
+  var _yrBusy = false;
+  function tmdbYear(type, id) {
+    var tp = type === 'tv' ? 'tv' : 'movie';
+    return fetch('/api/tmdb?path=' + encodeURIComponent(tp + '/' + id))
+      .then(function (r) { return r && r.ok ? r.json() : null; })
+      .then(function (j) { var d = j && (j.release_date || j.first_air_date); return d ? (+String(d).slice(0, 4) || 0) : 0; })
+      .catch(function () { return 0; });
+  }
+  function enrichYears(max) {
+    if (_yrBusy) return Promise.resolve(0);
+    var s = load(); if (!s || !s.cards) return Promise.resolve(0);
+    var todo = Object.keys(s.cards).filter(function (k) {
+      var c = s.cards[k];
+      return c.type !== 'person' && !c.y && c.y !== 0.1;      // 0.1 marks "asked, TMDB had none"
+    }).slice(0, max || 10);
+    if (!todo.length) return Promise.resolve(0);
+    _yrBusy = true;
+    return Promise.all(todo.map(function (k) {
+      var c = s.cards[k];
+      return tmdbYear(c.type, c.id).then(function (y) { return { k: k, y: y }; });
+    })).then(function (res) {
+      var s2 = load() || blank(); var n = 0;
+      res.forEach(function (r) {
+        if (!s2.cards || !s2.cards[r.k]) return;
+        s2.cards[r.k].y = r.y || 0.1;                          // never re-ask for a miss
+        if (r.y) n++;
+      });
+      save(s2); _yrBusy = false;
+      return n;
+    }).catch(function () { _yrBusy = false; return 0; });
+  }
   // Portrait stats for the profile's "Your cinema" — everything derived from what a
   // card already stores (serial, collected-on date, rarity, copies), so it needs no
   // network and works offline.
@@ -4040,13 +4081,36 @@
     var most = cards.slice().sort(function (a, b) { return (b.n || 1) - (a.n || 1); })[0];
     var days = {};
     cards.forEach(function (c) { if (c.first) days[c.first] = 1; });
+    // Dominant decade, reported with its own coverage so a half-filled backfill
+    // can't quietly present itself as the whole truth.
+    var dec = {}, known = 0, titles = 0;
+    cards.forEach(function (c) {
+      if (c.type === 'person') return;
+      titles++;
+      if (!c.y || c.y < 1800) return;
+      known++;
+      var d = Math.floor(c.y / 10) * 10;
+      dec[d] = (dec[d] || 0) + 1;
+    });
+    var topDec = null;
+    Object.keys(dec).forEach(function (d) { if (!topDec || dec[d] > dec[topDec]) topDec = d; });
     return {
       first: bySerial[0] || null,
       rarest: rarest || null,
       mostCopies: (most && (most.n || 1) > 1) ? most : null,
       collectingDays: Object.keys(days).length,
-      since: bySerial[0] ? bySerial[0].first : null
+      since: bySerial[0] ? bySerial[0].first : null,
+      decade: topDec ? { decade: +topDec, count: dec[topDec], known: known, titles: titles } : null
     };
+  }
+  // A local nickname so players who never sign in still have a name. Google's name
+  // wins when present — this is the fallback identity, not a competing one.
+  function nickname() { try { return (load() || blank()).nick || ''; } catch (_) { return ''; } }
+  function setNickname(v) {
+    var s = load() || blank();
+    s.nick = String(v || '').slice(0, 22).replace(/[<>]/g, '').trim();
+    save(s); refreshOpen();
+    return s.nick;
   }
 
   // Do you already own a card of this entity? (used by CineLinks to mark
@@ -4059,6 +4123,7 @@
     cardbacks: cardbacksState, useCardback: useCardback, openCardbacks: openCardbacks,
     achievements: achievementsState, openAchievements: openAchievements,
     titles: titlesState, title: activeTitle, setTitle: setTitle, portrait: portrait,
+    nickname: nickname, setNickname: setNickname, enrichYears: enrichYears,
     dust: dustBalance, shine: shineCard, shineCost: shineCost, isShined: isShined,
     prime: primeNext, primeCost: primeCost, primeState: primeState,
     draw: drawPack, drawInfo: drawInfo, buyBack: buyBack, backCost: backCost,
