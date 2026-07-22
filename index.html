@@ -4144,7 +4144,21 @@ const game = window.game = {
     }
   },
 
+  // Debug reveals par and the solution, and it used to be one accidental
+  // double-tap on the click counter away — enough to spoil the daily for someone
+  // who never meant to find it. Now it needs an explicit opt-in: visit with
+  // ?tester=1 once, which sticks. ?tester=0 turns it back off.
+  _isTester() {
+    try {
+      const q = new URLSearchParams(location.search).get('tester');
+      if (q === '1') localStorage.setItem('clTester', '1');
+      if (q === '0') localStorage.removeItem('clTester');
+      return localStorage.getItem('clTester') === '1';
+    } catch (_) { return false; }
+  },
+
   toggleDebug() {
+    if (!this._isTester()) return;
     this._debug = !this._debug;
     document.querySelectorAll('.debug-footer .debug-btn').forEach(b => { b.style.display = this._debug ? '' : 'none'; });
     if (!this._debug) {

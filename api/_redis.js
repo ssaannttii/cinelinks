@@ -14,4 +14,30 @@ async function redisCommand(commands) {
   return res.json();
 }
 
-module.exports = { redisCommand };
+// Fixed-window rate limiter. Returns { ok, count }.
+//
+// FAILS OPEN on purpose: if Redis is unconfigured or unreachable we must not take
+// the games down to enforce a quota guard. Callers that need hard denial should
+// check `configured` themselves.
+//
+// Cheap where it's used: the TMDB proxy sets s-maxage=86400, so the CDN answers
+// repeat queries without ever invoking the function. This only sees cache misses
+// — which is also exactly the traffic that burns real TMDB quota.
+async function rateLimit(bucket, limit, windowSec) {
+  try {
+    const win = Math.floor(Date.now() / 1000 / windowSec);
+    const key = 'rl:' + bucket + ':' + win;
+    const out = await redisCommand([['INCR', key], ['EXPIRE', key, windowSec]]);
+    const count = Number((out && out[0] && out[0].result) || 0);
+    return { ok: count <= limit, count: count };
+  } catch (_) {
+    return { ok: true, count: 0 };
+  }
+}
+
+function clientIp(req) {
+  const fwd = (req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  return fwd || (req.socket && req.socket.remoteAddress) || 'unknown';
+}
+
+module.exports = { redisCommand, rateLimit, clientIp };

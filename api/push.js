@@ -5,21 +5,11 @@
 //   POST /api/push?action=send  (x-push-secret)  { body? }   -> send to all, prune dead
 // Inert without VAPID keys. See docs/PUSH_SETUP.md.
 const { redisCommand } = require('./_redis');
+const { applyCors } = require('./_cors');
 
-function applyCors(req, res) {
-  const origin = req.headers.origin;
-  res.setHeader('Vary', 'Origin');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (!origin) return;
-  let host; try { host = new URL(origin).host; } catch (_) { return; }
-  if (host === req.headers.host || /(^|\.)vercel\.app$/.test(host) || /^(localhost|127\.0\.0\.1)(:\d+)?$/.test(host)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  }
-}
 
 module.exports = async function handler(req, res) {
-  applyCors(req, res);
+  applyCors(req, res, { methods: 'GET, POST, DELETE, OPTIONS' });
   if (req.method === 'OPTIONS') return res.status(200).end();
   const action = (req.query && req.query.action) || (req.method === 'GET' ? 'config' : '');
 

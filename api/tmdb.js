@@ -1,4 +1,6 @@
 const https = require('https');
+const { applyCors } = require('./_cors');
+const { rateLimit, clientIp } = require('./_redis');
 
 const ALLOWED_PATHS = [
   /^person\/popular$/,
@@ -86,11 +88,20 @@ function buildTmdbParams(queryParams, apiKey) {
 }
 
 module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  applyCors(req, res, { methods: 'GET, OPTIONS' });
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
+  }
+
+  // Quota guard. CORS keeps other sites' browsers out, but not a script hitting
+  // this proxy directly — and every call spends our TMDB quota. Generous enough
+  // that a real player never notices: the CDN (s-maxage=86400) answers repeats
+  // without invoking this function, so only distinct queries land here.
+  const limit = await rateLimit('tmdb:' + clientIp(req), 300, 60);
+  if (!limit.ok) {
+    res.setHeader('Retry-After', '60');
+    return res.status(429).json({ error: 'Too many requests' });
   }
 
   const apiKey = process.env.TMDB_API_KEY;

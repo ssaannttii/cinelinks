@@ -1,4 +1,5 @@
 const { redisCommand } = require('./_redis');
+const { applyCors } = require('./_cors');
 
 function parseChallenge(raw) {
   if (!raw) return null;
@@ -12,8 +13,7 @@ function parseChallenge(raw) {
 }
 
 module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  applyCors(req, res, { methods: 'GET, OPTIONS' });
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });

@@ -8,21 +8,9 @@
 // so concurrent devices reconcile cleanly. Disabled unless GOOGLE_CLIENT_ID is
 // set — the games work fully without it (local-first); login only *syncs*.
 const { redisCommand } = require('./_redis');
+const { applyCors } = require('./_cors');
 const MergeStats = require('../lib/merge-stats');
 
-function applyCors(req, res) {
-  const origin = req.headers.origin;
-  res.setHeader('Vary', 'Origin');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  if (!origin) return;
-  let host;
-  try { host = new URL(origin).host; } catch (_) { return; }
-  const ok = host === req.headers.host ||
-             /(^|\.)vercel\.app$/.test(host) ||
-             /^(localhost|127\.0\.0\.1)(:\d+)?$/.test(host);
-  if (ok) res.setHeader('Access-Control-Allow-Origin', origin);
-}
 
 // Verify the Google ID token via Google's tokeninfo endpoint and confirm it was
 // minted for THIS app (aud) by Google (iss) and hasn't expired. Returns the
@@ -49,7 +37,7 @@ async function readBlob(key) {
 }
 
 module.exports = async function handler(req, res) {
-  applyCors(req, res);
+  applyCors(req, res, { methods: 'GET, POST, DELETE, OPTIONS', headers: 'Content-Type, Authorization' });
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (!process.env.GOOGLE_CLIENT_ID) return res.status(501).json({ error: 'sync_disabled' });
 

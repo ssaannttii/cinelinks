@@ -8,6 +8,7 @@
 //   feedback:recent               list of latest compact JSON entries
 //   feedback:rl:YYYY-MM-DD:IP     per-IP submission counter
 const crypto = require('crypto');
+const { applyCors } = require('./_cors');
 const { redisCommand } = require('./_redis');
 
 const VALUES = new Set(['fun', 'confusing', 'hard', 'bug']);
@@ -38,22 +39,9 @@ function cleanPage(value) {
   return safe || 'home';
 }
 
-function applyCors(req, res) {
-  const origin = req.headers.origin;
-  res.setHeader('Vary', 'Origin');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (!origin) return;
-  let host;
-  try { host = new URL(origin).host; } catch (_) { return; }
-  const ok = host === req.headers.host ||
-             /(^|\.)vercel\.app$/.test(host) ||
-             /^(localhost|127\.0\.0\.1)(:\d+)?$/.test(host);
-  if (ok) res.setHeader('Access-Control-Allow-Origin', origin);
-}
 
 module.exports = async function handler(req, res) {
-  applyCors(req, res);
+  applyCors(req, res, { methods: 'POST, OPTIONS' });
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');

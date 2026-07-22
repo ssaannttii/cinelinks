@@ -16,6 +16,7 @@
 // plausible play time, and has not been used before. If SCORE_SECRET is unset
 // the game keeps working (token checks skipped) — IP rate limiting still applies.
 const crypto = require('crypto');
+const { applyCors } = require('./_cors');
 const { redisCommand } = require('./_redis');
 
 const SUBMIT_LIMIT_PER_IP = 50;       // max POSTs per IP per date
@@ -79,25 +80,9 @@ function clientIpHash(req) {
   return crypto.createHash('sha256').update(ip).digest('hex').slice(0, 16);
 }
 
-// Reflect Origin only for same-origin / *.vercel.app / localhost. Blocks
-// browser-based cross-site POSTs (json bodies are preflighted) without
-// hard-coding the production domain.
-function applyCors(req, res) {
-  const origin = req.headers.origin;
-  res.setHeader('Vary', 'Origin');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (!origin) return;
-  let host;
-  try { host = new URL(origin).host; } catch (_) { return; }
-  const ok = host === req.headers.host ||
-             /(^|\.)vercel\.app$/.test(host) ||
-             /^(localhost|127\.0\.0\.1)(:\d+)?$/.test(host);
-  if (ok) res.setHeader('Access-Control-Allow-Origin', origin);
-}
 
 module.exports = async function handler(req, res) {
-  applyCors(req, res);
+  applyCors(req, res, { methods: 'GET, POST, OPTIONS' });
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const secret = process.env.SCORE_SECRET || '';
