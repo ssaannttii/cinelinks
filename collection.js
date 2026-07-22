@@ -866,8 +866,17 @@
     try {
       var pend = [];
       for (var i = 0; i < cards.length; i++) {
-        var c = cards[i]; if (!c || c.imgc) continue;
-        if (c.type === 'person' || !c.img || /^https?:/.test(c.img)) { c.imgc = 1; _normQueue(c.type + ':' + c.id, null); continue; } // profiles aren't localised
+        var c = cards[i]; if (!c) continue;
+        // A card with NO image is BROKEN, not normalised. The old code stamped
+        // imgc on it and moved on, which sealed it blank forever: cards minted
+        // while /api/tmdb was down could never recover, because the one pass that
+        // could have fetched their poster had already marked them done. Missing
+        // images are therefore retried even when imgc is set.
+        var missing = !c.img;
+        if (c.imgc && !missing) continue;
+        if (!missing && (c.type === 'person' || /^https?:/.test(c.img))) {
+          c.imgc = 1; _normQueue(c.type + ':' + c.id, null); continue; // profiles aren't localised
+        }
         pend.push({ c: c, el: els ? els[i] : null });
       }
       if (!pend.length) return;
@@ -876,19 +885,28 @@
         while (active < MAX && qi < pend.length) {
           (function (it) {
             active++;
-            var tp = it.c.type === 'tv' ? 'tv' : 'movie';
+            // person is reachable here now: a person card with no profile photo
+            // is just as broken, and the endpoint differs only in field name.
+            var tp = it.c.type === 'tv' ? 'tv' : (it.c.type === 'person' ? 'person' : 'movie');
             fetch('/api/tmdb?path=' + encodeURIComponent(tp + '/' + it.c.id))
               .then(function (r) { return r && r.ok ? r.json() : null; })
               .then(function (j) {
                 active--;
-                var canon = j && j.poster_path;
+                var canon = j && (j.poster_path || j.profile_path);
                 if (canon) {
                   var changed = canon !== it.c.img;
                   it.c.img = canon; it.c.imgc = 1;
                   _normQueue(it.c.type + ':' + it.c.id, canon);
                   if (changed && it.el) {
                     var im = it.el.querySelector('.auth-bgimg,.ctc-art>img,.clc-img');
-                    if (im && im.tagName === 'IMG') im.src = im.src.replace(/\/t\/p\/(w\d+)\/.*$/, '/t/p/$1' + canon);
+                    if (im && im.tagName === 'IMG') {
+                      // Swap the path when there's already a TMDB url, but build a
+                      // full one when backfilling — a card that never had an image
+                      // has nothing for the regex to rewrite.
+                      im.src = /\/t\/p\/w\d+\//.test(im.src || '')
+                        ? im.src.replace(/\/t\/p\/(w\d+)\/.*$/, '/t/p/$1' + canon)
+                        : posterUrl(canon);
+                    }
                   }
                 }
                 pump();
