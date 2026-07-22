@@ -8,12 +8,13 @@ WebGL parallax; a 404 simply falls back to the procedural pseudo-depth.
 
 Usage:
   npm run depth:collect                          # refresh the poster list
-  python3.12 -m venv .venv-depth                 # once: deps — use 3.11/3.12, see requirements.txt
+  /usr/bin/python3 -m venv .venv-depth           # once: deps — see scripts/requirements.txt
   ./.venv-depth/bin/pip install -r scripts/requirements.txt
   ./.venv-depth/bin/python scripts/build-depth-maps.py
 
 A venv keeps this off system Python, which on current macOS refuses `pip install`
-outright (PEP 668, "externally-managed-environment").
+outright (PEP 668). Apple's /usr/bin/python3 is the reliable interpreter here;
+Homebrew's can have a broken pyexpat/expat link that stops pip bootstrapping.
 
 Incremental: existing depth/<basename> files are skipped, so re-runs only touch
 new pool entries. Model auto-downloads to ~/.cache/cinelinks-depth/ (~27 MB).
@@ -69,7 +70,9 @@ def main():
             depth = sess.run(None, {inp: x})[0][0]
             lo, hi = np.percentile(depth, 2), np.percentile(depth, 98)
             d = np.clip((depth - lo) / max(hi - lo, 1e-6), 0, 1)   # 1 = near, 0 = far
-            g = Image.fromarray((d * 255).astype(np.uint8), 'L')
+            # No explicit mode: a 2-D uint8 array already infers 'L', and passing
+            # `mode` is deprecated (removed in Pillow 13).
+            g = Image.fromarray((d * 255).astype(np.uint8))
             h = round(OUT_W * im.height / im.width)
             g = g.resize((OUT_W, h), Image.BILINEAR)
             # Anti-ghosting: ERODE the near (bright) regions a couple of pixels so the

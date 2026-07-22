@@ -1,11 +1,16 @@
 # Python deps for scripts/build-depth-maps.py (the depth-map pipeline).
 #
-# Use Python 3.11 or 3.12 — NOT whatever `python3` happens to be. onnxruntime
-# lags new releases by a long while, and on 3.14 `python3 -m venv` can't even
-# bootstrap pip (ensurepip exits 1).
+# Needs Python 3.9-3.12. NOT 3.13+/3.14: onnxruntime lags new releases, and on
+# 3.14 `venv` can't even bootstrap pip.
 #
-# Install into a throwaway venv so nothing touches system Python:
-#   python3.12 -m venv .venv-depth
+# macOS: prefer Apple's /usr/bin/python3 (self-contained, known good). Homebrew's
+# python can fail here with `pyexpat ... Symbol not found:
+# _XML_SetAllocTrackerActivationThreshold` — that's Homebrew's python linked
+# against its own expat but resolving the older /usr/lib one at runtime, which
+# breaks pip's bootstrap. Fix with `brew reinstall expat python@3.11`, or just
+# use the Apple interpreter:
+#
+#   /usr/bin/python3 -m venv .venv-depth
 #   ./.venv-depth/bin/pip install -r scripts/requirements.txt
 #   ./.venv-depth/bin/python scripts/build-depth-maps.py
 numpy
