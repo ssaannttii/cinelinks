@@ -407,6 +407,10 @@ body{font-family:var(--fui);background:var(--bg);color:var(--txt);min-height:100
 .hud-ring-fg{fill:none;stroke:var(--gold);stroke-width:3;stroke-linecap:round;transition:stroke-dashoffset .7s cubic-bezier(.25,.8,.3,1)}
 .hud-pic{width:32px;height:32px;border-radius:50%;object-fit:cover}
 .hud-lvl{font-size:.95rem;font-weight:900;color:var(--gold);line-height:1;text-shadow:0 1px 6px rgba(232,160,0,.45)}
+/* With a Google picture the numeral can't sit in the middle, so it becomes a corner
+   chip. The level rides the avatar either way — that's the only part of the HUD
+   that survives the mobile layout, so it can't live in the text column. */
+.hud-lvl.badge{position:absolute;bottom:-3px;right:-3px;min-width:17px;height:17px;padding:0 4px;border-radius:999px;background:var(--gold);color:#1a1408;font-size:.63rem;display:flex;align-items:center;justify-content:center;text-shadow:none;border:2px solid #2c343f}
 .hud-dot{position:absolute;top:0;right:0;width:11px;height:11px;border-radius:50%;background:#7fd49a;border:2px solid #2c343f}
 .hud-id{display:flex;flex-direction:column;align-items:flex-start;min-width:0;line-height:1.2}
 .hud-name{font-size:.82rem;font-weight:800;color:var(--txt);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -2678,11 +2682,16 @@ function renderHud(animate) {
   // Google avatar + given name when signed in; otherwise the level carries identity.
   var prof = null; try { prof = JSON.parse(localStorage.getItem('gauth_profile') || 'null'); } catch (_) {}
   var pic = document.getElementById('hudPic'), lvlB = document.getElementById('hudLvl');
-  if (prof && prof.picture && pic) { pic.src = prof.picture; pic.style.display = ''; if (lvlB) lvlB.style.display = 'none'; }
-  else if (pic) { pic.style.display = 'none'; if (lvlB) lvlB.style.display = ''; }
-  var nm = (prof && prof.name) ? String(prof.name).split(' ')[0] : (t('ccLevel') === 'ccLevel' ? 'Level' : t('ccLevel')) + ' ' + st.level;
-  set('hudName', nm);
-  set('hudSub', st.count + ' ' + (t('ccCards') === 'ccCards' ? 'cards' : t('ccCards')));
+  var signedIn = !!(prof && prof.picture && pic);
+  if (pic) pic.style.display = signedIn ? '' : 'none';
+  if (signedIn) pic.src = prof.picture;
+  // The level is always on the avatar — centred on its own, a corner chip over a
+  // photo. Never hidden: the text column disappears on phones.
+  if (lvlB) { lvlB.style.display = ''; lvlB.classList.toggle('badge', signedIn); }
+  var lvlWord = t('ccLevel') === 'ccLevel' ? 'Level' : t('ccLevel');
+  var cardsWord = t('ccCards') === 'ccCards' ? 'cards' : t('ccCards');
+  set('hudName', signedIn ? String(prof.name || '').split(' ')[0] : lvlWord + ' ' + st.level);
+  set('hudSub', (signedIn ? lvlWord + ' ' + st.level + ' · ' : '') + st.count + ' ' + cardsWord);
 
   // XP arc: how far into the current level (same maths as the vault ring).
   var ring = document.getElementById('hudRing');
