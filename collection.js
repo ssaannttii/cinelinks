@@ -3100,8 +3100,25 @@
             if (r.ok) {
               try { if (window.Sfx) { window.Sfx.haptic([12, 30]); } } catch (_) { /* noop */ }
               try { if (window.Track) window.Track('card_forged', { rarity: r.cards && r.cards[0] && r.cards[0].rarity, set: set.id }); } catch (_) { /* noop */ }
-              render();                                             // refresh slots + dust chip
-              if (r.cards && r.cards.length) setTimeout(function () { reveal(r.cards); }, 250);
+              // Order matters: the card you just bought opens BIG first, then settles
+              // into its slot, and the set-complete reward lands last. Rendering first
+              // filled the slot and fired the reward before you'd even seen the card.
+              if (r.cards && r.cards.length) {
+                _deferSetClaim = true;                              // hold the set for the overlay
+                _revealClosed = function () {
+                  _deferSetClaim = false;
+                  render();                                         // card drops into its slot…
+                  // …and renderSets() claims the set, which plays the reward overlay.
+                };
+                reveal(r.cards);
+                // reveal() bails on unusable cards; if it never opened, don't strand the
+                // deferral flag — settle immediately instead.
+                var _ov = document.getElementById('clCollReveal');
+                if (!_ov || !_ov.classList.contains('open')) {
+                  var _f = _revealClosed; _revealClosed = null; _deferSetClaim = false;
+                  if (_f) _f(); else render();
+                }
+              } else { render(); }
             } else {
               b.disabled = false;
               try { if (window.Sfx) window.Sfx.tap(); } catch (_) { /* noop */ }
@@ -3712,6 +3729,11 @@
   // behind it and the mobile toolbar can't show/hide and resize the fixed overlay.
   var _lockN = 0, _lockY = 0;
   var _vaultRelease = null, _revealRelease = null;   // a11y focus-trap release handles
+  // Forge sequencing: the reveal must play FIRST, then the card settles into its slot,
+  // and only then does the set-complete reward fire. _deferSetClaim keeps the reveal's
+  // summary from claiming the set early (whoever claims first wins, and claiming there
+  // would swallow the reward overlay); _revealClosed is a one-shot "reveal is done" hook.
+  var _deferSetClaim = false, _revealClosed = null;
   function lockScroll(on) {
     var d = document.documentElement, b = document.body;
     if (on) { if (_lockN++ === 0) { _lockY = window.scrollY || window.pageYOffset || 0; b.style.top = (-_lockY) + 'px'; d.classList.add('cl-scroll-lock'); b.classList.add('cl-scroll-lock'); } }
@@ -3728,7 +3750,15 @@
     document.body.appendChild(ov);
     return ov;
   }
-  function closeReveal() { stopShader(); stopGyro(); var ov = document.getElementById('clCollReveal'); if (ov && ov.classList.contains('open')) { ov.classList.remove('open'); lockScroll(false); try { if (_revealRelease) { _revealRelease(); _revealRelease = null; } } catch (_) { /* noop */ } } }
+  function closeReveal() {
+    stopShader(); stopGyro();
+    var ov = document.getElementById('clCollReveal');
+    if (ov && ov.classList.contains('open')) {
+      ov.classList.remove('open'); lockScroll(false);
+      try { if (_revealRelease) { _revealRelease(); _revealRelease = null; } } catch (_) { /* noop */ }
+    }
+    if (_revealClosed) { var f = _revealClosed; _revealClosed = null; try { f(); } catch (_) { /* noop */ } }
+  }
   function reveal(cards) {
     try {
       if (!Array.isArray(cards)) return;
@@ -3799,7 +3829,9 @@
       function next() { clearT(); stopShader(); stopGyro(); idx++; if (idx >= queue.length) summary(); else card(queue[idx]); }
       function summary() {
         state = 'sum'; stopShader(); stopGyro();
-        var newSets = []; try { newSets = claimSets(); } catch (_) { /* noop */ }
+        // When a forge is sequencing the reward itself, leave the set unclaimed so the
+        // overlay can fire after the card has settled back into its slot.
+        var newSets = []; try { if (!_deferSetClaim) newSets = claimSets(); } catch (_) { /* noop */ }
         var finalXp = (load() || blank()).xp || 0, lvlNow = levelFromXp(finalXp);
         if (lvlNow > lvlBefore) { try { if (window.Sfx) window.Sfx.levelUp(); } catch (_) { /* noop */ } }
         else if (newSets.length) { try { if (window.Sfx) window.Sfx.allDone(); } catch (_) { /* noop */ } }
