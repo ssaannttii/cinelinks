@@ -60,6 +60,7 @@ const I18N = {
     streakDays: 'day streak', streakClose: 'Close', streakMile: 'New milestone!', streakTap: 'tap to continue', streakModeAny: 'Any game', streakModeCl: 'CineLinks daily', metaAllDone: 'Day complete!',
     // click singular + goal tag
     clickSingular: 'click', goalTag: 'GOAL',
+    noImage: 'No image', cardChoose: 'Choose', cardVisited: 'Already visited', cardGoalA11y: 'target',
     // difficulty labels (from par)
     diffEasy: 'Easy', diffMedium: 'Medium', diffHard: 'Hard', diffExpert: 'Expert', difficultyLabel: 'Difficulty',
     // CineLinks additions: streak / archive / par
@@ -154,6 +155,7 @@ const I18N = {
     streakDays: 'días de racha', streakClose: 'Cerrar', streakMile: '¡Nuevo hito!', streakTap: 'toca para continuar', streakModeAny: 'Cualquier juego', streakModeCl: 'Diario CineLinks', metaAllDone: '¡Día completo!',
     // click singular + goal tag
     clickSingular: 'clic', goalTag: 'OBJETIVO',
+    noImage: 'Sin imagen', cardChoose: 'Elegir', cardVisited: 'Ya visitada', cardGoalA11y: 'objetivo',
     // difficulty labels (from par)
     diffEasy: 'Fácil', diffMedium: 'Media', diffHard: 'Difícil', diffExpert: 'Experto', difficultyLabel: 'Dificultad',
     // CineLinks additions: streak / archive / par
@@ -248,6 +250,7 @@ const I18N = {
     streakDays: 'días de racha', streakClose: 'Cerrar', streakMile: '¡Nuevo hito!', streakTap: 'toca para continuar', streakModeAny: 'Cualquier juego', streakModeCl: 'Diario CineLinks', metaAllDone: '¡Día completo!',
     // click singular + goal tag
     clickSingular: 'clic', goalTag: 'OBJETIVO',
+    noImage: 'Sin imagen', cardChoose: 'Elegir', cardVisited: 'Ya visitada', cardGoalA11y: 'objetivo',
     // difficulty labels (from par)
     diffEasy: 'Fácil', diffMedium: 'Media', diffHard: 'Difícil', diffExpert: 'Experto', difficultyLabel: 'Dificultad',
     // CineLinks additions: streak / archive / par
@@ -344,6 +347,7 @@ const I18N = {
     betaTitle: 'BÊTA privée', betaSub: 'Essaie un quotidien, puis touche Feedback si quelque chose cloche.',
     // click singular + goal tag
     clickSingular: 'clic', goalTag: 'OBJECTIF',
+    noImage: 'Aucune image', cardChoose: 'Choisir', cardVisited: 'Déjà visitée', cardGoalA11y: 'objectif',
     // difficulty labels (from par)
     diffEasy: 'Facile', diffMedium: 'Moyen', diffHard: 'Difficile', diffExpert: 'Expert', difficultyLabel: 'Difficulté',
     // CineLinks additions: streak / archive / par
@@ -438,6 +442,7 @@ const I18N = {
     betaTitle: 'Private BETA', betaSub: 'Probier ein Daily und tippe auf Feedback, wenn etwas nicht stimmt.',
     // click singular + goal tag
     clickSingular: 'Klick', goalTag: 'ZIEL',
+    noImage: 'Kein Bild', cardChoose: 'Wählen', cardVisited: 'Bereits besucht', cardGoalA11y: 'Ziel',
     // difficulty labels (from par)
     diffEasy: 'Leicht', diffMedium: 'Mittel', diffHard: 'Schwer', diffExpert: 'Experte', difficultyLabel: 'Schwierigkeit',
     // CineLinks additions: streak / archive / par
@@ -532,6 +537,7 @@ const I18N = {
     betaTitle: 'BETA privada', betaSub: 'Experimente um diário e toque em Feedback se algo parecer errado.',
     // click singular + goal tag
     clickSingular: 'clique', goalTag: 'ALVO',
+    noImage: 'Sem imagem', cardChoose: 'Escolher', cardVisited: 'Já visitada', cardGoalA11y: 'alvo',
     // difficulty labels (from par)
     diffEasy: 'Fácil', diffMedium: 'Média', diffHard: 'Difícil', diffExpert: 'Especialista', difficultyLabel: 'Dificuldade',
     // CineLinks additions: streak / archive / par

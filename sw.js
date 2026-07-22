@@ -5,7 +5,7 @@
  *   - other same-origin GETs (logo, icons, daily-challenges.js, i18n.js): stale-while-revalidate.
  * Bump CACHE_VERSION to invalidate old caches on deploy.
  */
-const CACHE_VERSION = 'cinelinks-v242';
+const CACHE_VERSION = 'cinelinks-v243';
 const SHELL = [
   '/',
   '/index.html',
@@ -82,10 +82,18 @@ self.addEventListener('fetch', (event) => {
       fetch(req)
         .then((res) => {
           const copy = res.clone();
-          caches.open(CACHE_VERSION).then((c) => c.put('/index.html', copy));
+          // Cache each navigation under ITS OWN url. This used to store every
+          // document as '/index.html', so the last page you visited silently
+          // became the offline home — open the app offline after playing and
+          // you'd get cinegroup.html instead of the home screen, and the wrong
+          // page stayed wedged there until the next CACHE_VERSION bump.
+          caches.open(CACHE_VERSION).then((c) => c.put(req, copy));
           return res;
         })
-        .catch(() => caches.match('/index.html').then((r) => r || caches.match('/')))
+        // Offline: prefer this exact page, then fall back to the shell.
+        .catch(() => caches.match(req)
+          .then((r) => r || caches.match('/index.html'))
+          .then((r) => r || caches.match('/')))
     );
     return;
   }

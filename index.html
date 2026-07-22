@@ -35,7 +35,10 @@
 :focus-visible{outline:2px solid var(--gold,#e8a000);outline-offset:2px;border-radius:6px;box-shadow:0 0 0 4px rgba(0,0,0,.45)}
 a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[tabindex]:focus-visible,[role="button"]:focus-visible{outline:2px solid var(--gold,#e8a000);outline-offset:2px}
 /* Tactile press feedback — every control springs inward on tap (transform-only, reduced-motion aware). */
-button:not(:disabled):not(.off):active,[role="button"]:not([aria-disabled="true"]):active,.mode:active,summary:active{transform:scale(.96);transition:transform .1s cubic-bezier(.3,.9,.3,1)}
+/* .card is excluded: connection cards are now real buttons, but they already own
+   their press feedback (the cardTap keyframes) and a hover tilt transform, and a
+   second scale here would fight both. */
+button:not(:disabled):not(.off):not(.card):active,[role="button"]:not([aria-disabled="true"]):active,.mode:active,summary:active{transform:scale(.96);transition:transform .1s cubic-bezier(.3,.9,.3,1)}
 @media(prefers-reduced-motion:reduce){button:active,[role="button"]:active,.mode:active,summary:active{transform:none}}
 /* Home cards cascade in on load — hero stays instant (primary CTA); secondary cards
    stagger up. Transform/opacity only, settled by ~.6s, never blocks tapping. */
@@ -693,7 +696,7 @@ body{font-family:var(--fui);background:var(--bg);color:var(--txt);min-height:100
 @keyframes cardTap{0%{transform:scale(1)}40%{transform:scale(.96);border-color:var(--gold);box-shadow:0 0 0 2px rgba(232,160,0,.4)}100%{transform:scale(1)}}
 .card.tapping{animation:cardTap .18s ease both;pointer-events:none}
 .card:hover{border-color:var(--gold);transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.4)}
-.card:not(.visited)::before{content:"Choose";position:absolute;top:8px;right:8px;z-index:2;background:rgba(30,37,46,.8);border:1px solid rgba(232,160,0,.32);border-radius:8px;color:var(--gold);font-size:.58rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 6px;opacity:0;transform:translateY(-3px);transition:opacity .15s,transform .15s;pointer-events:none}
+.card:not(.visited)::before{content:attr(data-choose);position:absolute;top:8px;right:8px;z-index:2;background:rgba(30,37,46,.8);border:1px solid rgba(232,160,0,.32);border-radius:8px;color:var(--gold);font-size:.58rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 6px;opacity:0;transform:translateY(-3px);transition:opacity .15s,transform .15s;pointer-events:none}
 .card:not(.visited):hover::before{opacity:1;transform:translateY(0)}
 .card:hover .card-img img{filter:brightness(.72) saturate(1.08)}
 .card.goal{border-color:rgba(232,160,0,.85);box-shadow:0 0 16px rgba(232,160,0,.3),0 0 0 2px rgba(232,160,0,.4);position:relative;overflow:hidden;animation:goalCardGlow 2.1s ease-in-out infinite}
@@ -707,13 +710,19 @@ body{font-family:var(--fui);background:var(--bg);color:var(--txt);min-height:100
 @keyframes goalTagPop{0%{transform:scale(0) translateY(-4px);opacity:0}70%{transform:scale(1.14)}100%{transform:scale(1);opacity:1}}
 @keyframes goalShine{0%{transform:translateX(0) skewX(-12deg);opacity:0}8%{opacity:1}28%{transform:translateX(320%) skewX(-12deg);opacity:0}100%{transform:translateX(320%) skewX(-12deg);opacity:0}}
 .card.visited{opacity:.38;cursor:not-allowed;pointer-events:none;position:relative}
-.card.visited::after{content:"Already visited";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:600;color:var(--mut);background:rgba(0,0,0,.55);text-align:center;padding:4px;pointer-events:none}
+.card.visited::after{content:attr(data-visited);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:600;color:var(--mut);background:rgba(0,0,0,.55);text-align:center;padding:4px;pointer-events:none}
 .people-section{margin-bottom:18px}
 .people-section:last-child{margin-bottom:0}
 .people-label{display:flex;align-items:center;gap:10px;font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin-bottom:10px}
 .people-label::after{content:"";height:1px;background:var(--bdr);flex:1}
 .card.director-card{border-color:rgba(232,160,0,.2);background:rgba(232,160,0,.04)}
 .card.director-card .card-sub{color:var(--gold);font-weight:600}
+/* Connection cards are <button> elements (keyboard + screen reader access to the
+   core game). These undo the UA button styling and restore block flow to the
+   inner spans, which are inline by default. */
+.card{display:block;width:100%;margin:0;padding:0;font:inherit;color:inherit;text-align:left;-webkit-appearance:none;appearance:none}
+.card:disabled{cursor:default}
+.card-img,.card-info{display:block}
 .card-img{width:100%;aspect-ratio:2/3;overflow:hidden;background:var(--s2)}
 .card-img.person{aspect-ratio:1/1}
 .card-img img{width:100%;height:100%;object-fit:cover;display:block;transition:filter .15s}
@@ -1561,6 +1570,11 @@ function setLang(lang) {
 }
 
 function applyI18n() {
+  // Keep the document language in sync with the UI language. It lives here rather
+  // than in setLang because boot goes straight through _detectLang() without ever
+  // calling setLang — so the page used to stay lang="en" for every locale, and a
+  // screen reader would read the Spanish or German UI with an English voice.
+  try { document.documentElement.lang = _lang; } catch (_) {}
   // Home
   const tagEl = document.querySelector('.tagline');
   if (tagEl) tagEl.textContent = t('tagline');
@@ -4121,7 +4135,7 @@ const game = window.game = {
         const nodeName = node.name;
         await new Promise(r => setTimeout(r, 320));
         try { if (window.Sfx) { Sfx.deadEnd(); Sfx.haptic([15, 30]); } } catch (_) {}
-        this._showToast(`Dead end - all connections from <strong>${nodeName}</strong> already visited. Going back…`);
+        this._showToastNamed('deadEndToast', nodeName);
         await new Promise(r => setTimeout(r, 1800));
         this._goBack();
       }
@@ -4169,6 +4183,8 @@ const game = window.game = {
     el.style.display = 'block';
   },
 
+  // TRUSTED HTML ONLY. Never pass a node name, profile field, or anything else
+  // that came from a URL, the API or storage — use _showToastNamed for that.
   _showToast(html, duration = 2600) {
     const t = document.getElementById('deadEndToast');
     if (!t) return;
@@ -4176,6 +4192,29 @@ const game = window.game = {
     t.classList.add('show');
     clearTimeout(this._toastTimer);
     this._toastTimer = setTimeout(() => t.classList.remove('show'), duration);
+  },
+
+  // Same toast, for messages that embed an untrusted name. Node names arrive
+  // from shared links (?sn=/?en=/?cn=), so a crafted challenge URL could inject
+  // markup if the name were concatenated into HTML. The localized string is
+  // rendered with the name split out as a real text node, which cannot execute.
+  // Bonus: this finally uses the i18n key, which existed in all six languages
+  // while the toast was hardcoded in English.
+  _showToastNamed(key, name, duration = 2600) {
+    const el = document.getElementById('deadEndToast');
+    if (!el) return;
+    const SEP = '\u0000';
+    const parts = String(t(key, SEP)).split(SEP);
+    const strong = document.createElement('strong');
+    strong.textContent = name == null ? '' : String(name);
+    el.replaceChildren(
+      document.createTextNode(parts[0] || ''),
+      strong,
+      document.createTextNode(parts[1] || '')
+    );
+    el.classList.add('show');
+    clearTimeout(this._toastTimer);
+    this._toastTimer = setTimeout(() => el.classList.remove('show'), duration);
   },
 
   async navigateTo(node) {
@@ -4481,22 +4520,41 @@ const game = window.game = {
     const isGoal = item.id === this.end.id && item.type === this.end.type;
     const isVisited = this.visited.has(item.type + '-' + item.id);
     // Note: don't skip start node - show it as visited/blocked instead
-    const div = document.createElement('div');
+    // A real <button>, not a div: this is the primary action of the whole game,
+    // and as a div it was unreachable by keyboard and invisible to screen readers
+    // as something you could activate. Inner elements are spans so the button
+    // only contains phrasing content.
+    const div = document.createElement('button');
+    div.type = 'button';
     const isDir = item.sub === 'Director';
     div.className = 'card' + (isGoal ? ' goal' : '') + (isVisited ? ' visited' : '') + (isDir ? ' director-card' : '');
     const imgClass = 'card-img' + (item.type === 'person' ? ' person' : '');
     const imgHtml = item.img
       ? '<img src="' + IMGBASE + item.img + '" alt="" loading="lazy">'
-      : '<div class="card-noimg">No image</div>';
+      : '<span class="card-noimg">' + t('noImage') + '</span>';
     const tvBadge = item.type === 'tv' ? '<span class="card-tv-badge">' + t('tvBadge') + '</span>' : '';
     const yearText = item.type === 'tv' || item.type === 'movie' ? (item.yearLabel || item.sub.slice(0,4) || '') : item.sub;
     const subHtml = item.type === 'tv' || item.type === 'movie'
       ? tvBadge + '<span>' + yearText.replace(/</g,'&lt;') + '</span>'
       : item.sub.replace(/</g,'&lt;');
-    div.innerHTML = '<div class="' + imgClass + '">' + imgHtml + '</div>' +
-      '<div class="card-info"><div class="card-name">' + item.name.replace(/</g,'&lt;') + '</div>' +
-      '<div class="card-sub">' + subHtml + '</div></div>' +
-      '<div class="card-glare" aria-hidden="true"></div>';
+    div.innerHTML = '<span class="' + imgClass + '">' + imgHtml + '</span>' +
+      '<span class="card-info"><span class="card-name">' + item.name.replace(/</g,'&lt;') + '</span>' +
+      '<span class="card-sub">' + subHtml + '</span></span>' +
+      '<span class="card-glare" aria-hidden="true"></span>';
+    // Name the action for screen readers: what it is, what kind, and its state.
+    // Without this the button announces only its raw text soup.
+    let aria = item.name + ', ' + nodeTypeLabel(item.type) + (yearText ? ', ' + yearText : '');
+    if (isGoal) aria += ' — ' + t('cardGoalA11y');
+    if (isVisited) aria += ' — ' + t('cardVisited');
+    div.setAttribute('aria-label', aria);
+    // The "Choose" chip and "Already visited" veil are CSS ::before/::after, which
+    // can't read from i18n — they were stuck in English. Feeding them through
+    // attr() makes them translate with everything else.
+    div.setAttribute('data-choose', t('cardChoose'));
+    div.setAttribute('data-visited', t('cardVisited'));
+    // Visited nodes were already non-clickable; `disabled` makes that fact reach
+    // keyboard and screen-reader users too, instead of being colour-only.
+    if (isVisited) div.disabled = true;
     if (isGoal && !isVisited) {
       const tag = document.createElement('span');
       tag.className = 'card-goal-tag';
