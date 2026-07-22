@@ -3222,7 +3222,7 @@
     try { renderQuests(); renderPrime(); } catch (_) { /* noop */ }
     s.classList.add('open');
     try { if (window.Sfx) window.Sfx.tap(); } catch (_) { /* noop */ }
-    try { if (window.fxTrapFocus) _sheetRelease = fxTrapFocus(s.querySelector('.cl-sheet-panel')); } catch (_) { /* noop */ }
+    try { if (window.fxTrapFocus) _sheetRelease = window.fxTrapFocus(s.querySelector('.cl-sheet-panel')); } catch (_) { /* noop */ }
   }
   function closeMetaSheet() {
     var s = document.getElementById('clMetaSheet'); if (!s || !s.classList.contains('open')) return;
@@ -3254,7 +3254,7 @@
     render();
     document.getElementById('clCollModal').classList.add('open'); lockScroll(true);
     try { mountHeaderCondense(); } catch (_) { /* noop */ }
-    try { if (window.fxTrapFocus) _vaultRelease = fxTrapFocus(document.getElementById('clCollModal')); } catch (_) { /* noop */ }
+    try { if (window.fxTrapFocus) _vaultRelease = window.fxTrapFocus(document.getElementById('clCollModal')); } catch (_) { /* noop */ }
     try { if (window.Track) window.Track('collection_open', stats()); } catch (_) { /* noop */ }
     // one-shot meta-layer intro on the first real visit — teaches the loop that
     // drives long-term engagement (collect → complete sets → spend dust), which the
@@ -3830,7 +3830,7 @@
       skip.style.display = ''; skip.onclick = function (e) { e.stopPropagation(); clearT(); summary(); };
       ov.onclick = function () { if (state === 'ready') next(); };
       ov.classList.add('open'); lockScroll(true);
-      try { if (window.fxTrapFocus) _revealRelease = fxTrapFocus(ov); } catch (_) { /* noop */ }
+      try { if (window.fxTrapFocus) _revealRelease = window.fxTrapFocus(ov); } catch (_) { /* noop */ }
       try { if (window.Sfx) window.Sfx.cardDeal(); } catch (_) { /* noop */ }
       try { if (window.Track) window.Track('card_revealed', { n: queue.length, top: queue[queue.length - 1].rarity }); } catch (_) { /* noop */ }
       card(queue[0]);

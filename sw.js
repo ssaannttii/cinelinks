@@ -5,7 +5,7 @@
  *   - other same-origin GETs (logo, icons, daily-challenges.js, i18n.js): stale-while-revalidate.
  * Bump CACHE_VERSION to invalidate old caches on deploy.
  */
-const CACHE_VERSION = 'cinelinks-v234';
+const CACHE_VERSION = 'cinelinks-v235';
 const SHELL = [
   '/',
   '/index.html',
@@ -112,7 +112,7 @@ self.addEventListener('fetch', (event) => {
 self.addEventListener('push', (event) => {
   let data = {};
   try { data = event.data ? event.data.json() : {}; }
-  catch (_) { data = { body: event.data ? event.data.text() : '' }; }
+  catch { data = { body: event.data ? event.data.text() : '' }; }
   const title = data.title || 'CineLinks';
   const opts = {
     body: data.body || "Today's puzzle is ready 🎬",
@@ -129,7 +129,7 @@ self.addEventListener('notificationclick', (event) => {
   const url = (event.notification.data && event.notification.data.url) || '/';
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
-      for (const c of list) { if ('focus' in c) { try { c.navigate && c.navigate(url); } catch (_) {} return c.focus(); } }
+      for (const c of list) { if ('focus' in c) { try { c.navigate && c.navigate(url); } catch { /* stale client */ } return c.focus(); } }
       if (self.clients.openWindow) return self.clients.openWindow(url);
     })
   );

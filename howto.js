@@ -80,7 +80,7 @@
   void nums;
 
   var _htRelease = null;
-  function open() { ov.style.display = 'flex'; requestAnimationFrame(function () { ov.classList.add('show'); }); try { if (window.fxTrapFocus) _htRelease = fxTrapFocus(ov); } catch (_) {} }
+  function open() { ov.style.display = 'flex'; requestAnimationFrame(function () { ov.classList.add('show'); }); try { if (window.fxTrapFocus) _htRelease = window.fxTrapFocus(ov); } catch (_) {} }
   function close() {
     ov.classList.remove('show');
     try { localStorage.setItem(seenKey, '1'); } catch (_) {}
