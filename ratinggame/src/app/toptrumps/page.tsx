@@ -176,6 +176,7 @@ export default function TopTrumps() {
   const shineUsedRef = useRef(false);        // the Shine save is once per match
   const settleRef = useRef<(() => void) | null>(null);
   const advanceRef = useRef<(() => void) | null>(null);   // tap-to-skip: run this duel's settle now
+  const [canAdvance, setCanAdvance] = useState(false);    // render-safe mirror of advanceRef
   const [shineOffer, setShineOffer] = useState<StatKey | null>(null);
   const [banned, setBanned] = useState<StatKey | null>(null);   // the stat you just lost with (can't re-pick it)
   const [revealed, setRevealed] = useState(false);
@@ -191,8 +192,11 @@ export default function TopTrumps() {
 
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const initHandRef = useRef<Set<number>>(new Set());   // your dealt hand — cards beyond it were captured in battle
-  const myDeckRef = useRef<Card[]>([]);      // your starting 8 (fixed) — for the hand viewer
-  const rivalDeckRef = useRef<Card[]>([]);   // rival's starting 8 (fixed) — scouting is tracked against this
+  // Both starting hands are READ DURING RENDER (the deck viewers below), so they are
+  // state rather than refs: mutating a ref wouldn't re-render the viewers, and reading
+  // refs while rendering isn't safe under concurrent rendering (react-hooks/refs).
+  const [myDeck, setMyDeck] = useState<Card[]>([]);       // your starting 8 (fixed) — for the hand viewer
+  const [rivalDeck, setRivalDeck] = useState<Card[]>([]); // rival's starting 8 (fixed) — scouting is tracked against this
   const matchStartRef = useRef(0);           // ms timestamp of match start (match-length telemetry)
   const reducedRef = useRef(false);
   const boardRef = useRef<HTMLDivElement>(null);
@@ -277,7 +281,7 @@ export default function TopTrumps() {
     clearTimers();
     const { mine, theirs, ownedN: on } = buildDecks(m);
     initHandRef.current = new Set(mine.map((c) => c.id));
-    myDeckRef.current = mine; rivalDeckRef.current = theirs;
+    setMyDeck(mine); setRivalDeck(theirs);
     setOwnedN(on);
     matchStartRef.current = Date.now(); trk("arena_start", { mode: m, owned: on });
     setArchetype(m === "daily" ? ARCHETYPES[dayNum() % ARCHETYPES.length] : ARCHETYPES[Math.floor(Math.random() * ARCHETYPES.length)]);
@@ -285,7 +289,7 @@ export default function TopTrumps() {
     setPot([]); setTurn("player"); setRound(1); setChosen(null); setDuel(null); setClash(false);
     setStreak(0); setBest(0); setWon(false); setRevealed(false);
     setRivalTag(null); setRivalMsg(null); setPrize(null);
-    shineUsedRef.current = false; settleRef.current = null; setShineOffer(null); setBanned(null);
+    shineUsedRef.current = false; settleRef.current = null; setCanAdvance(false); setShineOffer(null); setBanned(null);
     setIntel(2); setPeeked(false); setSeenIds([]); setTrackSel(null); setCpuTell(null);
     setPhase("deal");
     if (m === "daily") {
@@ -293,10 +297,10 @@ export default function TopTrumps() {
     } else setDailyLocked(false);
   }, []);
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time deal on mount
   useEffect(() => {
     let m: Mode = "daily";
     try { const q = new URLSearchParams(window.location.search).get("mode"); if (q === "practice" || q === "arena") m = q; } catch { /* noop */ }
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time deal on mount
     setMode(m); newGame(m);
   }, [newGame]);
 
@@ -378,7 +382,7 @@ export default function TopTrumps() {
       setMode("practice"); setOwnedN(on);
       matchStartRef.current = Date.now(); trk("arena_start", { mode: "rival", owned: on });
       setArchetype(ARCHETYPES[Math.floor(Math.random() * ARCHETYPES.length)]);
-      myDeckRef.current = mine; rivalDeckRef.current = theirs;
+      setMyDeck(mine); setRivalDeck(theirs);
       setPlayer(mine); setCpu(theirs);
       setPot([]); setTurn("player"); setRound(1); setChosen(null); setDuel(null); setClash(false);
       setStreak(0); setBest(0); setWon(false); setRevealed(false); setDailyLocked(false);
@@ -428,7 +432,7 @@ export default function TopTrumps() {
       if (np.length === 0 || nc.length === 0 || round >= MAX_ROUNDS) { finish(np, nc); }
       else { setRound((r) => r + 1); setRevealed(false); setChosen(null); setClash(false); setDuel(null); setPeeked(false); setTrackSel(null); setCpuTell(null); setPhase("play"); }
     };
-    advanceRef.current = settle;
+    advanceRef.current = settle; setCanAdvance(true);
     after(1200, () => {
       // Shine save: a Shined card from your collection lets you re-pick ONCE per
       // match after losing a duel you chose — the cosmetic becomes a lifeline.
@@ -470,8 +474,8 @@ export default function TopTrumps() {
   const doSwap = () => { if (!canAct || intel < 1 || player.length < 2) return; setIntel((i) => i - 1); setPlayer((p) => [...p.slice(1), p[0]]); trk("arena_swap", { mode }); Sfx.tap(); };
   // Tap-to-skip: once the result has flashed, tapping the board runs this duel's
   // settle now instead of waiting out the pause.
-  const canSkip = phase === "reveal" && clash && !shineOffer && !!advanceRef.current;
-  const advance = () => { if (!canSkip) return; clearTimers(); const f = advanceRef.current; advanceRef.current = null; f?.(); };
+  const canSkip = phase === "reveal" && clash && !shineOffer && canAdvance;
+  const advance = () => { if (!canSkip) return; clearTimers(); const f = advanceRef.current; advanceRef.current = null; setCanAdvance(false); f?.(); };
   // Deck tracker: a rival card is "known" once it's been revealed in a duel, or if
   // it originally came from YOUR hand (you always knew those). You learn the SET
   // they hold, never the order — the top card stays a gamble until you Peek.
@@ -481,13 +485,13 @@ export default function TopTrumps() {
   // that grows/shrinks as cards get captured. A rival card is "seen" once it has
   // appeared in any duel; your own 8 you always know.
   const rivalSeen = new Set<number>();
-  rivalDeckRef.current.forEach((c) => { if (seenIds.includes(c.id)) rivalSeen.add(c.id); });
-  const myKnown = new Set<number>(myDeckRef.current.map((c) => c.id));
-  const rivalViewer = rivalDeckRef.current.length > 0 ? (
-    <DeckViewer cards={rivalDeckRef.current} known={rivalSeen} label="Rival hand" sub={rivalSeen.size + " seen · " + (rivalDeckRef.current.length - rivalSeen.size) + " unknown"} sel={trackSel} onSel={setTrackSel} vs={pc} topId={peeked && cc ? cc.id : null} />
+  rivalDeck.forEach((c) => { if (seenIds.includes(c.id)) rivalSeen.add(c.id); });
+  const myKnown = new Set<number>(myDeck.map((c) => c.id));
+  const rivalViewer = rivalDeck.length > 0 ? (
+    <DeckViewer cards={rivalDeck} known={rivalSeen} label="Rival hand" sub={rivalSeen.size + " seen · " + (rivalDeck.length - rivalSeen.size) + " unknown"} sel={trackSel} onSel={setTrackSel} vs={pc} topId={peeked && cc ? cc.id : null} />
   ) : null;
-  const myViewer = myDeckRef.current.length > 0 ? (
-    <DeckViewer cards={myDeckRef.current} known={myKnown} label="Your hand" sub="tap for stats" sel={trackSel} onSel={setTrackSel} />
+  const myViewer = myDeck.length > 0 ? (
+    <DeckViewer cards={myDeck} known={myKnown} label="Your hand" sub="tap for stats" sel={trackSel} onSel={setTrackSel} />
   ) : null;
   const total = player.length + cpu.length;
   const youPct = total ? (player.length / total) * 100 : 50;
