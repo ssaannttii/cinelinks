@@ -9,4 +9,11 @@
   <url><loc>https://cinelinks.vercel.app/cinechain.html</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
   <url><loc>https://cinelinks.vercel.app/cinereel.html</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
   <url><loc>https://cinelinks.vercel.app/cinegroup.html</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://cinelinks.vercel.app/cinecode.html</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://cinelinks.vercel.app/privacy.html</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
+  <!-- Deliberately absent: admin.html and studio.html (robots.txt Disallow),
+       plus browse.html, beta.html, cineplot.html and stats.html, which all carry
+       <meta name="robots" content="noindex">. stats is a personal page with
+       nothing to index, and cineplot is a tombstone that canonicals and redirects
+       to cineclue, so listing either would work against us. -->
 </urlset>

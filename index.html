@@ -1744,11 +1744,19 @@ function dateKey(date = new Date()) {
   return parts.year + '-' + parts.month + '-' + parts.day;
 }
 
+// Human-facing dates follow the UI language, not a hardcoded en-US. Archive
+// labels, daily badges and "today is…" were reading out English weekdays and
+// months to players who had picked Spanish, French, German or Portuguese.
+//
+// Note this is NOT the same as datePartsInTimeZone above, which deliberately
+// pins en-US to build the YYYY-MM-DD daily key — that one must stay locale-proof.
 function formatDailyDate(date = new Date(), options = {}) {
+  const lang = (typeof _lang !== 'undefined' && _lang) ? _lang : undefined;
   try {
-    return new Intl.DateTimeFormat('en-US', {timeZone:DAILY_TIME_ZONE, ...options}).format(date);
+    return new Intl.DateTimeFormat(lang, {timeZone:DAILY_TIME_ZONE, ...options}).format(date);
   } catch(_) {
-    return date.toLocaleDateString('en-US', options);
+    try { return date.toLocaleDateString(lang, options); }
+    catch(_e) { return date.toLocaleDateString('en-US', options); }
   }
 }
 

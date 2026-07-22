@@ -3446,7 +3446,10 @@
   function detailInfo(c) {
     var rar = RARITY[c.rarity] || RARITY.common;
     var dt = null; try { dt = c.first ? new Date(c.first + 'T00:00:00') : null; } catch (_) { dt = null; }
-    var dateStr = (dt && !isNaN(dt.getTime())) ? dt.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
+    // currentLang(), not undefined: undefined follows the BROWSER locale, so a
+    // player on an English system who picked Spanish saw "Mar 3" in an otherwise
+    // Spanish card.
+    var dateStr = (dt && !isNaN(dt.getTime())) ? dt.toLocaleDateString(currentLang(), { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
     var n = c.n || 1;
     var mstRow = n >= 10 ? [CT('Mastery'), 'Gold ★', '#f5c542'] : n >= 5 ? [CT('Mastery'), 'Silver ★', '#dfe6f2'] : n >= 3 ? [CT('Mastery'), 'Bronze ★', '#cd8f52'] : [CT('Mastery'), (3 - n) + ' more cop' + (3 - n === 1 ? 'y' : 'ies') + ' to ★', ''];
     var rows = [
