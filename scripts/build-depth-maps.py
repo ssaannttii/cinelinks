@@ -8,7 +8,7 @@ WebGL parallax; a 404 simply falls back to the procedural pseudo-depth.
 
 Usage:
   npm run depth:collect                          # refresh the poster list
-  python3 -m venv .venv-depth                    # once: deps (numpy/onnxruntime/pillow)
+  python3.12 -m venv .venv-depth                 # once: deps — use 3.11/3.12, see requirements.txt
   ./.venv-depth/bin/pip install -r scripts/requirements.txt
   ./.venv-depth/bin/python scripts/build-depth-maps.py
 
