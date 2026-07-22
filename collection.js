@@ -862,6 +862,17 @@
     save(s); _normUpd = {};
   }
   function _normQueue(key, img) { _normUpd[key] = { img: img }; if (!_normT) _normT = setTimeout(_normFlush, 900); }
+  // Throttled: during an outage every card fails, and 400 identical events help
+  // nobody. A handful is enough to notice.
+  var _posterFailN = 0;
+  function _reportPosterFail(kind, status) {
+    try {
+      if (window.console) console.warn('[cinelinks] poster fetch failed', status || 'network', kind);
+      if (_posterFailN >= 3) return;
+      _posterFailN++;
+      if (window.Track) window.Track('poster_fetch_failed', { kind: kind, status: status || 0 });
+    } catch (_) { /* noop */ }
+  }
   function normalizePosters(cards, els) {
     try {
       var pend = [];
@@ -889,7 +900,13 @@
             // is just as broken, and the endpoint differs only in field name.
             var tp = it.c.type === 'tv' ? 'tv' : (it.c.type === 'person' ? 'person' : 'movie');
             fetch('/api/tmdb?path=' + encodeURIComponent(tp + '/' + it.c.id))
-              .then(function (r) { return r && r.ok ? r.json() : null; })
+              .then(function (r) {
+                // This exact call silently returned null for a day while the API
+                // was down, which is how cards ended up stored with no poster and
+                // nobody found out. Say something before giving up.
+                if (!r || !r.ok) { _reportPosterFail(tp, r ? r.status : 0); return null; }
+                return r.json();
+              })
               .then(function (j) {
                 active--;
                 var canon = j && (j.poster_path || j.profile_path);

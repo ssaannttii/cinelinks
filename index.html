@@ -1684,20 +1684,48 @@ function applyI18n() {
 // In-memory cache of TMDB responses for the current session: avoids re-fetching
 // credits when the player navigates back through the graph. Keyed by lang+path.
 const _apiCache = new Map();
+
+// Silent failure is what let a total API outage read as a cosmetic bug: every
+// caller wraps api() in `catch (_) {}`, so a day of 500s surfaced only as "some
+// new cards have no poster". Reports the first few failures per session — enough
+// to see it, not enough to flood analytics when everything is down.
+let _apiErrN = 0;
+function reportApiError(path, status) {
+  try {
+    console.warn('[cinelinks] API failure', status || 'network', path);
+    if (_apiErrN >= 5) return;
+    _apiErrN++;
+    // First path segment only ('movie', 'tv', 'person'): the id would explode
+    // event cardinality for no diagnostic gain.
+    if (window.Track) Track('api_error', { path: String(path).split('/')[0], status: status || 0 });
+  } catch (_) { /* reporting must never be the thing that breaks */ }
+}
+
 function api(path) {
   const cacheKey = _lang + '|' + path;
   const hit = _apiCache.get(cacheKey);
   if (hit) return hit;
   if (_apiCache.size > 400) _apiCache.clear(); // soft cap for very long sessions
   const url = '/api/tmdb?path=' + path + (_lang !== 'en-US' ? '&language=' + encodeURIComponent(_lang) : '');
+  let reported = false;
   const p = fetch(url)
-    .then(r => r.json())
+    .then(r => {
+      // A non-2xx used to fall straight into r.json(), which threw a parse error
+      // on Vercel's HTML error page and then vanished into a caller's empty
+      // catch. Check the status and say something instead.
+      if (!r.ok) { reported = true; reportApiError(path, r.status); throw new Error('api ' + r.status); }
+      return r.json();
+    })
     .then(data => {
       // Don't cache TMDB-level errors so they can be retried.
       if (data && (data.success === false || data.status_code)) _apiCache.delete(cacheKey);
       return data;
     })
-    .catch(err => { _apiCache.delete(cacheKey); throw err; });
+    .catch(err => {
+      _apiCache.delete(cacheKey);
+      if (!reported) reportApiError(path, 0);
+      throw err;
+    });
   _apiCache.set(cacheKey, p);
   return p;
 }

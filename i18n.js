@@ -597,3 +597,25 @@ const I18N = {
     clicksLabel: 'cliques',
   },
 };
+
+// Keep <html lang> in sync with the chosen UI language.
+//
+// Every page shipped a hardcoded lang="en", so a screen reader read the Spanish,
+// French, German or Portuguese UI with an English voice — and it also tells the
+// browser the wrong hyphenation and font rules. index.html handles this in
+// applyI18n(); the nine game modes have their own mini-dictionaries and no such
+// hook, so doing it here fixes all of them from the one file they already share.
+(function () {
+  try {
+    var stored = localStorage.getItem('clLang');
+    var lang = (stored && LANGS[stored]) ? stored : null;
+    if (!lang) {
+      var nav = (navigator.language || 'en-US');
+      lang = LANGS[nav] ? nav : (nav.slice(0, 2) === 'es' ? 'es-ES'
+           : nav.slice(0, 2) === 'fr' ? 'fr-FR'
+           : nav.slice(0, 2) === 'de' ? 'de-DE'
+           : nav.slice(0, 2) === 'pt' ? 'pt-BR' : 'en-US');
+    }
+    if (document.documentElement.lang !== lang) document.documentElement.lang = lang;
+  } catch (_) { /* never block page load over an attribute */ }
+})();
