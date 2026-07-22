@@ -10,6 +10,13 @@ generated-challenges.txt
 *.log
 .env*
 _*.js
+# ...but api/_*.js are SHARED HELPERS, not scratch files. Vercel needs the
+# underscore so they aren't exposed as routes, and it needs them committed or the
+# functions that require() them crash on boot with FUNCTION_INVOCATION_FAILED.
+# This bit us: api/_cors.js was silently skipped by `git add -A`, every handler
+# requiring it 500'd in production, and local tests passed the whole time because
+# the file was sitting right there on disk.
+!api/_*.js
 
 # python venv for the depth-map pipeline
 .venv*/
