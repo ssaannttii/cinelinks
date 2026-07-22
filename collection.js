@@ -1111,6 +1111,28 @@
       { id: 2316, type: 'tv', name: 'The Office' }, { id: 1668, type: 'tv', name: 'Friends' },
       { id: 1400, type: 'tv', name: 'Seinfeld' }, { id: 8592, type: 'tv', name: 'Parks and Recreation' }
     ] },
+    // ── More TV. Every id below is taken from cineclue-pool.js, i.e. already live
+    // in the daily pools and therefore verified — TMDB isn't reachable from the
+    // build sandbox, so inventing ids would have shipped broken cards.
+    { id: 'animatedtv', name: 'Animated Primetime', members: [
+      { id: 456, type: 'tv', name: 'The Simpsons' }, { id: 2190, type: 'tv', name: 'South Park' },
+      { id: 1434, type: 'tv', name: 'Family Guy' }
+    ] },
+    { id: 'procedural', name: 'Case of the Week', members: [
+      { id: 1408, type: 'tv', name: 'House' }, { id: 1405, type: 'tv', name: 'Dexter' },
+      { id: 1416, type: 'tv', name: "Grey's Anatomy" }
+    ] },
+    { id: 'genretv', name: 'Genre Television', members: [
+      { id: 1402, type: 'tv', name: 'The Walking Dead' }, { id: 1622, type: 'tv', name: 'Supernatural' },
+      { id: 60735, type: 'tv', name: 'The Flash' }, { id: 1412, type: 'tv', name: 'Arrow' }
+    ] },
+    { id: 'comforttv', name: 'Comfort Viewing', members: [
+      { id: 1100, type: 'tv', name: 'How I Met Your Mother' }, { id: 1668, type: 'tv', name: 'Friends' },
+      { id: 2316, type: 'tv', name: 'The Office' }
+    ] },
+    { id: 'britcrime', name: 'British Grit', members: [
+      { id: 60574, type: 'tv', name: 'Peaky Blinders' }, { id: 1438, type: 'tv', name: 'The Wire' }
+    ] },
     { id: 'crimetv', name: 'Crime and Antiheroes', members: [
       { id: 1396, type: 'tv', name: 'Breaking Bad' }, { id: 60059, type: 'tv', name: 'Better Call Saul' },
       { id: 1438, type: 'tv', name: 'The Wire' }, { id: 76331, type: 'tv', name: 'Succession' }
@@ -1273,7 +1295,24 @@
     { id: 'lvl5', icon: AI('<path d="M3 17 9 11l4 4 8-8"/><path d="M16 7h5v5"/>'), name: 'Rising Star', desc: 'Reach level 5', goal: function (c) { return [c.st.level, 5]; } },
     { id: 'lvl10', icon: AI('<circle cx="12" cy="9" r="5.5"/><path d="M8.5 13.5 7 21l5-2.5L17 21l-1.5-7.5"/>'), name: 'Veteran', desc: 'Reach level 10', goal: function (c) { return [c.st.level, 10]; } },
     { id: 'style', icon: AI('<rect x="4" y="4" width="16" height="16" rx="2.4"/><circle cx="12" cy="12" r="3.2"/><path d="M12 4.5v15M4.5 12h15"/>'), name: 'Style Icon', desc: 'Equip a non-default card back', goal: function (c) { return [c.cb !== 'classic' ? 1 : 0, 1]; } },
-    { id: 'shine1', icon: AI('<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M18.5 14.5l.6 1.8 1.8.6-1.8.6-.6 1.8-.6-1.8-1.8-.6 1.8-.6z"/>'), name: 'Polished', desc: 'Shine a card with dust', goal: function (c) { return [c.sh, 1]; } }
+    { id: 'shine1', icon: AI('<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M18.5 14.5l.6 1.8 1.8.6-1.8.6-.6 1.8-.6-1.8-1.8-.6 1.8-.6z"/>'), name: 'Polished', desc: 'Shine a card with dust', goal: function (c) { return [c.sh, 1]; } },
+    // ── Series: TV had no trophies at all, despite five TV sets and 55 shows in the
+    // daily pools — a whole strand of the collection with nothing to chase.
+    { id: 'tv1', icon: AI('<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M8 3l4 3 4-3"/>'), name: 'Tuned In', desc: 'Collect your first series', goal: function (c) { return [c.tv, 1]; } },
+    { id: 'tv10', icon: AI('<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M8 3l4 3 4-3M7 11h6"/>'), name: 'Binge Watcher', desc: 'Collect 10 series', goal: function (c) { return [c.tv, 10]; } },
+    { id: 'tv25', icon: AI('<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M8 3l4 3 4-3M7 11h10M7 14h6"/>'), name: 'Showrunner', desc: 'Collect 25 series', goal: function (c) { return [c.tv, 25]; } },
+    // ── Mastery: shine, ascension and depth each had a single rung.
+    { id: 'shine5', icon: AI('<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>'), name: 'Mirror Finish', desc: 'Shine 5 cards', goal: function (c) { return [c.sh, 5]; } },
+    { id: 'ascend5', icon: AI('<path d="M12 20V5M6 11l6-6 6 6"/>'), name: 'Alchemist', desc: 'Ascend 5 cards', goal: function (c) { return [c.asc, 5]; } },
+    { id: 'copies10', icon: AI('<rect x="7" y="3" width="12" height="16" rx="2"/><path d="M15 21H5a2 2 0 0 1-2-2V7"/>'), name: 'Ten of a Kind', desc: 'Hold 10 copies of one card', goal: function (c) { return [c.maxN, 10]; } },
+    { id: 'depth150', icon: AI('<path d="M4 7h16M4 12h16M4 17h16"/>'), name: 'Bottomless', desc: 'Bank 150 spare copies', goal: function (c) { return [c.depth, 150]; } },
+    // ── The long haul: nothing existed past level 20 or 200 cards, so the most
+    // invested players had already run out of things to earn.
+    { id: 'lvl30', icon: AI('<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>'), name: 'Custodian', desc: 'Reach level 30', goal: function (c) { return [c.st.level, 30]; } },
+    { id: 'coll350', icon: AI('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 4v16M16 4v16"/>'), name: 'Curator Emeritus', desc: 'Collect 350 cards', goal: function (c) { return [c.st.count, 350]; } },
+    { id: 'set10', icon: AI('<rect x="3" y="3" width="7" height="7" rx="1.4"/><rect x="14" y="3" width="7" height="7" rx="1.4"/><rect x="3" y="14" width="7" height="7" rx="1.4"/><rect x="14" y="14" width="7" height="7" rx="1.4"/>'), name: 'Set Collector', desc: 'Complete 10 sets', goal: function (c) { return [c.csDone, 10]; } },
+    { id: 'people50', icon: AI('<circle cx="9" cy="8" r="3.4"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 5.5a3.4 3.4 0 0 1 0 6.6M18 20a6 6 0 0 0-3-5.2"/>'), name: 'Talent Agent', desc: 'Collect 50 people', goal: function (c) { return [c.st.people, 50]; } },
+    { id: 'leg25', icon: AI('<path d="M12 3l2.6 5.6 6 .8-4.4 4.2 1.1 6L12 17.8 6.7 19.6l1.1-6L3.4 9.4l6-.8z"/>'), name: 'Pantheon', desc: 'Collect 25 legendary cards', goal: function (c) { return [c.st.byRarity.legendary, 25]; } }
   ];
   // Raw equipped card-back id (no unlock validation) — used for the 'style' achievement so
   // achievement evaluation never calls activeCardbackId()→cbUnlocked()→achvCount() (would recurse).
@@ -1320,12 +1359,14 @@
 
   function achCtx() {
     var st = stats(), s = load() || blank();
-    var sh = 0, maxN = 0;
-    Object.keys(s.cards || {}).forEach(function (k) { var c = s.cards[k]; if (c.shine) sh++; if ((c.n || 1) > maxN) maxN = c.n || 1; });
+    // stats() folds TV into `films`, so series can't be counted from it — tally them
+    // here instead, which is what lets TV have trophies of its own.
+    var sh = 0, maxN = 0, tv = 0;
+    Object.keys(s.cards || {}).forEach(function (k) { var c = s.cards[k]; if (c.shine) sh++; if ((c.n || 1) > maxN) maxN = c.n || 1; if (c.type === 'tv') tv++; });
     var cur = setsStateFrom(s).filter(function (x) { return x.kind === 'curated'; });
     var csTotal = cur.length, csDone = cur.filter(function (x) { return x.complete; }).length;
     var depth = 0, ascN = 0; Object.keys(s.cards || {}).forEach(function (k) { var c = s.cards[k]; depth += Math.max(0, (c.n || 1) - 1); ascN += (c.asc || 0); });
-    return { st: st, sd: s.setsDone ? Object.keys(s.setsDone).length : 0, cb: rawCardbackId(), sh: sh, maxN: maxN, csDone: csDone, csTotal: csTotal, depth: depth, asc: ascN };
+    return { st: st, sd: s.setsDone ? Object.keys(s.setsDone).length : 0, cb: rawCardbackId(), sh: sh, maxN: maxN, csDone: csDone, csTotal: csTotal, depth: depth, asc: ascN, tv: tv };
   }
   function achMet(a, ctx) { var g = a.goal(ctx); return g[0] >= g[1]; }
   // Record newly-satisfied achievements; returns the list newly unlocked this call.
