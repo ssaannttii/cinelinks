@@ -1909,7 +1909,10 @@
       // flicker in Chrome/Blink & Safari (they'd otherwise flash the card bg to black).
       '.auth-card{position:relative;container-type:inline-size;aspect-ratio:5/7;border-radius:13px;overflow:hidden;isolation:isolate;transition:transform .16s ease,box-shadow .2s ease;background:var(--spbg,#0c1117);box-shadow:0 14px 34px -10px rgba(0,0,0,.6);-webkit-backface-visibility:hidden;backface-visibility:hidden}' +
       '.auth-bgimg{position:absolute;top:-1px;left:16%;width:calc(84% + 1px);height:calc(100% + 2px);object-fit:cover;object-position:center top;z-index:0;transform:translateZ(0);-webkit-backface-visibility:hidden;backface-visibility:hidden}' +
-      '.auth-noimg{position:absolute;top:0;bottom:0;left:16%;right:0;z-index:0;background:radial-gradient(120% 80% at 50% 0%,#17325e,#0a1830)}' +
+      // No poster: a typographic card instead of a blank navy hole — the title's initial set
+      // huge in the display face, tinted by rarity, over the spine's own graphite.
+      '.auth-noimg{position:absolute;top:0;bottom:0;left:16%;right:0;z-index:0;overflow:hidden;background:radial-gradient(130% 70% at 30% 0%,color-mix(in srgb,var(--cr) 22%,transparent),transparent 70%),linear-gradient(180deg,#181c22,#0c0e12)}' +
+      '.auth-noimg b{position:absolute;left:6cqw;top:-4cqw;font-family:Fraunces,Georgia,serif;font-weight:600;font-size:86cqw;line-height:1;color:var(--cr);opacity:.16;letter-spacing:-.04em}' +
       // Taller, eased scrim: most posters print their own title logo in the bottom third,
       // right where the name plate sits, so the dark ramp has to start higher to win.
       '.auth-scrim{position:absolute;left:16%;right:0;bottom:0;height:54%;z-index:1;pointer-events:none;background:linear-gradient(180deg,#ffffff,#d6d6d6 30%,#4a4a4a 72%,#000000);mix-blend-mode:multiply;opacity:.9}' +
@@ -1974,12 +1977,14 @@
       '.auth-legendary .auth-card{box-shadow:0 14px 34px -10px rgba(0,0,0,.6),0 0 26px rgba(232,194,74,.28)}' +
       '.auth-foil{position:absolute;top:0;right:0;bottom:0;left:16%;z-index:7;pointer-events:none;opacity:0;background:repeating-linear-gradient(115deg,rgba(255,119,115,.4),rgba(255,237,95,.4) 11%,rgba(168,255,150,.4) 21%,rgba(131,255,247,.4) 31%,rgba(120,148,255,.4) 42%,rgba(216,117,255,.4) 52%,rgba(255,119,115,.4) 62%);background-size:280% 280%;background-position:var(--fx,50%) var(--fy,50%);mix-blend-mode:color-dodge;filter:brightness(.92) contrast(1.12);transition:opacity .22s}' +
       '.auth-rare .auth-foil{opacity:.14}.auth-elite .auth-foil{opacity:.22}.auth-legendary .auth-foil{opacity:.32;animation:authDrift 7s linear infinite}' +
-      // Mastery (copies) upgrades the card's material: bronze rim (x3) -> silver + shimmer (x5) -> gold frame + foil floor (x10).
+      // Mastery (copies) upgrades the card's material: rim (x3) -> brighter rim + shimmer (x5) -> heavy rim + foil floor (x10).
+      // The rim is drawn in the card's OWN rarity colour: a gold frame on an Elite read as
+      // Legendary and broke the rarity ladder. Bronze/silver/gold lives on the star badge.
       '.auth-mrim{position:absolute;inset:0;z-index:6;border-radius:13px;pointer-events:none}' +
-      '.auth.mst-m1 .auth-mrim{box-shadow:inset 0 0 0 1.4px rgba(205,143,82,.6)}' +
-      '.auth.mst-m2 .auth-mrim{box-shadow:inset 0 0 0 1.6px rgba(223,230,242,.72),0 0 14px rgba(223,230,242,.14)}' +
+      '.auth.mst-m1 .auth-mrim{box-shadow:inset 0 0 0 1.4px color-mix(in srgb,var(--cr) 55%,transparent)}' +
+      '.auth.mst-m2 .auth-mrim{box-shadow:inset 0 0 0 1.6px color-mix(in srgb,var(--cr) 80%,transparent),0 0 14px color-mix(in srgb,var(--cr) 22%,transparent)}' +
       '.auth.mst-m2 .auth-foil{opacity:.2}' +
-      '.auth.mst-m3 .auth-mrim{box-shadow:inset 0 0 0 2px rgba(245,197,66,.9),0 0 22px rgba(245,197,66,.22)}' +
+      '.auth.mst-m3 .auth-mrim{box-shadow:inset 0 0 0 2px var(--cr),inset 0 0 0 3.2px rgba(0,0,0,.35),0 0 22px color-mix(in srgb,var(--cr) 34%,transparent)}' +
       '.auth.mst-m3 .auth-foil{opacity:.34;animation:authDrift 9s linear infinite}' +
       '.auth.mst-m3 .auth-mrim{animation:authMrim 3.6s ease-in-out infinite}' +
       '@keyframes authMrim{0%,100%{filter:brightness(1)}50%{filter:brightness(1.25)}}' +
@@ -2129,7 +2134,7 @@
       var metaLayer = hasMetaLayer ? ('<div class="auth-meta"' + tplMetaBoxStyle(TL, c.rarity) + '>' + tplMetaContent(TL, rar, typeUp, no) + '</div>') : '';
       return '<div class="auth auth-' + c.rarity + (person ? ' person' : '') + (c.shine ? ' cl-shine' : '') + (mst ? ' mst-' + mst : '') + (TL ? ' auth-tpl' : '') + '" role="img" aria-label="' + (ctx.cardAria ? ctx.cardAria(c) : nm) + '" style="--cr:' + (c.rarity === 'common' ? '#9aa3ad' : rar.ring) + ';--m1:' + (METAL[c.rarity] || '#fff') + ';animation-delay:' + Math.min(i, 16) * 22 + 'ms" title="' + nm + ' · ' + rar.label + ' · ' + no + (c.shine ? ' · Shined' : '') + '">' +
         '<div class="auth-card">' +
-          (p ? '<img class="auth-bgimg" src="' + ctx.esc(p) + '" alt="" loading="lazy" decoding="async"' + O('poster') + '>' : '<div class="auth-noimg"></div>') +
+          (p ? '<img class="auth-bgimg" src="' + ctx.esc(p) + '" alt="" loading="lazy" decoding="async"' + O('poster') + '>' : '<div class="auth-noimg"><b aria-hidden="true">' + ctx.esc((c.name || '?').replace(/^(the|el|la|los|las|le|les|der|die|das|o|a)\s+/i, '').charAt(0).toUpperCase()) + '</b></div>') +
           '<div class="auth-scrim"' + O('scrim') + '></div>' +
           '<div class="auth-spine"><span class="auth-sp-stripes"><i></i><i></i><i></i><i></i></span><span class="auth-sp-meta">' + rar.label + ' · ' + typeUp + '</span><span class="auth-sp-no">' + no + '</span></div>' +
           tagsHtml +
@@ -2289,7 +2294,7 @@
       // to the detail. Inside the grid the Shine foil stops DRIFTING (an infinite
       // animation per shined card was the real cost) and settles to a static sheen,
       // so rarity/shine still read at a glance. Detail + reveal keep the full effect.
-      '#clCollGrid .cl-shine .ctc-foil,#clCollGrid .cl-shine .auth-foil{animation:none;opacity:.34}' +
+      '#clCollGrid .cl-shine .ctc-foil,#clCollGrid .cl-shine .auth-foil{animation:none;opacity:.5}' +
       // ── Detail open flip (masks the quality upgrade) ─────────────────────────
       // While the back faces the viewer the front face is hidden, which is exactly
       // when fill() swaps in the w780 poster and mounts gyro/depth/tilt. The spin
@@ -2617,14 +2622,21 @@
       '.ac-pg{font-size:.6rem;color:#888;font-weight:700;margin-top:4px}' +
       // Shine (foil) cosmetic — forces the holo overlay on regardless of rarity, plus a cool glow + sparkle tag.
       '@keyframes clShineDrift{0%{background-position:0% 50%}100%{background-position:260% 50%}}' +
-      '.cl-shine .auth-foil,.cl-shine .ctc-foil{display:block;opacity:.62;animation:clShineDrift 5.5s linear infinite}' +
-      '.cl-shine .auth-glit{opacity:.5}' +
-      '.cl-shine .auth-card{box-shadow:0 8px 22px rgba(0,0,0,.55),0 0 0 1px rgba(190,225,255,.35),0 0 26px rgba(150,205,255,.4)}' +
+      // .auth.cl-shine (not .cl-shine): the theme sheet is injected AFTER this one, so at equal
+      // specificity .auth-elite .auth-foil / .auth-card won and a shined card looked unshined.
+      '.auth.cl-shine .auth-foil,.cl-shine .ctc-foil{display:block;opacity:.62;animation:clShineDrift 5.5s linear infinite}' +
+      '.auth.cl-shine .auth-glit{opacity:.5}' +
+      '.auth.cl-shine .auth-card{box-shadow:0 8px 22px rgba(0,0,0,.55),0 0 0 1px rgba(190,225,255,.35),0 0 26px rgba(150,205,255,.4)}' +
       '.cl-shine .ctc-inner{box-shadow:0 6px 18px rgba(0,0,0,.5),0 0 0 1px rgba(190,225,255,.35),0 0 22px rgba(150,205,255,.4)}' +
       '.cl-shine-t{position:absolute;z-index:10;font-size:.86rem;line-height:1;filter:drop-shadow(0 1px 5px rgba(150,205,255,.95));animation:clSpark 2.4s ease-in-out infinite}' +
       '.ctc-art .cl-shine-t{top:6px;left:6px}' +
+      // inside the authentic tag row it must take its own slot, or it hides under the first badge
+      '.auth-tags .cl-shine-t,.auth-badge .cl-shine-t{position:static;font-size:4.6cqw;filter:none;background:rgba(8,10,14,.72);border-radius:1.2cqw;padding:1.3cqw 1.8cqw;box-shadow:inset 0 0 0 1px rgba(190,225,255,.55)}' +
+      // Shine's signature on the art: an icy hairline (rarity still owns the spine), since
+      // the colour-dodge foil all but vanishes over dark posters
+      '.auth.cl-shine .auth-frame::before{box-shadow:inset 0 0 0 1.5px rgba(190,225,255,.7),inset 0 0 3cqw rgba(150,205,255,.22)}' +
       '@keyframes clSpark{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.18);opacity:1}}' +
-      '@media(prefers-reduced-motion:reduce){.cl-shine .auth-foil,.cl-shine .ctc-foil,.cl-shine-t{animation:none}}' +
+      '@media(prefers-reduced-motion:reduce){.auth.cl-shine .auth-foil,.cl-shine .ctc-foil,.cl-shine-t{animation:none}}' +
       // ── scroll-in entrance (cards past the first screen rise as they scroll into view) ──
       '.cl-pre{opacity:0!important;transform:translateY(20px) scale(.95)!important;animation:none!important}' +
       '.cl-rise{animation:clRise .52s cubic-bezier(.2,.9,.3,1.25) both}' +
@@ -2648,7 +2660,7 @@
         // shine foil drift animates background-position (main-thread repaint per frame):
         // static on mobile, still lights up and tracks the drag tilt. Blend gone too
         // (render surface), so drop the opacity to keep the wash subtle.
-        '.cl-shine .auth-foil,.cl-shine .ctc-foil{animation:none;mix-blend-mode:normal;filter:none;opacity:.4}' +
+        '.auth.cl-shine .auth-foil,.cl-shine .ctc-foil{animation:none;mix-blend-mode:normal;filter:none;opacity:.4}' +
         // While the detail view is open the gallery grid below it still held dozens of
         // live card layer stacks — hide it so its textures are released. (Coarse-only:
         // desktop keeps the blurred grid visible behind the backdrop-filter.)
