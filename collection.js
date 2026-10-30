@@ -1910,23 +1910,36 @@
       '.auth-card{position:relative;container-type:inline-size;aspect-ratio:5/7;border-radius:13px;overflow:hidden;isolation:isolate;transition:transform .16s ease,box-shadow .2s ease;background:var(--spbg,#0c1117);box-shadow:0 14px 34px -10px rgba(0,0,0,.6);-webkit-backface-visibility:hidden;backface-visibility:hidden}' +
       '.auth-bgimg{position:absolute;top:-1px;left:16%;width:calc(84% + 1px);height:calc(100% + 2px);object-fit:cover;object-position:center top;z-index:0;transform:translateZ(0);-webkit-backface-visibility:hidden;backface-visibility:hidden}' +
       '.auth-noimg{position:absolute;top:0;bottom:0;left:16%;right:0;z-index:0;background:radial-gradient(120% 80% at 50% 0%,#17325e,#0a1830)}' +
-      '.auth-scrim{position:absolute;left:16%;right:0;bottom:0;height:44%;z-index:1;pointer-events:none;background:linear-gradient(180deg,#ffffff,#000000);mix-blend-mode:multiply;opacity:.85}' +
-      // Spine: left rail architecture (design 5) — stripes / vertical meta / card number.
-      '.auth-common{--cr:#9aa3ad}' +
-      '.auth-elite{--spbg:#100c15}.auth-legendary{--spbg:#15100a}' +
-      '.auth-spine{position:absolute;left:0;top:0;bottom:0;width:16%;z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:4.8cqw 0 5.6cqw;background:var(--spbg,#0c1117);border-right:.8cqw solid var(--cr);pointer-events:none}' +
-      '.auth-elite .auth-spine,.auth-legendary .auth-spine{border-right-width:1.2cqw}' +
-      '.auth-sp-stripes{display:flex;flex-direction:column;gap:1.6cqw;width:100%;padding:0 3.6cqw}' +
-      '.auth-sp-stripes i{display:block;height:2cqw;border-radius:.8cqw;background:var(--cr)}' +
-      '.auth-sp-stripes i:nth-child(2){opacity:.55}.auth-sp-stripes i:nth-child(3){opacity:.25}' +
-      '.auth-elite .auth-sp-stripes i:nth-child(1){box-shadow:0 0 6px rgba(181,138,214,.6)}.auth-elite .auth-sp-stripes i:nth-child(2){opacity:1}.auth-elite .auth-sp-stripes i:nth-child(3){opacity:.4}' +
-      '.auth-legendary .auth-sp-stripes i:nth-child(1){box-shadow:0 0 7px rgba(232,194,74,.8)}.auth-legendary .auth-sp-stripes i:nth-child(2){opacity:1;box-shadow:0 0 7px rgba(232,194,74,.55)}.auth-legendary .auth-sp-stripes i:nth-child(3){opacity:1;box-shadow:0 0 7px rgba(232,194,74,.35)}' +
+      // Taller, eased scrim: most posters print their own title logo in the bottom third,
+      // right where the name plate sits, so the dark ramp has to start higher to win.
+      '.auth-scrim{position:absolute;left:16%;right:0;bottom:0;height:54%;z-index:1;pointer-events:none;background:linear-gradient(180deg,#ffffff,#d6d6d6 30%,#4a4a4a 72%,#000000);mix-blend-mode:multiply;opacity:.9}' +
+      // Spine: left rail architecture (design 5) — tier pips / vertical meta / card number.
+      // Rarity is a MATERIAL ladder so it reads in a glance, before any text:
+      //   common = bare graphite · rare = navy rail · elite = plum metal · legendary = gold leaf
+      // and the pips count the tier (1–4 lit), so it reads even without colour.
+      '.auth-common{--spbg:#111418}.auth-rare{--spbg:#0d1421}.auth-elite{--spbg:#120d1a}.auth-legendary{--spbg:#15100a}' +
+      '.auth-spine{position:absolute;left:0;top:0;bottom:0;width:16%;z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:5.2cqw 0 5.6cqw;background:var(--spbg,#0c1117);border-right:.8cqw solid var(--cr);pointer-events:none}' +
+      '.auth-common .auth-spine{border-right-color:rgba(154,163,173,.4)}' +
+      '.auth-rare .auth-spine{background:linear-gradient(180deg,#132036,#0d1421 46%,#101a2c)}' +
+      '.auth-elite .auth-spine{border-right-width:1.2cqw;background:linear-gradient(180deg,#3b2853 0%,#1a1227 30%,#2d1f42 58%,#150e1f 100%);box-shadow:inset .5cqw 0 0 rgba(226,206,255,.16)}' +
+      '.auth-legendary .auth-spine{border-right:1.2cqw solid #7a5714;background:linear-gradient(180deg,#f6dd86 0%,#d6a63a 20%,#f4dc8a 44%,#b9852a 70%,#e7c463 88%,#c29434 100%);box-shadow:inset -.6cqw 0 1.2cqw rgba(90,60,8,.35),inset .5cqw 0 0 rgba(255,248,214,.55)}' +
+      '.auth-sp-stripes{display:flex;flex-direction:column;align-items:center;gap:2.5cqw}' +
+      '.auth-sp-stripes i{display:block;width:2.9cqw;height:2.9cqw;border-radius:.5cqw;transform:rotate(45deg);background:var(--cr);opacity:.18}' +
+      '.auth-common .auth-sp-stripes i:nth-child(-n+1),.auth-rare .auth-sp-stripes i:nth-child(-n+2),.auth-elite .auth-sp-stripes i:nth-child(-n+3),.auth-legendary .auth-sp-stripes i{opacity:1}' +
+      '.auth-common .auth-sp-stripes i{background:#9aa3ad}' +
+      '.auth-elite .auth-sp-stripes i:nth-child(-n+3){box-shadow:0 0 1.6cqw rgba(181,138,214,.7)}' +
+      '.auth-legendary .auth-sp-stripes i{background:#3b2704;box-shadow:0 .3cqw 0 rgba(255,246,206,.6)}' +
       '.auth-sp-meta,.auth-sp-no{writing-mode:vertical-rl;transform:rotate(180deg);font-family:"Space Mono",ui-monospace,Menlo,monospace;font-size:4cqw;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--cr);white-space:nowrap;max-height:62%;overflow:hidden}' +
+      '.auth-common .auth-sp-meta{color:rgba(170,178,188,.72)}' +
       '.auth-sp-no{font-weight:400;letter-spacing:.06em;color:rgba(255,255,255,.6);max-height:none}' +
+      // gold leaf takes dark ink, like a foil-stamped spine
+      '.auth-legendary .auth-sp-meta{color:#3b2704}.auth-legendary .auth-sp-no{color:rgba(59,39,4,.78);font-weight:700}' +
       '@keyframes authDrift{0%{background-position:0% 50%}100%{background-position:280% 50%}}' +
-      '.auth-tags{position:absolute;top:4.6cqw;right:4.6cqw;z-index:9;display:flex;gap:2.7cqw}' +
-      '.auth-nw{font-size:4.2cqw;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#06281a;background:#7fd49a;border-radius:3.6cqw;padding:1.6cqw 4cqw}' +
-      '.auth-dp{font-size:5.3cqw;font-weight:800;color:#1a1200;background:linear-gradient(135deg,#f5c542,#e8a000);border-radius:99px;padding:.7cqw 4.6cqw}' +
+      '.auth-tags{position:absolute;top:4.6cqw;right:4.6cqw;z-index:9;display:flex;align-items:center;gap:2.2cqw}' +
+      // badges are small printed labels, not pills: squared corners, mono for the count
+      // green stays the vault's "new" colour (Just collected, reveal tag), just quieter on the art
+      '.auth-nw{font-size:4cqw;font-weight:800;letter-spacing:.1em;text-transform:uppercase;line-height:1;color:#8fe0a8;background:rgba(8,10,14,.72);border-radius:1.2cqw;padding:1.7cqw 2.8cqw 1.5cqw;box-shadow:inset 0 0 0 1px rgba(127,212,154,.5)}' +
+      '.auth-dp{font-family:"Space Mono",ui-monospace,Menlo,monospace;font-size:4.4cqw;font-weight:700;line-height:1;color:#f4f6f8;background:rgba(8,10,14,.72);border-radius:1.2cqw;padding:1.5cqw 2.4cqw;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}' +
       // mastery star (copies ×3/×5/×10 → bronze/silver/gold)
       '.auth-mst{font-size:6.2cqw;line-height:1;font-weight:800}' +
       '.auth-mst.m1{color:#cd8f52;text-shadow:0 1px 4px rgba(0,0,0,.7)}' +
@@ -1936,8 +1949,13 @@
       '.auth-bar{width:10.4cqw;height:1.6cqw;border-radius:.8cqw;background:var(--cr);margin-bottom:3.2cqw}' +
       '.auth-elite .auth-bar{height:2cqw;box-shadow:0 0 7px rgba(181,138,214,.5)}' +
       '.auth-legendary .auth-bar{height:2cqw;box-shadow:0 0 9px rgba(232,194,74,.7)}' +
-      '.auth-name{font-weight:900;font-size:10.4cqw;line-height:1;letter-spacing:.01em;text-transform:uppercase;white-space:normal;max-height:2.05em;overflow:hidden;color:#f4f6f8;text-shadow:0 .8cqw 2cqw rgba(0,0,0,.85);margin-bottom:0}' +
+      // 800 is the heaviest Schibsted cut we load — asking for 900 got a smeared faux-bold
+      '.auth-name{font-weight:800;font-size:10.4cqw;line-height:.98;letter-spacing:-.005em;text-transform:uppercase;white-space:normal;max-height:2.05em;overflow:hidden;color:#f4f6f8;text-shadow:0 .8cqw 2cqw rgba(0,0,0,.85);margin-bottom:0}' +
       '.auth-name--md{font-size:8.8cqw}.auth-name--sm{font-size:7.4cqw;letter-spacing:0}' +
+      '.auth-elite .auth-name{color:#f7f1ff}.auth-legendary .auth-name{color:#fff3d2}' +
+      // release year under the title (films/shows, once known) — a fact, not decoration
+      '.auth-yr{margin-top:2.2cqw;font-family:"Space Mono",ui-monospace,Menlo,monospace;font-size:4.2cqw;font-weight:700;letter-spacing:.14em;line-height:1;color:rgba(255,255,255,.7);text-shadow:0 .5cqw 1.6cqw rgba(0,0,0,.9)}' +
+      '.auth-legendary .auth-yr{color:rgba(246,221,134,.85)}' +
       '.auth-meta{display:flex;align-items:center;justify-content:center;gap:4cqw;font-size:5.3cqw;font-weight:800;letter-spacing:.05em;text-transform:uppercase}' +
       '.auth-gem{width:4.7cqw;height:4.7cqw;flex-shrink:0;border-radius:1.3cqw;transform:rotate(45deg);background:var(--cr);box-shadow:0 0 4cqw var(--cr)}' +
       '.auth-rar{color:var(--cr)}' +
@@ -1945,8 +1963,12 @@
       '.auth-no{color:rgba(255,255,255,.82);font-family:ui-monospace,Menlo,monospace;letter-spacing:.03em}' +
       '.auth-frame{position:absolute;inset:0;z-index:6;border-radius:13px;pointer-events:none}' +
       '.auth-frame::before{content:"";position:absolute;left:16%;top:0;right:0;bottom:0;pointer-events:none}' +
+      '.auth-rare .auth-frame::before{box-shadow:inset 0 0 0 1px rgba(122,166,232,.22)}' +
       '.auth-elite .auth-frame::before{box-shadow:inset 0 0 0 1.5px rgba(181,138,214,.35)}' +
       '.auth-legendary .auth-frame::before{box-shadow:inset 0 0 0 1.5px rgba(232,194,74,.5)}' +
+      // legendary only: a second, inset gold rule over the art — the "framed print" mark
+      '.auth-frame::after{content:"";position:absolute;left:calc(16% + 2.6cqw);top:2.6cqw;right:2.6cqw;bottom:2.6cqw;border-radius:1.4cqw;pointer-events:none;display:none}' +
+      '.auth-legendary .auth-frame::after{display:block;box-shadow:inset 0 0 0 1px rgba(246,221,134,.5),0 0 0 1px rgba(0,0,0,.25)}' +
       '.auth-legendary .auth-frame{box-shadow:inset 0 0 0 2px rgba(232,194,74,.85)}' +
       '.auth-elite .auth-card{box-shadow:0 14px 34px -10px rgba(0,0,0,.6),0 0 16px rgba(181,138,214,.16)}' +
       '.auth-legendary .auth-card{box-shadow:0 14px 34px -10px rgba(0,0,0,.6),0 0 26px rgba(232,194,74,.28)}' +
@@ -2059,7 +2081,7 @@
         // and posters only get a GPU layer inside the drag-tilted detail/reveal cards.
         '.auth-card{isolation:auto}' +
         '.auth-foil,.auth-glit,.auth-glare{mix-blend-mode:normal}' +
-        '.auth-scrim{mix-blend-mode:normal;background:linear-gradient(180deg,transparent,rgba(0,0,0,.82));opacity:1}' +
+        '.auth-scrim{mix-blend-mode:normal;background:linear-gradient(180deg,transparent,rgba(0,0,0,.16) 30%,rgba(0,0,0,.66) 72%,rgba(0,0,0,.9));opacity:1}' +
         '.auth-foil,.auth-glit{filter:none}' +
         '.auth-rare .auth-foil{opacity:.1}.auth-elite .auth-foil{opacity:.15}.auth-legendary .auth-foil{opacity:.22}' +
         '.auth-card:hover .auth-glare,.auth-card.tilted .auth-glare{opacity:.55}' +
@@ -2081,6 +2103,7 @@
       var nlen = (c.name || '').length;
       var nmCls = nlen > 22 ? ' auth-name--sm' : nlen > 14 ? ' auth-name--md' : '';
       var nm = ctx.esc(c.name);
+      var yr = (!person && c.y >= 1880) ? Math.floor(c.y) : 0;   // 0.1 = TMDB had none
       // Card mastery: copies upgrade the card visibly (×3 bronze, ×5 silver, ×10 gold)
       var mst = (c.n || 1) >= 10 ? 'm3' : (c.n || 1) >= 5 ? 'm2' : (c.n || 1) >= 3 ? 'm1' : '';
       // Card Studio template (if applied): O() = per-layer inline override, tplCustom = added layers
@@ -2104,15 +2127,16 @@
       // it rides inside the name-plate box (default + legacy).
       var hasMetaLayer = TL && tplGet(TL, 'meta');
       var metaLayer = hasMetaLayer ? ('<div class="auth-meta"' + tplMetaBoxStyle(TL, c.rarity) + '>' + tplMetaContent(TL, rar, typeUp, no) + '</div>') : '';
-      return '<div class="auth auth-' + c.rarity + (person ? ' person' : '') + (c.shine ? ' cl-shine' : '') + (mst ? ' mst-' + mst : '') + (TL ? ' auth-tpl' : '') + '" role="img" aria-label="' + (ctx.cardAria ? ctx.cardAria(c) : nm) + '" style="--cr:' + rar.ring + ';--m1:' + (METAL[c.rarity] || '#fff') + ';animation-delay:' + Math.min(i, 16) * 22 + 'ms" title="' + nm + ' · ' + rar.label + ' · ' + no + (c.shine ? ' · Shined' : '') + '">' +
+      return '<div class="auth auth-' + c.rarity + (person ? ' person' : '') + (c.shine ? ' cl-shine' : '') + (mst ? ' mst-' + mst : '') + (TL ? ' auth-tpl' : '') + '" role="img" aria-label="' + (ctx.cardAria ? ctx.cardAria(c) : nm) + '" style="--cr:' + (c.rarity === 'common' ? '#9aa3ad' : rar.ring) + ';--m1:' + (METAL[c.rarity] || '#fff') + ';animation-delay:' + Math.min(i, 16) * 22 + 'ms" title="' + nm + ' · ' + rar.label + ' · ' + no + (c.shine ? ' · Shined' : '') + '">' +
         '<div class="auth-card">' +
           (p ? '<img class="auth-bgimg" src="' + ctx.esc(p) + '" alt="" loading="lazy" decoding="async"' + O('poster') + '>' : '<div class="auth-noimg"></div>') +
           '<div class="auth-scrim"' + O('scrim') + '></div>' +
-          '<div class="auth-spine"><span class="auth-sp-stripes"><i></i><i></i><i></i></span><span class="auth-sp-meta">' + rar.label + ' · ' + typeUp + '</span><span class="auth-sp-no">' + no + '</span></div>' +
+          '<div class="auth-spine"><span class="auth-sp-stripes"><i></i><i></i><i></i><i></i></span><span class="auth-sp-meta">' + rar.label + ' · ' + typeUp + '</span><span class="auth-sp-no">' + no + '</span></div>' +
           tagsHtml +
           '<div class="auth-text"' + (TL ? tplTextBoxStyle(TL, c.rarity) : '') + '>' +
             '<div class="auth-bar"></div>' +
             '<div class="auth-name' + nmCls + '"' + (TL ? tplTitleStyle(TL, c.rarity) : '') + '>' + nm + '</div>' +
+            (yr ? '<div class="auth-yr">' + yr + '</div>' : '') +
           '</div>' + metaLayer +
           '<div class="auth-frame"' + O('frame') + '></div>' + (mst ? '<div class="auth-mrim"></div>' : '') + '<div class="auth-foil"' + O('foil') + '></div><div class="auth-glit"></div><div class="auth-shade"></div><div class="auth-sheen"></div><div class="auth-glare"></div><div class="auth-refl"></div>' +
           '<div class="auth-rim auth-rim-t"></div><div class="auth-rim auth-rim-b"></div><div class="auth-rim auth-rim-l"></div><div class="auth-rim auth-rim-r"></div>' +
