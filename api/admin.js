@@ -4,6 +4,7 @@ const https = require('https');
 const crypto = require('crypto');
 const { redisCommand } = require('./_redis');
 const { dailyListIndex } = require('../lib/daily');
+const { summarize } = require('../lib/telemetry');
 
 function safeEqual(a, b) {
   const ab = Buffer.from(String(a));
@@ -304,6 +305,23 @@ async function handleFeedback(req, res) {
   return res.status(200).json({ days, recent });
 }
 
+// First-party telemetry (see api/feedback.js handleTrack). UTC days, because that
+// is the axis analytics.js uses for first-visit cohorts.
+async function handleTelemetry(req, res) {
+  const daysBack = Math.min(120, Math.max(1, parseInt(req.query.days || '30', 10) || 30));
+  const dates = [];
+  const cur = new Date();
+  for (let i = 0; i < daysBack; i++) { dates.push(cur.toISOString().slice(0, 10)); cur.setUTCDate(cur.getUTCDate() - 1); }
+  const results = await redisCommand(dates.map(date => ['HGETALL', 'tm:day:' + date]));
+  const days = dates.map((date, i) => {
+    const raw = redisHash(results[i] && results[i].result);
+    const c = {};
+    Object.keys(raw).forEach(k => { c[k] = intField(raw, k); });
+    return { date, c };
+  });
+  return res.status(200).json({ days, summary: summarize(days) });
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Admin-Password');
@@ -315,6 +333,7 @@ module.exports = async function handler(req, res) {
     if (req.method === 'GET' && action === 'month') return handleMonth(req, res);
     if (req.method === 'GET' && action === 'search') return handleSearch(req, res);
     if (req.method === 'GET' && action === 'feedback') return handleFeedback(req, res);
+    if (req.method === 'GET' && action === 'telemetry') return handleTelemetry(req, res);
     if (req.method === 'POST' && action === 'update') return handleUpdate(req, res);
     if (req.method === 'POST' && action === 'clear') return handleClear(req, res);
     return res.status(400).json({ error: 'Unknown action' });

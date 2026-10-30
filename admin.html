@@ -71,6 +71,11 @@ button,input{font:inherit}
 .fb-val{border-radius:999px;padding:3px 7px;font-size:.56rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;background:rgba(232,160,0,.12);color:var(--gold)}
 .fb-meta{min-width:0;color:var(--txt);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .fb-time{color:var(--mut);font-size:.62rem}
+.tm-modes{display:grid;gap:5px;margin-bottom:12px}
+.tm-mode{display:grid;grid-template-columns:96px 1fr 44px 44px;gap:8px;align-items:center;font-size:.7rem;color:var(--mut)}
+.tm-mode b{color:var(--txt);font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tm-mode .n{text-align:right;color:var(--txt);font-variant-numeric:tabular-nums}
+.tm-ev{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:.66rem;color:var(--mut)}.tm-ev b{color:var(--txt)}
 .lock{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(37,44,53,.97);padding:20px}
 .lock-card{width:min(420px,100%);background:var(--s1);border:1px solid var(--bdr);border-radius:8px;padding:22px}
 .lock-card h1{font-size:1.2rem;margin-bottom:8px}
@@ -145,6 +150,19 @@ button,input{font:inherit}
       <div class="fb-days" id="feedbackDays"></div>
       <div class="fb-recent-title">Latest votes</div>
       <div class="fb-recent" id="feedbackRecent">Unlock to load feedback.</div>
+    </div>
+
+    <div class="feedback-box">
+      <div class="feedback-head">
+        <div class="feedback-title">Telemetry · last 30 days</div>
+        <button class="btn" id="refreshTelemetryBtn">Refresh</button>
+      </div>
+      <div class="feedback-summary" id="tmSummary"></div>
+      <div class="fb-days" id="tmDays"></div>
+      <div class="fb-recent-title">Modes · views · finish</div>
+      <div class="tm-modes" id="tmModes">Unlock to load telemetry.</div>
+      <div class="fb-recent-title">All events</div>
+      <div class="tm-ev" id="tmEvents"></div>
     </div>
   </aside>
 </main>
@@ -324,6 +342,33 @@ function renderFeedback() {
   ).join('');
 }
 
+// First-party counters (Redis), the only place per-mode and retention numbers
+// can be read on the Hobby plan.
+let telemetry = null;
+function pct(r) { return r == null ? '–' : Math.round(r * 100) + '%'; }
+function renderTelemetry() {
+  if (!telemetry) return;
+  const s = telemetry.summary;
+  document.getElementById('tmSummary').innerHTML = [
+    [s.totals.visits, 'Visits'], [s.totals.newPlayers, 'New'],
+    [pct(s.d1.rate), 'D1 (' + s.d1.num + '/' + s.d1.den + ')'], [pct(s.d7.rate), 'D7 (' + s.d7.num + '/' + s.d7.den + ')']
+  ].map(([v, l]) => '<div class="fb-stat"><b>' + esc(String(v)) + '</b><span>' + esc(l) + '</span></div>').join('');
+  const days = telemetry.days.slice().reverse();   // oldest first
+  const max = Math.max(1, ...days.map(d => d.c.visit || 0));
+  document.getElementById('tmDays').innerHTML = days.filter(d => d.c.visit).map(d =>
+    '<div class="fb-row"><span>' + esc(d.date.slice(5)) + '</span><div class="fb-bar"><i style="width:' + Math.round((d.c.visit / max) * 100) + '%"></i></div><b>' + d.c.visit + (d.c['visit|new'] ? ' · ' + d.c['visit|new'] + ' new' : '') + '</b></div>'
+  ).join('') || '<div class="fb-row"><span>No visits counted yet.</span></div>';
+  document.getElementById('tmModes').innerHTML = s.modes.map(m =>
+    '<div class="tm-mode"><b>' + esc(m.mode) + '</b><div class="fb-bar"><i style="width:' + Math.round((m.finishRate || 0) * 100) + '%"></i></div><span class="n">' + m.views + '</span><span class="n">' + pct(m.finishRate) + '</span></div>'
+  ).join('') || 'No game views yet.';
+  document.getElementById('tmEvents').innerHTML = s.events.map(e => '<span>' + esc(e.name) + ' <b>' + e.count + '</b></span>').join('');
+}
+async function loadTelemetry() {
+  document.getElementById('tmModes').textContent = 'Loading telemetry...';
+  telemetry = await apiGet('telemetry', {days:30});
+  renderTelemetry();
+}
+
 async function loadFeedback() {
   document.getElementById('feedbackRecent').textContent = 'Loading feedback...';
   feedback = await apiGet('feedback', {days:14});
@@ -396,6 +441,7 @@ async function unlock() {
   try {
     await loadMonth();
     await loadFeedback();
+    loadTelemetry().catch(e => { document.getElementById('tmModes').textContent = e.message; });
     document.getElementById('lock').style.display = 'none';
   } catch (e) {
     const msg = /unauthorized/i.test(e.message) ? 'Wrong password' : e.message;
@@ -424,6 +470,10 @@ document.getElementById('saveBtn').onclick = saveChallenge;
 document.getElementById('clearOverrideBtn').onclick = clearOverride;
 document.getElementById('refreshFeedbackBtn').onclick = () => loadFeedback().catch(e => {
   document.getElementById('feedbackRecent').textContent = e.message;
+});
+
+document.getElementById('refreshTelemetryBtn').onclick = () => loadTelemetry().catch(e => {
+  document.getElementById('tmModes').textContent = e.message;
 });
 
 if (password) unlock();

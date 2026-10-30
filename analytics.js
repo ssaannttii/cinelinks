@@ -111,12 +111,46 @@
     return CTX;
   }
 
+  // ── First-party mirror ────────────────────────────────────────────────────
+  // Vercel won't let a Hobby project READ custom events (and keeps 31 days), so
+  // each event is also counted in our own Redis via /api/feedback {track: [...]}.
+  // Only what the daily counters need goes over the wire: name, mode, first-day
+  // flag, device class. Batched, and flushed when the page hides (listener at the
+  // end of this file, so it runs AFTER the abandon handler has queued its event).
+  var TQ = [], tqTimer = 0;
+  var MIRROR = (function () {
+    try {
+      var h = location.hostname || '';
+      if (!h || /^(localhost|127\.0\.0\.1)$/.test(h)) return false;
+      return !(/\.vercel\.app$/.test(h) && h !== 'cinelinks.vercel.app');   // skip preview deploys
+    } catch (_) { return false; }
+  })();
+  function flushTrack() {
+    tqTimer = 0;
+    while (TQ.length) {
+      var body = JSON.stringify({ track: TQ.splice(0, 25) });
+      try {
+        var nav = window.navigator || {}, sent = false;
+        if (nav.sendBeacon && typeof Blob !== 'undefined') sent = nav.sendBeacon('/api/feedback', new Blob([body], { type: 'application/json' }));
+        if (!sent && window.fetch) window.fetch('/api/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body, keepalive: true }).catch(function () {});
+      } catch (_) { /* noop */ }
+    }
+  }
+  function mirror(name, c, props) {
+    if (!MIRROR) return;
+    TQ.push({ n: name, m: props && props.mode ? String(props.mode) : undefined, np: c.new_player, dv: c.device });
+    if (TQ.length >= 25) flushTrack();
+    else if (!tqTimer && window.setTimeout) tqTimer = window.setTimeout(flushTrack, 1500);
+  }
+  window.CineInternal.trackQueue = function () { return TQ.slice(); };   // test hook
+
   function Track(name, props) {
     try {
       if (isTester()) return;
       var data = {}, c = context(), k;
       for (k in c) if (Object.prototype.hasOwnProperty.call(c, k)) data[k] = c[k];
       if (props) for (k in props) if (Object.prototype.hasOwnProperty.call(props, k)) data[k] = props[k];
+      mirror(String(name), c, props);
       window.va('event', { name: String(name), data: data });
       noteEvent(String(name));
     } catch (_) { /* noop */ }
@@ -203,4 +237,10 @@
       }
     } catch (_) { /* noop */ }
   }, true);
+
+  // Last listeners on purpose: game_abandon is queued by an earlier hide handler.
+  try {
+    document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') flushTrack(); });
+    window.addEventListener('pagehide', flushTrack);
+  } catch (_) { /* noop */ }
 })();

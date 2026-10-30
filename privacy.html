@@ -51,7 +51,7 @@ strong{color:var(--txt);font-weight:700}
 
   <p>CineLinks is a set of daily film games (CineLinks, CineLine, CineClue, CineFrame, CineCast, CineGrid, CineChain, CineReel, CineCode, CineGroup and the Rating games), plus a card collection and player profile. It is built to be <strong>local-first</strong>: your game progress stays in your own browser, and we don't need an account to give it back to you.</p>
 
-  <p>To be precise about the one thing that does leave your browser by default: we load <strong>Vercel Web Analytics</strong>, which records anonymous usage — the page visited, whether you're a returning visitor, and a few product events such as starting a game or clicking share. It is cookie-less and does not track you across other sites, but it is usage data being sent, so we'd rather say so here than imply nothing is. Details under <em>Cookies &amp; similar tech</em> below.</p>
+  <p>To be precise about the one thing that does leave your browser by default: we load <strong>Vercel Web Analytics</strong>, which records anonymous usage — the page visited, whether you're a returning visitor, and a few product events such as starting a game or clicking share. It is cookie-less and does not track you across other sites, but it is usage data being sent, so we'd rather say so here than imply nothing is. The same product events are also added to <strong>anonymous daily totals in our own database</strong> (for example "12 games of CineLine opened today, 3 by first-time visitors"); only the event name, game, a first-day yes/no and phone-or-desktop are sent, never an ID, and no per-person record is kept. Details under <em>Cookies &amp; similar tech</em> below.</p>
 
   <h2>What's stored on your device</h2>
   <p>Your streaks, played days and per-game state are saved in your browser's <strong>localStorage</strong> - on your device only. We don't need an account for this, and it never leaves your browser unless you choose to sign in (below). Clearing your browser data, or using the <a href="/stats.html">Reset</a> button, erases it.</p>
@@ -69,7 +69,7 @@ strong{color:var(--txt);font-weight:700}
   <ul>
     <li><strong>The games themselves set no tracking cookies.</strong> Game state uses localStorage, which is functional/strictly necessary.</li>
     <li><strong>Google sign-in:</strong> only if you actively sign in, Google may set cookies to keep your session. This is handled by Google under <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">their privacy policy</a>.</li>
-    <li><strong>Analytics:</strong> we use Vercel Web Analytics, which is privacy-friendly and does not use cookies or track you across sites.</li>
+    <li><strong>Analytics:</strong> we use Vercel Web Analytics, which is privacy-friendly and does not use cookies or track you across sites, plus our own anonymous daily counters (no IDs, no per-person records).</li>
   </ul>
 
   <h2>Third-party film data</h2>
