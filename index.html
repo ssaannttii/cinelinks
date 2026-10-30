@@ -432,6 +432,9 @@ body{font-family:var(--fui);background:var(--bg);color:var(--txt);min-height:100
   .hud-id{display:none}          /* phones: avatar + currencies only, no room for a name */
   .hud-av{width:38px;height:38px}.hud-ring{width:38px;height:38px}
   .hud-pic{width:27px;height:27px}
+  /* the HUD floats over the panel's top-right; on a phone the centred logo is wide
+     enough to run under it, so the panel starts below the HUD instead */
+  .start-inner{padding-top:64px!important}
 }
 @media(prefers-reduced-motion:reduce){.hud-ring-fg{transition:none}.hud-pill.bump,.hud-ring-fg.levelup{animation:none}}
 
@@ -853,6 +856,7 @@ body{font-family:var(--fui);background:var(--bg);color:var(--txt);min-height:100
 #deadEndToast strong{color:var(--gold)}
 .confetti{position:absolute;pointer-events:none;border-radius:2px;animation:fall linear forwards}
 @keyframes fall{0%{transform:translateY(-10px) rotate(0);opacity:1}100%{transform:translateY(550px) rotate(720deg);opacity:0}}
+@media(prefers-reduced-motion:reduce){.confetti{display:none}}
 
 /* Transition: navigate out */
 .g-body.nav-out .cur-card{opacity:0;transform:translateY(-10px) scale(.98);transition:opacity .18s ease,transform .18s ease}
@@ -976,6 +980,12 @@ body{font-family:var(--fui);background:var(--bg);color:var(--txt);min-height:100
   .wp{grid-template-columns:auto auto minmax(0,1fr);gap:10px}
   .wp-edge{grid-column:3;justify-self:start;margin-top:2px}
 }
+/* Cross-page transition into a game: the tapped card's name morphs into the game's
+   title (fx.css names it there); everything else crossfades. Script below. */
+@media(prefers-reduced-motion:no-preference){@view-transition{navigation:auto}}
+::view-transition-group(vt-game){animation-duration:.46s;animation-timing-function:cubic-bezier(.2,.8,.2,1)}
+::view-transition-old(vt-game),::view-transition-new(vt-game){height:100%;object-fit:contain}
+::view-transition-old(root),::view-transition-new(root){animation-duration:.28s}
 </style>
 </head>
 <body>
@@ -5205,6 +5215,36 @@ if (!loadGameFromUrl()) {
   else if (_entry.get('practice') === '1') game.startRandom();
   else showOnly('startScreen');
 }
+</script>
+<script>
+// Home <-> game view transition. A view-transition-name must be unique on the page,
+// so only the ONE card being left from (or returned to) carries it, and only for the
+// length of the transition; every other card stays unnamed.
+(function () {
+  function clear() { document.querySelectorAll('.game-name').forEach(function (n) { n.style.viewTransitionName = ''; }); }
+  function cardFor(path) {
+    var a = Array.prototype.find.call(document.querySelectorAll('.game-card a.mode'), function (x) {
+      try { return new URL(x.href, location.href).pathname === path; } catch (_) { return false; }
+    });
+    return a && a.closest('.game-card');
+  }
+  function name(card) { var n = card && card.querySelector('.game-name'); if (n) n.style.viewTransitionName = 'vt-game'; }
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('.game-card a.mode'); if (!a) return;
+    var u; try { u = new URL(a.href, location.href); } catch (_) { return; }
+    if (u.origin !== location.origin || u.pathname === '/' || u.pathname === '/index.html') return;
+    clear(); name(a.closest('.game-card'));
+  }, true);
+  // coming back (Back button, bfcache or not): morph the game title back into its card
+  window.addEventListener('pagereveal', function (e) {
+    clear();
+    var from = window.navigation && navigation.activation && navigation.activation.from;
+    if (!e.viewTransition || !from || !from.url) return;
+    var path; try { path = new URL(from.url).pathname; } catch (_) { return; }
+    name(cardFor(path));
+    e.viewTransition.finished.then(clear, clear);
+  });
+})();
 </script>
 <script>
 // Register the service worker (PWA / offline). Non-blocking; ignored on unsupported browsers.

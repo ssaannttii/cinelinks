@@ -294,7 +294,7 @@
     renderPips();
     renderResult(streak);
     save();
-    try { if (win && !PRACTICE && window.Collection && target) { var _wi = results.indexOf('win'); var _nc = window.Collection.add([{ id: target.id, type: target.type || 'movie', name: target.title, img: target.posterPath, rarityFloor: 'rare', bump: _wi === 0 ? 2 : _wi === 1 ? 1 : 0 }]); if (_nc && _nc.length) { try { var _w = JSON.parse(localStorage.getItem('clCardWins') || '[]'); if (_w.indexOf('cast') < 0) { _w.push('cast'); localStorage.setItem('clCardWins', JSON.stringify(_w)); } } catch (_e) { /* noop */ } if (window.Collection.reveal) setTimeout(function () { window.Collection.reveal(_nc); }, 500); } } } catch (_) { /* noop */ }
+    try { if (win && !PRACTICE && window.Collection && target) { var _wi = results.indexOf('win'); var _nc = window.Collection.add([{ id: target.id, type: target.type || 'movie', name: target.title, img: target.posterPath, rarityFloor: 'rare', bump: _wi === 0 ? 2 : _wi === 1 ? 1 : 0 }]); if (_nc && _nc.length) { try { var _w = JSON.parse(localStorage.getItem('clCardWins') || '[]'); if (_w.indexOf('cast') < 0) { _w.push('cast'); localStorage.setItem('clCardWins', JSON.stringify(_w)); } } catch (_e) { /* noop */ } if (window.Collection.reveal) (window.Fx && Fx.after ? Fx.after : setTimeout)(function () { window.Collection.reveal(_nc); }, 500); } } } catch (_) { /* noop */ }
     try { var _g = (CFG.stateKey || 'cineguess').replace(/State$/, ''); if (window.Track) window.Track(_g + '_complete', { win: win ? 1 : 0 }); } catch (_) { /* noop */ }
   }
 
@@ -335,14 +335,15 @@
     const pst = el.querySelector('.result-poster'); if (pst) pst.classList.add('fx-poster');
     if (solved) {
       const v = el.querySelector('.result-verdict'); if (v) v.classList.add('fx-win');
-      try { if (window.Sfx) { Sfx.win(); Sfx.haptic([12, 40, 12, 70]); } } catch (_) { /* noop */ }
-      if (window.Fx) { Fx.shake(1.2); setTimeout(() => Fx.confetti({ count: 90 }), 120); }
+      const winN = results.indexOf('win') + 1;
+      try { if (window.Sfx) Sfx.win(); } catch (_) { /* noop */ }
+      if (window.Fx) Fx.win(winN <= 1 ? 3 : winN <= MAX_GUESSES / 2 ? 2 : 1);   // Fx.win carries the haptic
       // streak number counts up + a rising streak stinger — reward that grows with the run
       const _sv = el.querySelector('.js-streakn');
       if (_sv && window.Fx && !PRACTICE) setTimeout(function () { Fx.countUp(_sv, streak.current, { ms: 600 }); try { if (window.Sfx) Sfx.streak(streak.current); } catch (_) { /* noop */ } }, 300);
     } else {
-      try { if (window.Sfx) { Sfx.deadEnd(); Sfx.haptic([40, 30, 40]); } } catch (_) { /* noop */ }
-      if (window.Fx) Fx.shake(0.7);
+      try { if (window.Sfx) Sfx.deadEnd(); } catch (_) { /* noop */ }
+      if (window.Fx) Fx.lose({ el: pst || el.querySelector('.result-film') });
     }
     document.getElementById('shareBtn').onclick = share;
     const again = document.getElementById('againBtn');

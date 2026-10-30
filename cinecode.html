@@ -31,7 +31,15 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 .ghead,.gstrip{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;max-width:470px;margin-left:auto;margin-right:auto}
 .ghead{margin-bottom:7px}
 .ghl{font-size:.54rem;letter-spacing:.05em;text-transform:uppercase;color:var(--mut);text-align:center;font-weight:700}
-.grow{max-width:470px;margin:0 auto 9px;animation:pop .32s both}
+.grow{max-width:470px;margin:0 auto 9px}
+/* only the row that just landed animates (render() rebuilds every row, so a blanket
+   animation re-popped the whole history on each guess): title rises, then the five
+   verdict cells flip over one by one, left to right */
+.grow.fresh .gtitle,.grow.fresh .anchors{animation:pop .32s both}
+.grow.fresh .anchors{animation-delay:.68s}
+.gstrip{perspective:600px}
+.grow.fresh .cx{animation:cxFlip .46s cubic-bezier(.3,.7,.3,1.15) both;animation-delay:calc(.12s + var(--i) * .11s)}
+@keyframes cxFlip{0%{transform:rotateX(92deg);filter:brightness(1.7)}62%{transform:rotateX(-14deg);filter:brightness(1.1)}100%{transform:none;filter:none}}
 .gtitle{display:flex;align-items:center;gap:8px;margin:0 0 4px;text-align:left}
 .gtitle img{width:26px;height:39px;border-radius:4px;object-fit:cover;background:#333;flex-shrink:0}
 .gtitle .t{font-weight:600;font-size:.85rem;line-height:1.15}
@@ -102,7 +110,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 <body>
 <a href="/" class="cl-home" aria-label="Back to CineLinks">← CineLinks</a>
 <div class="wrap" id="cinecode-app">
-  <div class="logo">Cine<b>Code</b></div>
+  <div class="logo" data-vt="game">Cine<b>Code</b></div>
   <div class="tag">Decode the hidden movie</div>
   <div class="kicker" id="modeLbl">Daily</div>
   <div id="stage"><div class="loading" style="padding:6px 0" aria-label="Loading">
@@ -285,6 +293,8 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     };
   }
   const CELL_ORDER=['year','genre','director','cast','keyword'];
+  let freshRow=-1;   // index of the row that just landed (animates its flip); -1 on a reload
+  function flipDone(){ return (window.Fx && Fx.reduced()) ? 0 : 120 + (CELL_ORDER.length - 1) * 110 + 460; }
 
   // Guaranteed clue ladder — the fix for "you only win if an anchor fires by
   // luck". Each wrong guess unlocks one REAL anchor of the SECRET, from vague to
@@ -319,8 +329,8 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
   // ── game state ────────────────────────────────────────────
   let SECRET=null, rows=[], over=false, busy=false;
 
-  function cellHTML(cell){
-    return '<div class="cx '+cell.c+'"'+(cell.t?' title="'+esc(cell.t)+'"':'')+'>'+esc(cell.v)+(cell.ar?' <span class="ar">'+(cell.ar==='up'?'↑':'↓')+'</span>':'')+'</div>';
+  function cellHTML(cell,i){
+    return '<div class="cx '+cell.c+'" style="--i:'+i+'"'+(cell.t?' title="'+esc(cell.t)+'"':'')+'>'+esc(cell.v)+(cell.ar?' <span class="ar">'+(cell.ar==='up'?'↑':'↓')+'</span>':'')+'</div>';
   }
   function anchorsHTML(c){
     const p=[], cap=arr=>arr.slice(0,3).map(esc).join(', ')+(arr.length>3?' +'+(arr.length-3):'');
@@ -329,11 +339,11 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     if(c.keyword.names&&c.keyword.names.length)   p.push('<span class="ak">🏷</span> '+cap(c.keyword.names));
     return p.length?'<div class="anchors">'+p.join('<span class="asep">·</span>')+'</div>':'';
   }
-  function rowHTML(r){
+  function rowHTML(r,i){
     const c=r.cells;
-    return '<div class="grow">'+
+    return '<div class="grow'+(i===freshRow?' fresh':'')+'">'+
       '<div class="gtitle"><img src="'+poster(r.movie.poster)+'" alt=""><span><span class="t">'+esc(r.movie.title)+'</span> <span class="y">'+(r.movie.year||'')+'</span></span></div>'+
-      '<div class="gstrip">'+CELL_ORDER.map(k=>cellHTML(c[k])).join('')+'</div>'+
+      '<div class="gstrip">'+CELL_ORDER.map((k,j)=>cellHTML(c[k],j)).join('')+'</div>'+
       anchorsHTML(c)+
     '</div>';
   }
@@ -414,9 +424,13 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     rows.push({movie:{id:g.id,title:g.title,year:g.year,poster:g.poster}, cells:compare(g,SECRET), win:win});
     if(win||rows.length>=MAX) over=true;
     trk('cinecode_guess',{mode:isDaily?'daily':'practice',turn:rows.length,win:win});
-    try{ if(window.Sfx){ if(win){Sfx.win&&Sfx.win();Sfx.haptic&&Sfx.haptic([12,40,12,70]);} else {Sfx.deadEnd&&Sfx.deadEnd();Sfx.haptic&&Sfx.haptic([30,25,30]);} } }catch(_){}
-    if(window.Fx) Fx.shake(win?1.2:0.5);
+    freshRow=rows.length-1;
     render();
+    // the verdict lands when the last cell has flipped, not before it
+    setTimeout(function(){
+      try{ if(window.Sfx){ if(win){Sfx.win&&Sfx.win();} else {Sfx.deadEnd&&Sfx.deadEnd();Sfx.haptic&&Sfx.haptic([30,25,30]);} } }catch(_){}
+      if(window.Fx && !win) Fx.shake(0.5);
+    }, flipDone());
   }
 
   function renderResult(){
@@ -433,7 +447,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
           const nc=Collection.add([{ id:s.id, type:'movie', name:s.title, img:s.poster, rarityFloor:'rare', bump: score<=2?2:score<=3?1:0 }]);
           if(nc&&nc.length){
             try{ const w=JSON.parse(localStorage.getItem('clCardWins')||'[]'); if(w.indexOf('code')<0){ w.push('code'); localStorage.setItem('clCardWins',JSON.stringify(w)); } }catch(_e){}
-            if(Collection.reveal) setTimeout(function(){ Collection.reveal(nc); },800);
+            if(Collection.reveal) (window.Fx&&Fx.after?Fx.after:setTimeout)(function(){ Collection.reveal(nc); },flipDone()+300);
           }
         }
       }catch(_){}
@@ -450,7 +464,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
         (credit?'<div class="cred">'+esc(credit)+'</div>':'')+'</div></div>'+
       (stats?statsHTML(stats):'')+
       '<div class="row"><button class="btn" id="shareBtn">'+TR('share')+'</button>'+(isDaily?'<a class="btn gold" href="/" style="display:flex;align-items:center;justify-content:center;text-decoration:none">← CineLinks</a>':'<button class="btn gold" id="again">'+TR('again')+'</button>')+'</div>';
-    if(won && window.Fx) setTimeout(()=>Fx.confetti({count:90}),160);
+    if(window.Fx) setTimeout(function(){ if(won) Fx.win(score<=1 ? 3 : score<=MAX/2 ? 2 : 1); else Fx.lose({ el: document.querySelector('#result .who') }); }, freshRow>=0 ? flipDone() : 0);
     (document.getElementById('again')||{}).onclick=()=>{location.href='/cinecode.html?practice=1&r='+Date.now();};
     document.getElementById('shareBtn').onclick=()=>{
       if(navigator.share){navigator.share({text:share}).catch(()=>{});}

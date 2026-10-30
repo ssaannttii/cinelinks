@@ -29,11 +29,37 @@
 /* floating score/streak pop (Fx.popText / Fx.popFrom) — the "+N" that rises and fades */
 @keyframes fxPopRise{0%{opacity:0;transform:translate(-50%,4px) scale(.7)}18%{opacity:1;transform:translate(-50%,-6px) scale(1.12)}40%{transform:translate(-50%,-14px) scale(1)}100%{opacity:0;transform:translate(-50%,-52px) scale(1)}}
 .fx-pop-txt{position:fixed;transform:translate(-50%,0);z-index:10000;pointer-events:none;font-weight:900;font-size:1.5rem;color:#f5c542;text-shadow:0 2px 12px rgba(0,0,0,.6),0 0 18px rgba(232,160,0,.5);animation:fxPopRise 1.05s cubic-bezier(.2,.8,.2,1) forwards;font-family:ui-rounded,'Schibsted Grotesk',system-ui,sans-serif}
+/* Fx.lose: the answer slams in, over a short drained vignette */
+@keyframes fxSlam{0%{opacity:0;transform:scale(1.22)}55%{opacity:1;transform:scale(.97)}78%{transform:scale(1.01)}100%{transform:none}}
+.fx-slam{animation:fxSlam .62s cubic-bezier(.2,.9,.25,1) both}
+@keyframes fxLoseVig{0%{opacity:0}22%{opacity:1}70%{opacity:1}100%{opacity:0}}
+.fx-lose-vig{position:fixed;inset:0;z-index:9990;pointer-events:none;background:radial-gradient(120% 90% at 50% 45%,transparent 38%,rgba(6,6,8,.62));-webkit-backdrop-filter:saturate(.3);backdrop-filter:saturate(.3);animation:fxLoseVig 1.3s ease both}
+@media(pointer:coarse){.fx-lose-vig{-webkit-backdrop-filter:none;backdrop-filter:none;background:radial-gradient(120% 90% at 50% 45%,rgba(20,20,24,.18) 30%,rgba(6,6,8,.7))}}
 @media(prefers-reduced-motion:reduce){
-  .fx-in,.fx-pop,.fx-shake,.fx-win,.fx-poster,.fx-glow,.fx-bounce{animation:none!important}
+  .fx-in,.fx-pop,.fx-shake,.fx-win,.fx-poster,.fx-glow,.fx-bounce,.fx-slam{animation:none!important}
   .fx-confetti{display:none!important}
   .fx-skel{animation:none}
   .fx-xfade{transition:none}
+}
+
+/* Cross-page transition: the home card's game name morphs into this page's title
+   (index.html names the tapped card's title vt-game just before it navigates), and
+   the rest of the page crossfades. Browsers without cross-document view transitions
+   just navigate as before. Off under reduced motion. */
+@media(prefers-reduced-motion:no-preference){
+  @view-transition{navigation:auto}
+  [data-vt="game"]{view-transition-name:vt-game}
+}
+::view-transition-group(vt-game){animation-duration:.46s;animation-timing-function:cubic-bezier(.2,.8,.2,1)}
+::view-transition-old(vt-game),::view-transition-new(vt-game){height:100%;object-fit:contain}
+::view-transition-old(root),::view-transition-new(root){animation-duration:.28s}
+
+/* Reduced motion, site-wide safety net: many modes define their own keyframes
+   (stamps, flips, pulses, an infinite low-timer pulse) without a guard. This
+   collapses every animation/transition to an instant end state, so nothing moves
+   but nothing is left half-drawn either. Opacity-only fades still resolve. */
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;animation-delay:0s!important;transition-duration:.01ms!important;transition-delay:0s!important;scroll-behavior:auto!important}
 }
 
 /* Freeze every animation while the tab is hidden (set by fx.js) — no compositor

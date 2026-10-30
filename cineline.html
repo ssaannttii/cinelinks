@@ -145,7 +145,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     </span>
   </div>
   <div class="head">
-    <div class="title">Cine<span>Line</span></div>
+    <div class="title" data-vt="game">Cine<span>Line</span></div>
     <div class="subtitle">Place each film on the timeline by its release year.</div>
   </div>
 
@@ -474,7 +474,7 @@ function finish(){
       }));
       if(nc && nc.length){
         try{ const w = JSON.parse(localStorage.getItem('clCardWins') || '[]'); if(w.indexOf('line') < 0){ w.push('line'); localStorage.setItem('clCardWins', JSON.stringify(w)); } }catch(_e){}
-        if(Collection.reveal) setTimeout(() => { Collection.reveal(nc); }, 900);
+        if(Collection.reveal) (window.Fx&&Fx.after?Fx.after:setTimeout)(() => { Collection.reveal(nc); }, 900);
       }
     }
   }catch(_){ /* collection is optional */ }
@@ -505,8 +505,8 @@ function renderResult(streak){
     streakLine +
     '<div class="result-actions">' + actions + '</div>';
   el.classList.add('fx-in');
-  if(solved){ try{ if(window.Sfx){ (score===total?Sfx.allDone():Sfx.win()); Sfx.haptic([12,40,12,70]); } }catch(_){} if(window.Fx){ Fx.shake(score===total?1.5:1.2); setTimeout(() => Fx.confetti({count:90}), 160); } }
-  else { try{ if(window.Sfx){ Sfx.deadEnd(); Sfx.haptic([40,30,40]); } }catch(_){} if(window.Fx) Fx.shake(0.7); }
+  if(solved){ try{ if(window.Sfx) (score===total?Sfx.allDone():Sfx.win()); }catch(_){} if(window.Fx) Fx.win(score===total ? 3 : score >= 8 ? 2 : 1); }
+  else { try{ if(window.Sfx) Sfx.deadEnd(); }catch(_){} if(window.Fx) Fx.lose({ el: el.querySelector('.result-verdict') }); }
   document.getElementById('shareBtn').onclick = share;
   const again = document.getElementById('againBtn');
   if(again) again.onclick = () => { location.href = 'cineline.html?practice=1&n=' + Date.now(); };

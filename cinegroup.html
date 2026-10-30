@@ -97,7 +97,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 <a href="/" class="cl-home" aria-label="Back to CineLinks">&#8592; CineLinks</a>
 <a href="#" class="switch" id="modeSwitch"></a>
 <div class="wrap" id="app">
-  <div class="logo">Cine<b>Group</b></div>
+  <div class="logo" data-vt="game">Cine<b>Group</b></div>
   <div class="tag">Find the four hidden connections.</div>
   <div class="kicker" id="modeLbl">Daily</div>
   <div id="stage"><div class="loading" style="padding:4px 0" aria-label="Building puzzle">
@@ -694,7 +694,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
       }));
       if(nc&&nc.length){
         try{ const w=JSON.parse(localStorage.getItem('clCardWins')||'[]'); if(w.indexOf('group')<0){ w.push('group'); localStorage.setItem('clCardWins',JSON.stringify(w)); } }catch(_e){}
-        if(Collection.reveal) setTimeout(()=>Collection.reveal(nc),700);
+        if(Collection.reveal) (window.Fx&&Fx.after?Fx.after:setTimeout)(()=>Collection.reveal(nc),700);
       }
     }catch(_){ /* collection is optional */ }
   }
@@ -731,7 +731,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
         if(solved.length===4){ finished=true; won=true; statsBump(true); grantCards(); }
         saveDaily();                    // save AFTER finished is set, or a reload sticks on "4 solved, not finished"
         render();
-        if(finished && won){ try{ if(window.Sfx){ Sfx.win(); Sfx.haptic([12,40,12,70]); } }catch(_){} if(window.Fx){ Fx.shake(1.3); Fx.confetti({count:110}); } }
+        if(finished && won){ try{ if(window.Sfx) Sfx.win(); }catch(_){} if(window.Fx) Fx.win(mistakes===0 ? 3 : mistakes<=2 ? 2 : 1); }
         if(!finished){ try{ flyTiles(flyRects, g); }catch(_){} }   // tiles fly into the new band
       },720);
     } else {
@@ -749,6 +749,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
         const have=new Set(solved.map(s=>s.key));
         for(const g of puzzle.groups){ if(!have.has(g.key)) pushSolved(g); }
         finished=true; won=false; statsBump(false); saveDaily(); render();
+        if(window.Fx) Fx.lose();
       }
     }
   }
@@ -832,6 +833,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
   boot();
 })();
 </script>
+<script src="/fx.js"></script>
 <script defer src="/sfx.js"></script>
 <script defer src="/analytics.js"></script>
 <script defer src="/feedback.js"></script>

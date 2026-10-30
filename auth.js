@@ -75,8 +75,18 @@
   // --- UI host: inline slot on the home (#authInline) else a fixed pill, top-right ---
   var slot = document.createElement('div');
   var inlineHost = document.getElementById('authInline');
+  // Game pages: ride in the page's own top bar, next to Daily/Practice. As a fixed
+  // top-right pill it sat right on top of that switch on phones and hid it.
+  var topbar = !inlineHost && document.querySelector('.topbar');
+  // a phone top bar already holds the back pill + Daily/Practice + date: there the
+  // button shrinks to the G icon (and the signed-in pill to the avatar) so it fits
+  var compact = false;
+  try { compact = !!topbar && matchMedia('(max-width:480px)').matches; } catch (_) { /* noop */ }
   if (inlineHost) {
     inlineHost.appendChild(slot);
+  } else if (topbar) {
+    slot.style.cssText = 'margin-left:10px;flex-shrink:0;position:relative;z-index:95';
+    topbar.appendChild(slot);
   } else {
     var wrap = document.createElement('div');
     wrap.id = 'gauth';
@@ -96,10 +106,11 @@
     var img = p.picture
       ? '<img src="' + p.picture + '" alt="" referrerpolicy="no-referrer" style="width:24px;height:24px;border-radius:50%;object-fit:cover">'
       : '<span style="width:24px;height:24px;border-radius:50%;background:#e8a000;color:#111;display:flex;align-items:center;justify-content:center;font-weight:800">' + ((p.name || '?')[0] || '?').toUpperCase() + '</span>';
-    pill.innerHTML = img + '<span style="color:#5bbd7a">' + A('authSyncedPill', '✓ Synced') + '</span>';
+    pill.innerHTML = img + (compact ? '' : '<span style="color:#5bbd7a">' + A('authSyncedPill', '✓ Synced') + '</span>');
+    if (compact) pill.style.padding = '3px';
 
     var menu = document.createElement('div');
-    menu.style.cssText = 'display:none;margin-top:6px;width:236px;background:#2c343f;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:11px;box-shadow:0 12px 34px rgba(0,0,0,.5);color:#f0f0f0;font-size:.78rem';
+    menu.style.cssText = 'display:none;position:absolute;top:100%;right:0;z-index:96;margin-top:6px;width:236px;background:#2c343f;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:11px;box-shadow:0 12px 34px rgba(0,0,0,.5);color:#f0f0f0;font-size:.78rem';
     var who = p.name || p.email ? ('<p style="margin:0 0 8px;font-weight:700">' + (p.name || p.email) + '</p>') : '';
     menu.innerHTML = who +
       '<p style="margin:0 0 10px;color:#8d8d8d;font-size:.72rem;line-height:1.5">' + A('authMenuBlurb', 'Your streaks &amp; history are backed up and synced across devices. We only store game stats and your Google ID.') + ' <a href="/privacy.html" style="color:#e8a000;text-decoration:none;font-weight:700">' + A('authPrivacy', 'Privacy') + '</a></p>';
@@ -132,7 +143,9 @@
     slot.innerHTML = '';
     setCardText(false);
     if (window.google && window.google.accounts) {
-      window.google.accounts.id.renderButton(slot, { type: 'standard', theme: 'filled_black', size: 'medium', shape: 'pill', text: 'signin' });
+      window.google.accounts.id.renderButton(slot, compact
+        ? { type: 'icon', theme: 'filled_black', size: 'medium', shape: 'circle' }
+        : { type: 'standard', theme: 'filled_black', size: 'medium', shape: 'pill', text: 'signin' });
     }
   }
 

@@ -98,7 +98,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     </span>
   </div>
   <div class="head">
-    <div class="title">Cine<span>Frame</span></div>
+    <div class="title" data-vt="game">Cine<span>Frame</span></div>
     <div class="subtitle">Guess the film from the frame. It zooms out and sharpens with each guess.</div>
   </div>
 
@@ -373,6 +373,7 @@ function makeGuess(movie){
   if(Media.sameTarget(movie, target)){ finish(true); return; }
   toast(T('notIt'));
   if(window.Fx) Fx.play(document.getElementById('guessInput'), 'fx-shake', 450);
+  try{ if(window.Sfx){ Sfx.deadEnd(); Sfx.haptic(55); } }catch(_){}
   advance('wrong');
 }
 function skip(){ if(!finished) advance('skip'); }
@@ -386,7 +387,7 @@ function finish(win){
   renderPips();
   renderResult(streak);
   save();
-  try { if (win && !PRACTICE && window.Collection && target) { var _wi = results.indexOf('win'); var _nc = window.Collection.add([{ id: target.id, type: target.type || 'movie', name: target.title, img: target.posterPath, rarityFloor: 'rare', bump: _wi === 0 ? 2 : _wi === 1 ? 1 : 0 }]); if (_nc && _nc.length) { try { var _w = JSON.parse(localStorage.getItem('clCardWins') || '[]'); if (_w.indexOf('frame') < 0) { _w.push('frame'); localStorage.setItem('clCardWins', JSON.stringify(_w)); } } catch (_e) {} if (window.Collection.reveal) setTimeout(function () { window.Collection.reveal(_nc); }, 500); } } } catch(_) {}
+  try { if (win && !PRACTICE && window.Collection && target) { var _wi = results.indexOf('win'); var _nc = window.Collection.add([{ id: target.id, type: target.type || 'movie', name: target.title, img: target.posterPath, rarityFloor: 'rare', bump: _wi === 0 ? 2 : _wi === 1 ? 1 : 0 }]); if (_nc && _nc.length) { try { var _w = JSON.parse(localStorage.getItem('clCardWins') || '[]'); if (_w.indexOf('frame') < 0) { _w.push('frame'); localStorage.setItem('clCardWins', JSON.stringify(_w)); } } catch (_e) {} if (window.Collection.reveal) (window.Fx && Fx.after ? Fx.after : setTimeout)(function () { window.Collection.reveal(_nc); }, 500); } } } catch(_) {}
   try { if (window.Track) window.Track('cineframe_complete', { win: win ? 1 : 0 }); } catch(_) {}
 }
 
@@ -422,7 +423,10 @@ function renderResult(streak){
     '<div class="result-actions">' + actions + '</div>';
   el.classList.add('fx-in');
   const pst = el.querySelector('.result-poster'); if(pst) pst.classList.add('fx-poster');
-  if(solved){ const v = el.querySelector('.result-verdict'); if(v) v.classList.add('fx-win'); if(window.Fx) setTimeout(() => Fx.confetti({count:90}), 120); }
+  // tier by how early it fell (1st guess = perfect); a loss slams the answer in
+  const winN = results.indexOf('win') + 1, tier = winN <= 1 ? 3 : winN <= MAX_GUESSES / 2 ? 2 : 1;
+  if(solved){ const v = el.querySelector('.result-verdict'); if(v) v.classList.add('fx-win'); try{ if(window.Sfx) Sfx.win(); }catch(_){} if(window.Fx) Fx.win(tier); }
+  else { try{ if(window.Sfx) Sfx.deadEnd(); }catch(_){} if(window.Fx) Fx.lose({ el: pst || el.querySelector('.result-film') }); }
   document.getElementById('shareBtn').onclick = share;
   const again = document.getElementById('againBtn');
   if(again) again.onclick = () => { location.href = 'cineframe.html?practice=1&n=' + Date.now(); };

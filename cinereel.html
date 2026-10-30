@@ -78,7 +78,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 <body>
 <a href="/" class="cl-home" aria-label="Back to CineLinks">← CineLinks</a>
 <div class="wrap" id="cinereel-app">
-  <div class="logo">Cine<b>Reel</b></div>
+  <div class="logo" data-vt="game">Cine<b>Reel</b></div>
   <div class="tag">Whose filmography is this?</div>
   <div class="kicker" id="modeLbl">Daily</div>
   <div id="stage"><div class="loading" style="padding:6px 0" aria-label="Loading">
@@ -309,17 +309,16 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
             rarityFloor:'rare', bump: shown===1?2:shown<=3?1:0 }]);
           if(nc&&nc.length){
             try{ const w=JSON.parse(localStorage.getItem('clCardWins')||'[]'); if(w.indexOf('reel')<0){ w.push('reel'); localStorage.setItem('clCardWins',JSON.stringify(w)); } }catch(_e){}
-            if(Collection.reveal) setTimeout(function(){ Collection.reveal(nc); },800);
+            if(Collection.reveal) (window.Fx&&Fx.after?Fx.after:setTimeout)(function(){ Collection.reveal(nc); },800);
           }
         }
       }catch(_){ /* collection is optional */ }
-      try{ if(window.Sfx){ Sfx.win(); Sfx.haptic([12,40,12,70]); } }catch(_){}
-      if(window.Fx) Fx.shake(1.2);
+      try{ if(window.Sfx) Sfx.win(); }catch(_){}
       render(); return;
     }
     if(isSkip){ if(shown<total){ shown++; try{ if(window.Sfx) Sfx.cardFlip(); }catch(_){} render(); } return; } // reveal, no penalty
     guesses.push({win:false});                                  // a real wrong guess
-    if(shown>=total){ over=true; render(); return; }            // no posters left → lost
+    if(shown>=total){ over=true; try{ if(window.Sfx) Sfx.deadEnd(); }catch(_){} render(); return; }   // no posters left → lost (the loss beat fires from the result)
     shown++; render();
     try{ if(window.Sfx){ Sfx.deadEnd(); Sfx.haptic([40,30,40]); } }catch(_){}
     if(window.Fx){ const gi=document.getElementById('gi'); if(gi) Fx.play(gi,'fx-shake',450); Fx.shake(0.6); }
@@ -347,7 +346,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
       (stats?statsHTML(stats):'')+
       '<div class="row"><button class="btn" id="shareBtn">'+TR('share')+'</button>'+(isDaily?'<a class="btn gold" href="/" style="display:flex;align-items:center;justify-content:center;text-decoration:none">← CineLinks</a>':'<button class="btn gold" id="again">'+TR('newCareer')+'</button>')+'</div>';
     const who=document.querySelector('#result .who img'); if(who) who.classList.add('fx-pop');
-    if(won && window.Fx) setTimeout(()=>Fx.confetti({count:90}),160);
+    if(window.Fx){ if(won) Fx.win(score<=1 ? 3 : score<=total/2 ? 2 : 1); else Fx.lose({ el: document.querySelector('#result .who') }); }
     (document.getElementById('again')||{}).onclick=()=>{location.href='/cinereel.html?practice=1&r='+Date.now();};
     document.getElementById('shareBtn').onclick=()=>{
       if(navigator.share){navigator.share({text:share}).catch(()=>{});}

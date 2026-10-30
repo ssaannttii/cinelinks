@@ -72,7 +72,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 <body>
 <a href="/" class="cl-home" aria-label="Back to CineLinks">← CineLinks</a>
 <div class="wrap" id="cinechain-app">
-  <div class="logo">Cine<b>Chain</b></div>
+  <div class="logo" data-vt="game">Cine<b>Chain</b></div>
   <div class="tag">Chain films that share an actor</div>
   <div class="kicker" id="modeLbl">Daily</div>
   <div id="stage"><div class="loading" style="padding:8px 0" aria-label="Loading">
@@ -174,7 +174,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
       }));
       if(nc&&nc.length){
         try{ const w=JSON.parse(localStorage.getItem('clCardWins')||'[]'); if(w.indexOf('chain')<0){ w.push('chain'); localStorage.setItem('clCardWins',JSON.stringify(w)); } }catch(_e){}
-        if(Collection.reveal) setTimeout(function(){ Collection.reveal(nc); },900);
+        if(Collection.reveal) (window.Fx&&Fx.after?Fx.after:setTimeout)(function(){ Collection.reveal(nc); },900);
       }
     }catch(_){ /* collection is optional */ }
   }
@@ -252,8 +252,9 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
       '<h2>'+T('shareChainOf')+' '+links+'!</h2>'+
       '<div class="sub">'+(chain.length)+' '+T('filmsLinked')+(links>=8?T('masterful'):links>=4?T('niceRun'):'')+'</div>'+
       '<div class="row-btns" style="margin-top:12px"><button class="btn" id="shareBtn">'+T('share')+'</button>'+(isDaily?'<a class="btn gold" href="/" style="display:flex;align-items:center;justify-content:center;text-decoration:none">← CineLinks</a>':'<button class="btn gold" id="again">'+T('newChain')+'</button>')+'</div>';
-    if(links>=1 && window.Fx) setTimeout(function(){ Fx.confetti({count:Math.min(50+links*12,130)}); }, 160);
-    if(links>=1){ try{ if(window.Sfx){ (links>=8?Sfx.allDone():Sfx.win()); Sfx.haptic([12,40,12,70]); } }catch(_){} if(window.Fx) Fx.shake(links>=8?1.6:1.2); }
+    // the clock always ends the run, so the "loss" is an empty chain; everything else scales by length
+    if(links>=1){ try{ if(window.Sfx) (links>=8?Sfx.allDone():Sfx.win()); }catch(_){} if(window.Fx) Fx.win(links>=8 ? 3 : links>=4 ? 2 : 1); }
+    else { try{ if(window.Sfx) Sfx.deadEnd(); }catch(_){} if(window.Fx) Fx.lose({ el: res.querySelector('h2') }); }
     (document.getElementById('again')||{}).onclick=function(){ location.href='/cinechain.html?practice=1&r='+Date.now(); };
     document.getElementById('shareBtn').onclick=function(){ if(navigator.share){navigator.share({text:share}).catch(function(){});} else { try{navigator.clipboard.writeText(share);}catch(_){ } const b=document.getElementById('shareBtn'); b.textContent=T('copied'); } };
   }

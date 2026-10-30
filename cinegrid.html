@@ -134,7 +134,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 <a href="/" class="cl-home" aria-label="Back to CineLinks">← CineLinks</a>
 <button class="snd" id="sndBtn" aria-label="Toggle sound" title="Sound"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5.5a9 9 0 0 1 0 13"/></svg></button>
 <div class="wrap" id="cinegrid-app">
-  <div class="logo">Cine<b>Grid</b></div>
+  <div class="logo" data-vt="game">Cine<b>Grid</b></div>
   <div class="tag">Name a film that pairs each actor</div>
   <div class="kicker" id="modeLbl">Daily</div>
   <div id="stage"><div class="loading" style="padding:4px 0" aria-label="Building grid">
@@ -423,19 +423,20 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
         }));
         if(nc&&nc.length){
           try{ const w=JSON.parse(localStorage.getItem('clCardWins')||'[]'); if(w.indexOf('grid')<0){ w.push('grid'); localStorage.setItem('clCardWins',JSON.stringify(w)); } }catch(_e){}
-          if(Collection.reveal) setTimeout(function(){ Collection.reveal(nc); },900);
+          if(Collection.reveal) (window.Fx&&Fx.after?Fx.after:setTimeout)(function(){ Collection.reveal(nc); },900);
         }
       }
     }catch(_){ /* collection is optional */ }
     render();
     const cells9=stage.querySelectorAll('.cell');
     if(win){
-      if(window.Fx){ setTimeout(function(){Fx.confetti({count:130,power:1.1});},150); setTimeout(function(){Fx.confetti({count:90,power:.9});},650); }
+      // tier by lives kept: untouched = perfect, more than half = solid
+      if(window.Fx) Fx.win(livesLeft>=LIVES ? 3 : livesLeft>LIVES/2 ? 2 : 1);
       // grid wave
       stage.querySelectorAll('.cell.correct').forEach(function(el,i){ setTimeout(function(){ if(window.Fx)Fx.play(el,'win-wave',600); },120+i*70); });
-      sfx('allDone'); haptic([20,40,20,40,30]); if(window.Fx)Fx.shake(1.4);
+      sfx('allDone');
     } else {
-      sfx('select'); haptic(20); // soft close on running out of lives
+      sfx('select'); if(window.Fx)Fx.lose(); // soft sound, but the run ending still gets its beat
     }
   }
 
