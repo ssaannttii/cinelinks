@@ -1083,6 +1083,13 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opa
 /* poster proportions, not list rows: the art gets the upper half, title and actions sit low */
 #startScreen .game-card:not(.hero){min-height:176px;padding:18px;justify-content:flex-end;gap:14px}
 @media (max-width:560px){#startScreen .game-card:not(.hero){min-height:150px}}
+/* taller cards put the head beside the mechanic collage: give the art the right half,
+   fade its left edge into the card, and keep the name and line on the left */
+#startScreen .game-card:not(.hero) .card-collage{left:50%;border-radius:0 16px 16px 0}
+#startScreen .game-card:not(.hero) .card-collage::after{background:linear-gradient(90deg,rgba(21,20,23,1) 0%,rgba(21,20,23,.35) 30%,transparent 60%),linear-gradient(0deg,rgba(21,20,23,.92) 0%,rgba(21,20,23,.2) 34%,transparent 55%)}
+#startScreen .game-card:not(.hero):has(.card-collage) .game-meta{max-width:50%}
+#startScreen .game-card:not(.hero) .cc-strip,#startScreen .game-card:not(.hero) .cc-chain,#startScreen .game-card:not(.hero) .cc-deck{top:42%}
+@media (max-width:560px){#startScreen .game-card:not(.hero) .card-collage{left:58%}#startScreen .game-card:not(.hero):has(.card-collage) .game-meta{max-width:44%}}
 #startScreen .game-card .game-ic{background:rgba(var(--accent,232,160,0),.12);box-shadow:inset 0 0 0 1px rgba(var(--accent,232,160,0),.22)}
 #startScreen .game-name{font-size:1.12rem;letter-spacing:0}
 #startScreen .game-desc{color:rgba(242,237,228,.62)}
