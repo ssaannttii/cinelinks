@@ -2146,11 +2146,12 @@ function parDifficulty(par) {
 
 // Par data (precomputed minimum clicks per challenge) - loaded once, optional.
 let _parData = null;
-// The in-game "best N" target and the win verdict stay OFF until par-data.json is
-// recomputed with the v3 rules (scripts/compute-par.js: board-exact neighbours +
-// directed search). The current values came from a symmetric, top-50 graph, so
-// some "best possible" routes go through credits the board never offers.
-const PAR_TRUSTED = false;
+// Gates the in-game "best N" target and the win verdict. par-data.json is the v3
+// recompute (scripts/compute-par.js: board-exact neighbours incl. the Director
+// chip, exact search in the direction routes are played), so "best possible" is
+// both reachable on the board and the real minimum. Flip back to false if par
+// ever comes from a looser graph again.
+const PAR_TRUSTED = true;
 async function loadParData() {
   if (_parData) return _parData;
   try {

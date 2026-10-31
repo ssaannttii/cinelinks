@@ -10,6 +10,7 @@
  * Usage:
  *   TMDB_API_KEY=xxxxx node scripts/compute-par.js
  *   TMDB_API_KEY=xxxxx node scripts/compute-par.js --max-depth 6 --branch 50
+ *   node scripts/compute-par.js --force --limit 5     # time the first 5 keys
  *
  * Output: par-data.json  { "person:3092>movie:346698": 2, ... }
  *
@@ -18,6 +19,11 @@
  *     board's own rules (scripts/tmdb-neighbors.js) — so par is the real
  *     achievable minimum. (--branch is kept only for cache invalidation.)
  *   - Bidirectional search keeps the node count ~2·b^(d/2) instead of b^d.
+ *     Boards are one-way (truncated top-N lists), so the backward half walks
+ *     every credit that COULD list a node and checks each against its own board
+ *     (lib/graph-bfs.js `directed`): the route is playable and the minimum.
+ *   - Boards are cached in .cache/tmdb/ (gitignored), shared across keys and
+ *     runs, and fetched --concurrency at a time; a rerun only pays for new nodes.
  *   - Requires Node 18+ (global fetch). Incremental: existing entries are reused.
  */
 'use strict';
@@ -33,7 +39,7 @@ const OUT = path.join(ROOT, 'par-data.json');
 const PATHS_OUT = path.join(ROOT, 'par-paths.json');
 const META_OUT = path.join(ROOT, 'par-data.meta.json');
 // Bump when the BFS / neighbour rules change, to invalidate cached pars.
-const PAR_ALGO_VERSION = 3;   // v3: board-exact neighbours + directed search (only playable routes)
+const PAR_ALGO_VERSION = 3;   // v3: board-exact neighbours (role-aware people) + exact directed search (only playable routes)
 const API_KEY = process.env.TMDB_API_KEY;
 
 function arg(flag, def) {
@@ -44,6 +50,9 @@ const MAX_DEPTH = parseInt(arg('--max-depth', '6'), 10);
 const BRANCH = parseInt(arg('--branch', '50'), 10);
 const FORCE = process.argv.includes('--force');   // recompute everything
 const ONLY_KEY = arg('--key', null);              // recompute just one "a>b" key
+const LIMIT = parseInt(arg('--limit', '0'), 10);   // stop after N keys (timing runs)
+const CONCURRENCY = parseInt(arg('--concurrency', '16'), 10);
+const CACHE_DIR = path.join(ROOT, '.cache', 'tmdb');
 
 if (!API_KEY || API_KEY === 'tu_key' || API_KEY === 'xxxxx') {
   console.error('Set a REAL TMDB_API_KEY (you used a placeholder). Run: TMDB_API_KEY=<your key> node scripts/compute-par.js');
@@ -84,27 +93,10 @@ function orderKeysByDate(keys) {
   return ordered;
 }
 
-const graph = createGraph(API_KEY, { branch: BRANCH });
-const neighbors = graph.neighbors;
-const predecessors = graph.predecessors;
+const graph = createGraph(API_KEY, { branch: BRANCH, cacheDir: CACHE_DIR });
 
 function readJson(file, fallback) {
   try { return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : fallback; } catch (_) { return fallback; }
-}
-
-// Resolve a "type:id" node key to its display name (cached; only used for paths).
-const nameCache = new Map();
-async function nameOf(key) {
-  if (nameCache.has(key)) return nameCache.get(key);
-  const [type, id] = key.split(':');
-  let name = key;
-  try {
-    if (type === 'person') { name = (await graph.tmdb('person/' + id)).name || key; }
-    else if (type === 'movie') { const d = await graph.tmdb('movie/' + id); name = d.title || d.name || key; }
-    else if (type === 'tv') { name = (await graph.tmdb('tv/' + id)).name || key; }
-  } catch (_) {}
-  nameCache.set(key, name);
-  return name;
 }
 
 async function resolvePath(pathKeys) {
@@ -112,9 +104,25 @@ async function resolvePath(pathKeys) {
   const out = [];
   for (const k of pathKeys) {
     const [type, id] = k.split(':');
-    out.push({ type, id: Number(id), name: await nameOf(k) });
+    let name = k;
+    try { name = await graph.name(type + ':' + id); } catch (_) {}
+    out.push(k.endsWith(':d') ? { type, id: Number(id), name, role: 'director' } : { type, id: Number(id), name });
   }
   return out;
+}
+
+// One search. A TMDB request that kept failing reads as an empty board inside
+// the BFS, which could make par look longer or unreachable — so such a run is
+// retried, and reported as failed rather than written.
+async function solve(start, end) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const before = graph.stats.failures;
+    const g = graph.towards(end);
+    const r = await shortestPathTrace(start, end, g.neighbors, { maxDepth: MAX_DEPTH, directed: true, candidates: g.candidates, concurrency: CONCURRENCY });
+    if (graph.stats.failures === before) return r;
+    console.warn('  TMDB failures during search, retrying...');
+  }
+  return null;
 }
 
 async function main() {
@@ -142,27 +150,37 @@ async function main() {
 
   let done = 0;
   let computed = 0;
+  const failed = [];
+  const t0 = Date.now();
   for (const key of keys) {
     done++;
+    if (LIMIT && computed >= LIMIT) break;
     const isMissing = result[key] == null || paths[key] === undefined; // missing par OR path
     if (!recomputeAll && !ONLY_KEY && !isMissing) continue; // skip already-calculated
     const [start, end] = key.split('>');
-    let dist = null;
-    let trace = null;
-    try {
-      const r = await shortestPathTrace(start, end, neighbors, { maxDepth: MAX_DEPTH, predecessors });
-      dist = r.dist; trace = r.path;
-    } catch (e) { console.error('  error on', key, e.message); }
-    result[key] = dist;
-    paths[key] = await resolvePath(trace);
+    const t = Date.now();
+    const req = graph.stats.requests;
+    let r = null;
+    try { r = await solve(start, end); } catch (e) { console.error('  error on', key, e.message); }
     computed++;
-    console.log(`[${done}/${keys.length}] ${key} -> ${dist == null ? 'unreachable' : dist}`);
+    const took = `${((Date.now() - t) / 1000).toFixed(1)}s, ${graph.stats.requests - req} req`;
+    if (!r) { failed.push(key); console.log(`[${done}/${keys.length}] ${key} -> FAILED (kept old value) ${took}`); continue; }
+    result[key] = r.dist;
+    paths[key] = await resolvePath(r.path);
+    console.log(`[${done}/${keys.length}] ${key} -> ${r.dist == null ? 'unreachable' : r.dist}  (${took})`);
     fs.writeFileSync(OUT, JSON.stringify(result, null, 0));        // checkpoint
     fs.writeFileSync(PATHS_OUT, JSON.stringify(paths, null, 0));
   }
 
-  fs.writeFileSync(META_OUT, JSON.stringify({ version: PAR_ALGO_VERSION, branch: BRANCH, maxDepth: MAX_DEPTH, updatedAt: new Date().toISOString() }, null, 2) + '\n');
-  console.log(`Done. Computed ${computed}, wrote ${OUT} + ${path.basename(PATHS_OUT)}`);
+  // Only a complete, clean pass may claim the new version: a partial run would
+  // otherwise mark the leftover old values as up to date.
+  const complete = !ONLY_KEY && !LIMIT && !failed.length && (recomputeAll || !stale);
+  if (complete) {
+    fs.writeFileSync(META_OUT, JSON.stringify({ version: PAR_ALGO_VERSION, branch: BRANCH, maxDepth: MAX_DEPTH, updatedAt: new Date().toISOString() }, null, 2) + '\n');
+  }
+  console.log(`Done. Computed ${computed} in ${((Date.now() - t0) / 60000).toFixed(1)} min, ${graph.stats.requests} TMDB requests, wrote ${OUT} + ${path.basename(PATHS_OUT)}`);
+  if (failed.length) console.log(`${failed.length} key(s) failed, rerun to fill them: ${failed.join(' ')}`);
+  if (!complete) console.log('Meta not updated (partial run).');
   try { require('./difficulty').audit(false); } catch (_) {}
 }
 

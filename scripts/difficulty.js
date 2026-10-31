@@ -61,7 +61,7 @@ async function single(key) {
     await g.verify();
     const [s, e] = key.split('>');
     if (!s || !e) { console.error('Invalid pair. Use type:id type:id, e.g. person:6193 movie:496243'); process.exit(1); }
-    par = await shortestPath(s, e, g.neighbors, { maxDepth: 6 });
+    par = await shortestPath(s, e, g.towards(e).neighbors, { maxDepth: 6 });
     source = 'computed via BFS';
   }
   const lab = labels()[key];

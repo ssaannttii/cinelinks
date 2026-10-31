@@ -20,3 +20,6 @@ _*.js
 
 # python venv for the depth-map pipeline
 .venv*/
+
+# compute-par TMDB board cache
+.cache/

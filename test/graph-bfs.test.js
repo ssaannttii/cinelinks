@@ -115,3 +115,76 @@ test('directed: with predecessors, a route that only exists backwards is not tak
   const r = await shortestPathTrace('a', 'b', nb, { predecessors: pred });
   assert.deepStrictEqual(r.path, ['a', 'x', 'b']);
 });
+
+// Plain forward BFS over the real (directed) boards: the true minimum.
+async function forwardBfs(a, b, nb, maxDepth) {
+  const seen = new Set([a]);
+  let frontier = [a];
+  for (let d = 1; d <= maxDepth && frontier.length; d++) {
+    const next = [];
+    for (const k of frontier) for (const m of nb(k)) {
+      if (m === b) return d;
+      if (!seen.has(m)) { seen.add(m); next.push(m); }
+    }
+    frontier = next;
+  }
+  return null;
+}
+
+test('directed: lazy backward check finds playable routes, exact when boards are mutual', async () => {
+  // Small seeded PRNG so the random graphs are the same every run.
+  let seed = 7;
+  const rnd = () => ((seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648);
+  for (let g = 0; g < 300; g++) {
+    const n = 8 + Math.floor(rnd() * 12);
+    const symmetric = g % 3 === 0;
+    const out = {};
+    for (let i = 0; i < n; i++) out['n' + i] = [];
+    for (let i = 0; i < n; i++) {
+      for (let j = 0; j < n; j++) {
+        if (i === j || rnd() >= 0.2) continue;
+        if (!out['n' + i].includes('n' + j)) out['n' + i].push('n' + j);
+        if (symmetric && !out['n' + j].includes('n' + i)) out['n' + j].push('n' + i);
+      }
+    }
+    const nb = k => out[k] || [];
+    const truth = await forwardBfs('n0', 'n1', nb, 6);
+    const r = await shortestPathTrace('n0', 'n1', async k => nb(k), { directed: true, concurrency: 4, maxDepth: 6 });
+    if (symmetric) assert.strictEqual(r.dist, truth, 'graph ' + g);
+    if (r.dist != null) {
+      assert.ok(truth != null && r.dist >= truth, 'graph ' + g + ' never shorter than the real minimum');
+      assert.strictEqual(r.path.length, r.dist + 1);
+      assert.strictEqual(r.path[0], 'n0');
+      assert.strictEqual(r.path[r.path.length - 1], 'n1');
+      for (let i = 0; i < r.path.length - 1; i++) {
+        assert.ok(nb(r.path[i]).includes(r.path[i + 1]), 'graph ' + g + ' edge ' + r.path[i] + '->' + r.path[i + 1]);
+      }
+    }
+  }
+});
+
+test('directed: the one-way shortcut is not taken', async () => {
+  const out = { a: ['x', 'p', 'q'], x: ['b', 'a'], p: [], q: [], b: ['y', 'a', 'x'], y: [] };
+  const r = await shortestPathTrace('a', 'b', k => out[k] || [], { directed: true });
+  assert.deepStrictEqual(r.path, ['a', 'x', 'b']);
+});
+
+test('directed: with superset candidates the search is exact', async () => {
+  let seed = 11;
+  const rnd = () => ((seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648);
+  for (let g = 0; g < 300; g++) {
+    const n = 8 + Math.floor(rnd() * 12);
+    const out = {};
+    for (let i = 0; i < n; i++) {
+      out['n' + i] = [];
+      for (let j = 0; j < n; j++) if (i !== j && rnd() < 0.2) out['n' + i].push('n' + j);
+    }
+    const nb = k => out[k] || [];
+    // Every edge into k, plus some noise that the lazy check has to reject.
+    const cand = k => Object.keys(out).filter(c => nb(c).includes(k) || rnd() < 0.2);
+    const truth = await forwardBfs('n0', 'n1', nb, 6);
+    const r = await shortestPathTrace('n0', 'n1', nb, { directed: true, candidates: cand, concurrency: 3, maxDepth: 6 });
+    assert.strictEqual(r.dist, truth, 'graph ' + g);
+    if (r.path) for (let i = 0; i < r.path.length - 1; i++) assert.ok(nb(r.path[i]).includes(r.path[i + 1]));
+  }
+});

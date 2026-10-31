@@ -78,7 +78,6 @@ async function main() {
 
   const graph = createGraph(API_KEY, { branch: BRANCH });
   await graph.verify(); // aborts with a clear error if the key is invalid
-  const neighbors = graph.neighbors;
   const out = [];
   const usedPairs = new Set();
   let attempts = 0;
@@ -96,7 +95,7 @@ async function main() {
     usedPairs.add(pairId);
 
     let par;
-    try { par = await shortestPath(startKey, endKey, neighbors, { maxDepth: MAX_DEPTH }); }
+    try { par = await shortestPath(startKey, endKey, graph.towards(endKey).neighbors, { maxDepth: MAX_DEPTH }); }
     catch (_) { par = null; }
     if (par == null || par < MIN_PAR || par > MAX_PAR) continue;
 
