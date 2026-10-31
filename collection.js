@@ -3925,7 +3925,8 @@
     }
     if (_revealClosed) { var f = _revealClosed; _revealClosed = null; try { f(); } catch (_) { /* noop */ } }
   }
-  function reveal(cards) {
+  // opts.preview: show the flip only (lobby prototype); no XP/level summary, since nothing was granted
+  function reveal(cards, opts) {
     try {
       if (!Array.isArray(cards)) return;
       var queue = cards.filter(function (c) { return c && c.rarity && RARITY[c.rarity]; });
@@ -3989,10 +3990,10 @@
       function showCap(c) {
         var cap = document.getElementById('clrCap'); if (!cap) return;
         var rl = RARITY[c.rarity];
-        cap.innerHTML = '<span class="clr-tag new">' + LT('New') + '</span><span class="clr-rare-lbl" style="color:' + rl.ring + '">' + rarLabel(c.rarity) + '</span><span class="clr-xp">+' + (XP[c.rarity] || 10) + ' XP</span>';
+        cap.innerHTML = (opts && opts.preview ? '' : '<span class="clr-tag new">' + LT('New') + '</span>') + '<span class="clr-rare-lbl" style="color:' + rl.ring + '">' + rarLabel(c.rarity) + '</span>' + (opts && opts.preview ? '' : '<span class="clr-xp">+' + (XP[c.rarity] || 10) + ' XP</span>');
         try { if (window.Sfx) window.Sfx.haptic(c.rarity === 'legendary' ? [20, 40, 60] : c.rarity === 'elite' ? [15, 30] : 10); } catch (_) { /* noop */ }
       }
-      function next() { clearT(); stopShader(); stopGyro(); idx++; if (idx >= queue.length) summary(); else card(queue[idx]); }
+      function next() { clearT(); stopShader(); stopGyro(); idx++; if (idx >= queue.length) { if (opts && opts.preview) closeReveal(); else summary(); } else card(queue[idx]); }
       function summary() {
         state = 'sum'; stopShader(); stopGyro();
         // When a forge is sequencing the reward itself, leave the set unclaimed so the
@@ -4025,7 +4026,7 @@
         document.getElementById('clrAgain').onclick = function (e) { e.stopPropagation(); closeReveal(); };
       }
       var skip = document.getElementById('clrSkip');
-      skip.style.display = ''; skip.onclick = function (e) { e.stopPropagation(); clearT(); summary(); };
+      skip.style.display = ''; skip.onclick = function (e) { e.stopPropagation(); clearT(); if (opts && opts.preview) closeReveal(); else summary(); };
       ov.onclick = function () { if (state === 'ready') next(); };
       ov.classList.add('open'); lockScroll(true);
       try { if (window.fxTrapFocus) _revealRelease = window.fxTrapFocus(ov); } catch (_) { /* noop */ }
@@ -4289,6 +4290,11 @@
     dust: dustBalance, shine: shineCard, shineCost: shineCost, isShined: isShined,
     prime: primeNext, primeCost: primeCost, primeState: primeState,
     claimReward: claimReward, rewardClaimed: rewardClaimed,
+    // Render a card outside the album (lobby shelves, prototypes): the active theme's
+    // markup, its CSS injected once; mountCards wires tilt/shine; openCard = the detail view.
+    cardHtml: function (c, i) { injectShell(); var t = activeTheme(); injectThemeCss(t); return t.card(locCard(c), CTX, i || 0); },
+    mountCards: function (el) { try { var t = activeTheme(); if (t.mount) t.mount(el); } catch (_) { /* noop */ } },
+    openCard: function (c, el, list) { injectShell(); openDetail(locCard(c), el, list ? { list: list.map(locCard), i: Math.max(0, list.indexOf(c)) } : undefined); },
     draw: drawPack, drawInfo: drawInfo, buyBack: buyBack, backCost: backCost,
     cardFlip: function (on) { try { localStorage.setItem('cl_cardflip', on ? '1' : '0'); } catch (_) { /* noop */ } return cardFlipOn(); },
     addDust: function (n) { var s = load() || blank(); s.dust = Math.max(0, (s.dust || 0) + (+n || 0)); save(s); refreshOpen(); return s.dust; },
