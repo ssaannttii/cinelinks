@@ -569,7 +569,8 @@ svg.i{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:1.8;stroke
   function renderTeaser() {
     var C0 = C(), el = $('albTeaser');
     if (!C0) { el.innerHTML = ''; return; }
-    var st = C0.stats(), cards = newest(5), near = nearestSet();
+    // a stale service-worker copy of collection.js (first visit after a deploy) has no cardHtml yet
+    var st = C0.stats(), cards = C0.cardHtml ? newest(5) : [], near = nearestSet();
     var fan = cards.length ? cards.map(function (c, i, a) {
       var mid = (a.length - 1) / 2, o = i - mid, rot = o * 7, x = o * 30, y = Math.abs(o) * 6;
       return '<div class="fc" style="transform:translateX(' + x + 'px) translateY(' + y + 'px) rotate(' + rot + 'deg);--t2:translateX(' + (x * 1.35) + 'px) translateY(' + (y - 6) + 'px) rotate(' + (rot * 1.3) + 'deg);z-index:' + (10 - Math.abs(Math.round(o))) + '">' + C0.cardHtml(c, i) + '</div>';
@@ -603,10 +604,10 @@ svg.i{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:1.8;stroke
     var st = C0.stats(), pct = st.xpSpan ? Math.round(st.xpInto / st.xpSpan * 100) : 0;
     $('albLede').textContent = st.count + ' cards · ' + st.films + ' films and shows · ' + st.people + ' people';
     $('albLvl').innerHTML = '<div class="ring" style="--p:' + pct + '"><b>' + st.level + '</b></div><div><div class="t">Level ' + st.level + '</div><div class="s">' + st.xpInto + ' / ' + st.xpSpan + ' XP to level ' + (st.level + 1) + '</div></div>';
-    albumCards = newest(36);
+    albumCards = C0.cardHtml ? newest(36) : [];
     $('cgrid').innerHTML = albumCards.length ? albumCards.map(function (c, i) { return '<div class="cc" data-i="' + i + '">' + C0.cardHtml(c, i) + '</div>'; }).join('')
       : '<p class="lede">Win any daily puzzle to open your first pack.</p>';
-    C0.mountCards($('cgrid'));
+    if (C0.mountCards) C0.mountCards($('cgrid'));
     var sets = (C0.sets ? C0.sets() : []).filter(function (s) { return s.discovered; }).sort(function (a, b) { return (b.complete - a.complete) || (b.pct - a.pct); });
     $('sets').innerHTML = sets.length ? sets.map(function (s) {
       return '<div class="setrow' + (s.complete ? ' full' : '') + '"><div class="top2"><span class="nm">' + esc(s.name) + '</span><span class="ct">' + (s.complete ? 'Complete' : s.owned + ' of ' + s.total) + '</span></div><div class="bar"><span style="width:' + Math.round(s.pct * 100) + '%"></span></div></div>';
@@ -614,7 +615,7 @@ svg.i{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:1.8;stroke
   }
   $('cgrid').addEventListener('click', function (e) {
     var cell = e.target.closest('.cc'); if (!cell || !C()) return;
-    var c = albumCards[+cell.dataset.i]; if (c) C().openCard(c, cell.firstElementChild, albumCards);
+    var c = albumCards[+cell.dataset.i]; if (c && C().openCard) C().openCard(c, cell.firstElementChild, albumCards);
   });
   Array.prototype.forEach.call(document.querySelectorAll('.seg button'), function (b) {
     b.addEventListener('click', function () {
