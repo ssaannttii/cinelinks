@@ -9,12 +9,16 @@
   var SUPPORT_URL = 'https://ko-fi.com/cines';
   var SUPPORT_LABEL = '☕ Support';
   if (!SUPPORT_URL) return;
+  // Not on game pages: mid-board it sat on top of answer cards, and asking for
+  // money while someone is playing is the wrong moment anyway. Home/stats only.
+  if (/\/cine[a-z]+\.html$/.test(location.pathname)) return;
 
   var a = document.createElement('a');
   a.href = SUPPORT_URL;
   a.target = '_blank';
   a.rel = 'noopener';
   a.textContent = SUPPORT_LABEL;
+  a.id = 'clSupport';   // index.html hides it while a CineLinks game is on screen
   // Sit above the ad bar if that's also enabled.
   var bottom = document.getElementById('ad-bar') ? 84 : 14;
   a.style.cssText = 'position:fixed;right:14px;bottom:' + bottom + 'px;z-index:90;background:#e8a000;color:#111;' +

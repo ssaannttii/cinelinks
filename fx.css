@@ -42,6 +42,10 @@
   .fx-xfade{transition:none}
 }
 
+/* Game pages: the "?" help button is fixed bottom-left; leave room under the last
+   row so it can't permanently cover a tile or an answer. */
+@media (max-width:640px){body:has(#ht-btn) .wrap{padding-bottom:72px}}
+
 /* Cross-page transition: the home card's game name morphs into this page's title
    (index.html names the tapped card's title vt-game just before it navigates), and
    the rest of the page crossfades. Browsers without cross-document view transitions

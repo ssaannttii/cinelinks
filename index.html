@@ -616,10 +616,15 @@ body{font-family:var(--fui);background:var(--bg);color:var(--txt);min-height:100
 
 /* Home screen entrance */
 @keyframes homeIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
-.start-inner.anim-in{animation:homeIn .45s cubic-bezier(.22,1,.36,1) both}
+.start-inner.anim-in{animation:homeIn .32s cubic-bezier(.22,1,.36,1) both}
 .clicks-n.popping{animation:pop .22s ease}
 
 .g-body{max-width:940px;margin:0 auto;padding:20px 20px 60px;width:100%}
+/* While a CineLinks game is on screen: the Support pill goes away (it covered answer
+   cards and is the wrong ask mid-game), and the board gets room at the bottom so the
+   "?" help button can never sit permanently on the last row of choices. */
+body:has(#gameScreen.active) #clSupport,body:has(#loadingScreen.active) #clSupport{display:none}
+@media (max-width:640px){#gameScreen .g-body{padding-bottom:84px}}
 
 /* Current node card */
 .cur-card{background:var(--s1);border:1px solid var(--bdr);border-radius:12px;padding:18px;display:flex;align-items:flex-start;gap:18px;margin-bottom:16px;position:relative;overflow:hidden}
@@ -772,6 +777,24 @@ body{font-family:var(--fui);background:var(--bg);color:var(--txt);min-height:100
   .start-node{padding:6px 8px}
   .cur-card{gap:14px;flex-wrap:wrap}
   .cur-info{flex-basis:calc(100% - 98px)}
+}
+/* Phone board: the choices ARE the game, so the "you are here" card goes compact.
+   It took half the screen (poster, a 3-line display title, a prompt that the
+   "Choose your next connection" label right below repeats), leaving two options
+   above the fold. The endpoints bar still names start and target. */
+@media (max-width:640px){
+  #gameScreen .cur-card{flex-wrap:nowrap;align-items:center;gap:12px;padding:11px 13px;margin-bottom:10px}
+  #gameScreen .cur-info{flex-basis:auto;padding-top:0}
+  #gameScreen .cur-img{width:46px;height:69px;border-radius:6px}
+  #gameScreen .cur-img.person{height:auto}
+  #gameScreen .cur-img.person img,#gameScreen .cur-img.person .cur-noimg{width:52px;height:52px}
+  #gameScreen .cur-badge{margin-bottom:2px}
+  #gameScreen .cur-name,#gameScreen .cur-name.title{font-size:1.12rem;line-height:1.15;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  #gameScreen .cur-meta{margin-top:2px;font-size:.74rem}
+  #gameScreen .cur-prompt{display:none}
+  #gameScreen .cur-actions:empty{display:none}
+  /* on the first board the path is one chip repeating the card above it */
+  #gameScreen #pathRow:not(:has(> :nth-child(2))){display:none}
 }
 
 /* WIN */
@@ -2495,10 +2518,13 @@ function burstParticles(card, badge) {
 }
 
 // First time a "new to collect" (✦) mark shows, explain it once.
-let _newmarkCoaching = false;
+let _newmarkCoaching = false, _newmarkWait = false;
 function newCardMarkCoach() {
   try {
     if (_newmarkCoaching || localStorage.getItem('cl_newmark_seen')) return;
+    // One bubble at a time: on a first board the hop-rule coach is usually up, and the
+    // two used to stack on top of each other. Wait for it to go, then explain ✦.
+    if (document.querySelector('.coach')) { if (!_newmarkWait) { _newmarkWait = true; setTimeout(function () { _newmarkWait = false; newCardMarkCoach(); }, 1500); } return; }
     const mark = document.querySelector('#grid .card-new-mark'); if (!mark) return;
     const card = mark.closest('.card'); if (!card) return;
     _newmarkCoaching = true;
@@ -3176,8 +3202,8 @@ function staggerHome() {
     let i = 0;
     els.forEach(function (e) {
       if (!e.animate || e.offsetParent === null) return;
-      e.animate([{ opacity: 0, transform: 'translateY(15px)' }, { opacity: 1, transform: 'none' }],
-        { duration: 460, delay: Math.min(i, 12) * 52, easing: 'cubic-bezier(.22,1,.36,1)', fill: 'backwards' });
+      e.animate([{ opacity: 0, transform: 'translateY(12px)' }, { opacity: 1, transform: 'none' }],
+        { duration: 340, delay: Math.min(i, 8) * 34, easing: 'cubic-bezier(.22,1,.36,1)', fill: 'backwards' });
       i++;
     });
   } catch (_) {}
@@ -3499,6 +3525,7 @@ function loadGameFromUrl() {
   return true;
 }
 
+let _homeShown = false;
 function showOnly(id) {
   ['startScreen','loadingScreen','gameScreen','winScreen'].forEach(s => {
     const el = document.getElementById(s);
@@ -3507,8 +3534,11 @@ function showOnly(id) {
     el.style.display = active ? 'flex' : 'none';
   });
   if (id === 'startScreen') {
+    // The entrance plays once per visit. Replayed on every return from a game it
+    // blanked the hub for ~1.1 s each time, right in the game → home → game loop.
+    const firstShow = !_homeShown; _homeShown = true;
     const inner = document.querySelector('.start-inner');
-    if (inner) {
+    if (inner && firstShow) {
       inner.classList.remove('anim-in');
       void inner.offsetWidth;
       inner.classList.add('anim-in');
@@ -3520,7 +3550,7 @@ function showOnly(id) {
     // Landing back home after a win: animate the HUD's deltas (count-up + "+N" +
     // XP arc + level-up pulse) instead of silently repainting the new totals.
     try { hudGain(); } catch (_) {}
-    try { homeAmbience(); staggerHome(); } catch (_) {}
+    try { homeAmbience(); if (firstShow) staggerHome(); } catch (_) {}
     // Sequence: streak overlay → per-card blooms → "day complete" grand finale.
     try {
       const _sk = celebrateStreak();
