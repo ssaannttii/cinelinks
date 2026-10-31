@@ -936,6 +936,27 @@ body:has(#gameScreen.active) #clSupport,body:has(#loadingScreen.active) #clSuppo
 @keyframes curSheenMove{from{transform:translateX(0) skewX(-16deg)}to{transform:translateX(600%) skewX(-16deg)}}
 /* Clicks counter: ring flash on every move (the pop overshoot is in @keyframes pop). */
 .hdr-clicks.flash{animation:clicksFlash .5s ease both}
+.clicks-par{display:block;margin-top:2px;font-size:.56rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--goldsoft,#f5c542);opacity:.85;white-space:nowrap}
+.hdr-clicks.over-par{background:linear-gradient(rgba(37,44,53,.94),rgba(37,44,53,.94)) padding-box,conic-gradient(rgba(214,120,72,.9) 360deg,rgba(255,255,255,.1) 0) border-box}
+.hdr-clicks.over-par .clicks-par{color:#d98a5e}
+.win-verdict{display:inline-block;margin:2px auto 12px;padding:6px 13px;border-radius:9px;font-size:.82rem;font-weight:800;letter-spacing:.02em}
+.win-verdict.perfect{color:#1a1200;background:linear-gradient(135deg,#f6dd86,#e8a000);box-shadow:0 8px 22px rgba(232,160,0,.35)}
+.win-verdict.close{color:var(--goldsoft,#f5c542);background:rgba(232,160,0,.12);box-shadow:inset 0 0 0 1px rgba(232,160,0,.35)}
+.win-verdict.far{color:var(--mut);background:rgba(255,255,255,.05)}
+.win-verdict.stamp{animation:verdictStamp .5s cubic-bezier(.2,1.6,.4,1) .35s both}
+@keyframes verdictStamp{0%{opacity:0;transform:scale(1.6) rotate(-6deg)}60%{opacity:1;transform:scale(.94) rotate(1deg)}100%{transform:none}}
+body:has(#winScreen.active) #ht-btn,body:has(#winScreen.active) #clSupport{display:none}
+@media (max-width:640px){
+  /* the win screen scrolls inside a box exactly one screen tall, so the sticky bar
+     below sits on the real bottom edge (min-height let it grow past the viewport and
+     the bar sank off-screen); auto margins centre short content without clipping */
+  #winScreen{height:100vh;height:100dvh;min-height:0;justify-content:flex-start}
+  #winScreen .win-box{margin-top:auto;margin-bottom:auto}
+  /* the next step stays under the thumb while the route animates in above it */
+  #winScreen .win-btns{position:sticky;bottom:0;z-index:3;grid-template-columns:1fr 1.6fr;margin:14px -16px -24px;padding:14px 16px calc(14px + env(safe-area-inset-bottom));border-radius:0 0 18px 18px;background:linear-gradient(180deg,rgba(44,52,63,0),var(--s1) 22%)}
+  #winScreen #winHomeBtn{display:none}
+}
+@media(prefers-reduced-motion:reduce){.win-verdict.stamp{animation:none}}
 @keyframes clicksFlash{0%{box-shadow:0 8px 18px rgba(0,0,0,.16),0 0 0 0 rgba(232,160,0,.6)}45%{box-shadow:0 8px 18px rgba(0,0,0,.16),0 0 0 7px rgba(232,160,0,0)}100%{box-shadow:0 8px 18px rgba(0,0,0,.16)}}
 @media(prefers-reduced-motion:reduce){
   .card-glare{display:none}
@@ -1271,9 +1292,9 @@ body:has(#gameScreen.active) #clSupport,body:has(#loadingScreen.active) #clSuppo
 <div id="loadingScreen" class="screen">
   <div class="load-shell">
     <div class="spinner"><div class="spinner-inner"></div></div>
-    <div class="load-kicker">Mission briefing</div>
-    <p class="load-txt" id="loadTxt">Locking target chain</p>
-    <div class="load-sub">Study the endpoints. Every click counts.</div>
+    <div class="load-kicker">Tonight’s double bill</div>
+    <p class="load-txt" id="loadTxt">Rolling the reel</p>
+    <div class="load-sub">Link the two in as few clicks as you can.</div>
     <div class="load-preview" id="loadPreview">
       <span class="load-preview-node" id="loadPreviewStart"></span>
       <span class="load-preview-arr">→</span>
@@ -1308,6 +1329,7 @@ body:has(#gameScreen.active) #clSupport,body:has(#loadingScreen.active) #clSuppo
     <div class="hdr-clicks" ondblclick="game.toggleDebug()">
       <span id="clickCounter" class="clicks-n">0</span>
       <span class="clicks-l">clicks</span>
+      <span class="clicks-par" id="clicksPar" hidden></span>
     </div>
   </header>
   <div class="g-body">
@@ -1359,6 +1381,7 @@ body:has(#gameScreen.active) #clSupport,body:has(#loadingScreen.active) #clSuppo
     <div class="stats">
       <div class="stat"><div id="playerClicks" class="stat-n">0</div><div class="stat-l">Clicks</div></div>
     </div>
+    <div id="winVerdict" class="win-verdict" hidden></div>
     <div id="winStreak" class="win-streak" style="display:none"></div>
     <div id="winPar" class="win-par" style="display:none"></div>
     <div id="winAvg" class="win-avg"></div>
@@ -1367,7 +1390,7 @@ body:has(#gameScreen.active) #clSupport,body:has(#loadingScreen.active) #clSuppo
     <div class="win-route-lbl">Winning route</div>
     <div id="winPath" class="win-path"></div>
     <div id="challengeRow">
-      <button class="btn btn-gold" style="margin:0;width:100%" onclick="game.challengeFriend()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="m13 19 6-6"/><path d="m16 16 4 4"/><path d="m19 21 2-2"/><path d="M14.5 6.5 18 3h3v3l-3.5 3.5"/></svg>Challenge a friend to beat your score</button>
+      <button class="btn btn-ghost" style="margin:0;width:100%" onclick="game.challengeFriend()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="m13 19 6-6"/><path d="m16 16 4 4"/><path d="m19 21 2-2"/><path d="M14.5 6.5 18 3h3v3l-3.5 3.5"/></svg>Challenge a friend to beat your score</button>
     </div>
     <div class="win-btns">
       <button class="btn btn-ghost" id="winHomeBtn" style="margin:0" onclick="game.reset()"><svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;margin-right:5px"><path d="M1.5 7L7 1.5L12.5 7V13H9V9.5H5V13H1.5Z"/></svg>Home</button>
@@ -1381,7 +1404,7 @@ body:has(#gameScreen.active) #clSupport,body:has(#loadingScreen.active) #clSuppo
           <button class="share-opt" onclick="game.openShareCard()"><span class="share-opt-icon">📸</span>Save as image</button>
         </div>
       </div>
-      <button class="btn btn-gold" style="margin:0" onclick="game.startRandom()">Play again</button>
+      <button class="btn btn-gold win-next" id="winNextBtn" style="margin:0" onclick="game.startRandom()">Play again</button>
     </div>
   </div>
 </div>
@@ -1917,14 +1940,17 @@ function filterMovies(results) {
   const currentYear = new Date().getFullYear();
   return (results||[]).filter(m => {
     const year = movieYear(m)|0;
+    // no documentaries: their "cast" is a narrator or two, so a practice board that
+    // starts on one is a dead end before the first click (Planet Earth → …)
     return m.poster_path && m.original_language === 'en' && !m.adult &&
-      (m.vote_count||0) > 300 && (!year || year <= currentYear);
+      (m.vote_count||0) > 300 && (!year || year <= currentYear) &&
+      !(m.genre_ids||[]).includes(99);
   });
 }
 
 function filterTvShows(results) {
   const currentYear = new Date().getFullYear();
-  const skipGenres = [10763,10764,10767]; // news, reality, talk
+  const skipGenres = [99,10763,10764,10767]; // documentary, news, reality, talk
   return (results||[]).filter(t => {
     const year = tvYear(t)|0;
     return t.poster_path && t.original_language === 'en' &&
@@ -2120,6 +2146,11 @@ function parDifficulty(par) {
 
 // Par data (precomputed minimum clicks per challenge) - loaded once, optional.
 let _parData = null;
+// The in-game "best N" target and the win verdict stay OFF until par-data.json is
+// recomputed with the v3 rules (scripts/compute-par.js: board-exact neighbours +
+// directed search). The current values came from a symmetric, top-50 graph, so
+// some "best possible" routes go through credits the board never offers.
+const PAR_TRUSTED = false;
 async function loadParData() {
   if (_parData) return _parData;
   try {
@@ -3859,7 +3890,7 @@ const game = window.game = {
     preview.classList.remove('visible');
     void preview.offsetWidth;
     preview.classList.add('visible');
-    if (txt) txt.textContent = 'Target chain acquired';
+    if (txt) txt.textContent = t('loadReady') === 'loadReady' ? 'Now showing' : t('loadReady');
   },
 
   async init(start, end, opts = {}) {
@@ -3885,6 +3916,7 @@ const game = window.game = {
     this._updateClicksLabel();
     document.querySelector('.hdr-clicks')?.style.setProperty('--click-ring', this.clickRing());
     this.renderDebugStats();
+    this._loadPar();   // dailies have a precomputed best route; practice boards don't
 
     showOnly('gameScreen');
     if (!opts.keepUrl) {
@@ -4000,9 +4032,31 @@ const game = window.game = {
     meta.style.display = text ? 'block' : 'none';
   },
 
+  // With a known best route the ring fills toward IT (full = you're on the best
+  // possible count); past it the box goes muted, so the target is felt, not read.
   clickRing() {
-    const maxClicks = this.dailyRecord || 20;
+    const maxClicks = this.par || this.dailyRecord || 20;
     return Math.min(360, Math.round((this.clicks / maxClicks) * 360)) + 'deg';
+  },
+  _renderParHud() {
+    const el = document.getElementById('clicksPar'), box = document.querySelector('.hdr-clicks');
+    if (!el || !box) return;
+    if (!this.par) { el.hidden = true; box.classList.remove('has-par', 'over-par'); return; }
+    const lbl = t('parBest') === 'parBest' ? 'best' : t('parBest');
+    el.textContent = lbl + ' ' + this.par;
+    el.hidden = false;
+    box.classList.add('has-par');
+    box.classList.toggle('over-par', this.clicks > this.par);
+    box.style.setProperty('--click-ring', this.clickRing());
+  },
+  async _loadPar() {
+    this.par = null; this._renderParHud();
+    if (!PAR_TRUSTED) return;
+    try {
+      const d = await loadParData(), s = this.start, e = this.end;
+      const p = d && (d[s.type + ':' + s.id + '>' + e.type + ':' + e.id] || d[e.type + ':' + e.id + '>' + s.type + ':' + s.id]);
+      if (Number.isFinite(p) && p > 0 && this.start === s) { this.par = p; this._renderParHud(); }
+    } catch (_) {}
   },
 
   renderPath() {
@@ -4108,11 +4162,10 @@ const game = window.game = {
     const key = this.start.type + ':' + this.start.id + '>' + this.end.type + ':' + this.end.id;
     const par = data && data[key];
     if (!Number.isFinite(par) || par <= 0) return;
-    const matched = this.clicks <= par;
     const diff = parDifficulty(par);
     el.innerHTML = '<span class="wp-par-n">' + t('parLabel') + ': ' + par + '</span>' +
       ' · <span class="wp-par-diff">' + t(diff) + '</span>' +
-      (matched ? ' · <span class="wp-par-you">' + t('parYou') + '</span>' : '');
+      '';   // "you matched it" now lives in the verdict stamp above
     el.style.display = '';
   },
 
@@ -4516,6 +4569,7 @@ const game = window.game = {
     ctr.classList.add('popping');
     const _hc = document.querySelector('.hdr-clicks');
     if (_hc) { _hc.classList.remove('flash'); void _hc.offsetWidth; _hc.classList.add('flash'); }
+    this._renderParHud();
 
     // Transition in: card slides in
     body.classList.add('nav-in');
@@ -4578,7 +4632,7 @@ const game = window.game = {
     }
     try { this._showCollNew(replay ? 0 : _collNewCards.length); } catch (_) {}
     try { if (!replay && _collNewCards.length) recordCardWin('cl'); } catch (_) {}
-    try { if (!replay && _collNewCards.length && window.Collection && Collection.reveal) setTimeout(function () { Collection.reveal(_collNewCards); }, 650); } catch (_) {}
+    try { if (!replay && _collNewCards.length && window.Collection && Collection.reveal) (window.Fx && Fx.after ? Fx.after : setTimeout)(function () { Collection.reveal(_collNewCards); }, 650); } catch (_) {}
     const winSub = document.querySelector('.win-sub');
     if (winSub) winSub.textContent = replay ? '✓ You already solved today’s challenge' : t('winSub');
 
@@ -4758,6 +4812,16 @@ const game = window.game = {
       try { if (window.Sfx) { Sfx.win(); Sfx.haptic([20, 40, 20, 40, 70]); } } catch (_) {}
       try { if (window.Track) Track('cl_complete', { clicks: this.clicks, mode: this.scoreDate === dateKey() ? 'daily' : 'practice' }); } catch (_) {}
     }
+    // Verdict against the best possible route (dailies), the next step, and a
+    // celebration sized to how good the route was. Replays (reopening today's
+    // solved daily) get the screen but not the party.
+    let _par = PAR_TRUSTED ? this.par : null;
+    if (!_par && PAR_TRUSTED) { try { const _pd = await loadParData(); const p = _pd && _pd[this._challengeKey()]; if (Number.isFinite(p) && p > 0) _par = p; } catch (_) {} }
+    this._renderVerdict(_par);
+    this._renderWinNext();
+    const _tier = !_par ? 2 : this.clicks <= _par ? 3 : this.clicks <= _par + 2 ? 2 : 1;
+    if (!replay && window.Fx && Fx.win) { Fx.win(_tier, { force: true }); }
+    else if (!replay) {
     const colors = ['#e8a000','#f0f0f0','#c0392b','#27ae60','#3498db'];
     for (let i = 0; i < 50; i++) {
       const c = document.createElement('div');
@@ -4774,13 +4838,48 @@ const game = window.game = {
       document.getElementById('winScreen').appendChild(c);
       setTimeout(() => c.remove(), 3200);
     }
+    }
 
-    // Auto-scroll to CTA buttons after score reveal
+    // Auto-scroll to CTA buttons after score reveal (phones pin them instead)
     const totalStaggerMs = 280 + (staggerIdx * 90) + 400;
-    setTimeout(() => {
+    if (!matchMedia('(max-width:640px)').matches) setTimeout(() => {
       const btns = document.querySelector('.win-btns');
       if (btns) btns.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }, totalStaggerMs);
+  },
+
+  _renderVerdict(par) {
+    const el = document.getElementById('winVerdict'); if (!el) return;
+    if (!par) { el.hidden = true; return; }
+    const off = this.clicks - par;
+    const tx = k => t(k) === k ? null : t(k);
+    let cls, txt;
+    if (off <= 0) { cls = 'perfect'; txt = tx('verdictPerfect') || '★ Perfect route'; }
+    else if (off <= 2) { cls = 'close'; txt = (tx('verdictClose') || 'Just {n} off the best route').replace('{n}', off); }
+    else { cls = 'far'; txt = (tx('verdictFar') || '{n} over the best route').replace('{n}', off); }
+    el.className = 'win-verdict ' + cls;
+    el.textContent = txt;
+    el.hidden = false;
+    el.classList.remove('stamp'); void el.offsetWidth; el.classList.add('stamp');
+  },
+  // One clear next step. After the daily that is the next unfinished game of
+  // today's trio (or the home, where the day-complete card is waiting); after
+  // practice it's another board. Home stays in the header.
+  _renderWinNext() {
+    const b = document.getElementById('winNextBtn'); if (!b) return;
+    const tx = (k, fb) => t(k) === k ? fb : t(k);
+    b.onclick = () => this.startRandom();
+    b.textContent = tx('playAnother', 'Play again');
+    if (this.scoreDate !== dateKey()) return;
+    try {
+      const items = metaItems();
+      if (metaAllDone(items)) { b.textContent = tx('trioDoneCta', 'Day complete · collect your card') + ' →'; b.onclick = () => this.reset(); return; }
+      const k = dailyTrio().slice(1).find(x => !trioSlotDone(items, x));
+      if (!k) return;
+      const g = META_NAV[trioSlotIdx(k)];
+      b.textContent = tx('metaNext', 'Next') + ': ' + g.n + ' →';
+      b.onclick = () => { location.href = g.h; };
+    } catch (_) {}
   },
 
   _makeCard(item) {

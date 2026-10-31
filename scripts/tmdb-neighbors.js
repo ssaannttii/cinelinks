@@ -3,10 +3,10 @@
 // generate-challenges). Keeping a single neighbour definition guarantees the
 // computed "par" and the generated challenges describe the SAME graph the game
 // presents to players. Requires Node 18+ (global fetch).
+const { filterPersonCredits } = require('../lib/credits');
 
 function createGraph(apiKey, opts) {
   opts = opts || {};
-  const BRANCH = opts.branch || 50;
   const tmdbCache = new Map();
   const neighborCache = new Map();
 
@@ -44,58 +44,78 @@ function createGraph(apiKey, opts) {
   }
 
   // Neighbours of a "type:id" node as an array of neighbour keys, mirroring the
-  // in-game connection rules and capped to the top BRANCH by relevance.
+  // in-game connection rules (see below).
   async function neighbors(key) {
     if (neighborCache.has(key)) return neighborCache.get(key);
     const [type, idStr] = key.split(':');
     const id = Number(idStr);
     let out = [];
 
+    // Mirror the board EXACTLY (index.html loadConnections + lib/credits.js). The
+    // old rule (top-50 by votes, acting + directing, no talk/award filter) found
+    // routes through talk shows, award telecasts and deep-cut credits that never
+    // appear as options, so "best possible" was unreachable on many dailies.
     if (type === 'person') {
       const d = await tmdb('person/' + id + '/combined_credits');
-      const cast = d.cast || [];
-      const directed = (d.crew || []).filter((c) => c.job === 'Director');
+      // The board shows acting credits, or directed works when you arrived via a
+      // "Director" chip. The graph has no notion of how you arrived, so it takes
+      // the union — only ever optimistic for actor-directors.
+      const acted = filterPersonCredits(d, {});
+      const directed = filterPersonCredits(d, { isDirector: true });
       const seen = new Set();
-      const items = [];
-      for (const m of [...cast, ...directed]) {
-        if (m.media_type !== 'movie' && m.media_type !== 'tv') continue;
-        const k = m.media_type + ':' + m.id;
-        if (seen.has(k)) continue;
-        seen.add(k);
-        items.push({ k, score: m.vote_count || 0 });
+      for (const m of [...acted, ...directed]) {
+        const k = m.type + ':' + m.id;
+        if (!seen.has(k)) { seen.add(k); out.push(k); }
       }
-      out = items.sort((a, b) => b.score - a.score).slice(0, BRANCH).map((x) => x.k);
     } else {
+      const order = (p) => (Number.isFinite(p.order) ? p.order : 999);
       let cast = [];
-      let crew = [];
+      let directors = [];
       if (type === 'tv') {
         const [c, a] = await Promise.all([
           tmdb('tv/' + id + '/credits'),
           tmdb('tv/' + id + '/aggregate_credits')
         ]);
-        cast = (c.cast && c.cast.length ? c.cast : a.cast) || [];
-        crew = (c.crew || []).filter((x) => x.job === 'Director');
+        const eps = (p) => p.total_episode_count || ((p.roles || [])[0] || {}).episode_count || 0;
+        const regular = (c.cast || []).slice().sort((x, y) => order(x) - order(y)).slice(0, 32);
+        const regIds = new Set(regular.map((p) => p.id));
+        const agg = (a.cast || [])
+          .filter((p) => !regIds.has(p.id))
+          .filter((p) => eps(p) > 1 || (p.popularity || 0) >= 10)
+          .sort((x, y) => (eps(y) - eps(x)) || ((y.popularity || 0) - (x.popularity || 0)));
+        cast = regular.length ? [...regular, ...agg.slice(0, 20)].slice(0, 52) : agg.slice(0, 52);
+        directors = (c.crew || []).filter((x) => x.job === 'Director');
+        if (!directors.length && !cast.length) directors = (a.crew || []).filter((x) => (x.jobs || []).some((j) => j.job === 'Director'));
       } else {
         const c = await tmdb('movie/' + id + '/credits');
-        cast = c.cast || [];
-        crew = (c.crew || []).filter((x) => x.job === 'Director');
+        cast = (c.cast || []).slice().sort((x, y) => order(x) - order(y)).slice(0, 38);
+        directors = (c.crew || []).filter((x) => x.job === 'Director');
       }
       const seen = new Set();
-      const items = [];
-      for (const p of [...crew, ...cast]) {
+      for (const p of [...directors, ...cast]) {
         if (seen.has(p.id)) continue;
         seen.add(p.id);
-        const order = Number.isFinite(p.order) ? p.order : 999;
-        items.push({ k: 'person:' + p.id, score: 10000 - order + (p.popularity || 0) });
+        out.push('person:' + p.id);
       }
-      out = items.sort((a, b) => b.score - a.score).slice(0, BRANCH).map((x) => x.k);
     }
 
     neighborCache.set(key, out);
     return out;
   }
 
-  return { tmdb, neighbors, verify };
+  // Nodes whose board shows `key`, as far as we can see from `key`'s own board:
+  // the mutual edges. A subset of the true predecessors (a node can list `key`
+  // without `key` listing it back), so par can only come out longer than the
+  // real minimum — never a route the board doesn't offer.
+  async function predecessors(key) {
+    const out = [];
+    for (const k of await neighbors(key)) {
+      if ((await neighbors(k)).indexOf(key) !== -1) out.push(k);
+    }
+    return out;
+  }
+
+  return { tmdb, neighbors, predecessors, verify };
 }
 
 module.exports = { createGraph };

@@ -104,3 +104,14 @@ test('large balanced graph stays cheap via bidirectional search', async () => {
   const n = graph(adj);
   assert.strictEqual(await shortestPath('l1_5', 'l2_7', n), 4); // leaf-hub-bridge-hub-leaf
 });
+
+test('directed: with predecessors, a route that only exists backwards is not taken', async () => {
+  // a's board shows only x; b's board shows y and a (but a's board doesn't show b).
+  // Undirected, a-b looks like 1 hop; as played it's a → x → b.
+  const out = { a: ['x', 'p', 'q'], x: ['b'], p: [], q: [], b: ['y', 'a'], y: [] };
+  const nb = k => out[k] || [];
+  const pred = k => Object.keys(out).filter(n => out[n].includes(k));
+  assert.strictEqual((await shortestPathTrace('a', 'b', nb)).dist, 1, 'undirected finds the fake shortcut');
+  const r = await shortestPathTrace('a', 'b', nb, { predecessors: pred });
+  assert.deepStrictEqual(r.path, ['a', 'x', 'b']);
+});

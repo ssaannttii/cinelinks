@@ -14,9 +14,9 @@
  * Output: par-data.json  { "person:3092>movie:346698": 2, ... }
  *
  * Notes:
- *   - Neighbour expansion mirrors what a player can actually click (cast +
- *     directors on a title; acting + directed works on a person), capped to the
- *     top `--branch` by relevance — so par is the real achievable minimum.
+ *   - Neighbour expansion mirrors what a player can actually click, using the
+ *     board's own rules (scripts/tmdb-neighbors.js) — so par is the real
+ *     achievable minimum. (--branch is kept only for cache invalidation.)
  *   - Bidirectional search keeps the node count ~2·b^(d/2) instead of b^d.
  *   - Requires Node 18+ (global fetch). Incremental: existing entries are reused.
  */
@@ -33,7 +33,7 @@ const OUT = path.join(ROOT, 'par-data.json');
 const PATHS_OUT = path.join(ROOT, 'par-paths.json');
 const META_OUT = path.join(ROOT, 'par-data.meta.json');
 // Bump when the BFS / neighbour rules change, to invalidate cached pars.
-const PAR_ALGO_VERSION = 1;
+const PAR_ALGO_VERSION = 3;   // v3: board-exact neighbours + directed search (only playable routes)
 const API_KEY = process.env.TMDB_API_KEY;
 
 function arg(flag, def) {
@@ -86,6 +86,7 @@ function orderKeysByDate(keys) {
 
 const graph = createGraph(API_KEY, { branch: BRANCH });
 const neighbors = graph.neighbors;
+const predecessors = graph.predecessors;
 
 function readJson(file, fallback) {
   try { return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : fallback; } catch (_) { return fallback; }
@@ -149,7 +150,7 @@ async function main() {
     let dist = null;
     let trace = null;
     try {
-      const r = await shortestPathTrace(start, end, neighbors, { maxDepth: MAX_DEPTH });
+      const r = await shortestPathTrace(start, end, neighbors, { maxDepth: MAX_DEPTH, predecessors });
       dist = r.dist; trace = r.path;
     } catch (e) { console.error('  error on', key, e.message); }
     result[key] = dist;
