@@ -726,6 +726,10 @@
     Elite:      { en: 'Elite', es: 'Élite', fr: 'Élite', de: 'Elite', pt: 'Elite' },
     Rare:       { en: 'Rare', es: 'Rara', fr: 'Rare', de: 'Selten', pt: 'Rara' },
     Common:     { en: 'Common', es: 'Común', fr: 'Commune', de: 'Gewöhnlich', pt: 'Comum' },
+    shareCard:  { en: 'Share this card', es: 'Compartir carta', fr: 'Partager la carte', de: 'Karte teilen', pt: 'Compartilhar carta' },
+    shareCopied:{ en: 'Link copied', es: 'Enlace copiado', fr: 'Lien copié', de: 'Link kopiert', pt: 'Link copiado' },
+    sharePulled:{ en: 'New {r} card', es: 'Nueva carta {r}', fr: 'Nouvelle carte {r}', de: 'Neue {r}-Karte', pt: 'Nova carta {r}' },
+    shareBeat:  { en: 'Today’s {g} · can you beat it?', es: '{g} de hoy · ¿te atreves?', fr: '{g} du jour · à toi de jouer', de: 'Heutiges {g} · schaffst du es?', pt: '{g} de hoje · consegue?' },
     tapOpen:    { en: 'Tap to open', es: 'Toca para abrir', fr: 'Touche pour ouvrir', de: 'Tippen zum Öffnen', pt: 'Toque para abrir' },
     packOne:    { en: '1 card inside', es: '1 carta dentro', fr: '1 carte à l’intérieur', de: '1 Karte darin', pt: '1 carta dentro' },
     packMany:   { en: '{n} cards inside', es: '{n} cartas dentro', fr: '{n} cartes à l’intérieur', de: '{n} Karten darin', pt: '{n} cartas dentro' },
@@ -2480,6 +2484,9 @@
       '#clCollReveal{position:fixed;inset:0;bottom:auto;height:100vh;height:100dvh;z-index:260;display:none;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 42%,rgba(46,36,20,.72),rgba(8,7,9,.94) 70%);backdrop-filter:blur(8px);overflow:hidden;cursor:pointer}' +
       '#clCollReveal.open{display:flex}' +
       // the sealed pack every win opens before its cards flip (all modes share it)
+      '.clr-share{display:inline-flex;align-items:center;gap:7px;margin-top:12px;height:38px;padding:0 16px;border:0;border-radius:10px;cursor:pointer;font:inherit;font-size:.84rem;font-weight:700;color:#1a1408;background:linear-gradient(135deg,#f6dd86 0%,#d9ab42 34%,#f4dc8a 58%,#b9852a 100%);box-shadow:0 1px 0 rgba(255,255,255,.45) inset,0 10px 24px -10px rgba(232,182,74,.55)}' +
+      '.clr-share svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}' +
+      '.clr-share.done{background:rgba(255,255,255,.08);color:#f2ede4;box-shadow:0 0 0 1px rgba(246,221,134,.3) inset}' +
       '.clp-stage{position:relative;width:min(58vw,236px);aspect-ratio:5/7;margin-bottom:46px}' +
       '.clp-glow{position:absolute;inset:-34%;border-radius:50%;pointer-events:none;background:radial-gradient(closest-side,rgba(246,221,134,.45),rgba(246,221,134,.08) 60%,transparent);opacity:0;transform:scale(.6);transition:opacity .6s,transform .9s cubic-bezier(.2,.8,.2,1)}' +
       '.clp-pack{--w:min(58vw,236px);position:absolute;inset:0;border-radius:calc(var(--w)*.09);overflow:hidden;isolation:isolate;transition:transform .5s cubic-bezier(.2,.8,.2,1),opacity .45s;animation:clpBreathe 3.2s ease-in-out infinite;' +
@@ -3957,6 +3964,82 @@
     }
     if (_revealClosed) { var f = _revealClosed; _revealClosed = null; try { f(); } catch (_) { /* noop */ } }
   }
+  // ── Share a pulled card: a 1080×1350 image (the card, its rarity, the game it
+  //    came from) plus a link to that game's daily, so a pull can bring a friend. ──
+  function loadImg(src) {
+    return new Promise(function (res) {
+      if (!src) return res(null);
+      var im = new Image(); im.crossOrigin = 'anonymous';
+      im.onload = function () { res(im); }; im.onerror = function () { res(null); };
+      im.src = src;
+    });
+  }
+  function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+  function shareImage(c, gameName) {
+    var W = 1080, H = 1350, rl = RARITY[c.rarity] || RARITY.common;
+    var fontsReady = (document.fonts && document.fonts.load) ? Promise.all([document.fonts.load('600 80px Fraunces'), document.fonts.load('700 30px "Schibsted Grotesk"')]).catch(function () {}) : Promise.resolve();
+    var art = c.img ? (/^https?:/.test(c.img) ? c.img : 'https://image.tmdb.org/t/p/w780' + c.img) : '';
+    return Promise.all([loadImg(art), fontsReady]).then(function (r) {
+      var im = r[0], cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+      var ctx = cv.getContext('2d');
+      var bg = ctx.createRadialGradient(W / 2, H * .45, 40, W / 2, H * .45, H * .75);
+      bg.addColorStop(0, '#2e2414'); bg.addColorStop(.55, '#120f0c'); bg.addColorStop(1, '#0c0b0d');
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+      var leaf = ctx.createLinearGradient(0, 0, W, 0); leaf.addColorStop(0, '#f6dd86'); leaf.addColorStop(.35, '#d9ab42'); leaf.addColorStop(.6, '#f4dc8a'); leaf.addColorStop(1, '#b9852a');
+      ctx.textAlign = 'center';
+      ctx.fillStyle = leaf; ctx.font = '600 64px Fraunces, Georgia, serif'; ctx.fillText('CineLinks', W / 2, 118);
+      ctx.fillStyle = rl.ring; ctx.font = '700 30px "Schibsted Grotesk", system-ui, sans-serif';
+      var eyebrow = LT('sharePulled').replace('{r}', rarLabel(c.rarity)).toUpperCase();
+      try { ctx.letterSpacing = '6px'; } catch (_) {}
+      ctx.fillText(eyebrow, W / 2, 182);
+      try { ctx.letterSpacing = '0px'; } catch (_) {}
+      // the card
+      var cw = 620, ch = Math.round(cw * 1.5), cx = (W - cw) / 2, cy = 224;
+      ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.75)'; ctx.shadowBlur = 70; ctx.shadowOffsetY = 30;
+      rr(ctx, cx, cy, cw, ch, 34); ctx.fillStyle = '#151417'; ctx.fill(); ctx.restore();
+      ctx.save(); rr(ctx, cx, cy, cw, ch, 34); ctx.clip();
+      if (im) {
+        var s = Math.max(cw / im.width, ch / im.height), iw = im.width * s, ih = im.height * s;
+        ctx.drawImage(im, cx + (cw - iw) / 2, cy + (ch - ih) / 2, iw, ih);
+      }
+      var sh = ctx.createLinearGradient(0, cy + ch * .45, 0, cy + ch); sh.addColorStop(0, 'rgba(12,11,13,0)'); sh.addColorStop(.62, 'rgba(12,11,13,.82)'); sh.addColorStop(1, 'rgba(12,11,13,.97)');
+      ctx.fillStyle = sh; ctx.fillRect(cx, cy, cw, ch);
+      ctx.restore();
+      ctx.lineWidth = 8; ctx.strokeStyle = rl.ring; rr(ctx, cx + 4, cy + 4, cw - 8, ch - 8, 31); ctx.stroke();
+      ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255,255,255,.18)'; rr(ctx, cx + 18, cy + 18, cw - 36, ch - 36, 22); ctx.stroke();
+      // title on the card
+      var name = locName(c) || c.name || '', size = 58;
+      ctx.fillStyle = '#f2ede4'; ctx.font = '600 ' + size + 'px Fraunces, Georgia, serif';
+      while (ctx.measureText(name).width > cw - 80 && size > 34) { size -= 2; ctx.font = '600 ' + size + 'px Fraunces, Georgia, serif'; }
+      ctx.fillText(name, W / 2, cy + ch - 92);
+      ctx.fillStyle = rl.ring; ctx.font = '700 26px "Schibsted Grotesk", system-ui, sans-serif';
+      try { ctx.letterSpacing = '5px'; } catch (_) {}
+      ctx.fillText((rarLabel(c.rarity) + ' · ' + typeLabel(c)).toUpperCase(), W / 2, cy + ch - 48);
+      try { ctx.letterSpacing = '0px'; } catch (_) {}
+      // the dare
+      ctx.fillStyle = '#f2ede4'; ctx.font = '600 40px Fraunces, Georgia, serif';
+      ctx.fillText(LT('shareBeat').replace('{g}', gameName), W / 2, H - 92);
+      ctx.fillStyle = '#a59f95'; ctx.font = '500 28px "Schibsted Grotesk", system-ui, sans-serif';
+      ctx.fillText(location.host || 'cinelinks.vercel.app', W / 2, H - 46);
+      return new Promise(function (res) { cv.toBlob(function (b) { res(b); }, 'image/png'); });
+    });
+  }
+  function shareCard(c, btn) {
+    var pk = packFor(null), game = pk.label;
+    var url = location.origin + (pk.icon === 'cl' ? '/' : location.pathname) + '?ref=card';
+    var text = LT('sharePulled').replace('{r}', rarLabel(c.rarity)) + ': ' + (locName(c) || c.name) + '. ' + LT('shareBeat').replace('{g}', game);
+    try { if (window.Track) window.Track('card_share', { rarity: c.rarity, game: pk.icon }); } catch (_) { /* noop */ }
+    function copied() { try { navigator.clipboard.writeText(text + ' ' + url); } catch (_) { /* noop */ } if (btn) { btn.classList.add('done'); btn.lastChild.textContent = LT('shareCopied'); } }
+    return shareImage(c, game).then(function (blob) {
+      var file = null; try { file = blob ? new File([blob], 'cinelinks-card.png', { type: 'image/png' }) : null; } catch (_) { file = null; }
+      if (file && navigator.canShare && navigator.canShare({ files: [file] })) return navigator.share({ files: [file], text: text + ' ' + url }).catch(function () {});
+      if (navigator.share) return navigator.share({ text: text, url: url }).catch(function () {});
+      // desktop: save the image and copy the link
+      if (blob) { var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'cinelinks-card.png'; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1500); }
+      copied();
+    }).catch(copied);
+  }
+
   // The pack a reveal opens with: named after the game that paid it (by page), or
   // opts.pack = { label, bonus } for rewards that aren't one game's (trio, week, streak).
   var PACK_ICON = {
@@ -4046,7 +4129,10 @@
       function showCap(c) {
         var cap = document.getElementById('clrCap'); if (!cap) return;
         var rl = RARITY[c.rarity];
-        cap.innerHTML = (opts && opts.preview ? '' : '<span class="clr-tag new">' + LT('New') + '</span>') + '<span class="clr-rare-lbl" style="color:' + rl.ring + '">' + rarLabel(c.rarity) + '</span>' + (opts && opts.preview ? '' : '<span class="clr-xp">+' + (XP[c.rarity] || 10) + ' XP</span>');
+        cap.innerHTML = (opts && opts.preview ? '' : '<span class="clr-tag new">' + LT('New') + '</span>') + '<span class="clr-rare-lbl" style="color:' + rl.ring + '">' + rarLabel(c.rarity) + '</span>' + (opts && opts.preview ? '' : '<span class="clr-xp">+' + (XP[c.rarity] || 10) + ' XP</span>') +
+          (opts && opts.preview ? '' : '<div><button type="button" class="clr-share" id="clrShare"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v13M7 8l5-5 5 5"/><path d="M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/></svg><span>' + LT('shareCard') + '</span></button></div>');
+        var sb = document.getElementById('clrShare');
+        if (sb) sb.onclick = function (e) { e.stopPropagation(); clearT(); shareCard(c, sb); };   // stay on this card while sharing
         try { if (window.Sfx) window.Sfx.haptic(c.rarity === 'legendary' ? [20, 40, 60] : c.rarity === 'elite' ? [15, 30] : 10); } catch (_) { /* noop */ }
       }
       function next() { clearT(); stopShader(); stopGyro(); idx++; if (idx >= queue.length) { if (opts && opts.preview) closeReveal(); else summary(); } else card(queue[idx]); }
