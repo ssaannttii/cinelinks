@@ -1565,6 +1565,7 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opa
 <script src="i18n.js"></script>
 <script src="lib/credits.js"></script>
 <script src="lib/daily.js"></script>
+<script src="lib/trio.js"></script>
 <script src="lib/difficulty.js"></script>
 <script>
 const DAILY_TIME_ZONE = 'Europe/Madrid';
@@ -3402,6 +3403,7 @@ const TRIO_POOL = ['line', 'reel', 'code', 'grid', 'chain', 'grp', 'guess'];
 const TRIO_IDX = { cl: 0, line: 4, reel: 5, code: 6, grid: 7, chain: 8, grp: 9 };   // into metaItems()/META_NAV
 const DAY_GOAL = 3;
 function dailyTrio(ud) {
+  if (window.Trio) return Trio.today(ud);              // lib/trio.js: one definition for every page
   if (ud == null) ud = _udNow();
   const n = TRIO_POOL.length;
   const i = ud % n, j = (i + 1 + Math.floor(ud / n) % (n - 1)) % n;   // two distinct, pairing drifts week to week
@@ -3461,7 +3463,7 @@ function claimHabitRewards() {
       const why = res.map(r => { const m = /^rwStreak:(\d+)$/.exec(r.why); return m ? t('rwStreak').replace('{n}', m[1]) : t(r.why); }).join(' · ');
       try { if (window.Track) Track('habit_reward', { n: res.length, cards: cards.length }); } catch (_) {}
       // let the day-complete confetti on the meta bar land first, then open the pack
-      if (cards.length) setTimeout(function () { try { Collection.reveal(cards); } catch (_) {} }, 1500);
+      if (cards.length) setTimeout(function () { try { Collection.reveal(cards, { pack: { label: why, bonus: true } }); } catch (_) {} }, 1500);
       else if (dust) habitToast('✨ +' + dust + ' dust · ' + why);
       try { renderMetaBar(); } catch (_) {}
     })

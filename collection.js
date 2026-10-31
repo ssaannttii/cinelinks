@@ -726,6 +726,10 @@
     Elite:      { en: 'Elite', es: 'Élite', fr: 'Élite', de: 'Elite', pt: 'Elite' },
     Rare:       { en: 'Rare', es: 'Rara', fr: 'Rare', de: 'Selten', pt: 'Rara' },
     Common:     { en: 'Common', es: 'Común', fr: 'Commune', de: 'Gewöhnlich', pt: 'Comum' },
+    tapOpen:    { en: 'Tap to open', es: 'Toca para abrir', fr: 'Touche pour ouvrir', de: 'Tippen zum Öffnen', pt: 'Toque para abrir' },
+    packOne:    { en: '1 card inside', es: '1 carta dentro', fr: '1 carte à l’intérieur', de: '1 Karte darin', pt: '1 carta dentro' },
+    packMany:   { en: '{n} cards inside', es: '{n} cartas dentro', fr: '{n} cartes à l’intérieur', de: '{n} Karten darin', pt: '{n} cartas dentro' },
+    packBonus:  { en: 'Bonus pack', es: 'Sobre extra', fr: 'Paquet bonus', de: 'Bonuspack', pt: 'Pacote bônus' },
     tapNext:    { en: 'tap for next', es: 'toca para la siguiente', fr: 'touche pour la suivante', de: 'tippen für weiter', pt: 'toque para a próxima' },
     tapFinish:  { en: 'tap to finish', es: 'toca para terminar', fr: 'touche pour terminer', de: 'tippen zum Beenden', pt: 'toque para finalizar' },
     landTip:    { en: 'New cards land in <b>Your collection</b> on the home page', es: 'Las cartas nuevas aparecen en <b>Tu colección</b> en la página de inicio', fr: 'Les nouvelles cartes arrivent dans <b>Ta collection</b> sur la page d’accueil', de: 'Neue Karten landen in <b>Deine Sammlung</b> auf der Startseite', pt: 'As cartas novas aparecem em <b>Sua coleção</b> na página inicial' },
@@ -2473,8 +2477,36 @@
       '.cl-share-btn:disabled{opacity:.85;cursor:default;transform:none}' +
       '.cl-share-btn.shake{animation:clShake .4s}' +
       // ── reveal sequence ──
-      '#clCollReveal{position:fixed;inset:0;bottom:auto;height:100vh;height:100dvh;z-index:260;display:none;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 42%,rgba(26,32,41,.75),rgba(8,11,15,.93) 70%);backdrop-filter:blur(8px);overflow:hidden;cursor:pointer}' +
+      '#clCollReveal{position:fixed;inset:0;bottom:auto;height:100vh;height:100dvh;z-index:260;display:none;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 42%,rgba(46,36,20,.72),rgba(8,7,9,.94) 70%);backdrop-filter:blur(8px);overflow:hidden;cursor:pointer}' +
       '#clCollReveal.open{display:flex}' +
+      // the sealed pack every win opens before its cards flip (all modes share it)
+      '.clp-stage{position:relative;width:min(58vw,236px);aspect-ratio:5/7;margin-bottom:46px}' +
+      '.clp-glow{position:absolute;inset:-34%;border-radius:50%;pointer-events:none;background:radial-gradient(closest-side,rgba(246,221,134,.45),rgba(246,221,134,.08) 60%,transparent);opacity:0;transform:scale(.6);transition:opacity .6s,transform .9s cubic-bezier(.2,.8,.2,1)}' +
+      '.clp-pack{--w:min(58vw,236px);position:absolute;inset:0;border-radius:calc(var(--w)*.09);overflow:hidden;isolation:isolate;transition:transform .5s cubic-bezier(.2,.8,.2,1),opacity .45s;animation:clpBreathe 3.2s ease-in-out infinite;' +
+        'background:radial-gradient(120% 60% at 30% 0%,rgba(246,221,134,.16),transparent 55%),linear-gradient(165deg,#2b261d 0%,#16130f 55%,#221d15 100%);' +
+        'box-shadow:0 0 0 1px rgba(246,221,134,.32) inset,0 1px 0 rgba(255,255,255,.12) inset,0 30px 60px -24px rgba(0,0,0,.95),0 6px 16px -6px rgba(0,0,0,.7)}' +
+      '.clp-pack.bonus{background:radial-gradient(120% 70% at 30% 0%,rgba(255,226,140,.34),transparent 60%),linear-gradient(165deg,#3a2f17 0%,#1a150c 60%,#2d2412 100%)}' +
+      '.clp-pack::before{content:"";position:absolute;inset:0;z-index:-1;opacity:.55;background:repeating-linear-gradient(118deg,transparent 0 5px,rgba(246,221,134,.05) 5px 6px)}' +
+      '.clp-pack::after{content:"";position:absolute;inset:-40% -60%;z-index:2;pointer-events:none;background:linear-gradient(105deg,transparent 42%,rgba(255,240,200,.22) 50%,transparent 58%);transform:translateX(-60%);animation:clpSheen 4.5s ease-in-out infinite}' +
+      '.clp-crimp{position:absolute;left:0;right:0;height:calc(var(--w)*.075);background:repeating-linear-gradient(90deg,rgba(246,221,134,.42) 0 2px,transparent 2px 4px);opacity:.75}' +
+      '.clp-crimp.t{top:0}.clp-crimp.b{bottom:0}' +
+      '.clp-tear{position:absolute;left:0;right:0;top:0;height:16%;z-index:3;border-bottom:1px dashed rgba(246,221,134,.45);background:linear-gradient(180deg,rgba(255,240,200,.07),transparent);transition:transform .55s cubic-bezier(.2,.8,.2,1),opacity .5s}' +
+      '.clp-tear::after{content:"";position:absolute;right:8%;top:50%;width:14%;height:2px;background:rgba(246,221,134,.6);border-radius:2px;transform:translateY(-50%)}' +
+      '.clp-seal{position:absolute;left:50%;top:44%;width:44%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;display:grid;place-items:center;color:#1a1408;background:linear-gradient(135deg,#f6dd86 0%,#d9ab42 34%,#f4dc8a 58%,#b9852a 100%);box-shadow:0 0 0 calc(var(--w)*.02) rgba(12,11,13,.65),0 0 0 calc(var(--w)*.035) rgba(246,221,134,.5),0 6px 14px -4px rgba(0,0,0,.8)}' +
+      '.clp-seal svg{width:54%;height:54%;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}' +
+      '.clp-name{position:absolute;left:0;right:0;bottom:16%;text-align:center;font-family:Fraunces,Georgia,serif;font-weight:600;font-size:calc(var(--w)*.13);color:#f6dd86;white-space:nowrap}' +
+      '.clp-n{position:absolute;left:6%;right:6%;bottom:9%;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:calc(var(--w)*.05);letter-spacing:.16em;text-transform:uppercase;color:rgba(246,221,134,.6);font-weight:600}' +
+      '.clp-hint{position:absolute;left:0;right:0;bottom:-38px;text-align:center;font-size:.76rem;letter-spacing:.2em;text-transform:uppercase;color:#e8b64a;font-weight:600;animation:clpHint 1.8s ease-in-out infinite}' +
+      '.clp-stage.shake .clp-pack{animation:clpShake .38s ease-in-out}' +
+      '.clp-stage.torn .clp-tear{transform:translate(18%,-130%) rotate(14deg);opacity:0}' +
+      '.clp-stage.torn .clp-glow{opacity:1;transform:scale(1)}' +
+      '.clp-stage.out .clp-pack{transform:translateY(46%) scale(.94);opacity:0}' +
+      '.clp-stage.out .clp-hint{opacity:0;animation:none}' +
+      '@keyframes clpBreathe{50%{transform:translateY(-6px) rotate(-.6deg)}}' +
+      '@keyframes clpSheen{0%,55%{transform:translateX(-60%)}100%{transform:translateX(60%)}}' +
+      '@keyframes clpHint{50%{opacity:.45}}' +
+      '@keyframes clpShake{20%{transform:rotate(-2.4deg) scale(1.02)}45%{transform:rotate(2.2deg) scale(1.03)}70%{transform:rotate(-1.2deg) scale(1.03)}100%{transform:none}}' +
+      '@media (prefers-reduced-motion:reduce){.clp-pack,.clp-pack::after,.clp-hint{animation:none}}' +
       'html.cl-scroll-lock{overflow:hidden}' +
       'body.cl-scroll-lock{position:fixed;left:0;right:0;width:100%;overflow:hidden;overscroll-behavior:none}' +
       '.clr-flash{position:absolute;inset:0;z-index:5;pointer-events:none;opacity:0;background:radial-gradient(circle at 50% 45%,rgba(232,160,0,.5),rgba(232,160,0,.12) 38%,transparent 66%)}' +
@@ -3925,7 +3957,31 @@
     }
     if (_revealClosed) { var f = _revealClosed; _revealClosed = null; try { f(); } catch (_) { /* noop */ } }
   }
+  // The pack a reveal opens with: named after the game that paid it (by page), or
+  // opts.pack = { label, bonus } for rewards that aren't one game's (trio, week, streak).
+  var PACK_ICON = {
+    cl: '<path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"/>',
+    line: '<path d="M3 12h18"/><circle cx="7" cy="12" r="2"/><circle cx="17" cy="12" r="2"/><path d="M7 7v3M17 14v3"/>',
+    grp: '<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/>',
+    chain: '<path d="M9 7H6a4 4 0 0 0 0 8h3"/><path d="M15 7h3a4 4 0 0 1 0 8h-3"/><path d="M8 11h8"/>',
+    code: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 8h.01M12 8h4M8 12h8M8 16h5"/>',
+    grid: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>',
+    reel: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.2"/><circle cx="12" cy="6.3" r="1"/><circle cx="12" cy="17.7" r="1"/><circle cx="6.3" cy="12" r="1"/><circle cx="17.7" cy="12" r="1"/>',
+    clue: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
+    frame: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 15 5-5 4 4 3-3 6 6"/>',
+    cast: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4-6"/>',
+    star: '<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>'
+  };
+  var PACK_PAGE = { '': ['CineLinks', 'cl'], index: ['CineLinks', 'cl'], cineline: ['CineLine', 'line'], cinegroup: ['CineGroup', 'grp'], cinechain: ['CineChain', 'chain'],
+    cinecode: ['CineCode', 'code'], cinegrid: ['CineGrid', 'grid'], cinereel: ['CineReel', 'reel'], cineclue: ['CineClue', 'clue'], cineframe: ['CineFrame', 'frame'], cinecast: ['CineCast', 'cast'] };
+  function packFor(opt) {
+    if (opt && opt.label) return { label: opt.label, icon: opt.bonus ? 'star' : (opt.icon || 'cl'), bonus: !!opt.bonus };
+    var k = String(location.pathname || '/').replace(/^\//, '').replace(/\.html$/, '').replace(/\/$/, '');
+    var m = PACK_PAGE[k] || PACK_PAGE[''];
+    return { label: m[0], icon: m[1], bonus: false };
+  }
   // opts.preview: show the flip only (lobby prototype); no XP/level summary, since nothing was granted
+  // opts.pack: false = straight to the flip; { label, bonus } = name the sealed pack
   function reveal(cards, opts) {
     try {
       if (!Array.isArray(cards)) return;
@@ -4027,12 +4083,34 @@
       }
       var skip = document.getElementById('clrSkip');
       skip.style.display = ''; skip.onclick = function (e) { e.stopPropagation(); clearT(); if (opts && opts.preview) closeReveal(); else summary(); };
-      ov.onclick = function () { if (state === 'ready') next(); };
       ov.classList.add('open'); lockScroll(true);
       try { if (window.fxTrapFocus) _revealRelease = window.fxTrapFocus(ov); } catch (_) { /* noop */ }
       try { if (window.Sfx) window.Sfx.cardDeal(); } catch (_) { /* noop */ }
       try { if (window.Track) window.Track('card_revealed', { n: queue.length, top: queue[queue.length - 1].rarity }); } catch (_) { /* noop */ }
-      card(queue[0]);
+      // Every win opens a sealed pack first: one tap to tear it, then the cards flip.
+      function packStage() {
+        var pk = packFor(opts && opts.pack), n = queue.length;
+        document.getElementById('clrBody').innerHTML =
+          '<div class="clp-stage" id="clpStage"><div class="clp-glow"></div><div class="clp-pack' + (pk.bonus ? ' bonus' : '') + '">' +
+          '<span class="clp-crimp t"></span><span class="clp-seal"><svg viewBox="0 0 24 24">' + (PACK_ICON[pk.icon] || PACK_ICON.cl) + '</svg></span>' +
+          // a bonus pack is named "Bonus pack" and says why underneath (Today's trio, 5-day week…)
+          '<span class="clp-name">' + esc(pk.bonus ? LT('packBonus') : pk.label) + '</span>' +
+          '<span class="clp-n">' + esc(pk.bonus && pk.label ? pk.label : (n === 1 ? LT('packOne') : LT('packMany').replace('{n}', n))) + '</span>' +
+          '<span class="clp-crimp b"></span><span class="clp-tear"></span></div><div class="clp-hint">' + LT('tapOpen') + '</div></div>';
+        state = 'pack';
+      }
+      function tearPack() {
+        state = 'anim';
+        var st = document.getElementById('clpStage');
+        try { if (window.Sfx) { window.Sfx.cardFlip(); window.Sfx.haptic([8, 30, 12]); } } catch (_) { /* noop */ }
+        if (reduced || !st) { card(queue[0]); return; }
+        st.className = 'clp-stage shake';
+        later(380, function () { st.className = 'clp-stage shake torn'; });
+        later(880, function () { st.className = 'clp-stage torn out'; });
+        later(1200, function () { card(queue[0]); });
+      }
+      ov.onclick = function () { if (state === 'pack') tearPack(); else if (state === 'ready') next(); };
+      if (opts && (opts.preview || opts.pack === false)) card(queue[0]); else packStage();
     } catch (_) { /* noop */ }
   }
 
