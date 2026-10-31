@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CineChain — Build the longest film chain</title>
 <meta name="description" content="Start from today's film and chain movies that share an actor — but each linking actor can only be used once. Go as long as you can.">
-<meta name="theme-color" content="#252c35">
+<meta name="theme-color" content="#0c0b0d">
 <link rel="icon" type="image/png" href="/logo.png">
 <link rel="canonical" href="https://cinelinks.vercel.app/cinechain.html">
 <meta property="og:type" content="website">
@@ -21,7 +21,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600&family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#252c35;--s1:#2c343f;--bdr:rgba(255,255,255,.07);--txt:#f0f0f0;--mut:#9aa4b0;--gold:#e8a000;--good:#5bbd7a}
+:root{--bg:#0c0b0d;--s1:#151417;--bdr:rgba(246,221,134,.085);--txt:#f2ede4;--mut:#a59f95;--gold:#e8a000;--good:#5bbd7a}
 body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;display:flex}
 .wrap{max-width:480px;margin:auto;padding:26px 16px 70px;width:100%;text-align:center}
 .logo{font-size:2rem;font-weight:800;letter-spacing:-.02em}
@@ -30,7 +30,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 .kicker{display:inline-block;font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);background:rgba(232,160,0,.15);padding:4px 9px;border-radius:999px;margin-bottom:14px;}
 .score{font-size:.85rem;color:var(--mut);font-weight:600;margin-bottom:14px}
 .score b{color:var(--gold);font-weight:800;font-size:1.4rem}
-.timer-big{position:sticky;top:0;z-index:40;font-size:2.4rem;font-weight:800;font-variant-numeric:tabular-nums;color:var(--gold);letter-spacing:.02em;line-height:1;margin:0 -16px 8px;padding:12px 0 8px;background:rgba(37,44,53,.92);backdrop-filter:blur(6px)}
+.timer-big{position:sticky;top:0;z-index:40;font-size:2.4rem;font-weight:800;font-variant-numeric:tabular-nums;color:var(--gold);letter-spacing:.02em;line-height:1;margin:0 -16px 8px;padding:12px 0 8px;background:rgba(21,20,23,.92);backdrop-filter:blur(6px)}
 .timer-big.low{color:#e8806f;animation:pulse 1s infinite}
 @keyframes pulse{50%{opacity:.5}}
 .chain{display:flex;flex-direction:column;align-items:center;gap:0;margin:0 auto 8px;max-width:340px}

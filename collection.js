@@ -166,7 +166,7 @@
       }
       var p = document.createElement('div');
       p.id = 'cvDbg';
-      p.style.cssText = 'position:fixed;right:14px;bottom:14px;z-index:100000;width:250px;background:rgba(37,44,53,.97);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:14px;color:#eee;font:12px/1.35 system-ui,-apple-system,sans-serif;box-shadow:0 24px 70px rgba(0,0,0,.65);backdrop-filter:blur(8px)';
+      p.style.cssText = 'position:fixed;right:14px;bottom:14px;z-index:100000;width:250px;background:rgba(21,20,23,.97);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:14px;color:#eee;font:12px/1.35 system-ui,-apple-system,sans-serif;box-shadow:0 24px 70px rgba(0,0,0,.65);backdrop-filter:blur(8px)';
       p.innerHTML =
         '<div style="font-weight:800;margin-bottom:10px;color:#e8a000;display:flex;justify-content:space-between;align-items:center">Depth zoom debug<span id="cvDbgX" style="cursor:pointer;opacity:.6">✕</span></div>' +
         '<div style="width:150px;margin:0 auto 10px"><div class="auth auth-common" id="cvDbgPrevWrap"><div class="auth-card tilted" id="cvDbgPrev" style="--dz:1;position:relative;aspect-ratio:2/3;border-radius:12px;overflow:hidden;background:#111"><img class="auth-bgimg" crossorigin="anonymous" src="' + poster + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top"></div></div></div>' +
@@ -2209,7 +2209,7 @@
       '@keyframes clCollIn{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}' +
       // ── The Vault: fullscreen collection stage. UI is a dark neutral chrome so the
       // card art carries all the colour (the Snap rule: cards own the hierarchy).
-      '#clCollModal{position:fixed;inset:0;z-index:240;display:none;flex-direction:column;background:#252c35}' +
+      '#clCollModal{position:fixed;inset:0;z-index:240;display:none;flex-direction:column;background:#0c0b0d}' +
       // site chrome that floats above the vault (help FAB z900, cookie bar z1000)
       // ducks while any collection surface is open
       'body:has(#clCollModal.open) #ht-btn,body:has(#clCollDetail.open) #ht-btn,body:has(#clCollReveal.open) #ht-btn,' +
@@ -2269,7 +2269,7 @@
       '.cl-vtab.on{color:#e8a000;border-bottom-color:#e8a000}' +
       '.cl-vtab .bdg{min-width:16px;padding:1px 5px;border-radius:99px;background:#e8a000;color:#1a1200;font-size:.6rem;font-weight:800;text-align:center}' +
       '@media(max-width:640px){' +
-        '.cl-vault-tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;margin:0;justify-content:space-around;background:rgba(37,44,53,.97);border-top:1px solid rgba(255,255,255,.1);border-bottom:none;padding:4px 6px calc(4px + env(safe-area-inset-bottom))}' +
+        '.cl-vault-tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;margin:0;justify-content:space-around;background:rgba(21,20,23,.97);border-top:1px solid rgba(255,255,255,.1);border-bottom:none;padding:4px 6px calc(4px + env(safe-area-inset-bottom))}' +
         '.cl-vtab{flex:1;flex-direction:column;gap:2px;padding:7px 4px;font-size:.6rem;border-bottom:none;border-radius:12px}' +
         '.cl-vtab .ic{font-size:1.15rem}' +
         '.cl-vtab.on{background:rgba(232,160,0,.12);border-bottom-color:transparent}' +
@@ -2283,8 +2283,8 @@
       '.cl-q-head b{color:#f5c542}.cl-q-head i{color:#8d8d8d;font-style:normal;font-weight:700}' +
       '.cl-q-row{display:grid;grid-template-columns:1fr;gap:7px}' +
       '@media(min-width:640px){.cl-q-row{grid-template-columns:1fr 1fr 1fr}}' +
-      '.cl-q{display:flex;align-items:center;gap:10px;background:#2c343f;border-radius:13px;padding:9px 11px}' +
-      '.cl-q.ready{background:linear-gradient(180deg,rgba(232,160,0,.14),#2c343f);box-shadow:inset 0 0 0 1px rgba(232,194,74,.35)}' +
+      '.cl-q{display:flex;align-items:center;gap:10px;background:#151417;border-radius:13px;padding:9px 11px}' +
+      '.cl-q.ready{background:linear-gradient(180deg,rgba(232,160,0,.14),#151417);box-shadow:inset 0 0 0 1px rgba(232,194,74,.35)}' +
       '.cl-q.claimed{opacity:.55}' +
       '.cl-q-ic{width:30px;height:30px;flex:none;border-radius:9px;background:rgba(232,160,0,.14);display:flex;align-items:center;justify-content:center;font-size:.95rem}' +
       '.cl-q-body{flex:1;min-width:0}' +
@@ -2297,8 +2297,8 @@
       '.cl-q-ok{flex:none;color:#5bbd7a;font-weight:800}' +
       // Prime strip — the always-open dust sink (guarantee the next card's rarity)
       '.cl-prime{width:100%}' +
-      '.cl-prime-box{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#2c343f;border-radius:13px;padding:9px 11px;margin-top:9px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.05)}' +
-      '.cl-prime.armed .cl-prime-box{background:linear-gradient(180deg,rgba(232,160,0,.16),#2c343f);box-shadow:inset 0 0 0 1px rgba(232,194,74,.4)}' +
+      '.cl-prime-box{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#151417;border-radius:13px;padding:9px 11px;margin-top:9px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.05)}' +
+      '.cl-prime.armed .cl-prime-box{background:linear-gradient(180deg,rgba(232,160,0,.16),#151417);box-shadow:inset 0 0 0 1px rgba(232,194,74,.4)}' +
       '.cl-prime-ic{width:30px;height:30px;flex:none;border-radius:9px;background:rgba(232,160,0,.14);display:flex;align-items:center;justify-content:center;font-size:1rem}' +
       '.cl-prime-body{flex:1;min-width:120px}' +
       '.cl-prime-ttl{font-size:.72rem;font-weight:800;color:#f0f0f0;line-height:1.25}' +
@@ -2325,12 +2325,12 @@
       '.cl-sheet.open{display:block}' +
       '.cl-sheet-scrim{position:absolute;inset:0;background:rgba(8,11,15,.6);animation:clShScrim .22s ease both}' +
       '@keyframes clShScrim{from{opacity:0}to{opacity:1}}' +
-      '.cl-sheet-panel{position:absolute;left:0;right:0;bottom:0;max-height:78%;overflow-y:auto;background:#252c35;border-radius:20px 20px 0 0;border-top:1px solid rgba(255,255,255,.1);box-shadow:0 -18px 50px rgba(0,0,0,.55);padding:6px 14px calc(18px + env(safe-area-inset-bottom));animation:clShUp .3s cubic-bezier(.2,.9,.3,1) both}' +
+      '.cl-sheet-panel{position:absolute;left:0;right:0;bottom:0;max-height:78%;overflow-y:auto;background:#0c0b0d;border-radius:20px 20px 0 0;border-top:1px solid rgba(255,255,255,.1);box-shadow:0 -18px 50px rgba(0,0,0,.55);padding:6px 14px calc(18px + env(safe-area-inset-bottom));animation:clShUp .3s cubic-bezier(.2,.9,.3,1) both}' +
       '@keyframes clShUp{from{transform:translateY(100%)}to{transform:none}}' +
       '.cl-sheet-grab{width:40px;height:4px;border-radius:99px;background:rgba(255,255,255,.24);margin:6px auto 2px;cursor:pointer}' +
       '.cl-sheet-body{padding-bottom:4px}' +
       '.cl-dust-btn{position:relative;border:0;font:inherit;cursor:pointer}' +
-      '.cl-dust-badge{position:absolute;top:-5px;right:-5px;min-width:17px;height:17px;border-radius:99px;background:#e8a000;color:#1a1408;font-size:.62rem;font-weight:900;font-style:normal;display:flex;align-items:center;justify-content:center;padding:0 4px;box-shadow:0 0 0 2px #252c35}' +
+      '.cl-dust-badge{position:absolute;top:-5px;right:-5px;min-width:17px;height:17px;border-radius:99px;background:#e8a000;color:#1a1408;font-size:.62rem;font-weight:900;font-style:normal;display:flex;align-items:center;justify-content:center;padding:0 4px;box-shadow:0 0 0 2px #0c0b0d}' +
       '@media(prefers-reduced-motion:reduce){.cl-sheet-panel,.cl-sheet-scrim{animation:none}}' +
       // ── Condensed header: the identity block yields to the cards while browsing ──
       '.cl-vault-hd .cl-coll-lvl{overflow:hidden;transition:max-height .28s cubic-bezier(.2,.8,.2,1),opacity .18s ease,margin-top .28s cubic-bezier(.2,.8,.2,1);max-height:90px}' +
@@ -2360,8 +2360,8 @@
       '.cb-buy:hover{filter:brightness(1.08)}.cb-buy.off{background:#5a5348;color:#2a2620;cursor:default}' +
       '.cb-buy.shake{animation:clShake .4s}' +
       // Draw strip (dust → random unowned card) — sits under the Collections hero
-      '.cl-draw{display:flex;align-items:center;gap:11px;background:linear-gradient(180deg,rgba(232,160,0,.12),#2c343f);border-radius:14px;padding:11px 13px;margin:2px 0 16px;box-shadow:inset 0 0 0 1px rgba(232,194,74,.28)}' +
-      '.cl-draw[data-complete="1"]{background:#2c343f;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);opacity:.75}' +
+      '.cl-draw{display:flex;align-items:center;gap:11px;background:linear-gradient(180deg,rgba(232,160,0,.12),#151417);border-radius:14px;padding:11px 13px;margin:2px 0 16px;box-shadow:inset 0 0 0 1px rgba(232,194,74,.28)}' +
+      '.cl-draw[data-complete="1"]{background:#151417;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);opacity:.75}' +
       '.cl-draw-ic{width:34px;height:34px;flex:none;border-radius:10px;background:rgba(232,160,0,.16);display:flex;align-items:center;justify-content:center;font-size:1.15rem}' +
       '.cl-draw-b{flex:1;min-width:0}' +
       '.cl-draw-t{font-size:.82rem;font-weight:800;color:#f0f0f0;line-height:1.2}' +
@@ -2393,7 +2393,7 @@
       '.cl-coll-grid{flex:1;overflow-y:auto;width:100%;max-width:1192px;margin:0 auto;padding:6px 16px 26px}' +
       // near edge-to-edge on a phone: those side gutters were width the cards wanted
       '@media(max-width:640px){.cl-coll-grid{padding:6px 8px 96px}}' +
-      '.cl-sec{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:9px;padding:12px 2px 9px;background:linear-gradient(180deg,#252c35 72%,rgba(37,44,53,0));font-weight:800;font-size:.76rem;letter-spacing:.09em;text-transform:uppercase;color:var(--sc,#cfcfcf)}' +
+      '.cl-sec{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:9px;padding:12px 2px 9px;background:linear-gradient(180deg,#0c0b0d 72%,rgba(21,20,23,0));font-weight:800;font-size:.76rem;letter-spacing:.09em;text-transform:uppercase;color:var(--sc,#cfcfcf)}' +
       '.cl-sec .gem{width:9px;height:9px;border-radius:2.5px;transform:rotate(45deg);background:var(--sc,#888);box-shadow:0 0 9px var(--sc,transparent);flex-shrink:0}' +
       '.cl-sec .n{color:#777;font-family:ui-monospace,Menlo,monospace;font-size:.72rem;letter-spacing:0}' +
       '.cl-sec .ln{flex:1;height:1px;background:linear-gradient(90deg,rgba(255,255,255,.12),transparent)}' +
@@ -2404,7 +2404,7 @@
       '.cl-coll-grid img,#clDetailCard img,#clrBody img,.cl-detail-card img{pointer-events:none;-webkit-user-drag:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}' +
       '.cl-coll-empty{padding:36px 20px 46px;text-align:center;color:#9a9a9a;font-size:.9rem;grid-column:1/-1}' +
       '.cl-empty-row{display:flex;justify-content:center;gap:12px;margin-bottom:18px}' +
-      '.cl-ghost{width:86px;aspect-ratio:5/7;border-radius:12px;border:1.5px dashed rgba(255,255,255,.14);background:repeating-linear-gradient(45deg,#28303a,#28303a 8px,#2c343f 8px,#2c343f 16px);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.16);font-size:1.5rem;font-weight:800}' +
+      '.cl-ghost{width:86px;aspect-ratio:5/7;border-radius:12px;border:1.5px dashed rgba(255,255,255,.14);background:repeating-linear-gradient(45deg,#28303a,#28303a 8px,#151417 8px,#151417 16px);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.16);font-size:1.5rem;font-weight:800}' +
       '.cl-empty-row .cl-ghost:nth-child(2){transform:translateY(-7px) rotate(2deg)}' +
       '.cl-empty-row .cl-ghost:nth-child(1){transform:rotate(-4deg)}' +
       '.cl-empty-row .cl-ghost:nth-child(3){transform:rotate(4deg)}' +
@@ -2423,7 +2423,7 @@
       '@keyframes clDetSwap{from{opacity:.25;transform:scale(.965)}to{opacity:1;transform:none}}' +
       '.cl-detail-box.swap{animation:clDetSwap .2s ease both}' +
       // debug panel
-      '.cl-dbg{background:#2c343f;border:1px solid rgba(255,255,255,.1);border-radius:16px;width:100%;max-width:440px;max-height:86vh;overflow-y:auto;padding:16px;box-shadow:0 28px 80px rgba(0,0,0,.6);color:#e8e8e8;font-size:.82rem}' +
+      '.cl-dbg{background:#151417;border:1px solid rgba(255,255,255,.1);border-radius:16px;width:100%;max-width:440px;max-height:86vh;overflow-y:auto;padding:16px;box-shadow:0 28px 80px rgba(0,0,0,.6);color:#e8e8e8;font-size:.82rem}' +
       '.cl-dbg h3{font-size:.95rem;font-weight:800;margin:0 0 4px;display:flex;justify-content:space-between;align-items:center}' +
       '.cl-dbg h3 span{color:#e8a000}' +
       '.cl-dbg section{border-top:1px solid rgba(255,255,255,.08);padding:12px 0 4px;margin-top:8px}' +
@@ -2453,7 +2453,7 @@
       '.cl-di{width:300px;max-width:90vw}' +
       '.cl-di-name{font-size:1.15rem;font-weight:800;color:#f5f5f5;text-align:center;margin-bottom:11px}' +
       '.cl-di-rows{display:flex;flex-direction:column;gap:1px;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.09)}' +
-      '.cl-di-row{display:flex;justify-content:space-between;padding:10px 14px;background:#2c343f;font-size:.84rem}' +
+      '.cl-di-row{display:flex;justify-content:space-between;padding:10px 14px;background:#151417;font-size:.84rem}' +
       '.cl-di-row span{color:#9a9a9a}.cl-di-row b{color:#f0f0f0;font-weight:700}' +
       '.cl-shine-wrap{width:100%;margin-top:13px;text-align:center}' +
       '.cl-shine-btn{width:100%;border:none;border-radius:12px;padding:12px 14px;font-size:.92rem;font-weight:800;cursor:pointer;color:#06121f;background:linear-gradient(135deg,#bfe6ff,#7ab8ff);box-shadow:0 6px 18px rgba(120,184,255,.32);transition:transform .12s ease,box-shadow .2s ease}' +
@@ -2563,7 +2563,7 @@
       '.clr-btn{padding:11px 20px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:#f0f0f0;font:inherit;font-weight:800;cursor:pointer}.clr-btn.gold{background:linear-gradient(135deg,#f5c542,#e8a000);color:#111;border:none}' +
       '@media(prefers-reduced-motion:reduce){.clr-stage,.clr-flip.flip-go,.clr-flip.live{animation:none}.clr-flash.go,.clr-flip .clr-halo,.clr-face::before,.clr-face::after{animation:none}.clr-face::before,.clr-face::after{display:none}}' +
       // ── sets view ──
-      '.cl-set{width:100%;display:flex;align-items:center;gap:12px;padding:13px 14px;margin-bottom:10px;border-radius:12px;background:#2c343f;border:1px solid rgba(255,255,255,.09);cursor:pointer;text-align:left;font:inherit;color:#f0f0f0}' +
+      '.cl-set{width:100%;display:flex;align-items:center;gap:12px;padding:13px 14px;margin-bottom:10px;border-radius:12px;background:#151417;border:1px solid rgba(255,255,255,.09);cursor:pointer;text-align:left;font:inherit;color:#f0f0f0}' +
       '.cl-set:hover{border-color:rgba(232,160,0,.4)}' +
       '.cl-set.done{border-color:rgba(232,160,0,.5);background:linear-gradient(180deg,rgba(232,160,0,.1),#1c1c1c)}' +
       '.cl-set-tx{flex:1;min-width:0}' +
@@ -2609,7 +2609,7 @@
       '.cl-sx-ring span{width:44px;height:44px;margin:6px;border-radius:50%;background:#212831;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;color:#f2ead6;font-variant-numeric:tabular-nums}' +
       '.cl-sx-ring i{font-style:normal;font-size:.6rem;color:#8a8272}' +
       '.cl-sx.mile .cl-sx-info{flex:1;min-width:0}' +
-      '.cl-slot{position:relative;aspect-ratio:5/7;border-radius:12px;border:1.5px dashed rgba(255,255,255,.16);background:repeating-linear-gradient(45deg,#28303a,#28303a 9px,#2c343f 9px,#2c343f 18px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:8px}' +
+      '.cl-slot{position:relative;aspect-ratio:5/7;border-radius:12px;border:1.5px dashed rgba(255,255,255,.16);background:repeating-linear-gradient(45deg,#28303a,#28303a 9px,#151417 9px,#151417 18px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:8px}' +
       '.cl-slot-q{font-size:1.8rem;font-weight:800;color:rgba(255,255,255,.22)}' +
       '.cl-slot-nm{font-size:.64rem;font-weight:700;color:rgba(255,255,255,.45);line-height:1.2}' +
       '.cl-slot-forge{font:inherit;font-size:.66rem;font-weight:800;color:#bfe6ff;background:rgba(120,184,255,.12);border:1px solid rgba(150,205,255,.4);border-radius:999px;padding:4px 10px;cursor:pointer;transition:background .15s}' +
@@ -2631,7 +2631,7 @@
       '#clSetWin{position:fixed;inset:0;z-index:255;display:none;align-items:center;justify-content:center;padding:22px;background:rgba(8,11,15,.72);backdrop-filter:blur(6px)}' +
       '#clSetWin.on{display:flex;animation:clswFade .25s ease both}' +
       '@keyframes clswFade{from{opacity:0}to{opacity:1}}' +
-      '.clsw-card{position:relative;width:100%;max-width:340px;text-align:center;background:var(--s1,#2c343f);border:1px solid rgba(232,194,74,.4);border-radius:20px;padding:26px 22px 22px;box-shadow:0 24px 70px rgba(0,0,0,.5);animation:clswPop .42s cubic-bezier(.22,1,.36,1) both}' +
+      '.clsw-card{position:relative;width:100%;max-width:340px;text-align:center;background:var(--s1,#151417);border:1px solid rgba(232,194,74,.4);border-radius:20px;padding:26px 22px 22px;box-shadow:0 24px 70px rgba(0,0,0,.5);animation:clswPop .42s cubic-bezier(.22,1,.36,1) both}' +
       '@keyframes clswPop{from{opacity:0;transform:translateY(18px) scale(.94)}to{opacity:1;transform:none}}' +
       '.clsw-badge{width:64px;height:64px;margin:0 auto 12px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#1a1408;background:linear-gradient(160deg,#f5d97a,#e8a000);box-shadow:0 0 0 6px rgba(232,194,74,.14),0 10px 26px rgba(232,160,0,.4)}' +
       '.clsw-badge svg{width:34px;height:34px}' +
@@ -2659,7 +2659,7 @@
       '.cb-item.locked .cb-swatch::after{content:attr(data-req);position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;text-align:center;padding:12px 6px;color:#fff;font-size:.66rem;font-weight:800;background:rgba(0,0,0,.55)}' +
       '.cb-nm{font-size:.7rem;font-weight:700;color:#cfcfcf;margin-top:6px}.cb-item.locked .cb-nm{color:#777}' +
       '.ac-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:11px}' +
-      '.ac-item{position:relative;border-radius:12px;padding:13px 11px 12px;text-align:center;background:#2c343f;border:1px solid rgba(255,255,255,.06)}' +
+      '.ac-item{position:relative;border-radius:12px;padding:13px 11px 12px;text-align:center;background:#151417;border:1px solid rgba(255,255,255,.06)}' +
       '.ac-item.got{background:linear-gradient(165deg,#2a2410,#161204);border-color:rgba(232,194,74,.4);box-shadow:0 0 0 1px rgba(232,194,74,.12),0 10px 26px rgba(0,0,0,.4)}' +
       '.ac-ic{color:#e8c24a;font-size:1.9rem;line-height:1;filter:grayscale(1) opacity(.4)}.ac-ic svg{width:30px;height:30px}' +
       '.ac-item.got .ac-ic{filter:drop-shadow(0 3px 10px rgba(232,194,74,.5))}' +
