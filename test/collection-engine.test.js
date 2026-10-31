@@ -144,3 +144,30 @@ test('showcase toggles membership and caps at six', () => {
   assert.deepStrictEqual({ ok: off.ok, on: off.on }, { ok: true, on: false });
   assert.strictEqual(C.showcase().length, 5);
 });
+
+// ── habit rewards (today's trio, weekly track, streak milestones) ───────────
+test('a habit reward pays an unowned card at or above its tier, exactly once', async () => {
+  const r = await C.claimReward('trio:1', { card: 'elite' });
+  assert.strictEqual(r.cards.length, 1);
+  assert.ok(['elite', 'legendary'].includes(r.cards[0].rarity), 'never below the promised tier');
+  assert.strictEqual(await C.claimReward('trio:1', { card: 'elite' }), null, 'same key never pays twice');
+  assert.strictEqual(C.rewardClaimed('trio:1'), true);
+});
+
+test('with nothing left at that tier it pays dust instead of downgrading', async () => {
+  // own every legendary in the pool, then ask for one more
+  for (let i = 0; i < 400; i++) {
+    const pick = await C.claimReward('fill:' + i, { card: 'legendary' });
+    if (!pick.cards.length) break;
+  }
+  const d0 = C.dust();
+  const r = await C.claimReward('streak:100', { card: 'legendary' });
+  assert.deepStrictEqual(r.cards, []);
+  assert.strictEqual(C.dust() - d0, 400);
+});
+
+test('a perfect week unlocks its trophy and title', async () => {
+  await C.claimReward('week7:20752', { dust: 100, perfect: 1 });
+  assert.ok(C.achievements().find(a => a.id === 'perfectweek').unlocked);
+  assert.ok(C.titles().find(t => t.id === 'perfectweek').unlocked);
+});

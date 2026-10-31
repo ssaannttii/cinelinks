@@ -157,6 +157,15 @@ body{font-family:var(--fui);background:var(--bg);color:var(--txt);min-height:100
 @media (max-width:560px){.first-loop{font-size:.66rem;gap:7px}.beta-callout{align-items:flex-start;flex-direction:column}.beta-pill{align-self:flex-start}}
 /* "Day complete" — clearing every daily lights the top banner gold-green. */
 .meta-trio{display:block;flex-basis:100%;margin-top:3px;font-size:.72rem;font-weight:600;color:var(--mut)}.meta-trio span.ok{color:var(--goldsoft,#f5c542)}
+.meta-prize{font-style:normal;color:var(--goldsoft,#f5c542);opacity:.85;white-space:nowrap}
+.meta-week{display:flex;flex-wrap:wrap;align-items:center;gap:3px 8px;flex-basis:100%;margin-top:6px;font-size:.68rem;font-weight:600;color:var(--mut)}
+.mw-l{color:var(--gold);font-weight:800;letter-spacing:.1em;text-transform:uppercase;font-size:.6rem;white-space:nowrap}
+.mw-marks{display:inline-flex;gap:3px}
+.mw-marks i{width:11px;height:11px;border-radius:3px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
+.mw-marks i.on{background:var(--gold);box-shadow:none}
+.mw-marks i.miss{box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);opacity:.6}
+.mw-marks i.now{box-shadow:inset 0 0 0 1.5px var(--gold)}.mw-marks i.on.now{box-shadow:0 0 0 2px rgba(232,160,0,.35)}
+.mw-h{min-width:0;line-height:1.3}
 .meta-bar.all-done{background:rgba(232,160,0,.16);box-shadow:inset 0 0 0 1px rgba(232,160,0,.3)}
 .meta-alldone{color:var(--gold);font-weight:800;letter-spacing:.01em}
 @keyframes allDonePop{0%{transform:scale(1)}25%{transform:scale(1.035);box-shadow:0 0 0 3px rgba(232,160,0,.55),0 18px 50px rgba(232,160,0,.4)}100%{transform:scale(1)}}
@@ -2307,7 +2316,7 @@ function renderFeatured() {
     }
   } catch(_) {}
 }
-window.addEventListener('load', function () { try { renderCollCard(); renderFeatured(); assignGamePosters(); } catch(_) {} });
+window.addEventListener('load', function () { try { renderCollCard(); renderFeatured(); assignGamePosters(); } catch(_) {} setTimeout(function () { try { claimHabitRewards(); } catch (_) {} }, 900); });
 let _bip = null;
 window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); _bip = e; try { maybeShowInstall(); } catch(_) {} });
 function maybeShowInstall() {
@@ -3258,6 +3267,68 @@ function trioSlotDone(items, key) {
 function metaAllDone(items) {
   return items.length > 0 && dailyTrio().every(k => trioSlotDone(items, k));
 }
+// ── Weekly track + habit rewards ─────────────────────────────────────────────
+// trioDays = UTC days the trio was finished (recorded here, the only page that
+// knows the trio). The week runs Monday→Sunday; 5 of 7 pays an Elite+ card, 7 of 7
+// a Perfect Week trophy. Collection.claimReward guarantees each key pays once.
+function trioDays() { try { const d = JSON.parse(localStorage.getItem('trioDays')); return Array.isArray(d) ? d : []; } catch (_) { return []; } }
+function noteTrioDay(items) {
+  if (!metaAllDone(items || metaItems())) return false;
+  const ud = _udNow(), days = trioDays();
+  if (days.indexOf(ud) < 0) { days.push(ud); try { localStorage.setItem('trioDays', JSON.stringify(days.slice(-120))); } catch (_) {} }
+  return true;
+}
+function weekInfo(ud) {
+  if (ud == null) ud = _udNow();
+  const mon = ud - ((ud + 3) % 7);                    // UTC day 0 (1970-01-01) was a Thursday
+  const set = new Set(trioDays());
+  const marks = [0, 1, 2, 3, 4, 5, 6].map(i => ({ done: set.has(mon + i), today: mon + i === ud, past: mon + i < ud }));
+  return { mon: mon, marks: marks, count: marks.filter(m => m.done).length };
+}
+const STREAK_REWARDS = [[7, { dust: 50 }], [30, { card: 'elite' }], [100, { card: 'legendary' }]];
+let _claimingRewards = false;
+function claimHabitRewards() {
+  if (_claimingRewards || !window.Collection || !Collection.claimReward) return;
+  const ss = document.getElementById('startScreen');
+  if (!ss || !ss.classList.contains('active')) return;                       // only on the home, never mid-game
+  const rv = document.getElementById('clCollReveal');
+  if (rv && rv.classList.contains('open')) { setTimeout(claimHabitRewards, 2500); return; }   // a reveal is already up
+  const items = metaItems(), ud = _udNow();
+  const trioDone = noteTrioDay(items), w = weekInfo(ud), streak = streakStats().cur;
+  const due = [];
+  if (trioDone) due.push(['trio:' + ud, { card: 'rare' }, 'rwTrio']);
+  if (w.count >= 5) due.push(['week5:' + w.mon, { card: 'elite' }, 'rwWeek5']);
+  if (w.count >= 7) due.push(['week7:' + w.mon, { dust: 100, perfect: 1 }, 'rwPerfect']);
+  STREAK_REWARDS.forEach(([n, spec]) => { if (streak >= n) due.push(['streak:' + n, spec, 'rwStreak:' + n]); });
+  const todo = due.filter(d => !Collection.rewardClaimed(d[0]));
+  if (!todo.length) return;
+  _claimingRewards = true;
+  Promise.all(todo.map(d => Collection.claimReward(d[0], d[1]).then(r => r && Object.assign(r, { why: d[2] }))))
+    .then(res => {
+      res = res.filter(Boolean);
+      const cards = [].concat.apply([], res.map(r => r.cards || []));
+      const dust = res.reduce((a, r) => a + (r.dust || 0), 0);
+      const why = res.map(r => { const m = /^rwStreak:(\d+)$/.exec(r.why); return m ? t('rwStreak').replace('{n}', m[1]) : t(r.why); }).join(' · ');
+      try { if (window.Track) Track('habit_reward', { n: res.length, cards: cards.length }); } catch (_) {}
+      // let the day-complete confetti on the meta bar land first, then open the pack
+      if (cards.length) setTimeout(function () { try { Collection.reveal(cards); } catch (_) {} }, 1500);
+      else if (dust) habitToast('✨ +' + dust + ' dust · ' + why);
+      try { renderMetaBar(); } catch (_) {}
+    })
+    .catch(function () {})
+    .then(function () { _claimingRewards = false; });
+}
+function habitToast(text) {
+  try {
+    var el = document.createElement('div'); el.setAttribute('role', 'status');
+    el.style.cssText = 'position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(16px);z-index:240;max-width:min(92vw,420px);background:var(--s1,#2c343f);border:1px solid rgba(232,160,0,.4);border-radius:14px;padding:11px 15px;font-size:.82rem;font-weight:700;line-height:1.35;color:var(--txt,#f0f0f0);box-shadow:0 16px 44px rgba(0,0,0,.5);opacity:0;transition:opacity .3s,transform .3s;cursor:pointer';
+    el.textContent = text;
+    document.body.appendChild(el);
+    requestAnimationFrame(function () { requestAnimationFrame(function () { el.style.opacity = '1'; el.style.transform = 'translateX(-50%) translateY(0)'; }); });
+    var kill = function () { try { el.style.opacity = '0'; el.style.transform = 'translateX(-50%) translateY(16px)'; setTimeout(function () { el.remove(); }, 320); } catch (_) {} };
+    el.addEventListener('click', kill); setTimeout(kill, 6000);
+  } catch (_) {}
+}
 // Daily Double reinforcement: the "⚡ +60" chip uses a title tooltip that's invisible
 // on touch. Once per day, when a second game would still bank the bonus, surface a
 // short auto-dismissing toast so the cross-game hook is actually seen.
@@ -3306,11 +3377,17 @@ function renderMetaBar() {
   const trioLine = '<span class="meta-trio">' + trioLbl + ': ' + trio.map(k => {
     const nm = META_NAV[trioSlotIdx(k)].n, ok = trioSlotDone(items, k);
     return '<span class="' + (ok ? 'ok' : '') + '">' + nm + (ok ? ' ✓' : '') + '</span>';
-  }).join(' · ') + '</span>';
+  }).join(' · ') + ' <em class="meta-prize">→ ' + t('trioPrize') + '</em></span>';
+  if (allDone) noteTrioDay(items);
+  const wk = weekInfo();
+  const weekLine = '<span class="meta-week"><span class="mw-l">' + t('weekL') + '</span><span class="mw-marks">' +
+    wk.marks.map(m => '<i class="' + (m.done ? 'on' : m.past ? 'miss' : '') + (m.today ? ' now' : '') + '"></i>').join('') +
+    '</span><span class="mw-h">' + (wk.count >= 7 ? t('weekPerfect') : wk.count + '/7 · ' + t('weekGoal')) + '</span></span>';
   if (anyDone === 0) left = chip + '<span class="meta-prog">' + t('metaStart') + '</span>';
   else if (allDone) { const adl = t('metaAllDone'); left = chip + '<span class="meta-prog meta-alldone">🎉 ' + (adl === 'metaAllDone' ? 'Day complete!' : adl) + (bonus ? ' · +' + bonus : '') + '</span>'; }
   else left = chip + '<span class="meta-prog"><b>' + done + '/' + total + '</b> ' + t('metaDoneL') + (bonus ? ' · +' + bonus : '') + '</span>';
   if (!allDone) left += trioLine;
+  left += weekLine;
   // Daily Double nudge: once one game is done (and the +60 bonus is still unclaimed),
   // surface the incentive on the next-game link so players know a 2nd game pays off.
   let ddHint = '', ddAvailable = false;
@@ -3329,6 +3406,7 @@ function renderMetaBar() {
   const right = anyDone > 0 ? '<button class="meta-share" id="metaShareBtn">' + t('metaShareBtn') + '</button>' : '';
   bar.innerHTML = '<div class="meta-info">' + left + nudge + '</div>' + right;
   try { if (ddAvailable) dailyDoubleToast(); } catch (_) {}
+  if (allDone || streak >= 7) setTimeout(claimHabitRewards, 0);
   const chipEl = document.getElementById('metaStreakChip');
   if (chipEl) chipEl.onclick = openStreakModal;
   const nb = document.getElementById('metaNextBtn');

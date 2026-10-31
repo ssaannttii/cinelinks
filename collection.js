@@ -1325,6 +1325,7 @@
     { id: 'depth15', icon: AI('<rect x="6" y="3" width="12" height="15" rx="2"/><path d="M4 6v13a2 2 0 0 0 2 2h11" opacity=".65"/>'), name: 'Stacked', desc: 'Hold 15 spare copies', goal: function (c) { return [c.depth, 15]; } },
     { id: 'depth60', icon: AI('<rect x="7" y="2.5" width="11" height="14" rx="2"/><path d="M4.5 5.5v13a2 2 0 0 0 2 2h10" opacity=".7"/><path d="M2.5 8v12a2 2 0 0 0 2 2h9" opacity=".4"/>'), name: 'Deep Vault', desc: 'Hold 60 spare copies', goal: function (c) { return [c.depth, 60]; } },
     { id: 'ascend1', icon: AI('<path d="M12 4l6 7h-4v9h-4v-9H6z"/>'), name: 'Ascendant', desc: 'Ascend a card a rarity tier', goal: function (c) { return [c.asc, 1]; } },
+    { id: 'perfectweek', icon: AI('<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/><path d="m8.5 14.5 2.3 2.3 4.7-4.6"/>'), name: 'Perfect Week', desc: 'Finish the daily trio all 7 days of a week', goal: function (c) { return [c.pw, 1]; } },
     { id: 'copies5', icon: AI('<rect x="7" y="3" width="12" height="16" rx="2"/><path d="M5 6v13a2 2 0 0 0 2 2h9" opacity=".7"/><path d="M11 8h4M11 11h4"/>'), name: 'Deep Pull', desc: 'Pull 5 copies of one card', goal: function (c) { return [c.maxN, 5]; } },
     { id: 'lvl20', icon: AI('<circle cx="12" cy="8.5" r="5"/><path d="M7 8.5l3.4 2.5L15.5 6"/><path d="M8 13 6.5 21l5.5-2.8L17.5 21 16 13"/>'), name: 'Master Curator', desc: 'Reach level 20', goal: function (c) { return [c.st.level, 20]; } },
     { id: 'lvl5', icon: AI('<path d="M3 17 9 11l4 4 8-8"/><path d="M16 7h5v5"/>'), name: 'Rising Star', desc: 'Reach level 5', goal: function (c) { return [c.st.level, 5]; } },
@@ -1401,7 +1402,7 @@
     var cur = setsStateFrom(s).filter(function (x) { return x.kind === 'curated'; });
     var csTotal = cur.length, csDone = cur.filter(function (x) { return x.complete; }).length;
     var depth = 0, ascN = 0; Object.keys(s.cards || {}).forEach(function (k) { var c = s.cards[k]; depth += Math.max(0, (c.n || 1) - 1); ascN += (c.asc || 0); });
-    return { st: st, sd: s.setsDone ? Object.keys(s.setsDone).length : 0, cb: rawCardbackId(), sh: sh, maxN: maxN, csDone: csDone, csTotal: csTotal, depth: depth, asc: ascN, tv: tv };
+    return { st: st, sd: s.setsDone ? Object.keys(s.setsDone).length : 0, cb: rawCardbackId(), sh: sh, maxN: maxN, csDone: csDone, csTotal: csTotal, depth: depth, asc: ascN, tv: tv, pw: s.perfectWeeks || 0 };
   }
   function achMet(a, ctx) { var g = a.goal(ctx); return g[0] >= g[1]; }
   // Record newly-satisfied achievements; returns the list newly unlocked this call.
@@ -1616,6 +1617,52 @@
     s.dust = have - cost; s.prime = tier; save(s); refreshOpen();
     return { ok: true, tier: tier, dust: s.dust };
   }
+
+  // ── Habit rewards: today's trio, the weekly track, streak milestones ──
+  // Finishing the day used to pay only confetti, so the habit that matters most was
+  // the one thing not wired into the card economy. The home page decides WHEN a
+  // reward is due (it owns the trio and the streak); this decides WHAT it is and
+  // guarantees each key pays exactly once, however often the page re-renders.
+  //   claimReward('trio:<ud>',   { card: 'rare' })
+  //   claimReward('week5:<mon>', { card: 'elite' })
+  //   claimReward('week7:<mon>', { dust: 100, perfect: 1 })
+  //   claimReward('streak:30',   { card: 'elite' })
+  // A card reward is an UNOWNED set card at that tier or better (its natural tier,
+  // so rarity stays honest); with none left at that tier it pays dust instead of
+  // quietly downgrading. Resolves {ok, key, cards, dust} or null if already paid.
+  var REWARD_DUST = { rare: 60, elite: 150, legendary: 400 };
+  function rewardPick(minTier) {
+    var s = load() || blank(), owned = s.cards || {};
+    var bag = drawPool().filter(function (m) { return !owned[m.type + ':' + m.id] && ORDER[rarityOf(m)] <= ORDER[minTier]; });
+    return bag.length ? bag[Math.floor(Math.random() * bag.length)] : null;
+  }
+  function claimReward(key, spec) {
+    spec = spec || {};
+    var s = load() || blank();
+    if (!s.rewards) s.rewards = {};
+    if (s.rewards[key]) return Promise.resolve(null);
+    s.rewards[key] = today();                                  // marked BEFORE the async poster fetch: no double pay
+    var cutoff = Math.floor(Date.now() / 864e5) - 60;          // daily trio keys don't need to live forever
+    Object.keys(s.rewards).forEach(function (k) { var m = /^trio:(\d+)$/.exec(k); if (m && +m[1] < cutoff && k !== key) delete s.rewards[k]; });
+    var dust = spec.dust || 0;
+    if (spec.perfect) s.perfectWeeks = (s.perfectWeeks || 0) + 1;
+    var pick = spec.card ? rewardPick(spec.card) : null;
+    if (spec.card && !pick) dust += REWARD_DUST[spec.card] || 60;
+    if (dust) { s.dust = (s.dust || 0) + dust; _pendingDust += dust; }
+    save(s);
+    if (spec.perfect) { try { syncAchievements(); } catch (_) { /* noop */ } }
+    if (!pick) { refreshOpen(); return Promise.resolve({ ok: true, key: key, cards: [], dust: dust }); }
+    return tmdbPoster(pick.type, pick.id).then(function (img) {
+      var added = add([{ id: pick.id, type: pick.type, name: pick.name, img: img, rarity: rarityOf(pick) }]);
+      if (!added.length) {                                     // raced: it was collected meanwhile, so pay in dust
+        var fb = REWARD_DUST[spec.card] || 60, s2 = load() || blank();
+        s2.dust = (s2.dust || 0) + fb; _pendingDust += fb; save(s2); dust += fb;
+      }
+      refreshOpen();
+      return { ok: true, key: key, cards: added, dust: dust };
+    });
+  }
+  function rewardClaimed(key) { var s = load() || blank(); return !!(s.rewards && s.rewards[key]); }
 
   // ─────────────────────────── admin / debug ops ─────────────────────────
   function reset() { try { localStorage.removeItem(KEY); } catch (_) { /* noop */ } refreshOpen(); }
@@ -4241,6 +4288,7 @@
     nickname: nickname, setNickname: setNickname, enrichYears: enrichYears,
     dust: dustBalance, shine: shineCard, shineCost: shineCost, isShined: isShined,
     prime: primeNext, primeCost: primeCost, primeState: primeState,
+    claimReward: claimReward, rewardClaimed: rewardClaimed,
     draw: drawPack, drawInfo: drawInfo, buyBack: buyBack, backCost: backCost,
     cardFlip: function (on) { try { localStorage.setItem('cl_cardflip', on ? '1' : '0'); } catch (_) { /* noop */ } return cardFlipOn(); },
     addDust: function (n) { var s = load() || blank(); s.dust = Math.max(0, (s.dust || 0) + (+n || 0)); save(s); refreshOpen(); return s.dust; },
