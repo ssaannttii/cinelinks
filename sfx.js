@@ -182,6 +182,27 @@
         noise(t + 0.5, 0.4, { gain: 0.06, freq: 5000, sweepTo: 8000 });
       });
     },
+    // ── pack opening ──
+    // the pack is pressed
+    packPress: function () { go(function (t) { note(170, t, 0.05, { type: 'triangle', gain: 0.05, slideTo: 120 }); noise(t, 0.03, { gain: 0.03, freq: 900 }); }); },
+    // a short foil tick as the tear advances
+    packTear: function () { go(function (t) { noise(t, 0.045, { gain: 0.07, freq: 2600 + Math.random() * 1800, q: 1.6, sweepTo: 1500 }); }); },
+    // low rumble while something big is inside (the caller loops short slices)
+    packRumble: function (s) {
+      s = s || 0.2;
+      go(function (t) { note(46, t, s, { type: 'sine', gain: 0.11, attack: 0.03 }); note(31, t, s, { type: 'triangle', gain: 0.05, attack: 0.03 }); noise(t, s, { gain: 0.045, freq: 130, q: 0.5 }); });
+    },
+    // the rip itself
+    packRip: function () { go(function (t) { noise(t, 0.2, { gain: 0.15, freq: 3400, sweepTo: 800, q: 0.8 }); noise(t + 0.04, 0.16, { gain: 0.1, freq: 1700, sweepTo: 420, q: 1 }); note(95, t, 0.16, { type: 'sine', gain: 0.12, slideTo: 42 }); }); },
+    // light bursts out of the opening, scaled to what's inside
+    packBurst: function (tier) {
+      go(function (t) {
+        if (tier === 'legendary') { noise(t, 0.55, { gain: 0.12, freq: 500, sweepTo: 7500, q: 0.6 }); note(55, t, 0.5, { type: 'sine', gain: 0.15, slideTo: 28 }); [523, 784, 1047].forEach(function (f, i) { note(f, t + 0.12 + i * 0.07, 0.5, { type: 'triangle', gain: 0.12 }); }); }
+        else if (tier === 'elite') { noise(t, 0.4, { gain: 0.1, freq: 700, sweepTo: 6000, q: 0.6 }); note(70, t, 0.35, { type: 'sine', gain: 0.1, slideTo: 35 }); [659, 988].forEach(function (f, i) { note(f, t + 0.1 + i * 0.07, 0.4, { type: 'triangle', gain: 0.11 }); }); }
+        else if (tier === 'rare') { noise(t, 0.3, { gain: 0.08, freq: 900, sweepTo: 5200, q: 0.7 }); note(784, t + 0.08, 0.3, { type: 'triangle', gain: 0.1 }); }
+        else { noise(t, 0.26, { gain: 0.07, freq: 1100, sweepTo: 4200, q: 0.7 }); note(659, t + 0.06, 0.22, { type: 'sine', gain: 0.08 }); }
+      });
+    },
     // level up
     levelUp: function () {
       go(function (t) {
