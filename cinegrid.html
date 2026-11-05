@@ -104,14 +104,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 .mbtns{display:flex;gap:8px;margin-top:10px}
 .mbtns button{flex:1;padding:9px;border-radius:12px;border:1px solid var(--bdr);background:transparent;color:var(--mut);font-family:inherit;font-weight:700;cursor:pointer;font-size:.82rem}
 #mHint{border-color:rgba(232,160,0,.4);color:var(--gold)}
-.result{margin-top:18px;padding:16px;border-radius:16px;border:1px solid var(--bdr);background:rgba(255,255,255,.04);display:none}
-.result.show{display:block;animation:fxFadeUp .5s cubic-bezier(.2,.8,.2,1) both}
-.result h2{font-size:1.45rem;margin-bottom:6px}
-.result h2.win{color:var(--good)}
-.result .sub{color:var(--mut);font-size:.82rem;margin-bottom:2px}
-.stats{display:flex;gap:16px;justify-content:center;margin:14px 0 4px}
-.stat{display:flex;flex-direction:column;align-items:center;gap:1px;font-size:.58rem;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}
-.stat b{font-size:1.3rem;color:var(--txt);font-weight:800}
+.result{display:none}
 .row-btns{display:flex;gap:8px;max-width:380px;margin:14px auto 0}
 .btn{flex:1;padding:12px;border-radius:12px;border:1px solid var(--bdr);background:transparent;color:var(--txt);font-family:inherit;font-weight:700;font-size:.85rem;cursor:pointer;transition:transform .09s ease}
 .btn:active{transform:scale(.96)}
@@ -153,6 +146,8 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
   <div class="mfeed" id="mFeed"></div>
   <div class="mbtns"><button id="mHint">💡 Stuck? Show options</button><button id="mClose">Cancel</button></div>
 </div></div>
+<script src="/lib/trio.js"></script>
+<script src="/end-screen.js"></script>
 <script src="/fx.js"></script>
 <script>
 (function(){
@@ -452,14 +447,13 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     let sq=''; for(let i=0;i<9;i++){ sq+=(cells[i]&&cells[i].status==='correct')?'🟩':'⬛'; if(i%3===2&&i<8)sq+='\n'; }
     const headline=win?(T('perfectGrid')+' 🎯'):(filled>=6?T('solid')+' '+filled+'/9':(filled>=3?filled+'/9, '+T('close'):filled+'/9'));
     const shareText='🎬 CineGrid'+(isDaily?' #'+dayN:'')+'\n'+sq+'\n'+filled+'/9'+(bestCombo>=2?' · 🔥'+bestCombo+' '+T('streak'):'')+' · '+T('rarity')+' '+rar+'\nhttps://cinelinks.vercel.app/cinegrid.html';
-    document.getElementById('result').innerHTML=
-      '<h2 class="'+(win?'win':'')+'">'+headline+'</h2>'+
-      '<div class="sub">'+(win?T('everySquare'):(filled?T('niceWork'):T('toughBoard')))+'</div>'+
-      '<div class="stats"><div class="stat"><b id="rsFilled">0/9</b>'+T('correct')+'</div><div class="stat"><b id="rsBest">0</b>'+T('bestStreak')+'</div><div class="stat"><b id="rsRar">0</b>'+T('rarity')+'</div></div>'+
-      '<div class="row-btns"><button class="btn" id="shareBtn">'+T('share')+'</button>'+(isDaily?'<a class="btn gold" href="/" style="display:flex;align-items:center;justify-content:center;text-decoration:none">← CineLinks</a>':'<button class="btn gold" id="again">'+T('newGrid')+'</button>')+'</div>';
-    if(window.Fx&&Fx.countUp){ Fx.countUp(document.getElementById('rsFilled'),filled,{suffix:'/9',ms:650}); Fx.countUp(document.getElementById('rsBest'),bestCombo,{ms:700}); Fx.countUp(document.getElementById('rsRar'),rar,{ms:850}); }
-    (document.getElementById('again')||{}).onclick=function(){ sfx('tap'); location.href='/cinegrid.html?practice=1&r='+Date.now(); };
-    document.getElementById('shareBtn').onclick=function(){ sfx('tap'); if(navigator.share){navigator.share({text:shareText}).catch(function(){});} else { try{navigator.clipboard.writeText(shareText);}catch(_){ } const b=document.getElementById('shareBtn'); b.textContent=T('copied'); } };
+    EndScreen.render(document.getElementById('result'),{
+      mode:'grid', practice:!isDaily, won:win, puzzle:dayN,
+      title:headline, sub:win?T('everySquare'):(filled?T('niceWork'):T('toughBoard')),
+      stats:[{n:filled,suffix:'/9',l:T('correct')},{n:bestCombo,l:T('bestStreak')},{n:rar,l:T('rarity')}],
+      share:{ text:shareText, score:filled+'/9', grid:sq },
+      again:{ label:T('newGrid'), href:'/cinegrid.html?practice=1&r='+Date.now() }
+    });
   }
 
   // ── sound toggle ──
@@ -490,8 +484,6 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 <script defer src="/feedback.js"></script>
 <script defer src="/cookie.js"></script>
 <script>/* collection.js is only needed on a win (Collection.add/reveal, always guarded) — load it at idle instead of on the critical path so the game boots faster */window.addEventListener("load",function(){var L=function(){if(window.Collection)return;var s=document.createElement("script");s.src="/collection.js";document.head.appendChild(s);};window.requestIdleCallback?requestIdleCallback(L,{timeout:3000}):setTimeout(L,1200);});</script>
-<script defer src="/lib/trio.js"></script>
 <script defer src="/game-frame.js"></script>
-<script defer src="/trio-next.js"></script>
 </body>
 </html>

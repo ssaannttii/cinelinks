@@ -55,10 +55,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 .btn{flex:1;padding:11px;border-radius:12px;border:1px solid var(--bdr);background:transparent;color:var(--txt);font-family:inherit;font-weight:700;font-size:.85rem;cursor:pointer}
 .btn.gold{background:var(--gold);color:#1a1408;border-color:var(--gold)}
 .hint{color:var(--mut);font-size:.78rem;margin:0 0 14px}
-.result{margin-top:16px;padding:16px;border-radius:16px;border:1px solid var(--bdr);background:rgba(255,255,255,.04);display:none}
-.result.show{display:block}
-.result h2{font-size:1.3rem;margin-bottom:4px;color:var(--good)}
-.result .sub{color:var(--mut);font-size:.82rem}
+.result{display:none}
 .loading{color:var(--mut);font-size:.9rem;padding:40px 0}
 .foot{margin-top:24px;color:var(--mut);font-size:.74rem}
 .foot a{color:var(--gold);text-decoration:none}
@@ -85,6 +82,8 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
   </div></div>
   <div class="foot">Data and images from TMDB, which does not endorse CineLinks · <a href="/privacy.html">Privacy</a></div>
 </div>
+<script src="/lib/trio.js"></script>
+<script src="/end-screen.js"></script>
 <script src="/fx.js"></script>
 <script defer src="/sfx.js"></script>
 <script>/* collection.js is only needed on a win (Collection.add/reveal, always guarded) — load it at idle instead of on the critical path so the game boots faster */window.addEventListener("load",function(){var L=function(){if(window.Collection)return;var s=document.createElement("script");s.src="/collection.js";document.head.appendChild(s);};window.requestIdleCallback?requestIdleCallback(L,{timeout:3000}):setTimeout(L,1200);});</script>
@@ -247,16 +246,16 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     const links=chain.length-1;
     const dayN=utcDay()-Math.floor(Date.UTC(2026,0,1)/864e5);
     const share='⛓️ CineChain'+(isDaily?' #'+dayN:'')+'\n'+T('shareChainOf')+' '+links+' '+(links===1?T('shareLink'):T('shareLinks'))+' '+T('shareFrom')+' '+chain[0].title+'\n'+'🎬'.repeat(Math.min(links+1,12))+'\nhttps://cinelinks.vercel.app/cinechain.html';
-    const res=document.getElementById('result'); res.classList.add('fx-in');
-    res.innerHTML=
-      '<h2>'+T('shareChainOf')+' '+links+'!</h2>'+
-      '<div class="sub">'+(chain.length)+' '+T('filmsLinked')+(links>=8?T('masterful'):links>=4?T('niceRun'):'')+'</div>'+
-      '<div class="row-btns" style="margin-top:12px"><button class="btn" id="shareBtn">'+T('share')+'</button>'+(isDaily?'<a class="btn gold" href="/" style="display:flex;align-items:center;justify-content:center;text-decoration:none">← CineLinks</a>':'<button class="btn gold" id="again">'+T('newChain')+'</button>')+'</div>';
+    const res=document.getElementById('result');
+    EndScreen.render(res,{
+      mode:'chain', practice:!isDaily, won:links>=1, puzzle:dayN,
+      title:T('shareChainOf')+' '+links, sub:links>=1?((chain.length)+' '+T('filmsLinked')+(links>=8?T('masterful'):links>=4?T('niceRun'):'')):'',
+      share:{ text:share },
+      again:{ label:T('newChain'), href:'/cinechain.html?practice=1&r='+Date.now() }
+    });
     // the clock always ends the run, so the "loss" is an empty chain; everything else scales by length
     if(links>=1){ try{ if(window.Sfx) (links>=8?Sfx.allDone():Sfx.win()); }catch(_){} if(window.Fx) Fx.win(links>=8 ? 3 : links>=4 ? 2 : 1); }
-    else { try{ if(window.Sfx) Sfx.deadEnd(); }catch(_){} if(window.Fx) Fx.lose({ el: res.querySelector('h2') }); }
-    (document.getElementById('again')||{}).onclick=function(){ location.href='/cinechain.html?practice=1&r='+Date.now(); };
-    document.getElementById('shareBtn').onclick=function(){ if(navigator.share){navigator.share({text:share}).catch(function(){});} else { try{navigator.clipboard.writeText(share);}catch(_){ } const b=document.getElementById('shareBtn'); b.textContent=T('copied'); } };
+    else { try{ if(window.Sfx) Sfx.deadEnd(); }catch(_){} if(window.Fx) Fx.lose({ el: res.querySelector('.es-title') }); }
   }
 
   (async function(){
@@ -275,8 +274,6 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 <script defer src="/analytics.js"></script>
 <script defer src="/feedback.js"></script>
 <script defer src="/cookie.js"></script>
-<script defer src="/lib/trio.js"></script>
 <script defer src="/game-frame.js"></script>
-<script defer src="/trio-next.js"></script>
 </body>
 </html>

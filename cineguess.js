@@ -306,48 +306,26 @@
   }
   function renderResult(streak) {
     const el = document.getElementById('result');
-    el.classList.remove('hidden');
-    // Cinematic touch: the film's backdrop behind the card, heavily darkened so
-    // text stays readable. No layout change — it's just the card background.
-    if (target.backdropPath) {
-      el.style.backgroundImage = 'linear-gradient(180deg,rgba(22,22,22,.86),rgba(22,22,22,.97)),url(' + IMGBASE + 'w780' + target.backdropPath + ')';
-      el.style.backgroundSize = 'cover';
-      el.style.backgroundPosition = 'center';
-    }
-    const verdict = solved
-      ? '<div class="result-verdict win">' + GT('solvedIn').replace('{n}', (results.indexOf('win') + 1)) + '</div>'
-      : '<div class="result-verdict lose">' + GT('outOfGuesses') + '</div>';
-    const bestPart = streak.best > streak.current ? ' · ' + GT('best') + ' <strong>' + streak.best + '</strong>' : '';
-    const streakLine = PRACTICE ? '' : '<div class="result-streak">🔥 ' + GT('streakW') + ' <strong class="js-streakn">' + streak.current + '</strong>' + bestPart + '</div>';
-    const actions = PRACTICE
-      ? '<button class="btn btn-gold" id="againBtn">' + GT('newTitle') + '</button><button class="btn" id="shareBtn">' + GT('share') + '</button>'
-      : '<a class="btn btn-gold" href="/" style="display:flex;align-items:center;justify-content:center;text-decoration:none">← CineLinks</a><button class="btn" id="shareBtn">Share</button>';
-    el.innerHTML =
-      (target.posterPath ? '<img class="result-poster" src="' + poster(target.posterPath, 'w342') + '" alt="">' : '') +
-      verdict +
-      '<div class="result-film">' + esc(target.title) + '</div>' +
-      '<div class="result-year">' + esc([target.year, target.genres].filter(Boolean).join('  ·  ')) + '</div>' +
-      '<div class="result-grid">' + emojiGrid() + '</div>' +
-      streakLine +
-      '<div class="result-actions">' + actions + '</div>';
-    // Polish: card entrance, poster pop, and a confetti burst on a win.
-    el.classList.add('fx-in');
-    const pst = el.querySelector('.result-poster'); if (pst) pst.classList.add('fx-poster');
+    const winN = results.indexOf('win') + 1;
+    EndScreen.render(el, {
+      mode: MODE, practice: PRACTICE, won: solved, puzzle: PUZZLE,
+      title: solved ? GT('solvedIn').replace('{n}', winN) : GT('outOfGuesses'),
+      answer: { name: target.title, year: target.year, meta: target.genres, img: target.posterPath ? poster(target.posterPath, 'w342') : '' },
+      backdrop: target.backdropPath ? IMGBASE + 'w780' + target.backdropPath : '',
+      grid: emojiGrid(),
+      stats: PRACTICE ? null : [{ n: streak.current, l: GT('streakW') }, { n: Math.max(streak.best, streak.current), l: GT('best') }],
+      share: { text: shareText(), score: (solved ? winN : 'X') + '/' + MAX_GUESSES },
+      again: { label: GT('newTitle'), href: PAGE + '?practice=1&n=' + Date.now() }
+    });
     if (solved) {
-      const v = el.querySelector('.result-verdict'); if (v) v.classList.add('fx-win');
-      const winN = results.indexOf('win') + 1;
       try { if (window.Sfx) Sfx.win(); } catch (_) { /* noop */ }
       if (window.Fx) Fx.win(winN <= 1 ? 3 : winN <= MAX_GUESSES / 2 ? 2 : 1);   // Fx.win carries the haptic
-      // streak number counts up + a rising streak stinger — reward that grows with the run
-      const _sv = el.querySelector('.js-streakn');
-      if (_sv && window.Fx && !PRACTICE) setTimeout(function () { Fx.countUp(_sv, streak.current, { ms: 600 }); try { if (window.Sfx) Sfx.streak(streak.current); } catch (_) { /* noop */ } }, 300);
+      // a rising streak stinger: reward that grows with the run
+      if (!PRACTICE) setTimeout(function () { try { if (window.Sfx) Sfx.streak(streak.current); } catch (_) { /* noop */ } }, 300);
     } else {
       try { if (window.Sfx) Sfx.deadEnd(); } catch (_) { /* noop */ }
-      if (window.Fx) Fx.lose({ el: pst || el.querySelector('.result-film') });
+      if (window.Fx) Fx.lose({ el: el.querySelector('.es-answer') });
     }
-    document.getElementById('shareBtn').onclick = share;
-    const again = document.getElementById('againBtn');
-    if (again) again.onclick = () => { location.href = PAGE + '?practice=1&n=' + Date.now(); };
   }
 
   function shareText() {
@@ -357,13 +335,6 @@
     const streak = (st && st.current > 1) ? '  🔥' + st.current : '';
     return head + '  ' + n + '/' + MAX_GUESSES + streak + '\n' + emojiGrid() + '\n' + SHARE_URL;
   }
-  function share() {
-    const text = shareText();
-    if (navigator.share) { navigator.share({ text }).catch(() => {}); return; }
-    if (navigator.clipboard) { navigator.clipboard.writeText(text).then(() => toast(GT('copied'))).catch(() => toast(text)); }
-    else toast(GT('copyPrefix') + text);
-  }
-
   function loadStreak() { try { const s = JSON.parse(localStorage.getItem(STREAK_KEY)); if (s) return { current: s.current | 0, best: s.best | 0, last: s.last | 0 }; } catch (_) {} return { current: 0, best: 0, last: 0 }; }
   function updateStreak(win) {
     if (PRACTICE) return loadStreak();

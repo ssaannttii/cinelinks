@@ -70,24 +70,14 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 .grow{display:flex;align-items:center;gap:8px;font-size:.85rem;padding:8px 12px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid var(--bdr)}
 .grow .gico{flex-shrink:0}
 .grow.wrong{color:var(--mut)}
-.result{text-align:center;margin-top:8px;background:linear-gradient(180deg,rgba(232,160,0,.08),transparent 140px),var(--s1);border:1px solid rgba(232,160,0,.18);border-radius:16px;padding:24px 18px;box-shadow:0 24px 60px rgba(0,0,0,.35);animation:fadeIn .35s ease both}
 .result.hidden{display:none}
-.result-poster{width:130px;border-radius:12px;margin:0 auto 14px;display:block;box-shadow:0 16px 36px rgba(0,0,0,.45)}
-.result-verdict{font-size:1.3rem;font-weight:800;margin-bottom:2px}
-.result-verdict.win{color:#5bbd7a}.result-verdict.lose{color:#d8503a}
-.result-film{font-size:1rem;color:var(--txt);font-weight:700}
-.result-year{color:var(--mut);font-size:.85rem;margin-bottom:12px}
-.result-grid{font-size:1.3rem;letter-spacing:3px;margin:10px 0 4px}
-.result-streak{color:var(--mut);font-size:.82rem;margin-bottom:14px}
-.result-streak strong{color:var(--gold)}
-.result-actions{display:flex;gap:10px}
 .loading,.errbox{text-align:center;color:var(--mut);padding:40px 0;font-size:.9rem}
 .footer{text-align:center;margin-top:26px;color:var(--mut);font-size:.68rem;opacity:.7}
 .footer a{color:var(--mut);text-decoration:none}.footer a:hover{color:var(--gold)}
 .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--s2);border:1px solid var(--bdr);color:var(--txt);padding:10px 16px;border-radius:12px;font-size:.85rem;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 /* desktop: use the extra width — bigger visual & roomier column */
-@media(min-width:760px){.wrap{max-width:640px}.title{font-size:2.4rem}.subtitle{font-size:.92rem}.clue-poster{width:190px;height:285px}.result-poster{width:160px}.clue-body{font-size:1rem}body{min-height:100vh;display:flex}.wrap{margin:auto}}
+@media(min-width:760px){.wrap{max-width:640px}.title{font-size:2.4rem}.subtitle{font-size:.92rem}.clue-poster{width:190px;height:285px}.clue-body{font-size:1rem}body{min-height:100vh;display:flex}.wrap{margin:auto}}
 </style>
 <link rel="stylesheet" href="/fx.css">
 <style data-cl-font-deslop>:root{--fdisp:'Fraunces',Georgia,'Times New Roman',serif;--fui:'Schibsted Grotesk','Inter',-apple-system,sans-serif}.title,.logo{font-family:var(--fdisp);font-weight:600;letter-spacing:-.01em}</style>
@@ -142,6 +132,8 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 </div>
 <div class="toast" id="toast"></div>
 
+<script src="/lib/trio.js"></script>
+<script src="/end-screen.js"></script>
 <script src="/fx.js"></script>
 <script src="cineclue-pool.js"></script>
 <script src="/lib/media.js"></script>
@@ -444,36 +436,21 @@ function emojiGrid(){
 
 function renderResult(streak){
   const el = document.getElementById('result');
-  el.classList.remove('hidden');
-  if(target.backdropPath){
-    el.style.backgroundImage = 'linear-gradient(180deg,rgba(33,40,49,.88),rgba(33,40,49,.97)),url(' + IMGBASE + 'w780' + target.backdropPath + ')';
-    el.style.backgroundSize = 'cover'; el.style.backgroundPosition = 'center';
-  }
-  const verdict = solved
-    ? '<div class="result-verdict win">' + T('solvedIn').replace('{n}', (solved ? results.indexOf('win') + 1 : MAX_GUESSES)) + '</div>'
-    : '<div class="result-verdict lose">' + T('outOfGuesses') + '</div>';
-  const bestPart = streak.best > streak.current ? ' · ' + T('best') + ' <strong>' + streak.best + '</strong>' : '';
-  const streakLine = PRACTICE ? '' : '<div class="result-streak">🔥 ' + T('streak') + ' <strong>' + streak.current + '</strong>' + bestPart + '</div>';
-  const actions = PRACTICE
-    ? '<button class="btn btn-gold" id="againBtn">' + T('newFilm') + '</button><button class="btn" id="shareBtn">' + T('share') + '</button>'
-    : '<a class="btn btn-gold" href="/" style="display:flex;align-items:center;justify-content:center;text-decoration:none">← CineLinks</a><button class="btn" id="shareBtn">' + T('share') + '</button>';
-  el.innerHTML =
-    (target.posterPath ? '<img class="result-poster" src="' + poster(target.posterPath, 'w342') + '" alt="">' : '') +
-    verdict +
-    '<div class="result-film">' + esc(target.title) + '</div>' +
-    '<div class="result-year">' + esc([target.year, target.genres].filter(Boolean).join('  ·  ')) + '</div>' +
-    '<div class="result-grid">' + emojiGrid() + '</div>' +
-    streakLine +
-    '<div class="result-actions">' + actions + '</div>';
-  el.classList.add('fx-in');
-  const pst = el.querySelector('.result-poster'); if(pst) pst.classList.add('fx-poster');
+  const winN = results.indexOf('win') + 1;
+  EndScreen.render(el, {
+    mode: 'clue', practice: PRACTICE, won: solved, puzzle: PUZZLE,
+    title: solved ? T('solvedIn').replace('{n}', winN) : T('outOfGuesses'),
+    answer: { name: target.title, year: target.year, meta: target.genres, img: target.posterPath ? poster(target.posterPath, 'w342') : '' },
+    backdrop: target.backdropPath ? IMGBASE + 'w780' + target.backdropPath : '',
+    grid: emojiGrid(),
+    stats: PRACTICE ? null : [{ n: streak.current, l: T('streak') }, { n: Math.max(streak.best, streak.current), l: T('best') }],
+    share: { text: shareText(), score: (solved ? winN : 'X') + '/' + MAX_GUESSES },
+    again: { label: T('newFilm'), href: 'cineclue.html?practice=1&n=' + Date.now() }
+  });
   // tier by how early it fell (1st guess = perfect); a loss slams the answer in
-  const winN = results.indexOf('win') + 1, tier = winN <= 1 ? 3 : winN <= MAX_GUESSES / 2 ? 2 : 1;
-  if(solved){ const v = el.querySelector('.result-verdict'); if(v) v.classList.add('fx-win'); try{ if(window.Sfx) Sfx.win(); }catch(_){} if(window.Fx) Fx.win(tier); }
-  else { try{ if(window.Sfx) Sfx.deadEnd(); }catch(_){} if(window.Fx) Fx.lose({ el: pst || el.querySelector('.result-film') }); }
-  document.getElementById('shareBtn').onclick = share;
-  const again = document.getElementById('againBtn');
-  if(again) again.onclick = () => { location.href = 'cineclue.html?practice=1&n=' + Date.now(); };
+  const tier = winN <= 1 ? 3 : winN <= MAX_GUESSES / 2 ? 2 : 1;
+  if(solved){ try{ if(window.Sfx) Sfx.win(); }catch(_){} if(window.Fx) Fx.win(tier); }
+  else { try{ if(window.Sfx) Sfx.deadEnd(); }catch(_){} if(window.Fx) Fx.lose({ el: el.querySelector('.es-answer') }); }
 }
 
 function shareText(){
@@ -483,13 +460,6 @@ function shareText(){
   const streak = (st && st.current > 1) ? '  🔥' + st.current : '';
   return head + '  ' + n + '/' + MAX_GUESSES + streak + '\n' + emojiGrid() + '\nhttps://cinelinks.vercel.app/cineclue.html';
 }
-function share(){
-  const text = shareText();
-  if(navigator.share){ navigator.share({ text }).catch(()=>{}); return; }
-  if(navigator.clipboard){ navigator.clipboard.writeText(text).then(()=>toast(T('copied'))).catch(()=>toast(text)); }
-  else toast(T('copyPrefix') + text);
-}
-
 // ── Streak + persistence ───────────────────────────────────────────────────
 function loadStreak(){ try{ const s = JSON.parse(localStorage.getItem(STREAK_KEY)); if(s) return { current:s.current|0, best:s.best|0, last:s.last|0 }; }catch(_){} return { current:0, best:0, last:0 }; }
 function updateStreak(win){
@@ -637,8 +607,6 @@ window.HOWTO = {
 <script defer src="/analytics.js"></script>
 <script defer src="/feedback.js"></script>
 <script>/* collection.js is only needed on a win (Collection.add/reveal, always guarded) — load it at idle instead of on the critical path so the game boots faster */window.addEventListener("load",function(){var L=function(){if(window.Collection)return;var s=document.createElement("script");s.src="/collection.js";document.head.appendChild(s);};window.requestIdleCallback?requestIdleCallback(L,{timeout:3000}):setTimeout(L,1200);});</script>
-<script defer src="/lib/trio.js"></script>
 <script defer src="/game-frame.js"></script>
-<script defer src="/trio-next.js"></script>
 </body>
 </html>

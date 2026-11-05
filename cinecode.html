@@ -81,19 +81,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 .btn{flex:1;padding:11px;border-radius:12px;border:1px solid var(--bdr);background:transparent;color:var(--txt);font-family:inherit;font-weight:700;font-size:.85rem;cursor:pointer}
 .btn.gold{background:var(--gold);color:#1a1408;border-color:var(--gold)}
 .btn:hover{opacity:.92}
-.result{margin-top:16px;padding:18px;border-radius:16px;border:1px solid var(--bdr);background:rgba(255,255,255,.04);display:none}
-.result.show{display:block;animation:pop .4s both}
-.result h2{font-size:1.3rem;margin-bottom:4px}
-.result h2.win{color:var(--good)}
-.result .who{display:flex;align-items:center;gap:12px;justify-content:center;margin:12px 0}
-.result .who img{width:56px;height:84px;border-radius:8px;object-fit:cover;border:1px solid var(--bdr)}
-.result .who .nm{font-weight:800;font-size:1.05rem;text-align:left}
-.result .who .sub{color:var(--mut);font-size:.8rem}
-.result .who .cred{color:var(--mut);font-size:.74rem;margin-top:3px}
-.result .who .nm .y{color:var(--mut);font-weight:600;font-size:.82rem}
-.stats{display:flex;gap:16px;justify-content:center;margin:14px 0 2px}
-.stat{display:flex;flex-direction:column;align-items:center;gap:1px;font-size:.6rem;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}
-.stat b{font-size:1.2rem;color:var(--txt);font-weight:800}
+.result{display:none}
 .legend{display:flex;gap:13px;justify-content:center;flex-wrap:wrap;margin:2px auto 16px;font-size:.66rem;color:var(--mut)}
 .legend span{display:inline-flex;align-items:center;gap:5px}
 .legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
@@ -124,6 +112,8 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
   <div class="foot">Data and images from TMDB, which does not endorse CineLinks · <a href="/privacy.html">Privacy</a></div>
 </div>
 
+<script src="/lib/trio.js"></script>
+<script src="/end-screen.js"></script>
 <script src="/fx.js"></script>
 <script defer src="/sfx.js"></script>
 <script src="/cineclue-pool.js"></script>
@@ -216,10 +206,11 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     try{localStorage.setItem('cinecodeStats',JSON.stringify(s));}catch(_){}
     return s;
   }
-  function statsHTML(s){
+  function statCells(s){
     const wr=s.played?Math.round(100*s.wins/s.played):0;
-    return '<div class="stats"><div class="stat"><b>'+s.streak+'</b>'+TR('streak')+'</div><div class="stat"><b>'+s.max+'</b>'+TR('best')+'</div><div class="stat"><b>'+s.played+'</b>'+TR('played')+'</div><div class="stat"><b>'+wr+'%</b>'+TR('won')+'</div></div>';
+    return [{n:s.streak,l:TR('streak')},{n:s.max,l:TR('best')},{n:s.played,l:TR('played')},{n:wr,suffix:'%',l:TR('won')}];
   }
+  function cap(t){ t=String(t||''); return t.charAt(0).toUpperCase()+t.slice(1); }
 
   // ── movie data + attribute comparison ─────────────────────
   // 3 calls per film: details (year/genre/country), credits (director + top
@@ -457,35 +448,32 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     const grid=rows.map(r=>CELL_ORDER.map(k=>r.cells[k].c==='green'?'🟩':r.cells[k].c==='gold'?'🟨':'🟥').join('')).join('\n');
     const share='🎬 CineCode'+(isDaily?' #'+dayN:'')+' '+(won?score+'/'+MAX:'X/'+MAX)+'\n'+grid+'\nhttps://cinelinks.vercel.app/cinecode.html';
     const credit=(s.dirName?('dir. '+s.dirName):'')+(s.lead?(s.dirName?' · ':'')+s.lead:'');
-    document.getElementById('result').innerHTML=
-      '<h2 class="'+(won?'win':'')+'">'+(won?TR('gotIt'):TR('soClose'))+'</h2>'+
-      '<div class="who"><img src="'+poster(s.poster,'w185')+'" alt=""><div><div class="nm">'+esc(s.title)+' <span class="y">'+(s.year||'')+'</span></div>'+
-        '<div class="sub">'+(won?(TR('solvedIn')+' '+score+'/'+MAX+' '+TR('tries')):TR('theAnswer'))+'</div>'+
-        (credit?'<div class="cred">'+esc(credit)+'</div>':'')+'</div></div>'+
-      (stats?statsHTML(stats):'')+
-      '<div class="row"><button class="btn" id="shareBtn">'+TR('share')+'</button>'+(isDaily?'<a class="btn gold" href="/" style="display:flex;align-items:center;justify-content:center;text-decoration:none">← CineLinks</a>':'<button class="btn gold" id="again">'+TR('again')+'</button>')+'</div>';
-    if(window.Fx) setTimeout(function(){ if(won) Fx.win(score<=1 ? 3 : score<=MAX/2 ? 2 : 1); else Fx.lose({ el: document.querySelector('#result .who') }); }, freshRow>=0 ? flipDone() : 0);
-    (document.getElementById('again')||{}).onclick=()=>{location.href='/cinecode.html?practice=1&r='+Date.now();};
-    document.getElementById('shareBtn').onclick=()=>{
-      if(navigator.share){navigator.share({text:share}).catch(()=>{});}
-      else{navigator.clipboard&&navigator.clipboard.writeText(share);const b=document.getElementById('shareBtn');b.textContent=TR('copied');}
-    };
+    EndScreen.render(document.getElementById('result'),{
+      mode:'code', practice:!isDaily, won:won, puzzle:dayN,
+      title:won?TR('gotIt'):TR('soClose'),
+      answer:{ name:s.title, year:s.year, meta:cap(won?(TR('solvedIn')+' '+score+'/'+MAX+' '+TR('tries')):TR('theAnswer')), credit:credit, img:poster(s.poster,'w185') },
+      stats:stats?statCells(stats):null,
+      share:{ text:share, score:(won?score:'X')+'/'+MAX, grid:grid },
+      again:{ label:TR('again'), href:'/cinecode.html?practice=1&r='+Date.now() }
+    });
+    if(window.Fx) setTimeout(function(){ if(won) Fx.win(score<=1 ? 3 : score<=MAX/2 ? 2 : 1); else Fx.lose({ el: document.querySelector('#result .es-answer') }); }, freshRow>=0 ? flipDone() : 0);
   }
 
   function renderReplay(d){
     SECRET={title:d.title,year:d.year,poster:d.poster,id:d.id};
     rows=d.rows||[]; over=true;
-    stage.innerHTML=
-      headHTML()+
-      rows.map(rowHTML).join('')+
-      '<div class="result show" id="result">'+
-      '<h2 class="'+(d.won?'win':'')+'">'+(d.won?TR('solvedToday'):TR('todaysAnswer'))+'</h2>'+
-      '<div class="who"><img src="'+poster(d.poster,'w185')+'" alt=""><div><div class="nm">'+esc(d.title)+' <span class="y">'+(d.year||'')+'</span></div>'+
-      '<div class="sub">'+(d.won?(TR('solvedIn')+' '+(d.score||'?')+'/'+MAX+' '+TR('tries')):TR('comeBack'))+'</div>'+
-      ((d.dirName||d.lead)?'<div class="cred">'+esc((d.dirName?('dir. '+d.dirName):'')+(d.lead?(d.dirName?' · ':'')+d.lead:''))+'</div>':'')+'</div></div>'+
-      statsHTML(loadStats())+
-      '<div class="row"><a class="btn gold" href="/" style="display:flex;align-items:center;justify-content:center;text-decoration:none">← CineLinks</a><button class="btn" id="again">'+TR('practice')+'</button></div></div>';
-    document.getElementById('again').onclick=()=>{location.href='/cinecode.html?practice=1';};
+    stage.innerHTML=headHTML()+rows.map(rowHTML).join('')+'<div id="result"></div>';
+    const dayN=utcDay()-Math.floor(Date.UTC(2026,0,1)/864e5);
+    let grid=''; try{ grid=rows.map(r=>CELL_ORDER.map(k=>r.cells[k].c==='green'?'🟩':r.cells[k].c==='gold'?'🟨':'🟥').join('')).join('\n'); }catch(_){ grid=''; }
+    const tally=(d.won?(d.score||'?'):'X')+'/'+MAX;
+    EndScreen.render(document.getElementById('result'),{
+      mode:'code', practice:false, won:!!d.won, puzzle:dayN,
+      title:d.won?TR('solvedToday'):TR('todaysAnswer'),
+      answer:{ name:d.title, year:d.year, meta:cap(d.won?(TR('solvedIn')+' '+(d.score||'?')+'/'+MAX+' '+TR('tries')):TR('comeBack')),
+        credit:(d.dirName?('dir. '+d.dirName):'')+(d.lead?(d.dirName?' · ':'')+d.lead:''), img:poster(d.poster,'w185') },
+      stats:statCells(loadStats()),
+      share:{ text:'🎬 CineCode #'+dayN+' '+tally+(grid?'\n'+grid:'')+'\nhttps://cinelinks.vercel.app/cinecode.html', score:tally, grid:grid }
+    });
   }
 
   // ── boot ──────────────────────────────────────────────────
@@ -503,8 +491,6 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 <script defer src="/analytics.js"></script>
 <script defer src="/feedback.js"></script>
 <script defer src="/cookie.js"></script>
-<script defer src="/lib/trio.js"></script>
 <script defer src="/game-frame.js"></script>
-<script defer src="/trio-next.js"></script>
 </body>
 </html>

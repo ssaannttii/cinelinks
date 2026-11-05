@@ -69,24 +69,14 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 .grow{display:flex;align-items:center;gap:8px;font-size:.85rem;padding:8px 12px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid var(--bdr)}
 .grow .gico{flex-shrink:0}
 .grow.wrong{color:var(--mut)}
-.result{text-align:center;margin-top:8px;background:linear-gradient(180deg,rgba(232,160,0,.08),transparent 140px),var(--s1);border:1px solid rgba(232,160,0,.18);border-radius:16px;padding:24px 18px;box-shadow:0 24px 60px rgba(0,0,0,.35);animation:fadeIn .35s ease both}
 .result.hidden{display:none}
-.result-poster{width:130px;border-radius:12px;margin:0 auto 14px;display:block;box-shadow:0 16px 36px rgba(0,0,0,.45)}
-.result-verdict{font-size:1.3rem;font-weight:800;margin-bottom:2px}
-.result-verdict.win{color:#5bbd7a}.result-verdict.lose{color:#d8503a}
-.result-film{font-size:1rem;color:var(--txt);font-weight:700}
-.result-year{color:var(--mut);font-size:.85rem;margin-bottom:12px}
-.result-grid{font-size:1.3rem;letter-spacing:3px;margin:10px 0 4px}
-.result-streak{color:var(--mut);font-size:.82rem;margin-bottom:14px}
-.result-streak strong{color:var(--gold)}
-.result-actions{display:flex;gap:10px}
 .loading,.errbox{text-align:center;color:var(--mut);padding:40px 0;font-size:.9rem}
 .footer{text-align:center;margin-top:26px;color:var(--mut);font-size:.68rem;opacity:.7}
 .footer a{color:var(--mut);text-decoration:none}.footer a:hover{color:var(--gold)}
 .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--s2);border:1px solid var(--bdr);color:var(--txt);padding:10px 16px;border-radius:12px;font-size:.85rem;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 /* desktop: use the extra width — bigger visual & roomier column */
-@media(min-width:760px){.wrap{max-width:640px}.title{font-size:2.4rem}.subtitle{font-size:.92rem}.clue-poster{width:190px;height:285px}.result-poster{width:160px}.clue-body{font-size:1rem}body{min-height:100vh;display:flex}.wrap{margin:auto}}
+@media(min-width:760px){.wrap{max-width:640px}.title{font-size:2.4rem}.subtitle{font-size:.92rem}.clue-poster{width:190px;height:285px}.clue-body{font-size:1rem}body{min-height:100vh;display:flex}.wrap{margin:auto}}
 </style>
 <link rel="stylesheet" href="/fx.css">
 <style data-cl-font-deslop>:root{--fdisp:'Fraunces',Georgia,'Times New Roman',serif;--fui:'Schibsted Grotesk','Inter',-apple-system,sans-serif}.title,.logo{font-family:var(--fdisp);font-weight:600;letter-spacing:-.01em}</style>
@@ -139,6 +129,8 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 </div>
 <div class="toast" id="toast"></div>
 
+<script src="/lib/trio.js"></script>
+<script src="/end-screen.js"></script>
 <script src="/fx.js"></script>
 <script src="cineclue-pool.js"></script>
 <script src="/lib/media.js"></script>
@@ -214,8 +206,6 @@ window.HOWTO = {
 <script defer src="/analytics.js"></script>
 <script defer src="/feedback.js"></script>
 <script>/* collection.js is only needed on a win (Collection.add/reveal, always guarded) — load it at idle instead of on the critical path so the game boots faster */window.addEventListener("load",function(){var L=function(){if(window.Collection)return;var s=document.createElement("script");s.src="/collection.js";document.head.appendChild(s);};window.requestIdleCallback?requestIdleCallback(L,{timeout:3000}):setTimeout(L,1200);});</script>
-<script defer src="/lib/trio.js"></script>
 <script defer src="/game-frame.js"></script>
-<script defer src="/trio-next.js"></script>
 </body>
 </html>
