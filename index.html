@@ -1217,7 +1217,7 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opa
         </div>
       </section>
       <footer class="lb-foot">
-        <div class="tmdb"><a href="https://www.themoviedb.org/" target="_blank" rel="noopener"><img src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_short-8e76e2a06f8c1c731a4c638a8e21c2e931ad4b39c0b77e6f18024d182b236bd6.svg" alt="TMDB"></a><span>This product uses the TMDB API and TMDB images, but is not endorsed or certified by TMDB.</span></div>
+        <div class="tmdb"><a href="https://www.themoviedb.org/" target="_blank" rel="noopener" class="tmdb-mark">TMDB</a><span>This product uses the TMDB API and TMDB images, but is not endorsed or certified by TMDB.</span></div>
         <div class="links"><a href="https://x.com/cinelinksgame" target="_blank" rel="noopener">Follow on X</a><span>·</span><a href="mailto:cinelinksgame@gmail.com">Contact</a><span>·</span><a href="/privacy.html">Privacy</a></div>
       </footer>
     </main>
@@ -1319,7 +1319,7 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opa
 <div id="gameScreen" class="screen">
   <header class="g-header">
     <div style="display:flex;gap:10px;align-items:center;flex-shrink:0">
-      <button class="hdr-back hdr-home" onclick="game.reset()">&#8592; CineLinks</button>
+      <button class="hdr-back hdr-home" onclick="game.reset()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg>Today</button>
       <button class="hdr-back" onclick="game.startRandom()" style="color:var(--gold)">&#8635; New</button>
       <button class="hdr-back" id="soundToggle" type="button" aria-label="Toggle sound" title="Sound" onclick="clToggleSound()">&#128266;</button>
       <span id="hdrDateBadge" style="display:none;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);border:1px solid var(--bdr);border-radius:6px;padding:3px 7px;white-space:nowrap"></span>
@@ -1384,7 +1384,7 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opa
 <div id="winScreen" class="screen">
   <div id="winBackdrop"></div>
   <header class="win-header">
-    <button class="hdr-back hdr-home" onclick="game.reset()">&#8592; CineLinks</button>
+    <button class="hdr-back hdr-home" onclick="game.reset()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg>Today</button>
     <button class="hdr-back" onclick="game.startRandom()" style="color:var(--gold)">&#8635; New</button>
   </header>
   <div class="win-box">

@@ -1,0 +1,52 @@
+/* CineLinks shared UI layer. Linked on every page AFTER the page's own styles, so
+   its rules win ties: one set of tokens, one button, one eyebrow, one footer,
+   whatever page you are on. Tokens match index.html's Lobby v2 layer; --gold stays
+   the brand #e8a000 each page already defines, --gold2 is the leaf highlight. */
+:root{
+  --bg:#0c0b0d;--s1:#151417;--s2:#1b1a1e;--s3:#242228;--txt:#f2ede4;--mut:#a59f95;--dim:#6f6a63;
+  --gold2:#f6dd86;--bdr:rgba(246,221,134,.085);--hair2:rgba(246,221,134,.16);
+  --leaf:linear-gradient(135deg,#f6dd86 0%,#d9ab42 34%,#f4dc8a 58%,#b9852a 100%);
+  --lift:0 1px 0 rgba(255,255,255,.035) inset,0 18px 40px -22px rgba(0,0,0,.9),0 2px 6px -2px rgba(0,0,0,.6);
+  --rim:0 0 0 1px rgba(246,221,134,.2) inset;
+  --fdisp:'Fraunces',Georgia,'Times New Roman',serif;--fui:'Schibsted Grotesk','Inter',-apple-system,sans-serif;
+  /* scales: radii by role, control heights, type steps */
+  --r-panel:20px;--r-card:16px;--r-btn:11px;--r-chip:7px;
+  --h-btn:44px;--h-btn-sm:36px;
+  --t-eyebrow:.7rem;--t-sm:.8rem;--t-body:.92rem;--t-lg:1.12rem;--t-xl:1.5rem;--t-title:clamp(2rem,7vw,2.5rem);
+  --ease:cubic-bezier(.2,.8,.2,1)
+}
+
+/* ── components ───────────────────────────────────────────────────────── */
+.ui-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:var(--h-btn);padding:0 20px;border:0;border-radius:var(--r-btn);font-family:var(--fui);font-weight:700;font-size:.95rem;line-height:1;color:#1a1408;background:var(--leaf);background-size:160% 160%;box-shadow:0 1px 0 rgba(255,255,255,.45) inset,0 10px 24px -10px rgba(232,182,74,.55);cursor:pointer;text-decoration:none;white-space:nowrap;transition:transform .2s var(--ease),background-position .6s var(--ease)}
+.ui-btn:hover{background-position:100% 0}
+.ui-btn:active{transform:scale(.97)}
+.ui-btn.ghost{color:var(--txt);background:rgba(255,255,255,.045);box-shadow:var(--rim)}
+.ui-btn.ghost:hover{background:rgba(255,255,255,.07)}
+.ui-btn.sm{height:var(--h-btn-sm);padding:0 14px;font-size:.84rem;border-radius:9px}
+.ui-eyebrow{font-size:var(--t-eyebrow);font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--gold2)}
+.ui-panel{background:var(--s1);border-radius:var(--r-panel);box-shadow:var(--lift),var(--rim)}
+
+/* ── game pages: the title lockup, the kicker, the footer ─────────────── */
+/* "Daily / Practice" under the title is a gold eyebrow, not a chip */
+body .kicker,body .date-badge{display:inline-block;font-size:.68rem;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--gold2);background:none;padding:0;border-radius:0;margin-top:8px}
+body .wrap>.logo,body .head .logo{font-family:var(--fdisp);font-weight:600;font-size:var(--t-title);line-height:1;letter-spacing:-.01em}
+body .wrap>.tag,body .head .tag{color:var(--mut);font-size:var(--t-body);margin-top:6px}
+body .foot{margin-top:30px;padding-top:14px;border-top:1px solid var(--bdr);color:var(--dim);font-size:.72rem;line-height:1.6}
+body .foot a{color:var(--mut);text-decoration:none;font-weight:600}
+/* buttons: one radius; gold ones wear the leaf; the old white share button goes quiet */
+body .btn{border-radius:var(--r-btn)}
+body .btn-gold,body .btn.gold{background:var(--leaf);color:#1a1408;border-color:transparent;box-shadow:0 1px 0 rgba(255,255,255,.45) inset,0 10px 24px -10px rgba(232,182,74,.55)}
+body .btn-ghost,body .btn-share{background:rgba(255,255,255,.045);color:var(--txt);border-color:transparent;box-shadow:var(--rim)}
+body .btn-ghost:hover,body .btn-share:hover{background:rgba(255,255,255,.07)}
+/* chips are soft rectangles, not pills */
+body .lchip,body .clue-chip,body .clif-genres span,body .arch-today,body .streak-mile{border-radius:var(--r-chip)}
+/* stats and privacy: the same frame as the game pages */
+.topbar a.home-link{display:inline-flex;align-items:center;gap:6px;height:var(--h-btn-sm);padding:0 12px;border-radius:10px;background:rgba(255,255,255,.045);box-shadow:var(--rim);color:var(--txt);font-size:.84rem;font-weight:600;text-decoration:none}
+.topbar span.home-link{font-size:.84rem;font-weight:600;color:var(--mut)}
+#gf .topbar span.home-link{display:none}
+/* the four older games spell their footer .footer; game-frame.js writes both */
+body .footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--bdr);color:var(--dim);font-size:.72rem;line-height:1.6;opacity:1}
+body .footer a{color:var(--mut)!important;text-decoration:none;font-weight:600}
+/* the TMDB mark inside the footer, as on the home */
+body .foot .tmdb-mark,body .footer .tmdb-mark{display:inline-block;font-family:"Space Mono",ui-monospace,Menlo,monospace;font-size:.62rem;font-weight:700;letter-spacing:.14em;color:var(--mut);padding:3px 6px;border-radius:5px;box-shadow:var(--rim);margin-right:8px;vertical-align:1px}
+body .foot .nw,body .footer .nw{white-space:nowrap}

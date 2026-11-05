@@ -32,7 +32,8 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 .bar{display:flex;justify-content:center;align-items:center;gap:16px;margin:0 0 8px;color:var(--mut);font-size:.76rem;font-weight:600}
 .bar .seg{display:flex;align-items:center;gap:6px}
 .bar b{color:var(--txt);font-weight:800;font-size:1rem}
-.lives{display:inline-flex;gap:3px;font-size:.95rem;line-height:1}
+.lives{display:inline-flex;gap:4px;line-height:1}
+.lives .hp svg{width:15px;height:15px;display:block;fill:#e8b64a;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
 .lives .hp{transition:transform .3s cubic-bezier(.3,1.4,.5,1),opacity .3s}
 .lives .hp.gone{opacity:.25;transform:scale(.8) translateY(1px);filter:grayscale(1)}
 .lives .hp.lose{animation:hpLose .5s ease}
@@ -129,6 +130,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 </style>
 <link rel="stylesheet" href="/fx.css">
 <style data-cl-font-deslop>:root{--fdisp:'Fraunces',Georgia,'Times New Roman',serif;--fui:'Schibsted Grotesk','Inter',-apple-system,sans-serif}.title,.logo{font-family:var(--fdisp);font-weight:600;letter-spacing:-.01em}</style>
+<link rel="stylesheet" href="/ui.css">
 </head>
 <body>
 <a href="/" class="cl-home" aria-label="Back to CineLinks">← CineLinks</a>
@@ -142,7 +144,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
       <span class="fx-skel" style="height:64px"></span><span class="fx-skel" style="height:64px"></span><span class="fx-skel" style="height:64px"></span><span class="fx-skel" style="height:64px"></span><span class="fx-skel" style="height:64px"></span><span class="fx-skel" style="height:64px"></span><span class="fx-skel" style="height:64px"></span><span class="fx-skel" style="height:64px"></span><span class="fx-skel" style="height:64px"></span><span class="fx-skel" style="height:64px"></span><span class="fx-skel" style="height:64px"></span><span class="fx-skel" style="height:64px"></span><span class="fx-skel" style="height:64px"></span><span class="fx-skel" style="height:64px"></span><span class="fx-skel" style="height:64px"></span><span class="fx-skel" style="height:64px"></span>
     </div>
   </div></div>
-  <div class="foot">Posters &amp; data from TMDB · part of <a href="/">CineLinks</a></div>
+  <div class="foot">Data and images from TMDB, which does not endorse CineLinks · <a href="/privacy.html">Privacy</a></div>
 </div>
 <div class="modal" id="modal"><div class="sheet">
   <h3>Name a film</h3><div class="pair" id="mPair"></div>
@@ -224,7 +226,6 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
       var mi=document.getElementById('mInput'); if(mi)mi.setAttribute('placeholder',T('searchPh'));
       var mh=document.getElementById('mHint'); if(mh)mh.textContent='💡 '+T('showOptions');
       var mc=document.getElementById('mClose'); if(mc)mc.textContent=T('cancel');
-      var foot=q('.foot'); if(foot)foot.innerHTML=T('footPre')+' TMDB · '+T('footPart')+' <a href="/">CineLinks</a>';
     }catch(_){}
   })();
   function api(p){return fetch('/api/tmdb?path='+p+'&language=en-US').then(r=>r.json());}
@@ -274,7 +275,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 
   function render(){
     const cc=correctCount();
-    let hearts=''; for(let i=0;i<LIVES;i++){ hearts+='<span class="hp'+(i>=livesLeft?' gone':'')+'" data-h="'+i+'">❤️</span>'; }
+    let hearts=''; for(let i=0;i<LIVES;i++){ hearts+='<span class="hp'+(i>=livesLeft?' gone':'')+'" data-h="'+i+'"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-4.6-9.3-9A5.2 5.2 0 0 1 12 6a5.2 5.2 0 0 1 9.3 6c-2.3 4.4-9.3 9-9.3 9z"/></svg></span>'; }
     let html='<div class="bar">'+
       '<span class="seg">'+T('correct')+' <b>'+cc+'/9</b></span>'+
       '<span class="seg">'+T('lives')+' <span class="lives" id="lives">'+hearts+'</span></span>'+
@@ -487,6 +488,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 <script defer src="/sfx.js"></script>
 <script defer src="/analytics.js"></script>
 <script defer src="/feedback.js"></script>
+<script defer src="/cookie.js"></script>
 <script>/* collection.js is only needed on a win (Collection.add/reveal, always guarded) — load it at idle instead of on the critical path so the game boots faster */window.addEventListener("load",function(){var L=function(){if(window.Collection)return;var s=document.createElement("script");s.src="/collection.js";document.head.appendChild(s);};window.requestIdleCallback?requestIdleCallback(L,{timeout:3000}):setTimeout(L,1200);});</script>
 <script defer src="/lib/trio.js"></script>
 <script defer src="/game-frame.js"></script>

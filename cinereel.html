@@ -74,6 +74,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 </style>
 <link rel="stylesheet" href="/fx.css">
 <style data-cl-font-deslop>:root{--fdisp:'Fraunces',Georgia,'Times New Roman',serif;--fui:'Schibsted Grotesk','Inter',-apple-system,sans-serif}.title,.logo{font-family:var(--fdisp);font-weight:600;letter-spacing:-.01em}</style>
+<link rel="stylesheet" href="/ui.css">
 </head>
 <body>
 <a href="/" class="cl-home" aria-label="Back to CineLinks">← CineLinks</a>
@@ -88,7 +89,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
       <span class="fx-skel" style="width:100%;height:46px;border-radius:12px"></span>
     </div>
   </div></div>
-  <div class="foot">Posters &amp; data from TMDB · part of <a href="/">CineLinks</a></div>
+  <div class="foot">Data and images from TMDB, which does not endorse CineLinks · <a href="/privacy.html">Privacy</a></div>
 </div>
 
 <script src="/fx.js"></script>
@@ -143,7 +144,6 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
   (function(){
     var tg=document.querySelector('.tag'); if(tg) tg.textContent=TR('tagline');
     var hm=document.querySelector('.cl-home'); if(hm) hm.setAttribute('aria-label',TR('backTo'));
-    var ft=document.querySelector('.foot'); if(ft) ft.innerHTML=TR('footData')+' <a href="/">CineLinks</a>';
   })();
 
   // ── helpers ───────────────────────────────────────────────
@@ -382,6 +382,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 </script>
 <script defer src="/analytics.js"></script>
 <script defer src="/feedback.js"></script>
+<script defer src="/cookie.js"></script>
 <script defer src="/lib/trio.js"></script>
 <script defer src="/game-frame.js"></script>
 <script defer src="/trio-next.js"></script>

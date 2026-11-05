@@ -68,6 +68,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 </style>
 <link rel="stylesheet" href="/fx.css">
 <style data-cl-font-deslop>:root{--fdisp:'Fraunces',Georgia,'Times New Roman',serif;--fui:'Schibsted Grotesk','Inter',-apple-system,sans-serif}.title,.logo{font-family:var(--fdisp);font-weight:600;letter-spacing:-.01em}</style>
+<link rel="stylesheet" href="/ui.css">
 </head>
 <body>
 <a href="/" class="cl-home" aria-label="Back to CineLinks">← CineLinks</a>
@@ -82,7 +83,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
       <div class="fx-skel-row" style="gap:8px;flex-wrap:wrap"><span class="fx-skel" style="width:80px;height:30px;border-radius:999px"></span><span class="fx-skel" style="width:96px;height:30px;border-radius:999px"></span><span class="fx-skel" style="width:72px;height:30px;border-radius:999px"></span></div>
     </div>
   </div></div>
-  <div class="foot">Posters &amp; data from TMDB · part of <a href="/">CineLinks</a></div>
+  <div class="foot">Data and images from TMDB, which does not endorse CineLinks · <a href="/privacy.html">Privacy</a></div>
 </div>
 <script src="/fx.js"></script>
 <script defer src="/sfx.js"></script>
@@ -135,7 +136,6 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     var tg=document.querySelector('.tag'); if(tg) tg.textContent=T('tag');
     var hm=document.querySelector('.cl-home'); if(hm) hm.setAttribute('aria-label',T('backTo'));
     var ld=document.querySelector('.loading'); if(ld) ld.setAttribute('aria-label',T('loading'));
-    var ft=document.querySelector('.foot'); if(ft) ft.innerHTML=T('footPre')+'<a href="/">CineLinks</a>';
   })();
   function api(p){return fetch('/api/tmdb?path='+p+'&language=en-US').then(r=>r.json());}
   function utcDay(){const n=new Date();return Math.floor(Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),n.getUTCDate())/864e5);}
@@ -274,6 +274,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 </script>
 <script defer src="/analytics.js"></script>
 <script defer src="/feedback.js"></script>
+<script defer src="/cookie.js"></script>
 <script defer src="/lib/trio.js"></script>
 <script defer src="/game-frame.js"></script>
 <script defer src="/trio-next.js"></script>

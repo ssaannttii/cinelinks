@@ -90,7 +90,7 @@
   } else {
     var wrap = document.createElement('div');
     wrap.id = 'gauth';
-    wrap.style.cssText = 'position:fixed;top:12px;right:12px;z-index:95;font-family:Inter,-apple-system,sans-serif';
+    wrap.style.cssText = 'position:fixed;top:12px;right:12px;z-index:95;font-family:"Schibsted Grotesk",-apple-system,sans-serif';
     wrap.appendChild(slot);
     document.body.appendChild(wrap);
   }
@@ -102,7 +102,7 @@
     box.style.cssText = 'position:relative;display:flex;flex-direction:column;align-items:flex-end';
     var pill = document.createElement('button');
     pill.title = 'Synced as ' + (p.email || p.name || 'you');
-    pill.style.cssText = 'display:flex;align-items:center;gap:7px;padding:4px 10px 4px 4px;border-radius:20px;border:1px solid rgba(232,160,0,.3);background:rgba(22,22,22,.92);color:#f0f0f0;font-family:inherit;font-size:.78rem;font-weight:700;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.3)';
+    pill.style.cssText = 'display:flex;align-items:center;gap:7px;padding:4px 10px 4px 4px;border-radius:10px;border:0;box-shadow:0 0 0 1px rgba(246,221,134,.22) inset;background:rgba(12,11,13,.82);color:#f0f0f0;font-family:inherit;font-size:.78rem;font-weight:700;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.3)';
     var img = p.picture
       ? '<img src="' + p.picture + '" alt="" referrerpolicy="no-referrer" style="width:24px;height:24px;border-radius:50%;object-fit:cover">'
       : '<span style="width:24px;height:24px;border-radius:50%;background:#e8a000;color:#111;display:flex;align-items:center;justify-content:center;font-weight:800">' + ((p.name || '?')[0] || '?').toUpperCase() + '</span>';
@@ -145,7 +145,7 @@
     if (window.google && window.google.accounts) {
       window.google.accounts.id.renderButton(slot, compact
         ? { type: 'icon', theme: 'filled_black', size: 'medium', shape: 'circle' }
-        : { type: 'standard', theme: 'filled_black', size: 'medium', shape: 'pill', text: 'signin' });
+        : { type: 'standard', theme: 'filled_black', size: 'medium', shape: 'rectangular', text: 'signin' });
     }
   }
 

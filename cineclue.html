@@ -91,6 +91,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 </style>
 <link rel="stylesheet" href="/fx.css">
 <style data-cl-font-deslop>:root{--fdisp:'Fraunces',Georgia,'Times New Roman',serif;--fui:'Schibsted Grotesk','Inter',-apple-system,sans-serif}.title,.logo{font-family:var(--fdisp);font-weight:600;letter-spacing:-.01em}</style>
+<link rel="stylesheet" href="/ui.css">
 </head>
 <body>
 <div id="cineBackdrop" aria-hidden="true"></div>
@@ -564,8 +565,6 @@ function applyStaticI18n(){
   var gb = document.getElementById('guessBtn'); if(gb) gb.textContent = T('guess');
   var ld = document.getElementById('loading'); if(ld) ld.setAttribute('aria-label', T('loading'));
   var home = document.querySelector('.cl-home'); if(home) home.setAttribute('aria-label', T('backToCineLinks'));
-  var ft = document.querySelector('.footer');
-  if(ft) ft.innerHTML = T('footerCredit') + ' <a href="https://www.themoviedb.org/" target="_blank" rel="noopener">TMDB</a>. ' + T('footerNotEndorsed') + ' · <a href="/privacy.html" style="color:inherit">' + T('privacy') + '</a>';
 }
 
 async function init(){

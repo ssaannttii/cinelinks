@@ -258,3 +258,43 @@ body:has(#startScreen.active) #clFbPanel{bottom:calc(166px + env(safe-area-inset
   .lb-mast{order:1}.lb-week{order:2}.lb-session{order:3}.lb-today .lb-sec{order:4}.lb-alb{order:5;margin-top:34px}
 }
 @media (prefers-reduced-motion:reduce){#startScreen *,#startScreen *::before,#startScreen *::after{animation:none!important;transition:none!important}}
+
+/* ── index.html surfaces outside the lobby: welcome, modals, the CineLinks game, the win screen ── */
+.lb-foot .tmdb-mark{font-family:"Space Mono",ui-monospace,Menlo,monospace;font-size:.7rem;font-weight:700;letter-spacing:.14em;color:var(--mut)!important;padding:4px 7px;border-radius:5px;box-shadow:var(--rim)}
+#ftue .ft-card{border:0;border-radius:22px;box-shadow:var(--lift),var(--rim)}
+#ftue .ft-brand .cl-brand-word{background:var(--leaf);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+#ftue .cl-brand-tag{color:var(--lb-gold)}
+#ftue .ft-beat .ic{background:rgba(246,221,134,.08);box-shadow:var(--rim);color:var(--lb-gold2)}
+#ftue .ft-cta{height:50px;padding:0;border-radius:11px;background:var(--leaf);font-weight:700;box-shadow:0 1px 0 rgba(255,255,255,.45) inset,0 10px 24px -10px rgba(232,182,74,.55)}
+#ftue .ft-x{background:rgba(255,255,255,.05);box-shadow:var(--rim)}
+#profileScreen .profile-box{border:0;border-radius:20px;box-shadow:var(--lift),var(--rim)}
+#profileScreen .profile-title{font-family:var(--fdisp);font-weight:600;font-size:1.5rem;letter-spacing:-.01em}
+#profileScreen .profile-title span{background:var(--leaf);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+#profileScreen .pf-sec-h{font-size:.68rem;font-weight:600;letter-spacing:.2em;color:var(--lb-gold2)}
+#profileScreen .pf-edit{color:var(--lb-gold2);font-weight:600;letter-spacing:.06em}
+#profileScreen .pf-title{border:0;border-radius:11px;background:rgba(255,255,255,.045);box-shadow:var(--rim);color:var(--txt)}
+#profileScreen .pf-title:hover{background:rgba(255,255,255,.07)}
+#profileScreen .pf-r-top .pf-r-b b{color:var(--lb-gold2);font-family:var(--fdisp);font-weight:600;font-size:1.3rem}
+#archiveModal .arch-box{border:0;border-radius:20px;box-shadow:var(--lift),var(--rim)}
+#archiveModal .arch-head h2{font-family:var(--fdisp);font-weight:600;font-size:1.3rem;letter-spacing:-.01em}
+#archiveModal .arch-item{border:0;border-radius:12px;box-shadow:var(--rim)}
+#archiveModal .arch-today{background:none;padding:0;font-weight:600;letter-spacing:.18em;color:var(--lb-gold2)}
+.streak-modal .streak-box,.streak-modal>div{border:0!important;box-shadow:var(--lift),var(--rim)}
+.streak-modal .streak-mile{border:0;box-shadow:var(--rim);border-radius:7px}
+.streak-modal .streak-mile.on{background:rgba(246,221,134,.1);color:var(--lb-gold2);box-shadow:0 0 0 1px rgba(246,221,134,.4) inset}
+.streak-modal .streak-modetog{border:0;box-shadow:var(--rim);border-radius:11px}
+.streak-modal .streak-modetog button{border-radius:8px}
+.streak-modal .streak-modetog button.on{background:var(--leaf);color:#1a1408}
+/* the CineLinks game: the same bar the other nine games wear */
+#gameScreen .g-header{height:54px;padding:0 12px;background:rgba(12,11,13,.78);backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);border-bottom:1px solid var(--lb-hair)}
+.hdr-back.hdr-home,.win-header .hdr-home{height:36px;padding:0 12px 0 8px;border:0;border-radius:10px;background:rgba(255,255,255,.045);box-shadow:var(--rim);color:var(--txt);font-size:.84rem;font-weight:600;gap:4px}
+.hdr-back.hdr-home svg{color:var(--lb-gold2)}
+.hdr-back.hdr-home:hover{color:var(--txt);background:rgba(255,255,255,.07)}
+#gameScreen .hdr-back:not(.hdr-home),.win-header .hdr-back:not(.hdr-home){font-weight:600;font-size:.84rem;color:var(--lb-gold2)!important}
+.coach{border:0!important;box-shadow:var(--lift),var(--rim)!important;border-radius:16px}
+.coach-x{background:var(--leaf);border-radius:9px;font-weight:700;padding:7px 14px}
+#winScreen .win-box{border:0;border-radius:20px;box-shadow:var(--lift),var(--rim)}
+#winScreen .win-h{font-family:var(--fdisp);font-weight:600;font-size:2rem;letter-spacing:-.02em;line-height:1.05}
+#winScreen .stat-n{font-family:var(--fdisp);font-weight:600;font-size:2.2rem;color:var(--lb-gold2)}
+#winScreen .stat-box{border:0;box-shadow:var(--rim);border-radius:14px}
+#loadingScreen .load-txt,#loadingScreen .load-h{font-family:var(--fdisp);font-weight:600;font-size:1.6rem;letter-spacing:-.01em}

@@ -2232,7 +2232,7 @@
       '.cl-coll-sub{font-size:.7rem;font-weight:700;color:#9aa4b0;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
       '.cl-coll-hd-btns{display:flex;align-items:center;gap:6px;flex-shrink:0}' +
       '.cl-coll-icon{background:none;border:none;color:#888;font-size:1.1rem;cursor:pointer;line-height:1;padding:2px 6px}.cl-coll-icon:hover{color:#f5f5f5}.cl-coll-icon svg{width:17px;height:17px;display:block}' +
-      '.cl-coll-dust{display:inline-flex;align-items:center;font-size:.78rem;font-weight:800;color:#bfe6ff;background:rgba(120,184,255,.12);border:1px solid rgba(150,205,255,.3);border-radius:99px;padding:3px 9px;margin-right:2px;white-space:nowrap}' +
+      '.cl-coll-dust{display:inline-flex;align-items:center;font-size:.78rem;font-weight:700;color:#bfe6ff;background:rgba(120,184,255,.12);border:1px solid rgba(150,205,255,.3);border-radius:8px;padding:3px 9px;margin-right:2px;white-space:nowrap}' +
       '.cl-coll-battle{color:#f5c542;background:rgba(232,160,0,.12);border-color:rgba(232,160,0,.4);text-decoration:none;cursor:pointer}' +
       '.cl-coll-battle:hover{background:rgba(232,160,0,.22)}' +
       // Narrow phones: the header chips go compact (icon-only Battle, tighter pills)
@@ -2240,7 +2240,7 @@
       '@media(max-width:480px){' +
         '.cl-coll-battle .lbl{display:none}' +
         '.cl-coll-dust{font-size:.7rem;padding:3px 7px;margin-right:0}' +
-        '.cl-coll-title{font-size:1.12rem}' +
+        '.cl-coll-title{font-size:1.2rem}' +
         '.cl-coll-x{width:30px;height:30px;font-size:.95rem}' +
         '.cl-xp-extra{display:none}' +                       // "to level N" / "Guaranteed:" prefixes
       '}' +
@@ -2275,7 +2275,7 @@
       '.cl-vtab{flex:0 0 auto;display:flex;align-items:center;gap:6px;background:none;border:none;border-bottom:2px solid transparent;color:#9a9a9a;font:inherit;font-size:.8rem;font-weight:800;letter-spacing:.02em;padding:9px 13px;cursor:pointer}' +
       '.cl-vtab .ic{font-size:.95rem;line-height:1}.cl-vtab .ic svg{width:20px;height:20px;display:block}' +
       '.cl-vtab:hover{color:#e8e8e8}' +
-      '.cl-vtab.on{color:#e8a000;border-bottom-color:#e8a000}' +
+      '.cl-vtab.on{color:#f6dd86;border-bottom-color:#e8b64a}' +
       '.cl-vtab .bdg{min-width:16px;padding:1px 5px;border-radius:99px;background:#e8a000;color:#1a1200;font-size:.6rem;font-weight:800;text-align:center}' +
       '@media(max-width:640px){' +
         '.cl-vault-tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;margin:0;justify-content:space-around;background:rgba(21,20,23,.97);border-top:1px solid rgba(255,255,255,.1);border-bottom:none;padding:4px 6px calc(4px + env(safe-area-inset-bottom))}' +
@@ -2577,7 +2577,7 @@
       '.clr-progress{position:absolute;top:calc(22px + env(safe-area-inset-top));display:flex;gap:6px;z-index:7}' +
       '.clr-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.22);transition:background .2s}' +
       '.clr-dot.on{background:linear-gradient(135deg,#f6dd86,#d9ab42 50%,#b9852a)}' +
-      '.clr-skip{position:absolute;top:calc(18px + env(safe-area-inset-top));right:20px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#ccc;font:inherit;font-size:.74rem;font-weight:700;padding:6px 13px;border-radius:999px;cursor:pointer;z-index:8}' +
+      '.clr-skip{position:absolute;top:calc(18px + env(safe-area-inset-top));right:20px;background:rgba(12,11,13,.6);border:0;box-shadow:0 0 0 1px rgba(246,221,134,.2) inset;color:#d8d2c8;font:inherit;font-size:.74rem;font-weight:600;padding:8px 13px;border-radius:9px;cursor:pointer;z-index:8}' +
       '.clr-skip:hover{color:#fff}' +
       // Width is also capped by HEIGHT: a 5/7 card at width W is 1.4·W tall, so the
       // cap must leave room for the caption + hint below it. 48dvh wide ⇒ ~67dvh
@@ -2654,7 +2654,7 @@
       '@keyframes clrIn2{from{opacity:0;transform:translateY(12px)}to{opacity:1}}' +
       '.clr-sum-h{font-size:1.5rem;font-weight:800;color:#f5f5f5}.clr-sum-x{color:#e8a000;font-weight:800}.clr-sum-lvl{color:#7fd49a;font-weight:800;font-size:.95rem}' +
       '.clr-sum-btns{display:flex;gap:10px;margin-top:6px}' +
-      '.clr-btn{padding:11px 20px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:#f0f0f0;font:inherit;font-weight:800;cursor:pointer}.clr-btn.gold{background:linear-gradient(135deg,#f5c542,#e8a000);color:#111;border:none}' +
+      '.clr-btn{height:44px;padding:0 20px;border-radius:11px;border:0;box-shadow:0 0 0 1px rgba(246,221,134,.2) inset;background:rgba(255,255,255,.045);color:#f2ede4;font:inherit;font-weight:700;cursor:pointer}.clr-btn.gold{background:linear-gradient(135deg,#f6dd86 0%,#d9ab42 34%,#f4dc8a 58%,#b9852a 100%);color:#1a1408;box-shadow:0 1px 0 rgba(255,255,255,.45) inset,0 10px 24px -10px rgba(232,182,74,.55)}' +
       '@media(prefers-reduced-motion:reduce){.clr-stage,.clr-flip.flip-go,.clr-flip.live{animation:none}.clr-flash.go,.clr-flip .clr-halo,.clr-face::before,.clr-face::after{animation:none}.clr-face::before,.clr-face::after{display:none}}' +
       // ── sets view ──
       '.cl-set{width:100%;display:flex;align-items:center;gap:12px;padding:13px 14px;margin-bottom:10px;border-radius:12px;background:#151417;border:1px solid rgba(255,255,255,.09);cursor:pointer;text-align:left;font:inherit;color:#f0f0f0}' +

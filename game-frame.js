@@ -13,8 +13,11 @@
   if (!mode) return;
   var practice = /[?&]practice=1/.test(location.search);
   var STR = {
-    en: { today: 'Today', trio: 'Trio' }, es: { today: 'Hoy', trio: 'Trío' }, fr: { today: 'Aujourd’hui', trio: 'Trio' },
-    de: { today: 'Heute', trio: 'Trio' }, pt: { today: 'Hoje', trio: 'Trio' }
+    en: { today: 'Today', trio: 'Trio', privacy: 'Privacy', foot: 'This product uses the TMDB API and TMDB images, but is not endorsed or certified by TMDB.' },
+    es: { today: 'Hoy', trio: 'Trío', privacy: 'Privacidad', foot: 'Este producto usa la API y las imágenes de TMDB, pero TMDB no lo respalda ni lo certifica.' },
+    fr: { today: 'Aujourd’hui', trio: 'Trio', privacy: 'Confidentialité', foot: 'Ce produit utilise l’API et les images de TMDB, sans être approuvé ni certifié par TMDB.' },
+    de: { today: 'Heute', trio: 'Trio', privacy: 'Datenschutz', foot: 'Dieses Produkt nutzt die TMDB-API und TMDB-Bilder, wird von TMDB aber weder unterstützt noch zertifiziert.' },
+    pt: { today: 'Hoje', trio: 'Trio', privacy: 'Privacidade', foot: 'Este produto usa a API e as imagens do TMDB, mas não é endossado nem certificado pelo TMDB.' }
   };
   var lang = 'en'; try { lang = String(localStorage.getItem('clLang') || 'en').slice(0, 2); } catch (_) {}
   var S = STR[lang] || STR.en;
@@ -71,4 +74,9 @@
   // fill the slot's dot the moment this daily is finished
   var t = setInterval(function () { trioDots(); if (window.Trio && Trio.result(mode).done) clearInterval(t); }, 1500);
   window.addEventListener('load', trioDots);
+
+  // one footer for all nine games: the TMDB mark, the sentence TMDB asks for, Privacy.
+  // The pages used to write their own (five wordings, two class names); now none do.
+  var foot = document.querySelector('.foot, .footer');
+  if (foot) foot.innerHTML = '<a class="tmdb-mark" href="https://www.themoviedb.org/" target="_blank" rel="noopener">TMDB</a><span>' + S.foot + '</span> <span class="nw">· <a href="/privacy.html">' + S.privacy + '</a></span>';
 })();

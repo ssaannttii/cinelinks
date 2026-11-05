@@ -21,8 +21,8 @@
   a.id = 'clSupport';   // index.html hides it while a CineLinks game is on screen
   // Sit above the ad bar if that's also enabled.
   var bottom = document.getElementById('ad-bar') ? 84 : 14;
-  a.style.cssText = 'position:fixed;right:14px;bottom:' + bottom + 'px;z-index:90;background:#e8a000;color:#111;' +
-    "font-family:Inter,-apple-system,sans-serif;font-weight:800;font-size:.8rem;padding:9px 14px;border-radius:999px;" +
+  a.style.cssText = 'position:fixed;right:14px;bottom:' + bottom + 'px;z-index:90;background:linear-gradient(135deg,#f6dd86 0%,#d9ab42 34%,#f4dc8a 58%,#b9852a 100%);color:#1a1408;' +
+    "font-family:'Schibsted Grotesk',-apple-system,sans-serif;font-weight:700;font-size:.8rem;height:36px;display:inline-flex;align-items:center;padding:0 14px;border-radius:10px;" +
     'text-decoration:none;box-shadow:0 8px 24px rgba(0,0,0,.35)';
   document.body.appendChild(a);
   // Shrink out of the way while the page scrolls (the pill was covering buttons

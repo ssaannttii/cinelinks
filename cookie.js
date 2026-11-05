@@ -19,13 +19,20 @@
   function show() {
   var bar = document.createElement('div');
   bar.id = 'clCookieBar';   // so fullscreen surfaces (collection vault) can duck it
-  bar.style.cssText = 'position:fixed;left:12px;right:12px;bottom:12px;z-index:1000;max-width:560px;margin:0 auto;background:#151417;border:1px solid rgba(232,160,0,.25);border-radius:12px;padding:13px 14px;display:flex;gap:12px;align-items:center;box-shadow:0 12px 34px rgba(0,0,0,.5);font-family:Inter,-apple-system,sans-serif';
-  bar.innerHTML = '<span style="flex:1;font-size:.8rem;line-height:1.5;color:#cfcfcf">We keep your streaks on this device and use cookie-free analytics — no tracking cookies. <a href="/privacy.html" style="color:#e8a000;text-decoration:none;font-weight:700">Learn more</a></span>';
+  bar.style.cssText = 'position:fixed;left:12px;right:12px;bottom:12px;z-index:1000;max-width:560px;margin:0 auto;background:#151417;border:0;box-shadow:0 1px 0 rgba(255,255,255,.035) inset,0 18px 40px -22px rgba(0,0,0,.9),0 0 0 1px rgba(246,221,134,.2) inset;border-radius:16px;padding:13px 14px;display:flex;gap:12px;align-items:center;font-family:"Schibsted Grotesk",-apple-system,sans-serif';
+  bar.innerHTML = '<span style="flex:1;font-size:.8rem;line-height:1.5;color:#cfcac0">We keep your streaks on this device and use cookie-free analytics — no tracking cookies. <a href="/privacy.html" style="color:#f6dd86;text-decoration:none;font-weight:700">Learn more</a></span>';
   var btn = document.createElement('button');
   btn.textContent = 'Got it';
-  btn.style.cssText = 'flex-shrink:0;padding:8px 14px;border:none;border-radius:8px;background:#e8a000;color:#111;font-family:inherit;font-weight:800;font-size:.8rem;cursor:pointer';
-  btn.onclick = function () { try { localStorage.setItem('cookieNoticeSeen', '1'); } catch (_) {} bar.remove(); };
+  btn.style.cssText = 'flex-shrink:0;height:36px;padding:0 14px;border:none;border-radius:9px;background:linear-gradient(135deg,#f6dd86 0%,#d9ab42 34%,#f4dc8a 58%,#b9852a 100%);color:#1a1408;font-family:inherit;font-weight:700;font-size:.82rem;cursor:pointer;box-shadow:0 1px 0 rgba(255,255,255,.45) inset';
+  btn.onclick = function () { try { localStorage.setItem('cookieNoticeSeen', '1'); } catch (_) {} hide(); };
   bar.appendChild(btn);
   document.body.appendChild(bar);
+  // lift the floating buttons (help, feedback, support) above the bar while it is up
+  var st = document.createElement('style'); st.id = 'clCookieLift';
+  st.textContent = 'html.cl-cookie #ht-btn,html.cl-cookie #clFbBtn,html.cl-cookie #clSupport{margin-bottom:var(--cl-cookie,0px)}';
+  document.head.appendChild(st);
+  function lift() { document.documentElement.style.setProperty('--cl-cookie', (bar.offsetHeight + 12) + 'px'); }
+  function hide() { document.documentElement.classList.remove('cl-cookie'); window.removeEventListener('resize', lift); bar.remove(); }
+  document.documentElement.classList.add('cl-cookie'); lift(); window.addEventListener('resize', lift);
   }
 })();
