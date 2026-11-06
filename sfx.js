@@ -74,13 +74,17 @@
 
   function haptic(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch (_) {} }
 
+  // Sustained voices (the pack hum) register here so muting mid-sound stops them.
+  var live = [];
+  function stopLive() { live.slice().forEach(function (h) { try { h.stop(true); } catch (_) {} }); live = []; }
+
   var Sfx = {
     get enabled() { load(); return enabled; },
     toggle: function () {
       load();
       enabled = !enabled;
       try { localStorage.setItem(KEY, enabled ? '1' : '0'); } catch (_) {}
-      if (enabled) Sfx.tap();
+      if (enabled) Sfx.tap(); else stopLive();
       return enabled;
     },
     haptic: haptic,
@@ -183,6 +187,61 @@
       });
     },
     // ── pack opening ──
+    // the house lights strike: a lamp clunk and a short hiss
+    packLights: function () { go(function (t) { note(92, t, 0.12, { type: 'sine', gain: 0.07, slideTo: 58 }); noise(t + 0.02, 0.42, { gain: 0.022, freq: 4200, sweepTo: 1800, q: 0.4 }); }); },
+    // the pack lands: a thud with a little weight
+    packLand: function () { go(function (t) { note(72, t, 0.26, { type: 'sine', gain: 0.16, slideTo: 34, attack: 0.004 }); noise(t, 0.11, { gain: 0.1, freq: 320, sweepTo: 90, q: 0.6 }); noise(t, 0.04, { gain: 0.05, freq: 2400 }); }); },
+    // the drone of a sealed pack: a low, slowly wobbling pad that rises in pitch and
+    // brightness with the tear (set(p)) and fades on stop(). Returns a handle; every
+    // method is safe to call when audio is off or unavailable.
+    packHum: function (tier) {
+      var h = { set: function () {}, stop: function () {} };
+      load(); if (!enabled) return h;
+      var c = ac(); if (!c) return h;
+      try {
+        var t = c.currentTime, big = tier === 'legendary' || tier === 'elite';
+        var base = big ? 0.065 : 0.03, f0 = 55, span = big ? 42 : 16, cut0 = 150, cutSpan = big ? 1500 : 600;
+        var o1 = c.createOscillator(), o2 = c.createOscillator(), f = c.createBiquadFilter(), g = c.createGain(), lfo = c.createOscillator(), lg = c.createGain();
+        o1.type = 'sawtooth'; o2.type = 'sine';
+        o1.frequency.value = f0; o2.frequency.value = f0 * 1.006;              // a hair of detune: the slow beating
+        f.type = 'lowpass'; f.frequency.value = cut0; f.Q.value = 2.2;
+        lfo.frequency.value = 0.8; lg.gain.value = 7; lfo.connect(lg); lg.connect(o1.frequency);
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(base, t + 1.4);
+        o1.connect(f); o2.connect(f); f.connect(g); g.connect(master);
+        o1.start(t); o2.start(t); lfo.start(t);
+        var done = false;
+        h.set = function (p) {
+          if (done) return;
+          try {
+            var now = c.currentTime, k = Math.max(0, Math.min(1, p || 0));
+            f.frequency.setTargetAtTime(cut0 + k * cutSpan, now, 0.08);
+            o1.frequency.setTargetAtTime(f0 + k * span, now, 0.1); o2.frequency.setTargetAtTime((f0 + k * span) * 1.006, now, 0.1);
+            g.gain.setTargetAtTime(base * (1 + k * 1.3), now, 0.1);
+          } catch (_) {}
+        };
+        h.stop = function (fast) {
+          if (done) return; done = true;
+          var i = live.indexOf(h); if (i >= 0) live.splice(i, 1);
+          try {
+            var now = c.currentTime, d = fast ? 0.07 : 0.5;
+            g.gain.cancelScheduledValues(now); g.gain.setValueAtTime(Math.max(0.0001, g.gain.value), now);
+            g.gain.exponentialRampToValueAtTime(0.0001, now + d);
+            o1.stop(now + d + 0.05); o2.stop(now + d + 0.05); lfo.stop(now + d + 0.05);
+          } catch (_) {}
+        };
+        live.push(h);
+      } catch (_) {}
+      return h;
+    },
+    // the card rises out of the torn pack: a glide up, stretched to the walkout (ms)
+    packRise: function (tier, ms) {
+      var d = Math.max(0.3, Math.min(1.2, (ms || 560) / 1000));
+      go(function (t) {
+        note(196, t, d, { type: 'triangle', gain: 0.07, slideTo: tier === 'legendary' ? 1046 : tier === 'elite' ? 784 : 587, attack: 0.04 });
+        noise(t, d, { gain: 0.045, freq: 700, sweepTo: 4600, q: 1.3 });
+        if (tier === 'legendary' || tier === 'elite') note(49, t, d, { type: 'sine', gain: 0.09, slideTo: 98, attack: 0.05 });
+      });
+    },
     // the pack is pressed
     packPress: function () { go(function (t) { note(170, t, 0.05, { type: 'triangle', gain: 0.05, slideTo: 120 }); noise(t, 0.03, { gain: 0.03, freq: 900 }); }); },
     // a short foil tick as the tear advances

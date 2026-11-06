@@ -2496,20 +2496,30 @@
       '#clrBody{position:relative}' +
       '.clp-stage{--w:min(60vw,280px,40dvh);--p:0;--amp:0;--mx:.5;--my:.35;--tier:#ffe9b0;position:relative;width:var(--w);aspect-ratio:5/7;margin-bottom:54px;z-index:6}' +
       '.clp-stage.out{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);margin:0;z-index:5;pointer-events:none}' +
-      '.clp-cone{position:absolute;left:50%;top:-120%;width:260%;height:300%;transform:translateX(-50%);pointer-events:none;z-index:0;opacity:0;transition:opacity 1.2s;background:conic-gradient(from 180deg at 50% 0%,transparent 40%,rgba(255,236,190,.06) 47%,rgba(255,236,190,.11) 50%,rgba(255,236,190,.06) 53%,transparent 60%);animation:clpCone 9s ease-in-out infinite alternate}' +
-      '.clp-stage.in .clp-cone{opacity:1}' +
+      // the house lights: the spotlight strikes like a stage lamp (a few flickers, then on)
+      '.clp-cone{position:absolute;left:50%;top:-120%;width:260%;height:300%;transform:translateX(-50%);pointer-events:none;z-index:0;opacity:0;background:conic-gradient(from 180deg at 50% 0%,transparent 40%,rgba(255,236,190,.06) 47%,rgba(255,236,190,.11) 50%,rgba(255,236,190,.06) 53%,transparent 60%);animation:clpCone 9s ease-in-out infinite alternate}' +
+      '.clp-stage.in .clp-cone{animation:clpCone 9s ease-in-out infinite alternate,clpStrike .9s ease-out both}' +
       '@keyframes clpCone{from{transform:translateX(-50%) rotate(-3deg)}to{transform:translateX(-50%) rotate(3deg)}}' +
+      '@keyframes clpStrike{0%{opacity:0}12%{opacity:.75}20%{opacity:.05}34%{opacity:.9}46%{opacity:.25}60%,100%{opacity:1}}' +
       '.clp-dust{position:absolute;inset:-60% -70%;pointer-events:none;z-index:0;overflow:hidden}' +
       '.clp-dust i{position:absolute;left:var(--x);top:var(--y);width:var(--s);height:var(--s);border-radius:50%;background:#ffe9b0;opacity:0;animation:clpDust calc(var(--d) * var(--spd,1)) linear infinite;animation-delay:var(--dl)}' +
       '@keyframes clpDust{0%{opacity:0;transform:translate(0,0)}15%{opacity:var(--o)}50%{transform:translate(calc(var(--sx) * .5),-45px)}85%{opacity:var(--o)}100%{opacity:0;transform:translate(var(--sx),-90px)}}' +
       '.clp-glow{position:absolute;inset:-55%;border-radius:50%;pointer-events:none;z-index:0;opacity:0;transform:scale(.6);transition:opacity .45s,transform .6s cubic-bezier(.2,.8,.2,1);background:radial-gradient(closest-side,color-mix(in srgb,var(--tier) 80%,transparent),color-mix(in srgb,var(--tier) 22%,transparent) 50%,transparent)}' +
-      '.clp-floor{position:absolute;left:8%;right:8%;bottom:-9%;height:14%;border-radius:50%;background:radial-gradient(ellipse at center,rgba(0,0,0,.75),transparent 70%);filter:blur(8px);z-index:0;opacity:0;transition:opacity .8s}' +
-      '.clp-stage.in .clp-floor{opacity:1}' +
-      '.clp-pack{position:absolute;inset:0;z-index:2;transform-style:preserve-3d;will-change:transform;outline:none;touch-action:none;cursor:grab;opacity:0;animation:clpArrive .8s cubic-bezier(.2,.9,.25,1.15) .05s forwards}' +
+      // the floor shadow and a dust puff appear the moment the pack lands (.landed)
+      '.clp-floor{position:absolute;left:8%;right:8%;bottom:-9%;height:14%;border-radius:50%;background:radial-gradient(ellipse at center,rgba(0,0,0,.75),transparent 70%);filter:blur(8px);z-index:0;opacity:0;transition:opacity .25s}' +
+      '.clp-stage.landed .clp-floor{opacity:1}' +
+      '.clp-puff{position:absolute;left:50%;bottom:-7%;width:130%;height:16%;border-radius:50%;z-index:1;pointer-events:none;opacity:0;transform:translate(-50%,0) scale(.3);background:radial-gradient(ellipse at center,transparent 28%,rgba(255,236,190,.32) 52%,transparent 72%)}' +
+      '.clp-stage.landed .clp-puff{animation:clpPuff .7s cubic-bezier(.2,.8,.2,1) forwards}' +
+      '@keyframes clpPuff{0%{opacity:.9;transform:translate(-50%,0) scale(.3)}100%{opacity:0;transform:translate(-50%,0) scale(1.45,1.1)}}' +
+      // the drop: falls with weight (ease-in), lands with a squash, settles
+      '.clp-pack{position:absolute;inset:0;z-index:2;transform-style:preserve-3d;will-change:transform;outline:none;touch-action:none;cursor:grab;opacity:0;animation:clpArrive .95s linear .05s forwards}' +
       '.clp-pack.ready{animation:none;opacity:1}' +
-      '@keyframes clpArrive{0%{opacity:0;transform:translateY(-70px) scale(1.12) rotateX(14deg)}60%{opacity:1}100%{opacity:1;transform:none}}' +
+      '@keyframes clpArrive{0%{opacity:0;transform:perspective(900px) translateY(-120%) scale(1.28) rotateX(24deg);animation-timing-function:cubic-bezier(.55,0,1,.45)}30%{opacity:1}62%{opacity:1;transform:perspective(900px) translateY(0) scale(1) rotateX(0);animation-timing-function:ease-out}74%{transform:perspective(900px) translateY(1.6%) scale(1.06,.94) rotateX(0)}88%{transform:perspective(900px) translateY(-.5%) scale(.985,1.015) rotateX(0)}100%{opacity:1;transform:perspective(900px) translateY(0) scale(1) rotateX(0)}}' +
       '.clp-core{position:absolute;inset:0;transform-style:preserve-3d;transition:scale .25s cubic-bezier(.2,.8,.2,1)}' +
       '.clp-stage.press .clp-core{scale:.965}' +
+      // hitstop: at the rip the frame freezes for a beat on a squashed pack and a white flash, then lets go
+      '.clp-stage.hit .clp-core{scale:1.07 .93;transition:scale .07s ease-out}' +
+      '.clp-stage.hit .clp-dust i,.clp-stage.hit .clp-cone{animation-play-state:paused}' +
       '.clp-stage.rumble .clp-core{animation:clpRumble .08s linear infinite}' +
       '@keyframes clpRumble{0%{transform:translate(calc(var(--amp) * -1px),calc(var(--amp) * .6px)) rotate(calc(var(--amp) * -.25deg))}25%{transform:translate(calc(var(--amp) * .8px),calc(var(--amp) * -.9px))}50%{transform:translate(calc(var(--amp) * -.6px),calc(var(--amp) * -.5px)) rotate(calc(var(--amp) * .25deg))}75%{transform:translate(calc(var(--amp) * 1px),calc(var(--amp) * .7px))}100%{transform:translate(calc(var(--amp) * -1px),calc(var(--amp) * .6px)) rotate(calc(var(--amp) * -.25deg))}}' +
       '.clp-body{position:absolute;inset:0;border-radius:calc(var(--w)*.085);overflow:hidden;isolation:isolate;' +
@@ -2554,6 +2564,16 @@
       '.clp-ring{position:absolute;inset:-5%;border-radius:12%;z-index:7;pointer-events:none;opacity:0;border:2px solid var(--tier);box-shadow:0 0 24px var(--tier),inset 0 0 18px color-mix(in srgb,var(--tier) 60%,transparent)}' +
       '.clp-ring.go{animation:clpRing .8s cubic-bezier(.19,1,.22,1) forwards}' +
       '@keyframes clpRing{0%{opacity:1;transform:scale(.85)}100%{opacity:0;transform:scale(1.7)}}' +
+      // godrays in the rarity colour wheel out of the opening at the rip
+      '.clp-rays{position:absolute;left:50%;top:19%;width:320%;aspect-ratio:1;z-index:6;pointer-events:none;opacity:0;transform:translate(-50%,-50%) scale(.3);background:repeating-conic-gradient(from 0deg,transparent 0 9deg,color-mix(in srgb,var(--tier) 60%,transparent) 11.5deg,transparent 14deg 24deg);-webkit-mask-image:radial-gradient(closest-side,#000 8%,rgba(0,0,0,.55) 38%,transparent 70%);mask-image:radial-gradient(closest-side,#000 8%,rgba(0,0,0,.55) 38%,transparent 70%)}' +
+      '.clp-rays.go{animation:clpRays 1.15s cubic-bezier(.2,.8,.2,1) forwards}' +
+      '.clp-stage.big .clp-rays.go{animation-duration:1.6s}' +
+      '@keyframes clpRays{0%{opacity:0;transform:translate(-50%,-50%) scale(.3) rotate(0)}14%{opacity:.95}100%{opacity:0;transform:translate(-50%,-50%) scale(1.5) rotate(40deg)}}' +
+      // embers escape through the tear as it grows (Elite and Legendary packs only)
+      '.clp-orbit{position:absolute;left:50%;top:19%;width:0;height:0;z-index:7;pointer-events:none;opacity:calc(var(--p) * 1.3);transition:opacity .2s}' +
+      '.clp-orbit i{position:absolute;left:0;top:0;width:var(--s);height:var(--s);margin:calc(var(--s) * -.5);border-radius:50%;background:#fff;box-shadow:0 0 10px 3px var(--tier);opacity:0;animation:clpSpark var(--d) cubic-bezier(.2,.6,.4,1) var(--dl) infinite}' +
+      '@keyframes clpSpark{0%{opacity:0;transform:translate(var(--x0),0) scale(.6)}12%{opacity:1}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.2)}}' +
+      '.clp-stage.torn .clp-orbit,.clp-stage.out .clp-orbit{opacity:0}' +
       '.clp-frags{position:absolute;inset:0;z-index:8;pointer-events:none}' +
       '.clp-frags i{position:absolute;left:var(--x);top:19%;width:var(--s);height:calc(var(--s) * .55);background:var(--c);border-radius:1px;opacity:0;box-shadow:0 0 6px color-mix(in srgb,var(--c) 70%,transparent);animation:clpFrag var(--d) cubic-bezier(.2,.7,.4,1) var(--dl) forwards}' +
       '@keyframes clpFrag{0%{opacity:1;transform:translate(0,0) rotate(0) scale(1)}55%{opacity:1;transform:translate(calc(var(--dx) * .7),var(--dy)) rotate(calc(var(--r) * .6))}100%{opacity:0;transform:translate(var(--dx),calc(var(--dy) * -.3 + 70px)) rotate(var(--r)) scale(.6)}}' +
@@ -2561,14 +2581,30 @@
       '.clp-stage.out .clp-body,.clp-stage.out .clp-strip,.clp-stage.out .clp-gloss{transform:translateY(42%) scale(.9);opacity:0;transition:transform .65s cubic-bezier(.4,0,.8,.4),opacity .5s .1s}' +
       '.clp-stage.out .clp-glow{opacity:0;transition:opacity .9s .2s}' +
       '.clp-hint{position:absolute;left:0;right:0;bottom:-44px;text-align:center;font-size:.74rem;letter-spacing:.2em;text-transform:uppercase;color:#e8b64a;font-weight:600;opacity:0;transition:opacity .3s;animation:clpHint 1.8s ease-in-out infinite}' +
-      '.clp-stage.in .clp-hint{opacity:1}' +
+      '.clp-stage.landed .clp-hint{opacity:1}' +
       '.clp-stage.torn .clp-hint,.clp-stage.out .clp-hint{opacity:0;animation:none}' +
       '@keyframes clpHint{50%{opacity:.45}}' +
-      '.clr-stage.from-pack{animation:clrEmerge .78s cubic-bezier(.2,.9,.3,1.12) both}' +
+      // the walkout: the card rises out of the pack on a pillar of light (slower for a rarer card: --em)
+      '.clr-stage.from-pack{animation:clrEmerge var(--em,.78s) cubic-bezier(.2,.9,.3,1.12) both}' +
       '@keyframes clrEmerge{0%{opacity:0;transform:translateY(36%) scale(.66)}22%{opacity:1}100%{opacity:1;transform:none}}' +
+      '.clr-pillar{position:absolute;left:50%;bottom:-8%;width:78%;height:170%;z-index:-1;pointer-events:none;opacity:0;transform-origin:50% 100%;transform:translateX(-50%) scaleY(0);background:linear-gradient(90deg,transparent 0%,color-mix(in srgb,var(--halo,#fff) 58%,transparent) 50%,transparent 100%);-webkit-mask-image:linear-gradient(180deg,transparent 0%,#000 60%);mask-image:linear-gradient(180deg,transparent 0%,#000 60%)}' +
+      '.clr-stage.from-pack .clr-pillar{animation:clrPillar calc(var(--em,.78s) * 1.7) cubic-bezier(.2,.8,.2,1) both}' +
+      '@keyframes clrPillar{0%{opacity:0;transform:translateX(-50%) scaleY(0)}18%{opacity:1;transform:translateX(-50%) scaleY(1)}65%{opacity:.55}100%{opacity:0;transform:translateX(-50%) scaleY(1.1)}}' +
+      // the rarity stamp slams in above the card as its face comes round (Rare and up)
+      '.clr-stamp{position:absolute;left:50%;top:-5%;z-index:9;pointer-events:none;opacity:0;transform:translate(-50%,-100%) scale(2.4);white-space:nowrap;font-family:"Schibsted Grotesk",system-ui,sans-serif;font-weight:800;font-size:clamp(1.2rem,6.4vw,2.1rem);line-height:1;letter-spacing:.34em;text-indent:.34em;text-transform:uppercase;color:var(--halo,#fff);text-shadow:0 0 22px var(--halo,transparent),0 0 2px rgba(0,0,0,.85)}' +
+      '.clr-stamp.go{animation:clrStamp 1.7s cubic-bezier(.16,1,.3,1) forwards}' +
+      '@keyframes clrStamp{0%{opacity:0;transform:translate(-50%,-100%) scale(2.6)}12%{opacity:1;transform:translate(-50%,-100%) scale(.96)}20%{transform:translate(-50%,-100%) scale(1.05)}28%{transform:translate(-50%,-100%) scale(1)}80%{opacity:1;transform:translate(-50%,-100%) scale(1)}100%{opacity:0;transform:translate(-50%,-135%) scale(.92)}}' +
+      // the cutscene frame: letterbox bars slide in for the pack and stay until the summary
+      '.clr-bar{position:absolute;left:0;right:0;height:34px;height:max(6dvh,34px);background:#000;z-index:6;pointer-events:none;transition:transform .75s cubic-bezier(.2,.8,.2,1)}' +
+      '.clr-bar.t{top:0;transform:translateY(-101%);box-shadow:0 1px 0 rgba(246,221,134,.16)}.clr-bar.b{bottom:0;transform:translateY(101%);box-shadow:0 -1px 0 rgba(246,221,134,.16)}' +
+      '#clCollReveal.cine .clr-bar{transform:none}' +
+      // the hitstop flash frame
+      '.clr-white{position:absolute;inset:0;z-index:9;pointer-events:none;opacity:0;background:#fff}' +
+      '.clr-white.go{animation:clrWhite .22s ease-out forwards}' +
+      '@keyframes clrWhite{0%{opacity:var(--wf,.6)}100%{opacity:0}}' +
       '.clr-vig{position:absolute;inset:0;pointer-events:none;z-index:3;background:radial-gradient(ellipse at 50% 45%,transparent 45%,rgba(0,0,0,.55) 100%)}' +
       '.clr-tint{position:absolute;inset:0;pointer-events:none;z-index:2;opacity:0;background:radial-gradient(ellipse at 50% 42%,color-mix(in srgb,var(--tier,#ffe9b0) 34%,transparent),transparent 62%)}' +
-      '@media (prefers-reduced-motion:reduce){.clp-pack,.clp-core,.clp-dust i,.clp-cone,.clp-tab,.clp-hint{animation:none}}' +
+      '@media (prefers-reduced-motion:reduce){.clp-pack,.clp-core,.clp-dust i,.clp-cone,.clp-tab,.clp-hint,.clp-puff,.clp-rays,.clp-orbit i,.clr-pillar,.clr-stamp,.clr-white{animation:none}.clr-stamp,.clr-white{display:none}.clr-bar{transition:none}}' +
       'html.cl-scroll-lock{overflow:hidden}' +
       'body.cl-scroll-lock{position:fixed;left:0;right:0;width:100%;overflow:hidden;overscroll-behavior:none}' +
       '.clr-flash{position:absolute;inset:0;z-index:5;pointer-events:none;opacity:0;background:radial-gradient(circle at 50% 45%,rgba(232,160,0,.5),rgba(232,160,0,.12) 38%,transparent 66%)}' +
@@ -2649,7 +2685,7 @@
       '@keyframes clrPop{0%{opacity:0;transform:scale(.4)}100%{opacity:1;transform:scale(1)}}' +
       '.clr-rare-lbl{display:block;margin-top:5px;font-size:.66rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase}' +
       '.clr-xp{display:block;margin-top:8px;color:#e8a000;font-weight:800;font-size:.92rem;letter-spacing:.02em}' +
-      '.clr-hint{position:absolute;bottom:24px;color:rgba(255,255,255,.5);font-size:.78rem;z-index:6}' +
+      '.clr-hint{margin-top:14px;text-align:center;color:rgba(255,255,255,.5);font-size:.78rem;z-index:6;opacity:0;transition:opacity .4s}.clr-hint.on{opacity:1}' +
       '.clr-sum{display:flex;flex-direction:column;align-items:center;gap:13px;z-index:6;text-align:center;animation:clrIn2 .4s ease both}' +
       '@keyframes clrIn2{from{opacity:0;transform:translateY(12px)}to{opacity:1}}' +
       '.clr-sum-h{font-size:1.5rem;font-weight:800;color:#f5f5f5}.clr-sum-x{color:#e8a000;font-weight:800}.clr-sum-lvl{color:#7fd49a;font-weight:800;font-size:.95rem}' +
@@ -4005,7 +4041,7 @@
     if (ov) return ov;
     injectShell();
     ov = document.createElement('div'); ov.id = 'clCollReveal'; ov.setAttribute('role', 'dialog');
-    ov.innerHTML = '<div class="clr-tint" id="clrTint"></div><div class="clr-vig"></div><div class="clr-flash" id="clrFlash"></div><div class="clr-progress" id="clrDots"></div>' +
+    ov.innerHTML = '<div class="clr-tint" id="clrTint"></div><div class="clr-vig"></div><div class="clr-flash" id="clrFlash"></div><div class="clr-white" id="clrWhite"></div><div class="clr-bar t"></div><div class="clr-bar b"></div><div class="clr-progress" id="clrDots"></div>' +
       '<button class="clr-skip" id="clrSkip">Skip &#9197;</button><div id="clrBody"></div>';
     document.body.appendChild(ov);
     return ov;
@@ -4015,6 +4051,7 @@
     stopShader(); stopGyro();
     try { if (_packUnbind) _packUnbind(); } catch (_) { /* noop */ }
     var ov = document.getElementById('clCollReveal');
+    if (ov) ov.classList.remove('cine');
     if (ov && ov.classList.contains('open')) {
       ov.classList.remove('open'); lockScroll(false);
       try { if (_revealRelease) { _revealRelease(); _revealRelease = null; } } catch (_) { /* noop */ }
@@ -4144,13 +4181,16 @@
       // stays in the DOM, absolutely positioned, while it drops away underneath).
       function card(c, fromPack) {
         var tier = c.rarity, rl = RARITY[tier];
-        var d = fromPack ? 560 : 0;                                              // the emergence, before the flip
+        // the walkout before the flip: a rarer card takes longer to rise out of the pack
+        var d = fromPack ? (tier === 'legendary' ? 800 : tier === 'elite' ? 680 : 560) : 0;
         var html =
-          '<div class="clr-stage' + (fromPack ? ' from-pack' : '') + '" style="--halo:' + rl.ring + '"><div class="clr-flip" id="clrFlip">' +
+          '<div class="clr-stage' + (fromPack ? ' from-pack' : '') + '" style="--halo:' + rl.ring + (fromPack ? ';--em:' + (d + 220) + 'ms' : '') + '">' +
+          (fromPack ? '<div class="clr-pillar"></div>' : '') +
+          '<div class="clr-flip" id="clrFlip">' +
           '<div class="clr-back ' + activeCardbackClass() + '"><div class="clr-halo"></div>' + cbBackHtml() + '</div>' +
           '<div class="clr-face" id="clrFace"></div>' +
           '<div class="clr-edge e-l"></div><div class="clr-edge e-r"></div><div class="clr-edge e-t"></div><div class="clr-edge e-b"></div>' +
-          '</div><div class="clr-shock" id="clrShock"></div></div>' +
+          '</div><div class="clr-shock" id="clrShock"></div><div class="clr-stamp" id="clrStamp"></div></div>' +
           '<div class="clr-cap" id="clrCap"></div>' +
           '<div class="clr-hint">' + (idx < queue.length - 1 ? LT('tapNext') : LT('tapFinish')) + (function () { try { if (!localStorage.getItem('clRevealTip')) { localStorage.setItem('clRevealTip', '1'); return '<div style="margin-top:6px;font-size:.68rem;color:#b9a97f">' + LT('landTip') + '</div>'; } } catch (_) { /* noop */ } return ''; })() + '</div>';
         var body = document.getElementById('clrBody');
@@ -4160,12 +4200,14 @@
         var flip = document.getElementById('clrFlip');
         try { flip.style.setProperty('--cw', (flip.offsetWidth || 300) + 'px'); } catch (_) { /* noop */ }   // real edge faces need the pixel width for translateZ
         state = 'anim';
-        if (reduced) { flip.classList.add('flipped'); showCap(c); state = 'ready'; return; }
-        try { if (window.Sfx) { if (fromPack) window.Sfx.cardDeal(); else window.Sfx.cardFlip(); window.Sfx.haptic(tier === 'legendary' ? [10, 30] : 8); } } catch (_) { /* noop */ }
+        if (reduced) { flip.classList.add('flipped'); showCap(c); var hn0 = document.querySelector('#clrBody .clr-hint'); if (hn0) hn0.classList.add('on'); state = 'ready'; return; }
+        try { if (window.Sfx) { if (fromPack) window.Sfx.packRise(tier, d); else window.Sfx.cardFlip(); window.Sfx.haptic(tier === 'legendary' ? [10, 30] : 8); } } catch (_) { /* noop */ }
         if (fromPack) later(d, function () { try { if (window.Sfx) window.Sfx.cardFlip(); } catch (_) { /* noop */ } });
-        later(360 + d, function () { flip.classList.add('flip-go'); });        // keyframe flip (1.05s)
-        later(900 + d, function () {                                            // ~crossover: front swings into view
+        later((fromPack ? 280 : 360) + d, function () { flip.classList.add('flip-go'); });        // keyframe flip (1.05s)
+        later((fromPack ? 820 : 900) + d, function () {                         // ~crossover: front swings into view
           try { if (window.Sfx) window.Sfx.reveal(tier); } catch (_) { /* noop */ }
+          // Rare and up: the rarity stamp slams in above the card
+          if (tier !== 'common') { var stp = document.getElementById('clrStamp'); if (stp) { stp.textContent = rarLabel(tier); stp.classList.add('go'); } }
           // elite+ punctuates the crossover with a rarity-coloured ring shockwave
           // (transform/opacity only — safe everywhere) and a short haptic hit
           if (tier === 'legendary' || tier === 'elite') {
@@ -4180,14 +4222,15 @@
             startShader();                                                       // prismatic godrays behind the legendary card
           }
         });
-        later(1420 + d, function () {                                           // flip settled: mount tilt + idle + cap
+        later((fromPack ? 1340 : 1420) + d, function () {                       // flip settled: mount tilt + idle + cap
           var face = document.getElementById('clrFace');
           try { if (theme.mount) theme.mount(face); } catch (_) { /* noop */ }
           stopGyro();                                                           // gyro paused for now (re-enable: _gyroOff = gyroMount(face))
           var f = document.getElementById('clrFlip'); if (f) f.classList.add('live');
+          var hn = document.querySelector('#clrBody .clr-hint'); if (hn) hn.classList.add('on');
           showCap(c); state = 'ready';
         });
-        later(3600 + d, function () { if (state === 'ready') next(); });
+        later((fromPack ? 3520 : 3600) + d, function () { if (state === 'ready') next(); });
       }
       function showCap(c) {
         var cap = document.getElementById('clrCap'); if (!cap) return;
@@ -4200,7 +4243,7 @@
       }
       function next() { clearT(); stopShader(); stopGyro(); idx++; if (idx >= queue.length) { if (opts && opts.preview) closeReveal(); else summary(); } else card(queue[idx]); }
       function summary() {
-        state = 'sum'; stopShader(); stopGyro();
+        state = 'sum'; stopShader(); stopGyro(); ov.classList.remove('cine');
         // When a forge is sequencing the reward itself, leave the set unclaimed so the
         // overlay can fire after the card has settled back into its slot.
         var newSets = []; try { if (!_deferSetClaim) newSets = claimSets(); } catch (_) { /* noop */ }
@@ -4267,9 +4310,13 @@
         } catch (_) { when = ''; }
         var dust = '';
         for (var i = 0; i < 22; i++) dust += '<i style="--x:' + (Math.random() * 100).toFixed(1) + '%;--y:' + (20 + Math.random() * 80).toFixed(1) + '%;--s:' + (1.5 + Math.random() * 2.5).toFixed(1) + 'px;--d:' + (6 + Math.random() * 7).toFixed(1) + 's;--dl:-' + (Math.random() * 10).toFixed(1) + 's;--o:' + (0.25 + Math.random() * 0.5).toFixed(2) + ';--sx:' + ((Math.random() - 0.5) * 60).toFixed(0) + 'px"></i>';
+        // embers that escape through the tear: only when something big is inside
+        var big = top === 'legendary' || top === 'elite', sparks = '';
+        if (big) for (var j = 0; j < (top === 'legendary' ? 18 : 12); j++) sparks += '<i style="--x0:' + ((Math.random() - 0.5) * 150).toFixed(0) + 'px;--dx:' + ((Math.random() - 0.5) * 240).toFixed(0) + 'px;--dy:' + (-(50 + Math.random() * 130)).toFixed(0) + 'px;--s:' + (3 + Math.random() * 3).toFixed(1) + 'px;--d:' + (0.9 + Math.random() * 0.9).toFixed(2) + 's;--dl:-' + (Math.random() * 1.8).toFixed(2) + 's"></i>';
+        ov.classList.add('cine');                                               // letterbox: the cutscene frame
         document.getElementById('clrBody').innerHTML =
-          '<div class="clp-stage' + (pk.bonus ? ' bonus' : '') + '" id="clpStage" style="--tier:' + tier + '">' +
-          '<div class="clp-cone"></div><div class="clp-dust">' + dust + '</div><div class="clp-glow" id="clpGlow"></div><div class="clp-floor"></div>' +
+          '<div class="clp-stage' + (pk.bonus ? ' bonus' : '') + (big ? ' big' : '') + '" id="clpStage" style="--tier:' + tier + '">' +
+          '<div class="clp-cone"></div><div class="clp-dust">' + dust + '</div><div class="clp-glow" id="clpGlow"></div><div class="clp-floor"></div><div class="clp-puff"></div>' +
           '<div class="clp-pack" id="clpPack" tabindex="0" role="button" aria-label="' + esc(LT('tapOpen')) + '"><div class="clp-core" id="clpCore">' +
             '<div class="clp-body"><div class="clp-inner"><span class="clp-leak"></span><span class="clp-peek"></span></div>' +
               '<span class="clp-seal"><svg viewBox="0 0 24 24">' + (PACK_ICON[pk.icon] || PACK_ICON.cl) + '</svg></span>' +
@@ -4283,7 +4330,8 @@
             '<span class="clp-tab"><svg viewBox="0 0 24 24"><path d="M5 12h12M13 6l6 6-6 6"/></svg></span>' +
             '<div class="clp-gloss"><span class="clp-diff"></span><span class="clp-spec"></span></div>' +
           '</div></div>' +
-          '<div class="clp-burst" id="clpBurst"></div><div class="clp-ring" id="clpRing"></div><div class="clp-frags" id="clpFrags"></div>' +
+          '<div class="clp-burst" id="clpBurst"></div><div class="clp-ring" id="clpRing"></div><div class="clp-rays" id="clpRays"></div><div class="clp-frags" id="clpFrags"></div>' +
+          (sparks ? '<div class="clp-orbit">' + sparks + '</div>' : '') +
           '<div class="clp-hint">' + LT('dragOpen') + '</div></div>';
         state = 'pack';
         packLive(top, tier);
@@ -4291,22 +4339,43 @@
       function packLive(top, tierColor) {
         var st = document.getElementById('clpStage'), pack = document.getElementById('clpPack'), strip = document.getElementById('clpStrip'), flap = document.getElementById('clpFlap'), glow = document.getElementById('clpGlow');
         var legendary = top === 'legendary', elite = top === 'elite';
-        var p = 0, drag = null, hover = false, ready = false, alive = true;
-        var rx = 0, ry = 0, tx = 0, trx = 0, try_ = 0, ttx = 0, mx = 0.5, my = 0.35, tmx = 0.5, tmy = 0.35, raf = 0;
+        var p = 0, drag = null, hover = false, ready = false, alive = true, hum = null;
+        var rx = 0, ry = 0, tx = 0, trx = 0, try_ = 0, ttx = 0, mx = 0.5, my = 0.35, tmx = 0.5, tmy = 0.35, raf = 0, z = 1;
         var lastTick = 0, lastRumble = 0;
         var tint = document.getElementById('clrTint'); if (tint) { tint.style.setProperty('--tier', tierColor); tint.style.opacity = '0'; }
         strip.style.clipPath = stripPoly(0);
-        setTimeout(function () { st.classList.add('in'); }, 30);
-        function arrived() { if (ready) return; ready = true; pack.classList.add('ready'); }
-        pack.addEventListener('animationend', arrived);
-        later(950, arrived);
-        try { pack.focus({ preventScroll: true }); } catch (_) { /* noop */ }
         function sfx(fn) { try { if (window.Sfx && window.Sfx[fn]) window.Sfx[fn].apply(window.Sfx, Array.prototype.slice.call(arguments, 1)); } catch (_) { /* noop */ } }
         function hap(v) { try { if (window.Sfx) window.Sfx.haptic(v); } catch (_) { /* noop */ } }
+        // Beat 1: the house lights strike. Beat 2: the pack lands (62% into clpArrive):
+        // floor shadow, dust puff, a thud and a small stage shake. Then it is live.
+        setTimeout(function () { st.classList.add('in'); sfx('packLights'); }, 30);
+        var landed = false;
+        function land() {
+          if (landed || !alive) return; landed = true;
+          st.classList.add('landed'); sfx('packLand'); hap(14);
+          try { if (window.Fx && window.Fx.shake) window.Fx.shake(0.22, document.getElementById('clrBody')); } catch (_) { /* noop */ }
+        }
+        // the touchdown is 62% into clpArrive: read the animation's own clock (its first
+        // frame can start late on a busy page), with a timer as the fallback
+        function landWatch() {
+          if (landed || !alive) return;
+          try { var a = pack.getAnimations ? pack.getAnimations()[0] : null; if (a && a.currentTime >= 589) { land(); return; } } catch (_) { /* noop */ }
+          requestAnimationFrame(landWatch);
+        }
+        requestAnimationFrame(landWatch);
+        later(1000, land);
+        function arrived() {
+          if (ready) return; ready = true; land(); pack.classList.add('ready');
+          try { if (window.Sfx && window.Sfx.packHum) hum = window.Sfx.packHum(top); } catch (_) { hum = null; }   // the drone of a sealed pack
+        }
+        pack.addEventListener('animationend', arrived);
+        later(1100, arrived);
+        try { pack.focus({ preventScroll: true }); } catch (_) { /* noop */ }
         function clamp(v) { return v < -1 ? -1 : v > 1 ? 1 : v; }
         function setP(v) {
           p = Math.max(0, Math.min(1, v));
           st.style.setProperty('--p', p.toFixed(3));
+          if (hum) hum.set(p);
           strip.style.clipPath = stripPoly(p); flap.style.clipPath = flapPoly(p);
           glow.style.opacity = (p * 0.9).toFixed(2); glow.style.transform = 'scale(' + (0.6 + p * 0.5).toFixed(3) + ')';
           if (tint) tint.style.opacity = (p * 0.8).toFixed(2);
@@ -4324,7 +4393,8 @@
           if (!alive || !st.isConnected) return;
           if (!drag && !hover) { trx = Math.sin(now / 1900) * 2.5; try_ = Math.sin(now / 1400) * 4; tmx = 0.5 + Math.sin(now / 2300) * 0.18; tmy = 0.35 + Math.sin(now / 1700) * 0.12; }
           rx += (trx - rx) * 0.1; ry += (try_ - ry) * 0.1; tx += (ttx - tx) * 0.15; mx += (tmx - mx) * 0.1; my += (tmy - my) * 0.1;
-          if (ready) pack.style.transform = 'perspective(900px) rotateX(' + rx.toFixed(2) + 'deg) rotateY(' + ry.toFixed(2) + 'deg) translateX(' + tx.toFixed(1) + 'px)';
+          z += ((state === 'pack' ? 1 + p * 0.09 : 1) - z) * 0.12;             // the camera pushes in as the tear grows
+          if (ready) pack.style.transform = 'perspective(900px) rotateX(' + rx.toFixed(2) + 'deg) rotateY(' + ry.toFixed(2) + 'deg) translateX(' + tx.toFixed(1) + 'px) scale(' + z.toFixed(3) + ')';
           st.style.setProperty('--mx', mx.toFixed(3)); st.style.setProperty('--my', my.toFixed(3));
           raf = requestAnimationFrame(frame);
         }
@@ -4379,14 +4449,25 @@
           for (var i = 0; i < 18; i++) h += '<i style="--x:' + (4 + Math.random() * 92).toFixed(1) + '%;--s:' + (3 + Math.random() * 7).toFixed(1) + 'px;--c:' + cols[i % 4] + ';--dx:' + ((Math.random() - 0.5) * 220).toFixed(0) + 'px;--dy:' + (-(50 + Math.random() * 170)).toFixed(0) + 'px;--r:' + ((Math.random() - 0.5) * 720).toFixed(0) + 'deg;--d:' + (0.7 + Math.random() * 0.6).toFixed(2) + 's;--dl:' + (Math.random() * 0.08).toFixed(2) + 's"></i>';
           document.getElementById('clpFrags').innerHTML = h;
         }
+        // The rip lands in two beats. burst(): hitstop, the frame freezes on a squashed
+        // pack and a flash for 80 ms (110 for a Legendary). release(): everything lets go.
         function burst() {
-          st.classList.remove('rumble', 'press'); st.classList.add('torn');
+          st.classList.remove('rumble', 'press'); st.classList.add('hit');
+          if (hum) { hum.stop(true); hum = null; }
+          var wf = document.getElementById('clrWhite');
+          if (wf) { wf.style.setProperty('--wf', legendary ? '.7' : elite ? '.55' : '.4'); wf.classList.remove('go'); void wf.offsetWidth; wf.classList.add('go'); }
+          sfx('packRip'); hap(legendary ? 30 : 18);
+          later(legendary ? 110 : 80, release);
+        }
+        function release() {
+          st.classList.remove('hit'); st.classList.add('torn');
           flap.classList.add('fly'); frags();
           document.getElementById('clpBurst').classList.add('go');
+          document.getElementById('clpRays').classList.add('go');
           if (elite || legendary) document.getElementById('clpRing').classList.add('go');
           glow.style.opacity = '1'; glow.style.transform = 'scale(1.15)';
           if (tint) { tint.style.transition = 'opacity 1.2s .4s'; tint.style.opacity = '0'; }
-          sfx('packRip'); sfx('packBurst', top);
+          sfx('packBurst', top);
           hap(legendary ? [20, 40, 20, 40, 120] : elite ? [14, 30, 40] : [10, 20, 30]);
           // shake the stage, not the body: a transformed body under the blurred overlay paints black on software/Safari compositors
           try { if (window.Fx && window.Fx.shake) window.Fx.shake(legendary ? 0.9 : elite ? 0.45 : 0.18, document.getElementById('clrBody')); } catch (_) { /* noop */ }
@@ -4399,6 +4480,7 @@
         }
         function unbind() {
           alive = false; cancelAnimationFrame(raf);
+          if (hum) { hum.stop(); hum = null; }
           ov.removeEventListener('pointerdown', onDown); ov.removeEventListener('pointermove', onMove);
           ov.removeEventListener('pointerup', onUp); ov.removeEventListener('pointercancel', onUp); ov.removeEventListener('pointerleave', onLeave);
           pack.removeEventListener('keydown', onKey);
