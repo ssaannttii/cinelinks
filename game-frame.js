@@ -13,11 +13,11 @@
   if (!mode) return;
   var practice = /[?&]practice=1/.test(location.search);
   var STR = {
-    en: { today: 'Today', trio: 'Trio', privacy: 'Privacy', foot: 'This product uses the TMDB API and TMDB images, but is not endorsed or certified by TMDB.' },
-    es: { today: 'Hoy', trio: 'Trío', privacy: 'Privacidad', foot: 'Este producto usa la API y las imágenes de TMDB, pero TMDB no lo respalda ni lo certifica.' },
-    fr: { today: 'Aujourd’hui', trio: 'Trio', privacy: 'Confidentialité', foot: 'Ce produit utilise l’API et les images de TMDB, sans être approuvé ni certifié par TMDB.' },
-    de: { today: 'Heute', trio: 'Trio', privacy: 'Datenschutz', foot: 'Dieses Produkt nutzt die TMDB-API und TMDB-Bilder, wird von TMDB aber weder unterstützt noch zertifiziert.' },
-    pt: { today: 'Hoje', trio: 'Trio', privacy: 'Privacidade', foot: 'Este produto usa a API e as imagens do TMDB, mas não é endossado nem certificado pelo TMDB.' }
+    en: { today: 'Today', trio: 'Trio', level: 'Lv', privacy: 'Privacy', foot: 'This product uses the TMDB API and TMDB images, but is not endorsed or certified by TMDB.' },
+    es: { today: 'Hoy', trio: 'Trío', level: 'Nv', privacy: 'Privacidad', foot: 'Este producto usa la API y las imágenes de TMDB, pero TMDB no lo respalda ni lo certifica.' },
+    fr: { today: 'Aujourd’hui', trio: 'Trio', level: 'Nv', privacy: 'Confidentialité', foot: 'Ce produit utilise l’API et les images de TMDB, sans être approuvé ni certifié par TMDB.' },
+    de: { today: 'Heute', trio: 'Trio', level: 'Lv', privacy: 'Datenschutz', foot: 'Dieses Produkt nutzt die TMDB-API und TMDB-Bilder, wird von TMDB aber weder unterstützt noch zertifiziert.' },
+    pt: { today: 'Hoje', trio: 'Trio', level: 'Nv', privacy: 'Privacidade', foot: 'Este produto usa a API e as imagens do TMDB, mas não é endossado nem certificado pelo TMDB.' }
   };
   var lang = 'en'; try { lang = String(localStorage.getItem('clLang') || 'en').slice(0, 2); } catch (_) {}
   var S = STR[lang] || STR.en;
@@ -42,7 +42,15 @@
     '#gf .topbar{margin:0!important;display:flex;align-items:center;gap:8px;justify-content:flex-end}' +
     '#gf .date-badge{display:none}' +
     'body.gf .wrap>.logo:first-child{margin-top:14px}' +
-    '@media (max-width:420px){#gf .gf-trio b{display:none}#gf .gf-trio{padding:0 6px}}';
+    // the level pill: the player's level with a hairline of progress under it; it counts
+    // up with a glow when the level changes (Collection fires cl:xp after a reveal)
+    '#gf .gf-lvl{position:relative;display:inline-flex;align-items:center;gap:5px;height:30px;margin-left:8px;padding:0 10px;border-radius:9px;text-decoration:none;color:#f6dd86;font-size:.74rem;font-weight:800;letter-spacing:.04em;background:rgba(255,255,255,.045);box-shadow:0 0 0 1px rgba(246,221,134,.14) inset;overflow:hidden;cursor:pointer}' +
+    '#gf .gf-lvl small{font-size:.6rem;font-weight:700;letter-spacing:.14em;color:#a59f95}' +
+    '#gf .gf-lvl i{position:absolute;left:0;bottom:0;height:2px;width:var(--p,0%);background:linear-gradient(90deg,#f6dd86,#d9ab42);transition:width .6s cubic-bezier(.25,.8,.3,1)}' +
+    '#gf .gf-lvl.up{animation:gfLvl .9s cubic-bezier(.2,1.4,.4,1)}' +
+    '@keyframes gfLvl{0%{box-shadow:0 0 0 1px rgba(246,221,134,.14) inset}30%{transform:scale(1.14);box-shadow:0 0 0 1.5px #f6dd86 inset,0 0 22px rgba(246,221,134,.6)}100%{transform:none;box-shadow:0 0 0 1px rgba(246,221,134,.14) inset}}' +
+    '@media (max-width:420px){#gf .gf-trio b{display:none}#gf .gf-trio{padding:0 6px}#gf .gf-lvl{margin-left:6px;padding:0 8px}}' +
+    '@media (prefers-reduced-motion:reduce){#gf .gf-lvl.up{animation:none}#gf .gf-lvl i{transition:none}}';
   document.head.appendChild(css);
 
   var bar = document.createElement('header'); bar.id = 'gf';
@@ -54,6 +62,28 @@
   home.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg>' + S.today;
   home.setAttribute('aria-label', S.today);
   L.appendChild(home);
+
+  // The level pill reads the collection save directly (collection.js loads at idle),
+  // with the same curve as levelFromXp there: level = floor(sqrt(xp / 50)) + 1.
+  var lvl = document.createElement('a'); lvl.className = 'gf-lvl'; lvl.href = '/'; lvl.setAttribute('aria-label', S.level);
+  function levelOf(xp) { return Math.floor(Math.sqrt(Math.max(0, xp) / 50)) + 1; }
+  function xpFor(l) { return 50 * (l - 1) * (l - 1); }
+  function readLevel() { var xp = 0; try { xp = (JSON.parse(localStorage.getItem('cl_collection') || '{}') || {}).xp || 0; } catch (_) { xp = 0; } var l = levelOf(xp); return { level: l, pct: Math.round(100 * (xp - xpFor(l)) / (xpFor(l + 1) - xpFor(l))) }; }
+  var shown = readLevel();
+  lvl.innerHTML = '<small>' + S.level + '</small><b>' + shown.level + '</b><i style="--p:' + shown.pct + '%"></i>';
+  lvl.onclick = function (e) { e.preventDefault(); try { if (window.Collection && Collection.openGallery) Collection.openGallery(); else location.href = '/'; } catch (_) { location.href = '/'; } };
+  L.appendChild(lvl);
+  function paintLevel() {
+    var now = readLevel(), b = lvl.querySelector('b'), i = lvl.querySelector('i');
+    if (i) i.style.setProperty('--p', now.pct + '%');
+    if (now.level !== shown.level) {
+      if (b) { if (window.Fx && Fx.countUp && now.level > shown.level) Fx.countUp(b, now.level, { ms: 600 }); else b.textContent = now.level; }
+      lvl.classList.remove('up'); void lvl.offsetWidth; lvl.classList.add('up');
+    }
+    shown = now;
+  }
+  window.addEventListener('cl:xp', paintLevel);
+  window.addEventListener('storage', function (e) { if (e.key === 'cl_collection') paintLevel(); });
 
   // the page's own controls, moved as-is (their listeners come with them)
   var topbar = document.querySelector('.topbar');

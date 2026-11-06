@@ -747,6 +747,12 @@
     moreAchv:   { en: 'more achievements', es: 'logros más', fr: 'succès de plus', de: 'weitere Erfolge', pt: 'conquistas a mais' },
     dustEarned: { en: 'dust earned', es: 'dust ganado', fr: 'dust gagné', de: 'Dust erhalten', pt: 'dust ganho' },
     contBtn:    { en: 'Continue', es: 'Continuar', fr: 'Continuer', de: 'Weiter', pt: 'Continuar' },
+    tapContinue:{ en: 'tap to continue', es: 'toca para seguir', fr: 'touche pour continuer', de: 'tippen zum Fortfahren', pt: 'toque para continuar' },
+    levelUpEye: { en: 'Level up', es: 'Subes de nivel', fr: 'Niveau supérieur', de: 'Level-Up', pt: 'Subiu de nível' },
+    setEye:     { en: 'Set complete', es: 'Set completado', fr: 'Série complétée', de: 'Set komplett', pt: 'Set completo' },
+    achvEye:    { en: 'Achievement unlocked', es: 'Logro desbloqueado', fr: 'Succès débloqué', de: 'Erfolg freigeschaltet', pt: 'Conquista desbloqueada' },
+    newBack:    { en: 'New card back', es: 'Nuevo reverso', fr: 'Nouveau dos de carte', de: 'Neuer Kartenrücken', pt: 'Novo verso' },
+    xpToNext:   { en: 'to level', es: 'para el nivel', fr: 'pour le niveau', de: 'bis Level', pt: 'para o nível' },
     viewColl:   { en: 'View collection', es: 'Ver colección', fr: 'Voir la collection', de: 'Sammlung ansehen', pt: 'Ver coleção' },
     // ── Vault chrome (tabs, header, quests, prime, draw, sets, backs, trophies) ──
     Cards:      { en: 'Cards', es: 'Cartas', fr: 'Cartes', de: 'Karten', pt: 'Cartas' },
@@ -2689,6 +2695,11 @@
       '.clr-sum{display:flex;flex-direction:column;align-items:center;gap:13px;z-index:6;text-align:center;animation:clrIn2 .4s ease both}' +
       '@keyframes clrIn2{from{opacity:0;transform:translateY(12px)}to{opacity:1}}' +
       '.clr-sum-h{font-size:1.5rem;font-weight:800;color:#f5f5f5}.clr-sum-x{color:#e8a000;font-weight:800}.clr-sum-lvl{color:#7fd49a;font-weight:800;font-size:.95rem}' +
+      '.clr-xp{display:flex;align-items:center;gap:12px;width:min(320px,84vw);margin:2px 0 4px}' +
+      '.clr-xp .cl-lvl-ring{position:relative;flex-shrink:0;width:46px;height:46px;border-radius:50%;box-shadow:0 0 0 2px rgba(246,221,134,.45) inset}' +
+      '.clr-xp .cl-lvl-ring b{font-size:1.05rem}' +
+      '.clr-xp-r{flex:1;min-width:0}.clr-xp .cl-coll-xp-bar{margin-top:0;height:8px}' +
+      '.clx-num{margin-top:7px;text-align:left;font-size:.72rem;font-weight:700;color:#a59f95}.clx-num span{font-weight:600;opacity:.7}' +
       '.clr-sum-btns{display:flex;gap:10px;margin-top:6px}' +
       '.clr-btn{height:44px;padding:0 20px;border-radius:11px;border:0;box-shadow:0 0 0 1px rgba(246,221,134,.2) inset;background:rgba(255,255,255,.045);color:#f2ede4;font:inherit;font-weight:700;cursor:pointer}.clr-btn.gold{background:linear-gradient(135deg,#f6dd86 0%,#d9ab42 34%,#f4dc8a 58%,#b9852a 100%);color:#1a1408;box-shadow:0 1px 0 rgba(255,255,255,.45) inset,0 10px 24px -10px rgba(232,182,74,.55)}' +
       '@media(prefers-reduced-motion:reduce){.clr-stage,.clr-flip.flip-go,.clr-flip.live{animation:none}.clr-flash.go,.clr-flip .clr-halo,.clr-face::before,.clr-face::after{animation:none}.clr-face::before,.clr-face::after{display:none}}' +
@@ -4017,6 +4028,129 @@
     setTimeout(function () { try { btn.innerHTML = old; btn.disabled = false; } catch (_) { /* noop */ } }, 1600);
   }
 
+  // ── Moments: the progression beats as scenes, in the pack's language (letterbox,
+  //    a stamp, light). A level-up, a completed set and an achievement used to be a
+  //    line of text in the reveal summary; now each is its own beat, queued so they
+  //    play one after another. moment(o) → Promise, resolved on tap or after o.ms.
+  //    o: { kind:'level'|'set'|'achv', eyebrow, title, sub (html), icon (svg html), ms }
+  var LEAF = 'linear-gradient(135deg,#f6dd86 0%,#d9ab42 34%,#f4dc8a 58%,#b9852a 100%)';
+  var MOMENT_ICON = {
+    level: '<svg viewBox="0 0 24 24"><path d="m12 4 2.2 5.2 5.6.5-4.2 3.7 1.3 5.6L12 16l-4.9 3 1.3-5.6L4.2 9.7l5.6-.5z"/></svg>',
+    set: '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="12" height="16" rx="2"/><path d="M8 3h11a2 2 0 0 1 2 2v12"/><path d="m6.5 13 2 2 4-4"/></svg>',
+    achv: '<svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="5.5"/><path d="M8.5 13.5 7 21l5-2.5L17 21l-1.5-7.5"/></svg>'
+  };
+  function injectMomentCss() {
+    if (document.getElementById('clMomentCss')) return;
+    var st = document.createElement('style'); st.id = 'clMomentCss';
+    st.textContent =
+      '#clMoment{position:fixed;inset:0;z-index:270;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;background:radial-gradient(circle at 50% 46%,rgba(46,36,20,.8),rgba(8,7,9,.96) 70%);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);cursor:pointer;font-family:"Schibsted Grotesk",system-ui,sans-serif;color:#f2ede4;overflow:hidden}' +
+      '#clMoment.open{display:flex}#clMoment.out{opacity:0;transition:opacity .35s}' +
+      '.clm-bar{position:absolute;left:0;right:0;height:34px;height:max(6dvh,34px);background:#000;z-index:2;transition:transform .7s cubic-bezier(.2,.8,.2,1)}' +
+      '.clm-bar.t{top:0;transform:translateY(-101%);box-shadow:0 1px 0 rgba(246,221,134,.16)}.clm-bar.b{bottom:0;transform:translateY(101%);box-shadow:0 -1px 0 rgba(246,221,134,.16)}' +
+      '#clMoment.in .clm-bar{transform:none}' +
+      '.clm-raysw{position:absolute;left:50%;top:46%;width:min(170vw,900px);aspect-ratio:1;transform:translate(-50%,-50%) scale(.4);opacity:0;pointer-events:none;transition:opacity .9s .2s,transform 1.3s cubic-bezier(.2,.8,.2,1) .1s}' +
+      '#clMoment.in .clm-raysw{opacity:1;transform:translate(-50%,-50%) scale(1)}' +
+      '.clm-rays{position:absolute;inset:0;background:repeating-conic-gradient(from 0deg,transparent 0 9deg,rgba(246,221,134,.24) 11.5deg,transparent 14deg 24deg);-webkit-mask-image:radial-gradient(closest-side,#000 4%,rgba(0,0,0,.45) 36%,transparent 70%);mask-image:radial-gradient(closest-side,#000 4%,rgba(0,0,0,.45) 36%,transparent 70%);animation:clmSpin 22s linear infinite}' +
+      '@keyframes clmSpin{to{transform:rotate(360deg)}}' +
+      '.clm-ic{width:72px;height:72px;border-radius:50%;display:grid;place-items:center;color:#1a1408;background:' + LEAF + ';box-shadow:0 0 0 6px rgba(12,11,13,.7),0 0 0 7px rgba(246,221,134,.5),0 18px 40px -12px rgba(232,182,74,.6);opacity:0;transform:scale(.4);z-index:3}' +
+      '#clMoment.in .clm-ic{animation:clmPop .6s cubic-bezier(.2,1.4,.3,1) .25s both}' +
+      '.clm-ic svg{width:34px;height:34px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}' +
+      '.clm-eye{margin-top:22px;font-size:.72rem;font-weight:700;letter-spacing:.26em;text-transform:uppercase;color:#d9ab42;opacity:0;z-index:3}' +
+      '#clMoment.in .clm-eye{animation:clmFade .5s ease .45s both}' +
+      '.clm-title{margin-top:10px;max-width:92vw;font-family:Fraunces,Georgia,serif;font-weight:600;font-size:clamp(2rem,10vw,3.4rem);line-height:1.05;letter-spacing:-.01em;background:' + LEAF + ';-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;opacity:0;z-index:3;filter:drop-shadow(0 6px 24px rgba(232,182,74,.35))}' +
+      '#clMoment.in .clm-title{animation:clmStamp .9s cubic-bezier(.16,1,.3,1) .55s both}' +
+      '@keyframes clmStamp{0%{opacity:0;transform:scale(2.4)}55%{opacity:1;transform:scale(.97)}75%{transform:scale(1.03)}100%{opacity:1;transform:scale(1)}}' +
+      '.clm-sub{margin-top:14px;max-width:36ch;font-size:.95rem;color:#a59f95;line-height:1.45;opacity:0;z-index:3}.clm-sub b{color:#f2ede4;font-weight:700}' +
+      '#clMoment.in .clm-sub{animation:clmFade .5s ease 1.1s both}' +
+      '.clm-go{margin-top:28px;font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(242,237,228,.5);opacity:0;z-index:3}' +
+      '#clMoment.in .clm-go{animation:clmFade .5s ease 1.6s both,clmHint 1.8s ease-in-out 2.1s infinite}' +
+      '@keyframes clmPop{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:scale(1)}}@keyframes clmFade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}@keyframes clmHint{50%{opacity:.45}}' +
+      '@media (prefers-reduced-motion:reduce){#clMoment .clm-ic,#clMoment .clm-eye,#clMoment .clm-title,#clMoment .clm-sub,#clMoment .clm-go{opacity:1;transform:none;animation:none}#clMoment .clm-rays{animation:none}.clm-bar{transition:none}}';
+    document.head.appendChild(st);
+  }
+  var _momentQ = Promise.resolve();
+  function moment(o) {
+    _momentQ = _momentQ.then(function () { return playMoment(o || {}); }).catch(function () {});
+    return _momentQ;
+  }
+  function playMoment(o) {
+    return new Promise(function (res) {
+      try {
+        injectMomentCss();
+        var reduced = reducedMotion();
+        var ov = document.getElementById('clMoment');
+        if (!ov) { ov = document.createElement('div'); ov.id = 'clMoment'; ov.setAttribute('role', 'dialog'); document.body.appendChild(ov); }
+        ov.className = '';
+        ov.innerHTML = '<div class="clm-bar t"></div><div class="clm-bar b"></div><div class="clm-raysw"><div class="clm-rays"></div></div>' +
+          '<div class="clm-ic">' + (o.icon || MOMENT_ICON[o.kind] || MOMENT_ICON.level) + '</div>' +
+          '<div class="clm-eye">' + esc(o.eyebrow || '') + '</div><div class="clm-title">' + esc(o.title || '') + '</div>' +
+          (o.sub ? '<div class="clm-sub">' + o.sub + '</div>' : '') + '<div class="clm-go">' + esc(LT('tapContinue')) + '</div>';
+        ov.classList.add('open'); lockScroll(true);
+        requestAnimationFrame(function () { ov.classList.add('in'); });
+        var closed = false, t0 = performance.now();
+        function close() {
+          if (closed) return; closed = true; clearTimeout(tm); ov.onclick = null;
+          ov.classList.add('out');
+          setTimeout(function () { ov.classList.remove('open', 'in', 'out'); lockScroll(false); res(); }, reduced ? 0 : 360);
+        }
+        var tm = setTimeout(close, o.ms || 3800);
+        ov.onclick = function () { if (performance.now() - t0 > 700) close(); };
+        setTimeout(function () {                                              // the beat lands with the stamp
+          try { if (window.Sfx) { if (o.kind === 'level') window.Sfx.levelUp(); else window.Sfx.allDone(); window.Sfx.haptic(o.kind === 'level' ? [12, 50, 12, 50, 20] : [12, 30, 12]); } } catch (_) { /* noop */ }
+          try { if (window.Fx && window.Fx.confetti && o.kind !== 'achv') window.Fx.confetti({ count: o.kind === 'level' ? 120 : 80, power: 1.15, y: window.innerHeight * 0.42 }); } catch (_) { /* noop */ }
+        }, reduced ? 0 : 560);
+        try { if (window.Track) window.Track('moment', { kind: o.kind }); } catch (_) { /* noop */ }
+      } catch (_) { res(); }
+    });
+  }
+  // The level-up scene, with what it unlocks (a card back) as its line.
+  function levelMoment(lv) {
+    var backs = cardbacksUnlockedBetween(lv - 1, lv);
+    var sub = backs.length ? LT('newBack') + ': <b>' + esc(backs[0].name) + '</b>' : '';
+    return moment({ kind: 'level', eyebrow: LT('levelUpEye'), title: LT('lvlWord') + ' ' + lv, sub: sub });
+  }
+  // ── The XP bar as a sequence: fills to the end of each level gained, plays the
+  //    level-up scene, restarts from empty for the overflow, then settles. root holds
+  //    .cl-lvl-ring b (level), .cl-coll-xp-bar i (fill) and .clx-num (progress text).
+  function xpRun(root, xpBefore, xpAfter, done) {
+    var fill = root.querySelector('.cl-coll-xp-bar i'), lvlEl = root.querySelector('.cl-lvl-ring b'), numEl = root.querySelector('.clx-num'), ring = root.querySelector('.cl-lvl-ring');
+    var lvlBefore = levelFromXp(xpBefore), lvlAfter = levelFromXp(xpAfter);
+    function spanOf(l) { return xpForLevel(l + 1) - xpForLevel(l); }
+    function pctAt(xp, l) { var s = spanOf(l); return s ? Math.max(0, Math.min(100, ((xp - xpForLevel(l)) / s) * 100)) : 0; }
+    function labels(lv, xp) {
+      if (lvlEl) lvlEl.textContent = lv;
+      if (numEl) numEl.innerHTML = Math.max(0, xp - xpForLevel(lv)) + ' / ' + spanOf(lv) + ' XP <span>' + LT('xpToNext') + ' ' + (lv + 1) + '</span>';
+    }
+    function width(pct, ms) { if (!fill) return; fill.style.transition = ms ? ('width ' + ms + 'ms cubic-bezier(.25,.8,.3,1)') : 'none'; fill.style.width = pct + '%'; }
+    if (reducedMotion() || !fill) {
+      labels(lvlAfter, xpAfter); width(Math.max(3, pctAt(xpAfter, lvlAfter)), 0);
+      var q = Promise.resolve(); for (var l = lvlBefore + 1; l <= lvlAfter; l++) (function (lv) { q = q.then(function () { return levelMoment(lv); }); })(l);
+      q.then(function () { if (done) done(); });
+      return;
+    }
+    var seq = [], lv = lvlBefore, from = pctAt(xpBefore, lvlBefore);
+    while (lv < lvlAfter && seq.length < 12) { seq.push({ from: from, to: 100, lv: lv, up: true }); lv++; from = 0; }
+    seq.push({ from: from, to: Math.max(3, pctAt(xpAfter, lvlAfter)), lv: lvlAfter, up: false });
+    var i = 0;
+    labels(lvlBefore, xpBefore); width(seq[0].from, 0);
+    (function step() {
+      if (i >= seq.length) { if (fill) fill.style.transition = ''; labels(lvlAfter, xpAfter); if (done) done(); return; }
+      var s = seq[i++];
+      labels(s.lv, s.up ? xpForLevel(s.lv + 1) : xpAfter);
+      width(s.from, 0);
+      requestAnimationFrame(function () {
+        var dur = Math.round(700 * Math.max(0.4, (s.to - s.from) / 100));
+        try { if (window.Sfx && window.Sfx.xpFill) window.Sfx.xpFill(dur); } catch (_) { /* noop */ }
+        width(s.to, dur);
+        setTimeout(function () {
+          if (!s.up) { step(); return; }
+          if (ring) { ring.classList.remove('levelup'); void ring.offsetWidth; ring.classList.add('levelup'); }
+          setTimeout(function () { levelMoment(s.lv + 1).then(function () { setTimeout(step, 150); }); }, 240);
+        }, dur + 40);
+      });
+    })();
+  }
+
   // ── Reveal sequence: the "earn" moment. reveal(newCards) plays a per-card
   // flip with rarity-scaled flair (sound + haptics + legendary flash), then a
   // summary with XP and any level-up. Auto-plays after a win; skippable. ──
@@ -4242,36 +4376,48 @@
         try { if (window.Sfx) window.Sfx.haptic(c.rarity === 'legendary' ? [20, 40, 60] : c.rarity === 'elite' ? [15, 30] : 10); } catch (_) { /* noop */ }
       }
       function next() { clearT(); stopShader(); stopGyro(); idx++; if (idx >= queue.length) { if (opts && opts.preview) closeReveal(); else summary(); } else card(queue[idx]); }
+      // The summary is a progression beat: the XP counts up while the bar fills, every
+      // level gained plays its scene, then each completed set (its bonus fills the bar
+      // again) and each achievement, one after another. Dust is the one plain line.
       function summary() {
         state = 'sum'; stopShader(); stopGyro(); ov.classList.remove('cine');
         // When a forge is sequencing the reward itself, leave the set unclaimed so the
         // overlay can fire after the card has settled back into its slot.
         var newSets = []; try { if (!_deferSetClaim) newSets = claimSets(); } catch (_) { /* noop */ }
-        var finalXp = (load() || blank()).xp || 0, lvlNow = levelFromXp(finalXp);
-        if (lvlNow > lvlBefore) { try { if (window.Sfx) window.Sfx.levelUp(); } catch (_) { /* noop */ } }
-        else if (newSets.length) { try { if (window.Sfx) window.Sfx.allDone(); } catch (_) { /* noop */ } }
-        var setLines = newSets.map(function (st) { return '<div class="clr-sum-lvl"><svg viewBox="0 0 24 24" width="1em" height="1em" style="vertical-align:-.12em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.6 6 .8-4.4 4.2 1.1 6L12 17.8 6.7 19.6l1.1-6L3.4 9.4l6-.8z"/></svg> ' + LT('setComplete') + ': ' + esc(st.name) + ' &middot; +' + st.bonus + ' XP</div>'; }).join('');
-        var lvlLine = lvlNow > lvlBefore ? '<div class="clr-sum-lvl">' + LT('levelUp') + ' ' + lvlNow + '! 🎉</div>' : '';
-        var newBacks = lvlNow > lvlBefore ? cardbacksUnlockedBetween(lvlBefore, lvlNow) : [];
-        var backLine = newBacks.map(function (cb) { return '<div class="clr-sum-lvl"><svg viewBox="0 0 24 24" width="1em" height="1em" style="vertical-align:-.12em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2.4"/><circle cx="12" cy="12" r="3.2"/></svg> ' + LT('backUnlocked') + ': ' + esc(cb.name) + '</div>'; }).join('');
         var newAchv = []; try { newAchv = syncAchievements(); } catch (_) { /* noop */ }
-        if (newAchv.length) { try { if (window.Sfx) window.Sfx.allDone(); } catch (_) { /* noop */ } }
-        var achLine = newAchv.slice(0, 3).map(function (a) { return '<div class="clr-sum-lvl">' + a.icon + ' ' + LT('achievement') + ': ' + esc(a.name) + '</div>'; }).join('') +
-          (newAchv.length > 3 ? '<div class="clr-sum-lvl"><svg viewBox="0 0 24 24" width="1em" height="1em" style="vertical-align:-.12em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="5.5"/><path d="M8.5 13.5 7 21l5-2.5L17 21l-1.5-7.5"/></svg> +' + (newAchv.length - 3) + ' ' + LT('moreAchv') + '</div>' : '');
+        var finalXp = (load() || blank()).xp || 0;
+        var setXp = newSets.reduce(function (a, st) { return a + (st.bonus || 75); }, 0);
         // achievement-gated card backs (e.g. Mastery) newly crossed this win
-        if (newAchv.length) { var ac2 = achvCount(); backLine += cardbacksUnlockedByAchv(ac2 - newAchv.length, ac2).map(function (cb) { return '<div class="clr-sum-lvl"><svg viewBox="0 0 24 24" width="1em" height="1em" style="vertical-align:-.12em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2.4"/><circle cx="12" cy="12" r="3.2"/></svg> ' + LT('backUnlocked') + ': ' + esc(cb.name) + '</div>'; }).join(''); }
+        var achBacks = []; if (newAchv.length) { try { var ac2 = achvCount(); achBacks = cardbacksUnlockedByAchv(ac2 - newAchv.length, ac2); } catch (_) { /* noop */ } }
+        var lines = achBacks.map(function (cb) { return '<div class="clr-sum-lvl">' + LT('backUnlocked') + ': ' + esc(cb.name) + '</div>'; }).join('');
         // _pendingDust bundles every source this session (dupes, level-ups, the
-        // Daily Double, trophies) — so label it generically, not "from duplicates".
-        var dustLine = _pendingDust > 0 ? '<div class="clr-sum-lvl">&#10024; +' + _pendingDust + ' ' + LT('dustEarned') + '</div>' : '';
+        // Daily Double, trophies), so label it generically, not "from duplicates".
+        if (_pendingDust > 0) lines += '<div class="clr-sum-lvl">+' + _pendingDust + ' ' + LT('dustEarned') + '</div>';
         _pendingDust = 0;
         document.getElementById('clrBody').innerHTML =
           '<div class="clr-sum"><div class="clr-sum-h">+' + queue.length + ' ' + (queue.length === 1 ? LT('cardOne') : LT('cardMany')) + '</div>' +
-          '<div class="clr-sum-x">+' + gained + ' XP</div>' + setLines + lvlLine + backLine + achLine + dustLine +
+          '<div class="clr-sum-x" id="clrSumXp">+0 XP</div>' +
+          '<div class="clr-xp" id="clrXp"><div class="cl-lvl-ring"><b>' + levelFromXp(beforeXp) + '</b></div><div class="clr-xp-r"><div class="cl-coll-xp-bar"><i style="width:0%"></i></div><div class="clx-num"></div></div></div>' +
+          lines +
           '<div class="clr-sum-btns"><button class="clr-btn" id="clrAgain">' + LT('contBtn') + '</button><button class="clr-btn gold" id="clrView">' + LT('viewColl') + '</button></div></div>';
         var sk = document.getElementById('clrSkip'); if (sk) sk.style.display = 'none';
         ov.onclick = null;
         document.getElementById('clrView').onclick = function (e) { e.stopPropagation(); closeReveal(); openGallery(); };
         document.getElementById('clrAgain').onclick = function (e) { e.stopPropagation(); closeReveal(); };
+        var xpEl = document.getElementById('clrSumXp');
+        try { if (window.Fx && window.Fx.countUp) window.Fx.countUp(xpEl, gained + setXp, { ms: 900, prefix: '+', suffix: ' XP' }); else xpEl.textContent = '+' + (gained + setXp) + ' XP'; } catch (_) { /* noop */ }
+        var root = document.getElementById('clrXp');
+        xpRun(root, beforeXp, afterXp, function () {
+          var q = Promise.resolve(), xp = afterXp;
+          newSets.forEach(function (st) {
+            q = q.then(function () { return moment({ kind: 'set', eyebrow: LT('setEye'), title: st.name, sub: '+' + (st.bonus || 75) + ' XP' }); })
+              .then(function () { return new Promise(function (r) { var to = xp + (st.bonus || 75); xpRun(root, xp, to, r); xp = to; }); });
+          });
+          newAchv.slice(0, 3).forEach(function (a) {
+            q = q.then(function () { return moment({ kind: 'achv', eyebrow: LT('achvEye'), title: a.name, icon: a.icon, ms: 3000 }); });
+          });
+          q.then(function () { try { window.dispatchEvent(new CustomEvent('cl:xp', { detail: { xp: finalXp, level: levelFromXp(finalXp) } })); } catch (_) { /* noop */ } });
+        });
       }
       var skip = document.getElementById('clrSkip');
       skip.style.display = ''; skip.onclick = function (e) { e.stopPropagation(); clearT(); if (opts && opts.preview) closeReveal(); else summary(); };
@@ -4745,6 +4891,7 @@
   // expose + init
   window.Collection = {
     add: add, stats: stats, all: allCards, owns: owns, openGallery: openGallery, markSeen: markSeen, reveal: reveal, sets: setsState,
+    moment: moment, level: function () { var st = load() || blank(), xp = st.xp || 0, lv = levelFromXp(xp); return { xp: xp, level: lv, into: xp - xpForLevel(lv), span: xpForLevel(lv + 1) - xpForLevel(lv) }; },
     cardbacks: cardbacksState, useCardback: useCardback, openCardbacks: openCardbacks,
     achievements: achievementsState, openAchievements: openAchievements,
     titles: titlesState, title: activeTitle, setTitle: setTitle, portrait: portrait,
