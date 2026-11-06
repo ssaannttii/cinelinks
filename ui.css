@@ -50,3 +50,13 @@ body .footer a{color:var(--mut)!important;text-decoration:none;font-weight:600}
 /* the TMDB mark inside the footer, as on the home */
 body .foot .tmdb-mark,body .footer .tmdb-mark{display:inline-block;font-family:"Space Mono",ui-monospace,Menlo,monospace;font-size:.62rem;font-weight:700;letter-spacing:.14em;color:var(--mut);padding:3px 6px;border-radius:5px;box-shadow:var(--rim);margin-right:8px;vertical-align:1px}
 body .foot .nw,body .footer .nw{white-space:nowrap}
+
+/* ── page entrance ────────────────────────────────────────────────────────
+   Every screen enters the same way: the blocks inside .wrap rise in, one after
+   another. backwards, not both: once in, an element is back on its own styles,
+   so nothing the page does to it later is overridden. */
+@keyframes uiRise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:no-preference){
+  .wrap > :not([data-vt]):not(.modal):not(script):not(style):not(template){animation:uiRise .55s var(--ease,cubic-bezier(.2,.8,.2,1)) backwards;animation-delay:var(--ui-i,0s)}
+  .wrap > :nth-child(2){--ui-i:.06s}.wrap > :nth-child(3){--ui-i:.12s}.wrap > :nth-child(4){--ui-i:.18s}.wrap > :nth-child(5){--ui-i:.24s}.wrap > :nth-child(n+6){--ui-i:.3s}
+}

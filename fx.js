@@ -240,6 +240,30 @@
     };
   };
 
+  // ── Images arrive with a fade, never a pop ──────────────────────────────────
+  // Every <img> still loading when it enters the DOM gets .fx-img until it lands
+  // (or fails). Images already decoded are left alone, so nothing blinks.
+  function watchImg(img) {
+    if (img.__fxw || img.complete) return; img.__fxw = 1;
+    img.classList.add('fx-img');
+    var on = function () { img.classList.add('on'); };
+    img.addEventListener('load', on, { once: true }); img.addEventListener('error', on, { once: true });
+    if (img.complete) on();
+  }
+  try {
+    Array.prototype.forEach.call(document.images, watchImg);
+    new MutationObserver(function (ms) {
+      for (var i = 0; i < ms.length; i++) {
+        var added = ms[i].addedNodes;
+        for (var j = 0; j < added.length; j++) {
+          var n = added[j]; if (n.nodeType !== 1) continue;
+          if (n.tagName === 'IMG') watchImg(n);
+          else if (n.getElementsByTagName) { var imgs = n.getElementsByTagName('img'); for (var k = 0; k < imgs.length; k++) watchImg(imgs[k]); }
+        }
+      }
+    }).observe(document.documentElement, { childList: true, subtree: true });
+  } catch (_) { /* noop */ }
+
   // Pause all CSS animations while the tab is backgrounded (fx.css does the work).
   try {
     document.addEventListener('visibilitychange', function () {

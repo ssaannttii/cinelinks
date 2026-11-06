@@ -16,8 +16,9 @@
 <meta property="og:image" content="https://cinelinks.vercel.app/og-image.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:site" content="@cinelinksgame">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="preload" href="/fonts/fraunces-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/schibsted-grotesk-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/fonts.css">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#0c0b0d;--s1:#151417;--bdr:rgba(246,221,134,.085);--txt:#f2ede4;--mut:#a59f95;--gold:#e8a000}
@@ -26,7 +27,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
 .home-link{display:inline-flex;align-items:center;gap:6px;color:var(--mut);text-decoration:none;font-size:.8rem;font-weight:600}
 .home-link:hover{color:var(--gold)}
-h1{font-size:1.9rem;font-weight:800;letter-spacing:-.02em;margin:8px 0 4px}
+h1{font-family:var(--fdisp,'Fraunces',Georgia,serif);font-size:2rem;font-weight:600;letter-spacing:-.01em;margin:8px 0 4px}
 .updated{color:var(--mut);font-size:.78rem;margin-bottom:26px}
 h2{font-size:1.05rem;font-weight:800;color:var(--gold);margin:26px 0 8px}
 p{margin:0 0 12px;color:#d8d8d8;font-size:.95rem}
