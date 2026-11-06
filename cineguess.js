@@ -281,9 +281,8 @@
     if (finished) return;
     if (Media.sameTarget(movie, target)) { finish(true); return; }
     toast(GT('notIt'));
-    if (window.Fx) Fx.play(document.getElementById('guessInput'), 'fx-shake', 450);
-    try { if (window.Sfx) { Sfx.deadEnd(); Sfx.haptic(55); } } catch (_) { /* noop */ }
     advance('wrong');
+    if (!finished && window.Fx && Fx.wrong) { const gi = document.getElementById('guessInput'); Fx.wrong(gi, { hard: results.length >= MAX_GUESSES - 1 }); Fx.tension(gi, results.length === MAX_GUESSES - 1); }
   }
   function skip() { if (!finished) advance('skip'); }
   function finish(win) {

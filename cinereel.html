@@ -313,8 +313,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     guesses.push({win:false});                                  // a real wrong guess
     if(shown>=total){ over=true; try{ if(window.Sfx) Sfx.deadEnd(); }catch(_){} render(); return; }   // no posters left → lost (the loss beat fires from the result)
     shown++; render();
-    try{ if(window.Sfx){ Sfx.deadEnd(); Sfx.haptic([40,30,40]); } }catch(_){}
-    if(window.Fx){ const gi=document.getElementById('gi'); if(gi) Fx.play(gi,'fx-shake',450); Fx.shake(0.6); }
+    if(window.Fx && Fx.wrong){ const gi=document.getElementById('gi'); Fx.wrong(gi, { hard: shown>=total-1 }); if(shown>=total-1) Fx.tension(gi, true); }
     const m=document.getElementById('miss');
     if(m&&name) m.textContent='“'+name+'” '+TR('nope');
   }

@@ -151,7 +151,48 @@
       if (wait > 0) setTimeout(fn, wait); else fn();
     }, ms || 0);
   }
-  window.Fx = { after: after, confetti: confetti, burstFrom: burstFrom, play: play, reduced: reduced, countUp: countUp, shake: shake, popText: popText, popFrom: popFrom, win: win, lose: lose };
+  // ── The feedback vocabulary ─────────────────────────────────────────────────
+  // One calibrated set for every game, so a right answer feels the same in
+  // CineLine as in CineGrid: each call is the visual, the sound and the haptic.
+  //   right(el, o)    a correct step. o.n = the run so far (the chime climbs from 2),
+  //                   o.pop = text to float off el, o.shake = override (default .4)
+  //   wrong(el, o)    a wrong step. o.hard = the costly one (last life, one away):
+  //                   bigger shake, longer haptic. A red ring on el + a red beat.
+  //   confirm(el)     a guess committed (Submit, Go, Finish): tick + short haptic
+  //   pick()          a selection changed: a soft tap (the spring is the global :active)
+  //   tension(el, on) last attempt or time running out: el pulses red while on; a
+  //                   low two-note warning + haptic the moment it starts
+  // el is optional everywhere: pass null when the game draws its own visual.
+  function sfx(name, a) { try { if (window.Sfx && window.Sfx[name]) window.Sfx[name](a); } catch (_) {} }
+  function hap(p) { try { if (window.Sfx && window.Sfx.haptic) window.Sfx.haptic(p); } catch (_) {} }
+  function right(el, o) {
+    o = o || {}; var n = o.n || 1;
+    if (el) play(el, 'fx-right', 760);
+    if (n >= 2) sfx('streak', n); else sfx('goalReach');
+    hap(n >= 3 ? [10, 20, 10] : [10, 25]);
+    shake(o.shake != null ? o.shake : 0.4);
+    if (o.pop && el) popFrom(el, o.pop, { color: '#f6dd86', size: '1.15rem' });
+  }
+  function wrong(el, o) {
+    o = o || {};
+    if (el) play(el, 'fx-wrong', 520);
+    sfx('deadEnd'); hap(o.hard ? [40, 30, 70] : [40, 30, 40]);
+    shake(o.hard ? 0.85 : 0.6);
+    if (reduced()) return;
+    var v = document.createElement('div'); v.className = 'fx-wrong-vig' + (o.hard ? ' hard' : '');
+    document.body.appendChild(v);
+    setTimeout(function () { try { v.remove(); } catch (_) {} }, 460);
+  }
+  function confirm(el) { sfx('select'); hap(8); if (el) play(el, 'fx-confirm', 320); }
+  function pick() { sfx('tap'); hap(4); }
+  function tension(el, on) {
+    if (!el) return;
+    if (!on) { el.classList.remove('fx-tense'); return; }
+    if (el.classList.contains('fx-tense')) return;
+    el.classList.add('fx-tense'); sfx('tense'); hap([20, 40, 20]);
+  }
+  window.Fx = { after: after, confetti: confetti, burstFrom: burstFrom, play: play, reduced: reduced, countUp: countUp, shake: shake, popText: popText, popFrom: popFrom, win: win, lose: lose,
+    right: right, wrong: wrong, confirm: confirm, pick: pick, tension: tension };
 
   // Pages that load fx.js without fx.css (the home page keeps its own chrome rules)
   // still need the styles of the elements this file CREATES — otherwise the "+N"

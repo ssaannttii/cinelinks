@@ -399,9 +399,8 @@ function makeGuess(movie){
   if(finished) return;
   if(Media.sameTarget(movie, target)){ finish(true); return; }
   toast(T('notIt'));
-  if(window.Fx) Fx.play(document.getElementById('guessInput'), 'fx-shake', 450);
-  try{ if(window.Sfx){ Sfx.deadEnd(); Sfx.haptic(55); } }catch(_){}
   advance('wrong');
+  if(!finished && window.Fx && Fx.wrong){ const gi = document.getElementById('guessInput'); Fx.wrong(gi, { hard: results.length >= MAX_GUESSES - 1 }); Fx.tension(gi, results.length === MAX_GUESSES - 1); }
 }
 
 function skip(){

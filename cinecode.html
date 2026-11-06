@@ -419,8 +419,8 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     render();
     // the verdict lands when the last cell has flipped, not before it
     setTimeout(function(){
-      try{ if(window.Sfx){ if(win){Sfx.win&&Sfx.win();} else {Sfx.deadEnd&&Sfx.deadEnd();Sfx.haptic&&Sfx.haptic([30,25,30]);} } }catch(_){}
-      if(window.Fx && !win) Fx.shake(0.5);
+      if(win){ try{ if(window.Sfx) Sfx.win(); }catch(_){} }
+      else if(!over && window.Fx && Fx.wrong){ const rowEl=stage.querySelector('.grow.fresh'); Fx.wrong(rowEl||null, { hard: rows.length>=MAX-1 }); if(rows.length===MAX-1) Fx.tension(stage.querySelector('.dots'), true); }
     }, flipDone());
   }
 

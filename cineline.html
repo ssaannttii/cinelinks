@@ -392,7 +392,7 @@ function renderTimeline(){
     h += '<button class="tl-slot' + (finished ? ' done' : '') + '" data-slot="' + i + '"' + (finished ? ' disabled' : '') + ' aria-label="' + T('placeHere') + '">' + T('placeHere') + '</button>';
     if(i < sorted.length){
       const c = sorted[i];
-      const flash = (c === lastPlaced) ? (c._res === 'correct' ? ' fx-bounce' : ' fx-shake') : '';
+      const flash = (c === lastPlaced) ? (c._res === 'correct' ? ' fx-right' : ' fx-wrong') : '';
       const cls = c._anchor ? ' anchor' : (c._res ? ' ' + c._res : '');
       h += '<div class="tl-item' + cls + flash + '" data-mid="' + (c.id || '') + '" data-yr="' + c.year + '" role="button" tabindex="0" aria-label="' + esc(c.title) + ' — ' + T('learnAria') + '">' +
         (c.poster ? '<img src="' + poster(c.poster, 'w92') + '" alt="">' : '<div class="tl-ph"></div>') +
@@ -434,10 +434,9 @@ function place(slot){
   results.push(c._res);
   placed.push(c);
   toast(ok ? ('✓ ' + c.title + ' — ' + c.year) : ('✗ ' + c.title + ' — ' + c.year));
-  try{ if(window.Sfx){ if(ok){ Sfx.goalReach(); Sfx.haptic([10,25]); } else { Sfx.deadEnd(); Sfx.haptic([40,30,40]); } } }catch(_){}
-  if(window.Fx) Fx.shake(ok ? 0.4 : 0.7);
   pendingIdx++;
   renderTimeline();
+  if(window.Fx && Fx.right){ let run = 0; for(let i = results.length - 1; i >= 0 && results[i] === 'correct'; i--) run++; if(ok) Fx.right(null, { n: run }); else Fx.wrong(null, { hard: pendingIdx >= deck.length - 1 }); }
   renderProgress();
   if(pendingIdx >= deck.length){ finish(); }
   else { renderCurrent(); }

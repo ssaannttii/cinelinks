@@ -293,6 +293,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     html+='</div>';
     html+='<div class="result'+(over?' show':'')+'" id="result"></div>';
     stage.innerHTML=html;
+    if(!over&&livesLeft===1){ const lv=document.getElementById('lives'); if(lv) lv.classList.add('fx-tense'); }   // the last life keeps its pulse across re-renders
     // play any queued cell animations
     Object.keys(flashCells).forEach(function(i){ const el=stage.querySelector('.cell[data-i="'+i+'"]'); if(el&&window.Fx) Fx.play(el,'fx-'+flashCells[i],700); });
     flashCells={};
@@ -380,18 +381,18 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
       const tier=rareTier(d.v);
       flashCells[idx]='bounce'; render();
       const el=stage.querySelector('.cell[data-i="'+idx+'"]');
-      if(tier==='elite'){ sfx('reveal','elite'); if(window.Fx)Fx.burstFrom(el,{count:30,power:.9}); floatOff(idx,'💎 '+T('deepCut'),'gold'); }
-      else if(tier==='rare'){ sfx('reveal','rare'); floatOff(idx,'✨ '+T('nicePull'),'gold'); }
-      else if(combo>=2){ sfx('streak',combo); floatOff(idx,'🔥 '+combo+'!','green'); }
-      else { sfx('goalReach'); }
-      haptic(combo>=3?[10,20,10]:14);
+      if(tier==='elite'){ sfx('reveal','elite'); if(window.Fx)Fx.burstFrom(el,{count:30,power:.9}); floatOff(idx,T('deepCut'),'gold'); haptic([10,20,10]); }
+      else if(tier==='rare'){ sfx('reveal','rare'); floatOff(idx,T('nicePull'),'gold'); haptic(14); }
+      else if(window.Fx&&Fx.right){ Fx.right(null,{n:combo,shake:.3}); if(combo>=2) floatOff(idx,'\u00d7'+combo,'green'); }
+      else { sfx('goalReach'); haptic(14); }
       rowFb=rowFeedback();
       if(correctCount()===9){ finish(true); busy=false; return; }
       busy=false; render();
     } else {
       cells[idx].status='wrong'; (triedByCell[idx]=triedByCell[idx]||new Set()).add(+d.id);
       const wasLives=livesLeft; livesLeft--; combo=0;
-      flashCells[idx]='shake'; sfx('deadEnd'); haptic([14,40,14]); if(window.Fx)Fx.shake(0.7); render();
+      flashCells[idx]='wrong'; if(window.Fx&&Fx.wrong) Fx.wrong(null,{hard:wasLives-1<=1}); else { sfx('deadEnd'); haptic([14,40,14]); } render();
+      if(livesLeft===1&&window.Fx&&Fx.tension) Fx.tension(document.getElementById('lives'),true);
       const hp=stage.querySelector('.hp[data-h="'+(wasLives-1)+'"]'); if(hp&&window.Fx)Fx.play(hp,'lose',500);
       floatOff(idx,'✕ '+T('notMatch'),'');
       await wait(720);

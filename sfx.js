@@ -118,6 +118,14 @@
       });
     },
 
+    // last attempt in play — a low two-note warning (Fx.tension)
+    tense: function () {
+      go(function (t) {
+        note(220, t, 0.12, { type: 'triangle', gain: 0.09 });
+        note(165, t + 0.15, 0.24, { type: 'triangle', gain: 0.1, slideTo: 150 });
+      });
+    },
+
     // dead end — low descending thud
     deadEnd: function () {
       go(function (t) {

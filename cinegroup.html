@@ -622,6 +622,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
        '<button class="btn btn-go" id="goBtn" disabled>'+T('submit')+'</button>'+
        '</div>';
     stage.innerHTML=h;
+    if(mistakes===MAX_MIST-1){ const m=stage.querySelector('.mistakes'); if(m) m.classList.add('fx-tense'); }   // the last mistake in play keeps its pulse across re-renders
     document.querySelectorAll('.tile[data-id]').forEach(el=>el.addEventListener('click',()=>onTile(el.dataset.id)));
     document.getElementById('shuffleBtn').onclick=onShuffle;
     document.getElementById('deselBtn').onclick=()=>{ selected=[]; syncSel(); };
@@ -661,7 +662,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     if(go) go.disabled=selected.length!==4;
     if(des) des.disabled=selected.length===0;
   }
-  function onTile(id){ if(locked) return; const i=selected.indexOf(id); if(i>=0) selected.splice(i,1); else { if(selected.length>=4) return; selected.push(id); } syncSel(); }
+  function onTile(id){ if(locked) return; const i=selected.indexOf(id); if(i>=0) selected.splice(i,1); else { if(selected.length>=4) return; selected.push(id); } if(window.Fx && Fx.pick) Fx.pick(); syncSel(); }
   function onShuffle(){ // shuffle only the unsolved tiles; solved ones stay pinned in place
     const solvedKeys=new Set(solved.map(s=>s.key));
     const pos=[], ids=[]; board.forEach((id,i)=>{ if(!solvedKeys.has(tileMap[id].key)){ pos.push(i); ids.push(id); } });
@@ -707,6 +708,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
   }
   function onSubmit(){
     if(locked||selected.length!==4) return;
+    if(window.Fx && Fx.confirm) Fx.confirm(document.getElementById('goBtn'));
     const keys=selected.map(id=>tileMap[id].key);
     guesses.push(keys.slice());
     const allSame=keys.every(k=>k===keys[0]);
@@ -716,8 +718,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
       // bounce the four correct tiles in a ripple (colored), then lock them in place
       selected.forEach((id,i)=>{ const el=document.querySelector('.tile[data-id="'+id+'"]'); if(el){ el.style.animationDelay=(i*0.08)+'s'; el.style.background=g.color; el.classList.remove('sel'); el.classList.add('solving'); } });
       lastSolvedKey=g.key;
-      try{ if(window.Sfx){ Sfx.goalReach(); Sfx.haptic([10,30]); } }catch(_){}
-      if(window.Fx) Fx.shake(0.5);
+      if(window.Fx && Fx.right) Fx.right(null, { n: solved.length + 1, shake: 0.5 });
       toast('✓ '+g.label);              // reveal the category
       setTimeout(()=>{
         const flyRects=selected.map(id=>{ const el=document.querySelector('.tile[data-id="'+id+'"]'); return el?el.getBoundingClientRect():null; }).filter(Boolean);
@@ -733,10 +734,10 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
       const counts={}; keys.forEach(k=>counts[k]=(counts[k]||0)+1);
       const max=Math.max(...Object.values(counts));
       selected.forEach(id=>{ const el=document.querySelector('.tile[data-id="'+id+'"]'); if(el){ el.classList.add('wrong'); setTimeout(()=>el.classList.remove('wrong'),400);} });
-      try{ if(window.Sfx){ Sfx.deadEnd(); Sfx.haptic([40,30,40]); } }catch(_){}
-      if(window.Fx) Fx.shake(max===3?0.9:0.6);
       mistakes++;
+      if(window.Fx && Fx.wrong) Fx.wrong(null, { hard: max===3 || mistakes>=MAX_MIST-1 });
       const dots=document.getElementById('dots'); if(dots) dots.innerHTML=dotsHtml();
+      if(window.Fx && Fx.tension && mistakes===MAX_MIST-1) Fx.tension(document.querySelector('.mistakes'), true);
       if(max===3) toast(T('oneAway'));
       else if(sharedConnection(selected)) toast(T('realConnection'));
       saveDaily();
