@@ -1490,6 +1490,7 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opa
 <script src="lib/credits.js"></script>
 <script src="lib/daily.js"></script>
 <script src="lib/trio.js"></script>
+<script src="session.js"></script>
 <script src="lib/difficulty.js"></script>
 <script>
 const DAILY_TIME_ZONE = 'Europe/Madrid';
@@ -3347,6 +3348,9 @@ function gameParamsFromUrl() {
 function loadGameFromUrl() {
   const params = gameParamsFromUrl();
   if (!params) return false;
+  // The official daily, reloaded: its snapshot wins over the URL's unofficial copy.
+  const snap = game._dailySnap;
+  if (snap && snap.date === dateKey() && snap.start && snap.end && sameNode(params.start, snap.start) && sameNode(params.end, snap.end)) { game.startDaily(); return true; }
   // Mid-game link (has current node) → jump straight in
   if (params.current) {
     game.init(params.start, params.end, {current:params.current, keepUrl:true});
@@ -3555,9 +3559,13 @@ const game = window.game = {
         this.dead = new Set();
         const badgeEl = document.getElementById('hdrDateBadge');
         if (badgeEl) { badgeEl.textContent = formatDailyDate(dateFromKey(key), {month:'short', day:'numeric'}); badgeEl.style.display = ''; }
+        try { if (window.Session) Session.end(); } catch (_) {}
         await this.showWin(true);
         return;
       }
+      // Left mid-run? Back to the same board, clicks and token (session.js).
+      const snap = this._dailySnap;
+      if (snap && snap.date === key && Array.isArray(snap.path) && snap.path.length) { await this.resumeDaily(snap); return; }
     }
 
     const badge = document.getElementById('hdrDateBadge');
@@ -3577,12 +3585,46 @@ const game = window.game = {
     this.optDist = null;
     this._showLoadPreview(challenge.s, challenge.e);
     await new Promise(r => setTimeout(r, BRIEFING_DELAY_MS));
-    this.init(challenge.s, challenge.e, {
+    await this.init(challenge.s, challenge.e, {
       scoreDate: key,
       dailyRecord: scoreNumber(score && score.record),
       scoreStats: score,
       scoreToken: scoreToken
     });
+    this._snapDaily();
+  },
+
+  // ── the daily run survives leaving ──
+  // A reload used to rebuild the pair from the URL as an unofficial game (no token,
+  // no streak, no cards) and "Today" mid-run lost the clicks. Now every move
+  // snapshots the official run; startDaily resumes it and the lobby offers Continue.
+  _dailySnap: null,
+  _snapDaily() {
+    if (!this.scoreDate || this.scoreDate !== dateKey() || !this.start || !this.end) return;
+    const strip = n => { const o = { id: n.id, type: n.type, name: n.name }; if (n.img) o.img = n.img; if (n.role) o.role = n.role; if (n.year) o.year = n.year; return o; };
+    this._dailySnap = {
+      date: this.scoreDate, start: strip(this.start), end: strip(this.end), path: this.path.map(strip), clicks: this.clicks,
+      visited: Array.from(this.visited), dead: Array.from(this.dead), token: this.scoreToken, dailyRecord: this.dailyRecord, scoreStats: this._scoreStats
+    };
+    try { if (window.Session) Session.save(); } catch (_) {}
+  },
+  async resumeDaily(s) {
+    try { if (window.Track) Track('cl_resume', { clicks: s.clicks }); } catch (_) {}
+    const badge = document.getElementById('hdrDateBadge');
+    if (badge) { badge.textContent = formatDailyDate(dateFromKey(s.date), {month:'short', day:'numeric'}); badge.style.display = ''; }
+    this.optDist = null;
+    const path = s.path.map(normalizeNode), cur = path[path.length - 1];
+    this._dailySnap = s;
+    await this.init(path[0], normalizeNode(s.end), { scoreDate: s.date, dailyRecord: s.dailyRecord, scoreStats: s.scoreStats, scoreToken: s.token, current: path.length > 1 ? cur : null, keepUrl: true });
+    this.path = path; this.cur = cur; this.clicks = s.clicks | 0;
+    this.visited = new Set(s.visited && s.visited.length ? s.visited : path.map(n => n.type + '-' + n.id));
+    this.dead = new Set(s.dead || []);
+    const ctr = document.getElementById('clickCounter'); if (ctr) ctr.textContent = this.clicks;
+    this._updateClicksLabel();
+    document.querySelector('.hdr-clicks')?.style.setProperty('--click-ring', this.clickRing());
+    try { this._renderParHud(); } catch (_) {}
+    this.renderPath();
+    try { if (window.Session) Session.gate(); } catch (_) {}
   },
 
   openArchive() {
@@ -4046,6 +4088,7 @@ const game = window.game = {
     this.visited.delete(removed.type + '-' + removed.id);
     this.clicks = Math.max(0, this.clicks - 1);
     this.cur = this.path[this.path.length - 1];
+    this._snapDaily();
 
     const ctr = document.getElementById('clickCounter');
     ctr.textContent = this.clicks;
@@ -4364,6 +4407,7 @@ const game = window.game = {
     this.cur = node;
     this.clicks++;
     this.path.push(node);
+    this._snapDaily();
 
     const ctr = document.getElementById('clickCounter');
     ctr.textContent = this.clicks;
@@ -4473,6 +4517,7 @@ const game = window.game = {
     // Record locally that this date was completed (for the archive list) and
     // persist today's daily result so it can be shown instead of replayed.
     if (!replay && this.scoreDate) recordPlayed(this.scoreDate, this.clicks);
+    if (!replay && this.scoreDate === dateKey()) { this._dailySnap = null; try { if (window.Session) Session.end(); } catch (_) {} }
     if (!replay && this.scoreDate === dateKey()) {
       try {
         const lite = n => ({ name: n.name, type: n.type, id: n.id, img: n.img, yearLabel: n.yearLabel, role: n.role });
@@ -5242,6 +5287,13 @@ document.getElementById('shareCard').addEventListener('click', function(e) {
   if (e.target === this) game.closeShareCard();
 });
 
+// The daily run in progress, if any, before any routing reads the URL (session.js).
+try {
+  if (window.Session) {
+    const _snap = Session.start({ mode: 'cl', practice: false, v: 1, get: () => game._dailySnap, summary: s => '<b>' + (s.clicks | 0) + '</b> ' + t((s.clicks | 0) === 1 ? 'clickSingular' : 'clicksLabel') });
+    if (_snap && _snap.date === dateKey() && Array.isArray(_snap.path) && _snap.path.length) game._dailySnap = _snap;
+  }
+} catch (_) {}
 if (!loadGameFromUrl()) {
   // Deep-links: /?chal=N&cd=DATE accepts a friend's challenge on today's daily;
   // /?daily=1 jumps straight into today's challenge, /?practice=1 a random one.

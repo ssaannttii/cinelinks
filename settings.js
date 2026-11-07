@@ -94,6 +94,7 @@
       });
     });
   }
+  var _back = null;
   function onKey(e) { if (e.key === 'Escape') close(); }
   function open() {
     injectCss();
@@ -102,10 +103,13 @@
     _ov.classList.add('open'); requestAnimationFrame(function () { _ov.classList.add('in'); });
     document.addEventListener('keydown', onKey);
     try { if (window.fxTrapFocus) _release = window.fxTrapFocus(_ov.querySelector('.cls-panel')); } catch (_) { /* noop */ }
+    // the back button closes the sheet before it leaves the page (session.js)
+    try { if (window.Session && Session.trap && !_back) _back = Session.trap(close); } catch (_) { _back = null; }
     try { if (window.Track) window.Track('settings_open', {}); } catch (_) { /* noop */ }
   }
   function close() {
     if (!_ov || !_ov.classList.contains('open')) return;
+    try { if (_back) { var b = _back; _back = null; b(); } } catch (_) { /* noop */ }
     _ov.classList.remove('in');
     document.removeEventListener('keydown', onKey);
     try { if (_release) { _release(); _release = null; } } catch (_) { /* noop */ }

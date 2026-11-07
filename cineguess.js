@@ -23,7 +23,8 @@
     practice:{en:'Practice',es:'Pr\u00e1ctica',fr:'Entra\u00eenement',de:'\u00dcbung',pt:'Treino'},
     dailyNum:{en:'Daily #',es:'Diario #',fr:'Quotidien #',de:'T\u00e4glich #',pt:'Di\u00e1rio #'},
     dailyArrow:{en:'Daily \u2192',es:'Diario \u2192',fr:'Quotidien \u2192',de:'T\u00e4glich \u2192',pt:'Di\u00e1rio \u2192'},
-    practiceArrow:{en:'Practice \u2192',es:'Pr\u00e1ctica \u2192',fr:'Entra\u00eenement \u2192',de:'\u00dcbung \u2192',pt:'Treino \u2192'}
+    practiceArrow:{en:'Practice \u2192',es:'Pr\u00e1ctica \u2192',fr:'Entra\u00eenement \u2192',de:'\u00dcbung \u2192',pt:'Treino \u2192'},
+    runGuess:{en:'Guess <b>{n}</b> of {m}',es:'Intento <b>{n}</b> de {m}',fr:'Essai <b>{n}</b> sur {m}',de:'Versuch <b>{n}</b> von {m}',pt:'Tentativa <b>{n}</b> de {m}'}
   };
   function GT(k){ var m=GT_L[k]; if(!m) return k; var l=_lang(); return (l==='en'?null:m[l])||m.en||k; }
   const CFG = window.CINE_GAME || {};
@@ -75,6 +76,15 @@
   const PRACTICE = new URLSearchParams(location.search).get('practice') === '1';
   const RAND_START = Math.floor(Math.random() * 100003);
   let target = null, clues = [], stage = 0, results = [], finished = false, solved = false;
+
+  // Leaving is never a loss: the daily run already survives in STATE_KEY (the
+  // source of truth, restored in init). Session only keeps a one-line summary for
+  // the lobby and shows the welcome-back curtain after an unfinished day is restored.
+  if (window.Session) Session.start({
+    mode: MODE, practice: PRACTICE, v: 1, key: null,
+    get: function () { return (results.length && !finished) ? { n: results.length, stage: stage } : null; },
+    summary: function (st) { return GT('runGuess').replace('{n}', Math.min(st.n + 1, MAX_GUESSES)).replace('{m}', MAX_GUESSES); }
+  });
 
   function poolCandidates(base, n) {
     const pool = window.CINECLUE_POOL || [];
@@ -350,6 +360,7 @@
     var s = { day: DAY, results: results, stage: stage, finished: finished, solved: solved };
     if (finished && target) s.answer = { title: target.title, poster: target.posterPath };
     try { localStorage.setItem(STATE_KEY, JSON.stringify(s)); } catch (_) {}
+    if (window.Session) { if (finished) Session.end(); else Session.save(); }   // the run snapshot follows the board; the end clears it
   }
   function restore() {
     if (PRACTICE) return false;
@@ -416,6 +427,8 @@
     document.getElementById('game').style.display = 'block';
     renderPips(); renderClues(); renderGuesses();
     if (finished) { document.getElementById('play').style.display = 'none'; renderResult(loadStreak()); }
+    // a finished day needs no snapshot; an unfinished one with guesses gets the welcome-back curtain
+    if (window.Session) { if (finished) Session.end(); else if (had && results.length) Session.gate(); }
 
     const inp = document.getElementById('guessInput');
     inp.addEventListener('input', onInput);

@@ -86,6 +86,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 <script src="/lib/trio.js"></script>
 <script src="/end-screen.js"></script>
 <script src="/fx.js"></script>
+<script src="/session.js"></script>
 <script defer src="/sfx.js"></script>
 <script>/* collection.js is only needed on a win (Collection.add/reveal, always guarded) — load it at idle instead of on the critical path so the game boots faster */window.addEventListener("load",function(){var L=function(){if(window.Collection)return;var s=document.createElement("script");s.src="/collection.js";document.head.appendChild(s);};window.requestIdleCallback?requestIdleCallback(L,{timeout:3000}):setTimeout(L,1200);});</script>
 <script>
@@ -236,6 +237,15 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
   // ── game state ────────────────────────────────────────────
   let T=null, shown=1, guesses=[], over=false;
 
+  // The run survives leaving: how many posters are open and the guesses made so far
+  // are snapshotted after every guess or reveal and when the page is hidden; the
+  // daily career itself is recomputed from the day. Practice never restores.
+  const saved = window.Session ? Session.start({
+    mode:'reel', practice:!isDaily, v:1, key:null,
+    get: function(){ if(!T||over||(shown<=START&&!guesses.length)) return null; return { shown:shown, guesses:guesses.map(function(g){ return g.win?1:0; }) }; },
+    summary: function(st){ return '<b>'+(st.shown||START)+'</b>/'+(T?T.reveal.length:REVEALS)+' '+TR('posters'); }
+  }) : null;
+
   function render(){
     const reveal=T.reveal, total=reveal.length;
     let cells='';
@@ -295,6 +305,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     const total=T.reveal.length;
     if(win){
       guesses.push({win:true}); over=true;
+      if(window.Session) Session.end();
       // Daily win → the guessed actor is the prize card: floor rare, +2 for
       // nailing it off the first poster, +1 within three.
       try{
@@ -310,10 +321,11 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
       try{ if(window.Sfx) Sfx.win(); }catch(_){}
       render(); return;
     }
-    if(isSkip){ if(shown<total){ shown++; try{ if(window.Sfx) Sfx.cardFlip(); }catch(_){} render(); } return; } // reveal, no penalty
+    if(isSkip){ if(shown<total){ shown++; try{ if(window.Sfx) Sfx.cardFlip(); }catch(_){} render(); if(window.Session) Session.save(); } return; } // reveal, no penalty
     guesses.push({win:false});                                  // a real wrong guess
-    if(shown>=total){ over=true; try{ if(window.Sfx) Sfx.deadEnd(); }catch(_){} render(); return; }   // no posters left → lost (the loss beat fires from the result)
+    if(shown>=total){ over=true; if(window.Session) Session.end(); try{ if(window.Sfx) Sfx.deadEnd(); }catch(_){} render(); return; }   // no posters left → lost (the loss beat fires from the result)
     shown++; render();
+    if(window.Session) Session.save();
     if(window.Fx && Fx.wrong){ const gi=document.getElementById('gi'); Fx.wrong(gi, { hard: shown>=total-1 }); if(shown>=total-1) Fx.tension(gi, true); }
     const m=document.getElementById('miss');
     if(m&&name) m.textContent='“'+name+'” '+TR('nope');
@@ -364,9 +376,16 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
   // ── boot ──────────────────────────────────────────────────
   (async()=>{
     try{
-      if(isDaily){const d=loadDone(); if(d&&d.day===utcDay()&&d.finished){renderReplay(d);return;}}
+      if(isDaily){const d=loadDone(); if(d&&d.day===utcDay()&&d.finished){if(window.Session) Session.end(); renderReplay(d);return;}}
       T=await pickTarget();
       if(!T){stage.innerHTML='<div class="loading">'+TR('loadFail')+'</div>';return;}
+      if(saved&&saved.shown){
+        // back to the run: the same posters open, the same dots under them
+        shown=Math.max(Math.min(START,T.reveal.length),Math.min(T.reveal.length,saved.shown|0));
+        guesses=(saved.guesses||[]).map(function(g){return {win:!!g};}); over=false; render();
+        Session.gate(function(){ const gi=document.getElementById('gi'); if(gi) gi.focus(); });
+        return;
+      }
       shown=Math.min(START,T.reveal.length); guesses=[]; over=false; render();
     }catch(e){stage.innerHTML='<div class="loading">'+TR('errorPrefix')+e.message+'</div>';}
   })();

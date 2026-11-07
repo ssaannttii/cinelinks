@@ -150,6 +150,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 <script src="/lib/trio.js"></script>
 <script src="/end-screen.js"></script>
 <script src="/fx.js"></script>
+<script src="/session.js"></script>
 <script>
 (function(){
   // --- i18n (self-contained; i18n.js isn't loaded on game pages) ---
@@ -235,6 +236,20 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
   function wait(ms){return new Promise(function(r){setTimeout(r,ms);});}
 
   let GRID=null, photos={}, cells=[null,null,null,null,null,null,null,null,null], livesLeft=LIVES, over=false, won=false, openIdx=-1, busy=false, rowFb=null, creditsCache={}, flashCells={}, triedByCell={}, combo=0, bestCombo=0, guesses=0;
+
+  // The run survives leaving: the board (6 actor ids), the cells proved so far, the
+  // lives, the streak and the films already tried per cell are snapshotted after every
+  // guess and when the page is hidden. A cell still being checked, or flashing wrong,
+  // is transient and is not kept. Practice never restores.
+  const saved = window.Session ? Session.start({
+    mode:'grid', practice:!isDaily, v:1, key:null,
+    get: function(){
+      if(!GRID||!guesses) return null;
+      const tried={}; Object.keys(triedByCell).forEach(function(i){ tried[i]=Array.from(triedByCell[i]); });
+      return { grid:GRID, cells:cells.map(function(c){ return c&&c.status==='correct' ? {movieId:c.movieId,poster:c.poster,title:c.title,votes:c.votes} : null; }), lives:livesLeft, combo:combo, best:bestCombo, guesses:guesses, tried:tried };
+    },
+    summary: function(st){ const cc=(st.cells||[]).filter(Boolean).length; return T('correct')+' <b>'+cc+'</b>/9 · '+T('lives')+' <b>'+(st.lives==null?LIVES:st.lives)+'</b>'; }
+  }) : null;
 
   // ── live grid generation (3×3 biclique over the co-star graph) ──
   function hash(s){s=''+s;let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return h>>>0;}
@@ -389,6 +404,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
       rowFb=rowFeedback();
       if(correctCount()===9){ finish(true); busy=false; return; }
       busy=false; render();
+      if(window.Session) Session.save();
     } else {
       cells[idx].status='wrong'; (triedByCell[idx]=triedByCell[idx]||new Set()).add(+d.id);
       const wasLives=livesLeft; livesLeft--; combo=0;
@@ -400,6 +416,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
       cells[idx]=null; rowFb=rowFeedback();
       if(livesLeft<=0){ finish(false); busy=false; return; }
       busy=false; render();
+      if(window.Session) Session.save();
     }
   }
   function rowFeedback(){ return [0,1,2].map(function(r){ let c=0; for(let k=0;k<3;k++){ const cell=cells[r*3+k]; if(cell&&cell.status==='correct')c++; } return c+'/3'; }); }
@@ -407,6 +424,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
   function finish(win){
     over=true; won=win;
     if(isDaily) persist();
+    if(window.Session) Session.end();
     // Daily win → collect every film you proved (path-like commons); the rarest find
     // (fewest votes) is the prize card, bumped by how many lives survived.
     try{
@@ -469,13 +487,23 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
   // ── boot ──
   (async function(){
     try{
-      if(isDaily){ const s=loadState(); if(s&&s.day===utcDay()&&s.finished){ GRID=s.grid; cells=s.cells; over=true; won=!!s.won; livesLeft=s.lives||0; bestCombo=s.best||0; rowFb=rowFeedback(); await loadPhotos(); render(); return; } }
+      if(isDaily){ const s=loadState(); if(s&&s.day===utcDay()&&s.finished){ if(window.Session) Session.end(); GRID=s.grid; cells=s.cells; over=true; won=!!s.won; livesLeft=s.lives||0; bestCombo=s.best||0; rowFb=rowFeedback(); await loadPhotos(); render(); return; } }
+      // back to a run in progress: its board comes with the snapshot, so the proved cells always fit it
+      const back=!!(saved&&saved.grid&&saved.grid.length===2&&Array.isArray(saved.cells)&&saved.cells.length===9);
+      if(back){ GRID=saved.grid; if(isDaily) saveGrid({day:utcDay(),grid:GRID}); }
       // daily reuses the cached generated board (stable across reloads); else generate live.
-      if(isDaily){ const cg=loadGrid(); if(cg&&cg.day===utcDay()&&cg.grid){ GRID=cg.grid; } }
+      else if(isDaily){ const cg=loadGrid(); if(cg&&cg.day===utcDay()&&cg.grid){ GRID=cg.grid; } }
       if(!GRID){ GRID=await generateGrid(isDaily?utcDay():Math.floor(Math.random()*1e9)); if(isDaily) saveGrid({day:utcDay(),grid:GRID}); }
       cells=[null,null,null,null,null,null,null,null,null];
+      if(back){
+        cells=saved.cells.map(function(c){ return c&&c.poster ? {movieId:+c.movieId,poster:c.poster,title:c.title,votes:+c.votes||0,status:'correct'} : null; });
+        livesLeft=Math.max(1,Math.min(LIVES,saved.lives==null?LIVES:+saved.lives)); combo=+saved.combo||0; bestCombo=+saved.best||0; guesses=+saved.guesses||0;
+        triedByCell={}; Object.keys(saved.tried||{}).forEach(function(i){ triedByCell[i]=new Set(saved.tried[i]||[]); });
+        rowFb=rowFeedback();
+      }
       await loadPhotos();
       render();
+      if(back) Session.gate();
     }catch(e){ stage.innerHTML='<div class="loading">'+T('errorPrefix')+e.message+'</div>'; }
   })();
   async function loadPhotos(){ const ids=[].concat(GRID[0],GRID[1]); await Promise.all(ids.map(function(id){ return api('person/'+id).then(function(d){ photos[id]=d.profile_path; }).catch(function(){}); })); }

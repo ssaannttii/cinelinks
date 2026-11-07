@@ -116,6 +116,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 <script src="/lib/trio.js"></script>
 <script src="/end-screen.js"></script>
 <script src="/fx.js"></script>
+<script src="/session.js"></script>
 <script defer src="/sfx.js"></script>
 <script src="/cineclue-pool.js"></script>
 <script>/* collection.js is only needed on a win (Collection.add/reveal, always guarded) — load it at idle instead of on the critical path so the game boots faster */window.addEventListener("load",function(){var L=function(){if(window.Collection)return;var s=document.createElement("script");s.src="/collection.js";document.head.appendChild(s);};window.requestIdleCallback?requestIdleCallback(L,{timeout:3000}):setTimeout(L,1200);});</script>
@@ -145,6 +146,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     soClose:     { en:'Out of guesses', es:'Sin intentos', fr:'Plus d’essais', de:'Keine Versuche mehr', pt:'Sem tentativas' },
     solvedIn:    { en:'decoded in', es:'descifrada en', fr:'décodé en', de:'gelöst in', pt:'decifrado em' },
     tries:       { en:'tries', es:'intentos', fr:'essais', de:'Versuche', pt:'tentativas' },
+    guessOf:     { en:'Guess {n} of {m}', es:'Intento {n} de {m}', fr:'Essai {n} sur {m}', de:'Versuch {n} von {m}', pt:'Tentativa {n} de {m}' },
     theAnswer:   { en:'the answer', es:'la respuesta', fr:'la réponse', de:'die Lösung', pt:'a resposta' },
     share:       { en:'Share', es:'Compartir', fr:'Partager', de:'Teilen', pt:'Compartilhar' },
     again:       { en:'New film', es:'Nueva peli', fr:'Nouveau film', de:'Neuer Film', pt:'Novo filme' },
@@ -321,6 +323,15 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
   // ── game state ────────────────────────────────────────────
   let SECRET=null, rows=[], over=false, busy=false;
 
+  // The run survives leaving: the rows so far (each already holds the guessed
+  // film and its DNA reveal, so a restore needs no refetch) and the secret's id,
+  // so a snapshot never lands on a different film. Practice never comes back.
+  const saved = window.Session ? Session.start({
+    mode:'code', practice:!isDaily, v:1, key:null,
+    get: function(){ return (rows.length && !over) ? { secret: SECRET ? SECRET.id : null, rows: rows } : null; },
+    summary: function(st){ return TR('guessOf').replace('{n}','<b>'+Math.min(st.rows.length+1,MAX)+'</b>').replace('{m}',MAX); }
+  }) : null;
+
   function cellHTML(cell,i){
     return '<div class="cx '+cell.c+'" style="--i:'+i+'"'+(cell.t?' title="'+esc(cell.t)+'"':'')+'>'+esc(cell.v)+(cell.ar?' <span class="ar">'+(cell.ar==='up'?'↑':'↓')+'</span>':'')+'</div>';
   }
@@ -418,6 +429,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     trk('cinecode_guess',{mode:isDaily?'daily':'practice',turn:rows.length,win:win});
     freshRow=rows.length-1;
     render();
+    if(!over && window.Session) Session.save();
     // the verdict lands when the last cell has flipped, not before it
     setTimeout(function(){
       if(win){ try{ if(window.Sfx) Sfx.win(); }catch(_){} }
@@ -426,6 +438,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
   }
 
   function renderResult(){
+    if(window.Session) Session.end();
     const won=rows.some(r=>r.win);
     const score=won?rows.length:MAX;
     const s=SECRET;
@@ -480,10 +493,17 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
   // ── boot ──────────────────────────────────────────────────
   (async()=>{
     try{
-      if(isDaily){const d=loadDone(); if(d&&d.day===utcDay()&&d.finished){renderReplay(d);return;}}
+      if(isDaily){const d=loadDone(); if(d&&d.day===utcDay()&&d.finished){if(window.Session) Session.end(); renderReplay(d);return;}}
       SECRET=await pickSecret();
       if(!SECRET){stage.innerHTML='<div class="loading">'+TR('loadFail')+'</div>';return;}
       SECRET.hints=buildHints(SECRET);
+      // Back to a run in progress: the same secret (checked by id), the rows as
+      // they were, no flip animation; the curtain says which guess is next.
+      if(saved && saved.secret===SECRET.id && Array.isArray(saved.rows) && saved.rows.length && saved.rows.length<MAX && !saved.rows.some(r=>r&&r.win)){
+        rows=saved.rows; over=false; freshRow=-1; render();
+        Session.gate();
+        return;
+      }
       rows=[]; over=false; trk('cinecode_start',{mode:isDaily?'daily':'practice'}); render();
     }catch(e){stage.innerHTML='<div class="loading">'+TR('errorPrefix')+e.message+'</div>';}
   })();

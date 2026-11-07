@@ -108,6 +108,9 @@
 .lb-step.next .lb-pack{--w:76px}
 .lb-step.next .art{opacity:.62}
 .lb-step.next .k{color:var(--lb-gold)}
+.lb-step.run .k::before{content:"";display:inline-block;width:7px;height:7px;margin:0 7px 1px 0;border-radius:50%;background:var(--lb-gold);box-shadow:0 0 0 3px rgba(246,221,134,.18);animation:lbLive 1.6s ease-in-out infinite}
+@keyframes lbLive{0%,100%{box-shadow:0 0 0 3px rgba(246,221,134,.18)}50%{box-shadow:0 0 0 6px rgba(246,221,134,.04)}}
+@media (prefers-reduced-motion:reduce){.lb-step.run .k::before{animation:none}}
 .lb-step.next .nm2{font-size:1.55rem}
 .lb-step.done .art{opacity:.16;filter:grayscale(.7)}
 .lb-step.done .nm2{color:var(--mut)}

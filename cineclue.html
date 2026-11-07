@@ -136,6 +136,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 <script src="/lib/trio.js"></script>
 <script src="/end-screen.js"></script>
 <script src="/fx.js"></script>
+<script src="/session.js"></script>
 <script src="cineclue-pool.js"></script>
 <script src="/lib/media.js"></script>
 <script src="/lib/pool.js"></script>
@@ -202,7 +203,9 @@ var L = {
   htQuote:         { en:'A thief who steals secrets through dream-sharing…', es:'Un ladrón que roba secretos compartiendo sueños…', fr:'Un voleur qui dérobe des secrets en partageant les rêves…', de:'Ein Dieb, der Geheimnisse durch geteilte Träume stiehlt…', pt:'Um ladrão que rouba segredos compartilhando sonhos…' },
   htKeywords:      { en:'dream · heist · subconscious', es:'sueño · atraco · subconsciente', fr:'rêve · casse · subconscient', de:'Traum · Coup · Unterbewusstsein', pt:'sonho · assalto · subconsciente' },
   htGenre:         { en:'Action · Sci-Fi · 2010', es:'Acción · Ciencia ficción · 2010', fr:'Action · Science-fiction · 2010', de:'Action · Science-Fiction · 2010', pt:'Ação · Ficção científica · 2010' },
-  htConclusion:    { en:'Clues stack up until you guess:', es:'Las pistas se acumulan hasta que aciertas:', fr:'Les indices s’accumulent jusqu’à ce que tu trouves :', de:'Die Hinweise stapeln sich, bis du errätst:', pt:'As dicas se acumulam até você acertar:' }
+  htConclusion:    { en:'Clues stack up until you guess:', es:'Las pistas se acumulan hasta que aciertas:', fr:'Les indices s’accumulent jusqu’à ce que tu trouves :', de:'Die Hinweise stapeln sich, bis du errätst:', pt:'As dicas se acumulam até você acertar:' },
+  // run in progress (lobby + welcome-back curtain)
+  runGuess:        { en:'Guess <b>{n}</b> of {m}', es:'Intento <b>{n}</b> de {m}', fr:'Essai <b>{n}</b> sur {m}', de:'Versuch <b>{n}</b> von {m}', pt:'Tentativa <b>{n}</b> de {m}' }
 };
 function T(k){ var m=L[k]; if(!m||typeof m!=='object') return k; var l=_lang(); return (l==='en'?null:m[l])||m.en||k; }
 
@@ -249,6 +252,15 @@ let solved = false;
 
 const STATE_KEY = 'cineclueState';
 const STREAK_KEY = 'cineclueStreak';
+
+// Leaving is never a loss: the daily run already survives in cineclueState (the
+// source of truth, restored in init). Session only keeps a one-line summary for
+// the lobby and shows the welcome-back curtain after an unfinished day is restored.
+if(window.Session) Session.start({
+  mode:'clue', practice:PRACTICE, v:1, key:null,
+  get: function(){ return (results.length && !finished) ? { n: results.length, stage: stage } : null; },
+  summary: function(st){ return T('runGuess').replace('{n}', Math.min(st.n + 1, MAX_GUESSES)).replace('{m}', MAX_GUESSES); }
+});
 
 // ── Daily target (fixed pool) + Practice (endless TMDB Discover pool) ───────
 function poolCandidates(base, n){
@@ -472,7 +484,7 @@ function updateStreak(win){
   try{ localStorage.setItem(STREAK_KEY, JSON.stringify(s)); }catch(_){}
   return s;
 }
-function save(){ if(PRACTICE) return; const s={ day:DAY, results, stage, finished, solved }; if(finished && target) s.answer={ title:target.title, poster:target.posterPath }; try{ localStorage.setItem(STATE_KEY, JSON.stringify(s)); }catch(_){} }
+function save(){ if(PRACTICE) return; const s={ day:DAY, results, stage, finished, solved }; if(finished && target) s.answer={ title:target.title, poster:target.posterPath }; try{ localStorage.setItem(STATE_KEY, JSON.stringify(s)); }catch(_){} if(window.Session){ if(finished) Session.end(); else Session.save(); } }
 function restore(){
   if(PRACTICE) return false; // practice is always a fresh game
   try{
@@ -559,6 +571,8 @@ async function init(){
     document.getElementById('play').style.display = 'none';
     renderResult(loadStreak());
   }
+  // a finished day needs no snapshot; an unfinished one with guesses gets the welcome-back curtain
+  if(window.Session){ if(finished) Session.end(); else if(had && results.length) Session.gate(); }
 
   // wire inputs
   const inp = document.getElementById('guessInput');

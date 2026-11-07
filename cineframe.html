@@ -133,6 +133,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 <script src="/lib/trio.js"></script>
 <script src="/end-screen.js"></script>
 <script src="/fx.js"></script>
+<script src="/session.js"></script>
 <script src="cineclue-pool.js"></script>
 <script src="/lib/media.js"></script>
 <script src="/lib/pool.js"></script>
@@ -174,7 +175,9 @@ var L = {
   howtoStep3:       { en:'Every wrong guess or skip <b>zooms out and sharpens</b> the frame a little more.', es:'Cada fallo o salto <b>aleja y enfoca</b> un poco más el fotograma.', fr:'Chaque erreur ou saut <b>dézoome et affine</b> un peu plus l’image.', de:'Jeder falsche Tipp oder Übersprung <b>zoomt heraus und schärft</b> das Bild ein wenig mehr.', pt:'Cada erro ou pulo <b>afasta e deixa mais nítido</b> o fotograma um pouco mais.' },
   howtoStep4:       { en:'Early frames are obscure on purpose; the recognizable shots come later.', es:'Los primeros fotogramas son oscuros a propósito; las tomas reconocibles llegan después.', fr:'Les premières images sont volontairement obscures ; les plans reconnaissables viennent plus tard.', de:'Die ersten Bilder sind absichtlich unauffällig; die wiedererkennbaren Aufnahmen kommen später.', pt:'Os primeiros fotogramas são obscuros de propósito; as cenas reconhecíveis vêm depois.' },
   howtoStep5:       { en:'Fewer guesses = better. <b>Daily</b> keeps your streak; <b>Practice</b> is unlimited.', es:'Menos intentos = mejor. <b>Diario</b> mantiene tu racha; <b>Práctica</b> es ilimitado.', fr:'Moins d’essais = mieux. <b>Quotidien</b> garde votre série ; <b>Entraînement</b> est illimité.', de:'Weniger Versuche = besser. <b>Täglich</b> hält deine Serie; <b>Übung</b> ist unbegrenzt.', pt:'Menos tentativas = melhor. <b>Diário</b> mantém sua sequência; <b>Treino</b> é ilimitado.' },
-  howtoCaption:     { en:'The frame goes from blurry to sharp as your guesses run out.', es:'El fotograma pasa de borroso a nítido a medida que se agotan tus intentos.', fr:'L’image passe du flou au net à mesure que vos essais s’épuisent.', de:'Das Bild wird von unscharf zu scharf, während deine Versuche zur Neige gehen.', pt:'O fotograma passa de desfocado a nítido conforme suas tentativas acabam.' }
+  howtoCaption:     { en:'The frame goes from blurry to sharp as your guesses run out.', es:'El fotograma pasa de borroso a nítido a medida que se agotan tus intentos.', fr:'L’image passe du flou au net à mesure que vos essais s’épuisent.', de:'Das Bild wird von unscharf zu scharf, während deine Versuche zur Neige gehen.', pt:'O fotograma passa de desfocado a nítido conforme suas tentativas acabam.' },
+  // run in progress (lobby + welcome-back curtain)
+  runGuess:         { en:'Guess <b>{n}</b> of {m}', es:'Intento <b>{n}</b> de {m}', fr:'Essai <b>{n}</b> sur {m}', de:'Versuch <b>{n}</b> von {m}', pt:'Tentativa <b>{n}</b> de {m}' }
 };
 function T(k){ var m=L[k]; if(!m||typeof m!=='object') return k; var l=_lang(); return (l==='en'?null:m[l])||m.en||k; }
 
@@ -208,6 +211,15 @@ let solved = false;
 
 const STATE_KEY = 'cineframeState';
 const STREAK_KEY = 'cineframeStreak';
+
+// Leaving is never a loss: the daily run already survives in cineframeState (the
+// source of truth, restored in init). Session only keeps a one-line summary for
+// the lobby and shows the welcome-back curtain after an unfinished day is restored.
+if(window.Session) Session.start({
+  mode:'frame', practice:PRACTICE, v:1, key:null,
+  get: function(){ return (results.length && !finished) ? { n: results.length, stage: stage } : null; },
+  summary: function(st){ return T('runGuess').replace('{n}', Math.min(st.n + 1, MAX_GUESSES)).replace('{m}', MAX_GUESSES); }
+});
 
 // ── Daily target (fixed pool) + Practice (endless TMDB Discover, movies only
 // so there's always a textless backdrop to blur) ───────────────────────────
@@ -429,7 +441,7 @@ function updateStreak(win){
   try{ localStorage.setItem(STREAK_KEY, JSON.stringify(s)); }catch(_){}
   return s;
 }
-function save(){ if(PRACTICE) return; const s={ day:DAY, results, stage, finished, solved }; if(finished && target) s.answer={ title:target.title, poster:target.posterPath }; try{ localStorage.setItem(STATE_KEY, JSON.stringify(s)); }catch(_){} }
+function save(){ if(PRACTICE) return; const s={ day:DAY, results, stage, finished, solved }; if(finished && target) s.answer={ title:target.title, poster:target.posterPath }; try{ localStorage.setItem(STATE_KEY, JSON.stringify(s)); }catch(_){} if(window.Session){ if(finished) Session.end(); else Session.save(); } }
 function restore(){
   if(PRACTICE) return false;
   try{
@@ -511,6 +523,8 @@ async function init(){
   renderPips(); renderFrame(finished); renderGuesses();
 
   if(finished){ document.getElementById('play').style.display = 'none'; renderResult(loadStreak()); }
+  // a finished day needs no snapshot; an unfinished one with guesses gets the welcome-back curtain
+  if(window.Session){ if(finished) Session.end(); else if(had && results.length) Session.gate(); }
 
   const inp = document.getElementById('guessInput');
   inp.addEventListener('input', onInput);

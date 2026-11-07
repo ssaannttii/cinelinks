@@ -86,6 +86,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 <script src="/lib/trio.js"></script>
 <script src="/end-screen.js"></script>
 <script src="/fx.js"></script>
+<script src="/session.js"></script>
 <script defer src="/sfx.js"></script>
 <script>/* collection.js is only needed on a win (Collection.add/reveal, always guarded) — load it at idle instead of on the critical path so the game boots faster */window.addEventListener("load",function(){var L=function(){if(window.Collection)return;var s=document.createElement("script");s.src="/collection.js";document.head.appendChild(s);};window.requestIdleCallback?requestIdleCallback(L,{timeout:3000}):setTimeout(L,1200);});</script>
 <script>
@@ -143,18 +144,33 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
   function saveState(o){try{localStorage.setItem('cinechainState',JSON.stringify(o));}catch(_){}}
   function esc(s){return (s||'').replace(/[&<>"]/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m];});}
 
-  let chain=[], usedActors=new Set(), usedFilms=new Set(), over=false, busy=false, timeLeft=DURATION, timerId=null, justAdded=false;
+  let chain=[], usedActors=new Set(), usedFilms=new Set(), over=false, busy=false, timeLeft=DURATION, timerId=null, justAdded=false, started=false;
 
   function fmtTime(s){ const m=Math.floor(s/60), x=s%60; return m+':'+(x<10?'0':'')+x; }
   function startTimer(){
-    if(timerId) return;
+    if(timerId||over) return;
     timerId=setInterval(function(){
       timeLeft--;
       const el=document.getElementById('timer'); if(el){ el.textContent='⏱ '+fmtTime(Math.max(0,timeLeft)); el.classList.toggle('low',timeLeft<=15); }
-      if(timeLeft<=0){ stopTimer(); over=true; if(isDaily) persist(); grantChain(); render(); }
+      if(timeLeft<=0){ finishRun(); }
     },1000);
   }
   function stopTimer(){ if(timerId){ clearInterval(timerId); timerId=null; } }
+  // The clock starts with the first letter typed, not with the page: reading the
+  // rules, a slow network or the coach cost no seconds.
+  function begin(){ if(started||over) return; started=true; startTimer(); }
+  function finishRun(){ stopTimer(); over=true; if(isDaily) persist(); if(window.Session) Session.end(); grantChain(); render(); }
+
+  // The run survives leaving: the chain, the actors and films used and the seconds
+  // left are snapshotted after every link and when the page is hidden; the clock
+  // stops while hidden and a curtain asks before it runs again. A practice run is
+  // kept too, unless "New chain" (?r=) asked for a fresh one.
+  const saved = window.Session ? Session.start({
+    mode:'chain', practice:!isDaily, v:1, key: isDaily ? null : (/[?&]r=/.test(location.search) ? null : 'p'),
+    get: function(){ return started ? { chain: chain.map(function(f){ return {id:f.id,title:f.title,poster:f.poster,via:f.via}; }), actors: Array.from(usedActors), films: Array.from(usedFilms) } : null; },
+    summary: function(){ return T('chainLength')+' <b>'+(chain.length-1)+'</b>'; },
+    timer: { left: function(){ return timeLeft; }, pause: stopTimer, resume: function(){ if(started&&!over) startTimer(); } }
+  }) : null;
 
   // Daily chain finished → collect every film you linked (the seed was given, not
   // earned). A run of 4+ links earns a prize: the FINAL film (your furthest reach),
@@ -207,9 +223,9 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 
   function wire(){
     const ci=document.getElementById('ci'), ac=document.getElementById('ac');
-    document.getElementById('finish').onclick=function(){ stopTimer(); over=true; if(isDaily) persist(); grantChain(); render(); };
+    document.getElementById('finish').onclick=function(){ finishRun(); };
     ci.focus();
-    let lk; ci.addEventListener('input',function(){ clearTimeout(lk); lk=setTimeout(function(){ lookup(ci.value,ac); },240); });
+    let lk; ci.addEventListener('input',function(){ begin(); clearTimeout(lk); lk=setTimeout(function(){ lookup(ci.value,ac); },240); });
   }
   function lookup(q,ac){
     if(q.trim().length<2){ ac.style.display='none'; return; }
@@ -237,6 +253,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
       // each link is a small win — the stinger pitch climbs with the chain length
       if(window.Fx && Fx.right) Fx.right(null, { n: chain.length-1, shake: 0.45 });
       justAdded=true; busy=false; render();
+      if(window.Session) Session.save();
     }catch(e){ if(feed) feed.textContent=T('networkHiccup'); busy=false; }
   }
 
@@ -260,13 +277,23 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 
   (async function(){
     try{
-      if(isDaily){ const s=loadState(); if(s&&s.day===utcDay()&&s.finished){ over=true; chain=s.chain.map(function(f){return {title:f.title,poster:f.poster,via:f.via,cast:[]};}); render(); return; } }
+      if(isDaily){ const s=loadState(); if(s&&s.day===utcDay()&&s.finished){ over=true; if(window.Session) Session.end(); chain=s.chain.map(function(f){return {title:f.title,poster:f.poster,via:f.via,cast:[]};}); render(); return; } }
+      if(saved && saved.chain && saved.chain.length){
+        // back to the run: only the last film needs its cast again
+        chain=saved.chain.map(function(f){ return {id:f.id,title:f.title,poster:f.poster,via:f.via,cast:[]}; });
+        usedActors=new Set(saved.actors||[]); usedFilms=new Set(saved.films||[]);
+        const m=Session.restored(); timeLeft=Math.max(1,Math.min(DURATION,Math.round(m&&m.left!=null?m.left:DURATION)));
+        started=true;
+        chain[chain.length-1].cast=await castOf(chain[chain.length-1].id);
+        render();
+        Session.gate(function(){ startTimer(); });
+        return;
+      }
       const seed=isDaily?SEEDS[(utcDay()%SEEDS.length+SEEDS.length)%SEEDS.length]:SEEDS[Math.floor(Math.random()*SEEDS.length)];
       const cast=await castOf(seed[0]);
       chain=[{id:seed[0],title:seed[1],poster:seed[2],cast:cast,via:null}];
       usedFilms.add(seed[0]);
       render();
-      startTimer();
     }catch(e){ stage.innerHTML='<div class="loading">'+T('errorPrefix')+': '+e.message+'</div>'; }
   })();
 })();

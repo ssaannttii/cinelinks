@@ -20,7 +20,7 @@
     cinechain: [
       { sel: '.chain', t: { en: 'Start from today’s film. Add a film that <b>shares an actor</b> with it.', es: 'Empieza por la película de hoy. Añade otra que <b>comparta un actor</b> con ella.', fr: 'Partez du film du jour. Ajoutez un film qui <b>partage un acteur</b> avec lui.', de: 'Starte beim Film des Tages. Füge einen Film hinzu, der <b>einen Schauspieler</b> mit ihm teilt.', pt: 'Começa pelo filme de hoje. Junta um filme que <b>partilhe um ator</b> com ele.' } },
       { sel: '#ci', t: { en: 'Type a title here. Each actor can link only once, so spend them wisely.', es: 'Escribe un título aquí. Cada actor solo enlaza una vez, así que úsalos bien.', fr: 'Tapez un titre ici. Chaque acteur ne relie qu’une fois : dépensez-les bien.', de: 'Tippe hier einen Titel ein. Jeder Schauspieler verbindet nur einmal, also setze sie klug ein.', pt: 'Escreve um título aqui. Cada ator só liga uma vez, por isso usa-os bem.' } },
-      { sel: '#timer', t: { en: 'Two minutes. The longer the chain, the better.', es: 'Dos minutos. Cuanto más larga la cadena, mejor.', fr: 'Deux minutes. Plus la chaîne est longue, mieux c’est.', de: 'Zwei Minuten. Je länger die Kette, desto besser.', pt: 'Dois minutos. Quanto mais longa a cadeia, melhor.' } }
+      { sel: '#timer', t: { en: 'Two minutes, starting with your first letter. The longer the chain, the better.', es: 'Dos minutos, que empiezan con tu primera letra. Cuanto más larga la cadena, mejor.', fr: 'Deux minutes, à partir de ta première lettre. Plus la chaîne est longue, mieux c’est.', de: 'Zwei Minuten, ab deinem ersten Buchstaben. Je länger die Kette, desto besser.', pt: 'Dois minutos, a partir da tua primeira letra. Quanto mais longa a cadeia, melhor.' } }
     ],
     cinecode: [
       { sel: '#gi', t: { en: 'There is a secret film. Name any film to start decoding it.', es: 'Hay una película secreta. Nombra cualquier película para empezar a descifrarla.', fr: 'Il y a un film secret. Nommez n’importe quel film pour commencer à le décoder.', de: 'Es gibt einen geheimen Film. Nenne irgendeinen Film, um ihn zu entschlüsseln.', pt: 'Há um filme secreto. Diz qualquer filme para começares a decifrá-lo.' } },
@@ -212,9 +212,16 @@
   ov.querySelectorAll('.ht-num').forEach(function (n) { n.textContent = i++; });
   void nums;
 
-  var _htRelease = null;
-  function open() { ov.style.display = 'flex'; requestAnimationFrame(function () { ov.classList.add('show'); }); try { if (window.fxTrapFocus) _htRelease = window.fxTrapFocus(ov); } catch (_) {} }
+  var _htRelease = null, _htBack = null;
+  function open() {
+    ov.style.display = 'flex'; requestAnimationFrame(function () { ov.classList.add('show'); });
+    try { if (window.fxTrapFocus) _htRelease = window.fxTrapFocus(ov); } catch (_) {}
+    // the back button closes the rules before it leaves the page (session.js)
+    try { if (window.Session && Session.trap && !_htBack) _htBack = Session.trap(close); } catch (_) { _htBack = null; }
+  }
   function close() {
+    if (!ov.classList.contains('show')) return;
+    try { if (_htBack) { var b = _htBack; _htBack = null; b(); } } catch (_) {}
     ov.classList.remove('show');
     try { localStorage.setItem(seenKey, '1'); } catch (_) {}
     try { if (_htRelease) { _htRelease(); _htRelease = null; } } catch (_) {}

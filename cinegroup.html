@@ -107,6 +107,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
 
 <script src="/lib/trio.js"></script>
 <script src="/end-screen.js"></script>
+<script src="/session.js"></script>
 <script>
 (function(){
   'use strict';
@@ -149,7 +150,9 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
     couldNotBuild:  { en:'Could not build a puzzle. Please try again later.', es:'No se pudo crear el puzle. Inténtalo más tarde.', fr:'Impossible de créer le puzzle. Réessaie plus tard.', de:'Rätsel konnte nicht erstellt werden. Bitte später erneut versuchen.', pt:'Não foi possível criar o desafio. Tente novamente mais tarde.' },
     sameFranchise:  { en:'Same franchise: ', es:'Misma franquicia: ', fr:'Même franchise : ', de:'Gleiche Reihe: ', pt:'Mesma franquia: ' },
     starring:       { en:'Starring ', es:'Protagonizada por ', fr:'Avec ', de:'Mit ', pt:'Estrelado por ' },
-    directedBy:     { en:'Directed by ', es:'Dirigida por ', fr:'Réalisé par ', de:'Regie: ', pt:'Dirigido por ' }
+    directedBy:     { en:'Directed by ', es:'Dirigida por ', fr:'Réalisé par ', de:'Regie: ', pt:'Dirigido por ' },
+    runFound:       { en:'<b>{k}</b> of 4 found', es:'<b>{k}</b> de 4 encontrados', fr:'<b>{k}</b> sur 4 trouvés', de:'<b>{k}</b> von 4 gefunden', pt:'<b>{k}</b> de 4 encontrados' },
+    runMistakes:    { en:'<b>{m}</b> mistakes', es:'<b>{m}</b> errores', fr:'<b>{m}</b> erreurs', de:'<b>{m}</b> Fehler', pt:'<b>{m}</b> erros' }
   };
   function T(k){ var m=L[k]; if(!m||typeof m!=='object') return k; var l=_lang(); return (l==='en'?null:m[l])||m.en||k; }
 
@@ -537,6 +540,15 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
   let locked=false;
   let lastSolvedKey=null;   // for the "new banner" reveal animation
 
+  // Leaving is never a loss: the daily board already survives in cinegroupState
+  // (the source of truth, restored in boot). Session only keeps a one-line
+  // summary for the lobby and shows the welcome-back curtain after a restore.
+  if(window.Session) Session.start({
+    mode:'grp', practice:PRACTICE, v:1, key:null,
+    get: function(){ return (guesses.length && !finished) ? { k: solved.length, m: mistakes, n: guesses.length } : null; },
+    summary: function(st){ return T('runFound').replace('{k}', st.k)+' · '+(st.m===1 ? '<b>1</b> '+T('mistakeSing') : T('runMistakes').replace('{m}', st.m)); }
+  });
+
   const stage=document.getElementById('stage');
   const toastEl=document.getElementById('toast');
   let toastT=null;
@@ -591,6 +603,7 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
   function saveDaily(){
     if(PRACTICE) return;
     setLS(SKEY,{day,solved,mistakes,guesses,finished,won,board});
+    if(window.Session){ if(finished) Session.end(); else Session.save(); }   // the run snapshot follows the board; the end clears it
   }
 
   function statsBump(didWin){
@@ -825,6 +838,8 @@ body{font-family:'Schibsted Grotesk','Inter',-apple-system,sans-serif;background
       if(!board||board.length!==16||board.some(id=>!tileMap[id])){ board=shuffle(puzzle.groups.flatMap(g=>g.tiles.map(t=>t.id)),'b'+day); }
     }
     render();
+    // a finished day needs no snapshot; an unfinished one with guesses gets the welcome-back curtain
+    if(!PRACTICE && window.Session){ if(finished) Session.end(); else if(guesses.length) Session.gate(); }
   }
   boot();
 })();

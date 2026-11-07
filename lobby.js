@@ -72,7 +72,11 @@
       var dn = !!(s0 && s0.date === td); return { done: dn, txt: dn ? (s0.mine | 0) + '–' + (s0.cpu | 0) : '' };
     }
     var r = Trio.result(k), s = r.s || {};
-    if (!r.done) return { done: false };
+    if (!r.done) {
+      // a run left mid-way (session.js): the card says so and offers Continue
+      var run = null; try { run = window.Session && Session.peek(k); } catch (_) { run = null; }
+      return run ? { done: false, run: run.sum || T('lbInProgress') } : { done: false };
+    }
     var txt;
     if (k === 'cl') txt = s.clicks === 1 ? T('lbClick1') : T('lbClicks', { n: s.clicks });
     else if (k === 'line') txt = s.score != null ? s.score + '/10' : T('lbDone');
@@ -106,12 +110,14 @@
       var M = MODES[m], r = res[i], isNext = i === nextI;
       var foot = r.done
         ? '<span class="res"><span class="ok">' + CHECK + '</span>' + esc(r.txt || T('lbDone')) + '</span><span class="pz">' + T('lbPackOpened') + '</span>'
+        : r.run ? '<span class="lb-leaf">' + T('lbContinue') + ' ' + ARROW + '</span><span class="pz">' + T('lbMin', { n: M.min }) + '</span>'
         : isNext ? '<span class="lb-leaf">' + T('lbPlay') + ' ' + ARROW + '</span><span class="pz">' + T('lbMin', { n: M.min }) + '</span>'
           : '<span class="play-s">' + T('lbPlay') + ' ' + ARROW + '</span><span class="pz">' + T('lbMin', { n: M.min }) + '</span>';
-      return '<a class="lb-step ' + (r.done ? 'done' : isNext ? 'next' : '') + '" href="' + (m === 'cl' ? '/?daily=1' : M.d) + '" data-play="' + m + '" style="--bd:' + backdrop(m, isNext ? 'w1280' : 'w780') + '">' +
-        '<span class="art"></span>' + pack(m, { opened: r.done, label: isNext ? M.n : '' }) +
-        '<div><div class="k">' + (r.done ? T('lbDone') : isNext ? T('lbUpNext') : T('lbThen')) + ' · ' + T('lbOf', { n: i + 1 }) + '</div>' +
-        '<div class="nm2">' + esc(M.n) + '</div><div class="ln">' + esc(line(m)) + '</div><div class="ft">' + foot + '</div></div></a>';
+      var big = isNext || !!r.run;
+      return '<a class="lb-step ' + (r.done ? 'done' : big ? 'next' : '') + (r.run ? ' run' : '') + '" href="' + (m === 'cl' ? '/?daily=1' : M.d) + '" data-play="' + m + '" style="--bd:' + backdrop(m, big ? 'w1280' : 'w780') + '">' +
+        '<span class="art"></span>' + pack(m, { opened: r.done, label: big ? M.n : '' }) +
+        '<div><div class="k">' + (r.done ? T('lbDone') : r.run ? T('lbInProgress') : isNext ? T('lbUpNext') : T('lbThen')) + ' · ' + T('lbOf', { n: i + 1 }) + '</div>' +
+        '<div class="nm2">' + esc(M.n) + '</div><div class="ln">' + (r.run ? r.run : esc(line(m))) + '</div><div class="ft">' + foot + '</div></div></a>';
     }).join('');
 
     var claimed = !!(C() && C().rewardClaimed && C().rewardClaimed('trio:' + Trio.udNow()));
@@ -124,7 +130,7 @@
     $('lbRail').innerHTML = rest.map(function (k) {
       var M = MODES[k], r = result(k);
       return '<a class="lb-tile" href="' + M.d + '" data-play="' + k + '"><div class="ps" style="--pp:' + poster(k, 'w342') + ';--bb:' + backdrop(k, 'w780') + '"><span class="ic">' + ic(k) + '</span>' + (r.done ? '<span class="dn">' + CHECK + '</span>' : '') + '</div>' +
-        '<div class="tn">' + esc(M.n) + '</div><div class="tl">' + esc(r.done ? (r.txt || T('lbDoneToday')) : line(k)) + '</div></a>';
+        '<div class="tn">' + esc(M.n) + '</div><div class="tl">' + (r.done ? esc(r.txt || T('lbDoneToday')) : r.run ? T('lbInProgress') + ' · ' + r.run : esc(line(k))) + '</div></a>';
     }).join('');
 
     renderWeek();
@@ -161,8 +167,8 @@
       return '<section class="lb-sec"><div class="lb-sec-h"><h2 class="lb-h2">' + T(f[0]) + '</h2></div><div class="lb-ggrid">' + f[1].map(function (k) {
         var M = MODES[k], r = result(k);
         return '<div class="lb-gcard' + (r.done ? ' is-done' : '') + '"><a class="ps" href="' + M.d + '" data-play="' + k + '" style="background-image:' + poster(k) + '">' + (tm.indexOf(k) >= 0 ? '<span class="tag">' + T('lbToday2') + '</span>' : '') +
-          '<div class="cap"><div class="nm2">' + esc(M.n) + '</div><div class="ln">' + esc(r.done ? (r.txt || T('lbDoneToday')) : line(k)) + '</div></div></a>' +
-          '<div class="row"><a class="d" href="' + M.d + '" data-play="' + k + '">' + (r.done ? T('lbResult') : T('lbDaily')) + '</a><a class="p" href="' + (M.p || M.d + '?practice=1') + '" data-play="' + k + '" data-practice="1">' + T('lbPractice') + '</a></div></div>';
+          '<div class="cap"><div class="nm2">' + esc(M.n) + '</div><div class="ln">' + (r.done ? esc(r.txt || T('lbDoneToday')) : r.run ? T('lbInProgress') + ' · ' + r.run : esc(line(k))) + '</div></div></a>' +
+          '<div class="row"><a class="d" href="' + M.d + '" data-play="' + k + '">' + (r.done ? T('lbResult') : r.run ? T('lbContinue') : T('lbDaily')) + '</a><a class="p" href="' + (M.p || M.d + '?practice=1') + '" data-play="' + k + '" data-practice="1">' + T('lbPractice') + '</a></div></div>';
       }).join('') + '</div></section>';
     }).join('');
   }
