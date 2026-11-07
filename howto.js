@@ -86,7 +86,7 @@
     return true;
   }
   function start(steps) {
-    var reduced = false; try { reduced = matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (_) {}
+    var reduced = document.documentElement.classList.contains('cl-reduce'); try { reduced = reduced || matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (_) {}
     var root = document.createElement('div'); root.id = 'ht-coach';
     root.innerHTML = '<div class="htc-spot"></div><div class="htc-bub" role="dialog" aria-live="polite"><div class="htc-tx"></div><div class="htc-row"><span class="htc-dots"></span><button type="button" class="htc-skip"></button><button type="button" class="htc-go"></button></div></div>';
     document.body.appendChild(root);

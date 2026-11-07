@@ -13,11 +13,11 @@
   if (!mode) return;
   var practice = /[?&]practice=1/.test(location.search);
   var STR = {
-    en: { today: 'Today', trio: 'Trio', level: 'Lv', privacy: 'Privacy', foot: 'This product uses the TMDB API and TMDB images, but is not endorsed or certified by TMDB.' },
-    es: { today: 'Hoy', trio: 'Trío', level: 'Nv', privacy: 'Privacidad', foot: 'Este producto usa la API y las imágenes de TMDB, pero TMDB no lo respalda ni lo certifica.' },
-    fr: { today: 'Aujourd’hui', trio: 'Trio', level: 'Nv', privacy: 'Confidentialité', foot: 'Ce produit utilise l’API et les images de TMDB, sans être approuvé ni certifié par TMDB.' },
-    de: { today: 'Heute', trio: 'Trio', level: 'Lv', privacy: 'Datenschutz', foot: 'Dieses Produkt nutzt die TMDB-API und TMDB-Bilder, wird von TMDB aber weder unterstützt noch zertifiziert.' },
-    pt: { today: 'Hoje', trio: 'Trio', level: 'Nv', privacy: 'Privacidade', foot: 'Este produto usa a API e as imagens do TMDB, mas não é endossado nem certificado pelo TMDB.' }
+    en: { today: 'Today', trio: 'Trio', level: 'Lv', settings: 'Settings', privacy: 'Privacy', foot: 'This product uses the TMDB API and TMDB images, but is not endorsed or certified by TMDB.' },
+    es: { today: 'Hoy', trio: 'Trío', level: 'Nv', settings: 'Ajustes', privacy: 'Privacidad', foot: 'Este producto usa la API y las imágenes de TMDB, pero TMDB no lo respalda ni lo certifica.' },
+    fr: { today: 'Aujourd’hui', trio: 'Trio', level: 'Nv', settings: 'Réglages', privacy: 'Confidentialité', foot: 'Ce produit utilise l’API et les images de TMDB, sans être approuvé ni certifié par TMDB.' },
+    de: { today: 'Heute', trio: 'Trio', level: 'Lv', settings: 'Einstellungen', privacy: 'Datenschutz', foot: 'Dieses Produkt nutzt die TMDB-API und TMDB-Bilder, wird von TMDB aber weder unterstützt noch zertifiziert.' },
+    pt: { today: 'Hoje', trio: 'Trio', level: 'Nv', settings: 'Definições', privacy: 'Privacidade', foot: 'Este produto usa a API e as imagens do TMDB, mas não é endossado nem certificado pelo TMDB.' }
   };
   var lang = 'en'; try { lang = String(localStorage.getItem('clLang') || 'en').slice(0, 2); } catch (_) {}
   var S = STR[lang] || STR.en;
@@ -50,6 +50,8 @@
     '#gf .gf-lvl.up{animation:gfLvl .9s cubic-bezier(.2,1.4,.4,1)}' +
     '@keyframes gfLvl{0%{box-shadow:0 0 0 1px rgba(246,221,134,.14) inset}30%{transform:scale(1.14);box-shadow:0 0 0 1.5px #f6dd86 inset,0 0 22px rgba(246,221,134,.6)}100%{transform:none;box-shadow:0 0 0 1px rgba(246,221,134,.14) inset}}' +
     '@media (max-width:420px){#gf .gf-trio b{display:none}#gf .gf-trio{padding:0 6px}#gf .gf-lvl{margin-left:6px;padding:0 8px}}' +
+    '#gf .gf-set{width:36px;height:36px;flex-shrink:0;border:0;border-radius:10px;background:rgba(255,255,255,.045);box-shadow:0 0 0 1px rgba(246,221,134,.14) inset;color:#f2ede4;cursor:pointer;display:grid;place-items:center;padding:0}' +
+    '#gf .gf-set svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}' +
     '@media (prefers-reduced-motion:reduce){#gf .gf-lvl.up{animation:none}#gf .gf-lvl i{transition:none}}';
   document.head.appendChild(css);
 
@@ -89,6 +91,14 @@
   var topbar = document.querySelector('.topbar');
   if (topbar) R.appendChild(topbar);
   else ['#modeSwitch', '#sndBtn'].forEach(function (sel) { var el = document.querySelector(sel); if (el) R.appendChild(el); });
+  // the settings gear: sound, vibration, motion, text size, language (settings.js loads on first tap)
+  var gear = document.createElement('button'); gear.type = 'button'; gear.className = 'gf-set'; gear.setAttribute('aria-label', S.settings); gear.title = S.settings;
+  gear.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
+  gear.onclick = function () {
+    if (window.Settings) { Settings.open(); return; }
+    var sc = document.createElement('script'); sc.src = '/settings.js'; sc.onload = function () { try { Settings.open(); } catch (_) { /* noop */ } }; document.head.appendChild(sc);
+  };
+  R.appendChild(gear);
 
   function trioDots() {
     if (practice || !window.Trio) { M.innerHTML = ''; return; }

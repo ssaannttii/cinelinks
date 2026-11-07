@@ -53,7 +53,7 @@
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function posterUrl(p) { if (!p) return ''; return /^https?:/.test(p) ? p : IMG + p; }
   function typeLabel(c) { return c.type === 'person' ? CT('Person') : c.type === 'tv' ? CT('Series') : CT('Film'); }
-  function reducedMotion() { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (_) { return false; } }
+  function reducedMotion() { try { return document.documentElement.classList.contains('cl-reduce') || matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (_) { return false; } }
   // Live-tunable depth-zoom params (driven by the ?cvdebug=1 slider panel). Defaults
   // are the shipped values; the shader reads these each frame so sliders update live.
   var DEPTH_CFG = window.CL_DEPTH_CFG = (window.CL_DEPTH_CFG || { zoom: 0.03, aoStr: 1, aoMax: 0.16, ease: 0.04, ovs: 1.0 });
@@ -3273,7 +3273,7 @@
   function playSetReward(sets, xpBefore, xpAfter, lvlBefore, lvlAfter) {
     if (!sets || !sets.length) return;
     var gain = xpAfter - xpBefore;
-    var reduce = false; try { reduce = matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (_) {}
+    var reduce = reducedMotion();
     // Build the celebration card (queue if several sets complete at once).
     var ov = document.getElementById('clSetWin');
     if (!ov) { ov = document.createElement('div'); ov.id = 'clSetWin'; document.body.appendChild(ov); }

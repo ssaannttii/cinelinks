@@ -88,6 +88,9 @@ body{background:radial-gradient(1000px 480px at 50% -140px,rgba(232,160,0,.11),t
    (stamps, flips, pulses, an infinite low-timer pulse) without a guard. This
    collapses every animation/transition to an instant end state, so nothing moves
    but nothing is left half-drawn either. Opacity-only fades still resolve. */
+html.cl-reduce *,html.cl-reduce *::before,html.cl-reduce *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;animation-delay:0s!important;transition-duration:.01ms!important;transition-delay:0s!important;scroll-behavior:auto!important}
+html.cl-reduce .fx-confetti,html.cl-reduce .fx-wrong-vig,html.cl-reduce .fx-lose-vig{display:none!important}
+html.cl-text-lg{font-size:112%}
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;animation-delay:0s!important;transition-duration:.01ms!important;transition-delay:0s!important;scroll-behavior:auto!important}
 }

@@ -2,7 +2,14 @@
 (function () {
   'use strict';
   var COLORS = ['#e8a000', '#7fd49a', '#f0d878', '#5bbd7a', '#ffffff', '#7aa6e8', '#b58ad6'];
-  function reduced() { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (_) { return false; } }
+  // The player's own preferences (the settings sheet) become classes on <html> at
+  // load: cl-reduce mirrors the OS reduced-motion switch, cl-text-lg scales the type.
+  try {
+    var H = document.documentElement;
+    if (localStorage.getItem('cl_motion') === 'reduce') H.classList.add('cl-reduce');
+    if (localStorage.getItem('cl_text') === 'lg') H.classList.add('cl-text-lg');
+  } catch (_) { /* noop */ }
+  function reduced() { try { return document.documentElement.classList.contains('cl-reduce') || matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (_) { return false; } }
 
   // Confetti burst. opts: {count, x, y, spread, power}
   function confetti(opts) {

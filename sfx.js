@@ -72,7 +72,7 @@
     try { fn(c.currentTime); } catch (_) {}
   }
 
-  function haptic(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch (_) {} }
+  function haptic(p) { try { if (localStorage.getItem('cl_haptics') === '0') return; if (navigator.vibrate) navigator.vibrate(p); } catch (_) {} }
 
   // Sustained voices (the pack hum) register here so muting mid-sound stops them.
   var live = [];
